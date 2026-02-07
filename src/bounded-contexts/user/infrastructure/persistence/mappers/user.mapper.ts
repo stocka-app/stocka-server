@@ -1,0 +1,40 @@
+import { UserModel } from '@/user/domain/models/user.model';
+import { UserEntity } from '@/user/infrastructure/persistence/entities/user.entity';
+
+export class UserMapper {
+  static toDomain(entity: UserEntity): UserModel {
+    return UserModel.reconstitute({
+      id: entity.id,
+      uuid: entity.uuid,
+      email: entity.email,
+      username: entity.username,
+      passwordHash: entity.passwordHash,
+      status: entity.status,
+      emailVerifiedAt: entity.emailVerifiedAt,
+      verificationBlockedUntil: entity.verificationBlockedUntil,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      archivedAt: entity.archivedAt,
+    });
+  }
+
+  static toEntity(model: UserModel): Partial<UserEntity> {
+    const entity: Partial<UserEntity> = {
+      uuid: model.uuid,
+      email: model.email,
+      username: model.username,
+      passwordHash: model.passwordHash,
+      status: model.status.toString(),
+      emailVerifiedAt: model.emailVerifiedAt,
+      verificationBlockedUntil: model.verificationBlockedUntil,
+      archivedAt: model.archivedAt,
+    };
+
+    // Only include id if it exists (for updates)
+    if (model.id !== undefined) {
+      entity.id = model.id;
+    }
+
+    return entity;
+  }
+}
