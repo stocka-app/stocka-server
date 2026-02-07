@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: stocka-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: stocka_db
+      POSTGRES_USER: stocka
+      POSTGRES_PASSWORD: stocka_dev_password
+    volumes:
+      - stocka_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stocka -d stocka_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  stocka_pgdata:
