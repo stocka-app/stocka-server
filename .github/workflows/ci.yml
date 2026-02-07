@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: stocka_test_db
+          POSTGRES_USER: stocka
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U stocka -d stocka_test_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+        env:
+          NODE_ENV: test
+          PORT: 3001
+          API_PREFIX: api
+          FRONTEND_URL: http://localhost:5173
+          REQUEST_TIMEOUT_MS: 10000
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: stocka
+          DB_PASSWORD: test_password
+          DB_DATABASE: stocka_test_db
+          JWT_ACCESS_SECRET: ci-access-secret-key
+          JWT_REFRESH_SECRET: ci-refresh-secret-key
+          JWT_ACCESS_EXPIRATION: 15m
+          JWT_REFRESH_EXPIRATION: 7d
+          CORS_ORIGIN: http://localhost:5173
+
+      - name: Build application
+        run: npm run build
+
+  deploy-develop:
+    needs: lint-test-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to develop environment
+        run: echo "TODO: Configure deployment to develop environment"
