@@ -1,0 +1,134 @@
+import { plainToInstance } from 'class-transformer';
+import { IsEnum, IsNumber, IsOptional, IsString, validateSync } from 'class-validator';
+
+enum Environment {
+  Development = 'development',
+  Production = 'production',
+  Test = 'test',
+}
+
+class EnvironmentVariables {
+  @IsEnum(Environment)
+  NODE_ENV!: Environment;
+
+  @IsNumber()
+  PORT!: number;
+
+  @IsString()
+  API_PREFIX!: string;
+
+  @IsString()
+  FRONTEND_URL!: string;
+
+  @IsNumber()
+  REQUEST_TIMEOUT_MS!: number;
+
+  // Database
+  @IsString()
+  DB_HOST!: string;
+
+  @IsNumber()
+  DB_PORT!: number;
+
+  @IsString()
+  DB_USERNAME!: string;
+
+  @IsString()
+  DB_PASSWORD!: string;
+
+  @IsString()
+  DB_DATABASE!: string;
+
+  // JWT
+  @IsString()
+  JWT_ACCESS_SECRET!: string;
+
+  @IsString()
+  JWT_REFRESH_SECRET!: string;
+
+  @IsString()
+  JWT_ACCESS_EXPIRATION!: string;
+
+  @IsString()
+  JWT_REFRESH_EXPIRATION!: string;
+
+  // CORS
+  @IsString()
+  CORS_ORIGIN!: string;
+
+  // Google OAuth (optional in dev)
+  @IsString()
+  @IsOptional()
+  GOOGLE_CLIENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  GOOGLE_CLIENT_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  GOOGLE_CALLBACK_URL?: string;
+
+  // Facebook OAuth (optional in dev)
+  @IsString()
+  @IsOptional()
+  FACEBOOK_APP_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  FACEBOOK_APP_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  FACEBOOK_CALLBACK_URL?: string;
+
+  // Apple OAuth (optional in dev)
+  @IsString()
+  @IsOptional()
+  APPLE_CLIENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  APPLE_TEAM_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  APPLE_KEY_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  APPLE_PRIVATE_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  APPLE_CALLBACK_URL?: string;
+
+  // Email (Resend)
+  @IsString()
+  @IsOptional()
+  RESEND_API_KEY?: string;
+
+  @IsString()
+  @IsOptional()
+  EMAIL_FROM?: string;
+
+  @IsNumber()
+  @IsOptional()
+  VERIFICATION_CODE_EXPIRATION_MINUTES?: number;
+}
+
+export function validate(config: Record<string, unknown>): EnvironmentVariables {
+  const validatedConfig = plainToInstance(EnvironmentVariables, config, {
+    enableImplicitConversion: true,
+  });
+
+  const errors = validateSync(validatedConfig, {
+    skipMissingProperties: false,
+  });
+
+  if (errors.length > 0) {
+    throw new Error(errors.toString());
+  }
+
+  return validatedConfig;
+}
