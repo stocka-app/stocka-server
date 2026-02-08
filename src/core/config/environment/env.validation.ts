@@ -56,6 +56,23 @@ class EnvironmentVariables {
   @IsString()
   CORS_ORIGIN!: string;
 
+  // Feature Flags - Social Auth Providers
+  @IsString()
+  @IsOptional()
+  GOOGLE_AUTH_ENABLED?: string;
+
+  @IsString()
+  @IsOptional()
+  FACEBOOK_AUTH_ENABLED?: string;
+
+  @IsString()
+  @IsOptional()
+  MICROSOFT_AUTH_ENABLED?: string;
+
+  @IsString()
+  @IsOptional()
+  APPLE_AUTH_ENABLED?: string;
+
   // Google OAuth (optional in dev)
   @IsString()
   @IsOptional()
@@ -82,7 +99,24 @@ class EnvironmentVariables {
   @IsOptional()
   FACEBOOK_CALLBACK_URL?: string;
 
-  // Apple OAuth (optional in dev)
+  // Microsoft OAuth (optional - enabled by default)
+  @IsString()
+  @IsOptional()
+  MICROSOFT_CLIENT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  MICROSOFT_CLIENT_SECRET?: string;
+
+  @IsString()
+  @IsOptional()
+  MICROSOFT_TENANT_ID?: string;
+
+  @IsString()
+  @IsOptional()
+  MICROSOFT_CALLBACK_URL?: string;
+
+  // Apple OAuth (DISABLED - See ADR-001)
   @IsString()
   @IsOptional()
   APPLE_CLIENT_ID?: string;
