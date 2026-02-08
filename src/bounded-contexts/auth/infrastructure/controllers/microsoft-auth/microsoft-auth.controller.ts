@@ -9,7 +9,8 @@ export class MicrosoftAuthController {
   @UseGuards(MicrosoftAuthGuard)
   @ApiOperation({
     summary: 'Initiate Microsoft OAuth flow',
-    description: 'Redirects to Microsoft for authentication. Supports personal and corporate accounts.',
+    description:
+      'Redirects to Microsoft for authentication. Supports personal and corporate accounts.',
   })
   @ApiResponse({
     status: 302,
