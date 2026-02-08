@@ -44,17 +44,15 @@ const EventHandlers = [
       provide: INJECTION_TOKENS.USER_CONTRACT,
       useClass: TypeOrmUserRepository,
     },
+    {
+      provide: INJECTION_TOKENS.USER_FACADE,
+      useExisting: UserFacade,
+    },
     ...CommandHandlers,
     ...QueryHandlers,
     ...EventHandlers,
     UserFacade,
   ],
-  exports: [
-    {
-      provide: INJECTION_TOKENS.USER_FACADE,
-      useExisting: UserFacade,
-    },
-    UserFacade,
-  ],
+  exports: [INJECTION_TOKENS.USER_FACADE, UserFacade],
 })
 export class UserModule {}
