@@ -1,8 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, Profile, VerifyCallback } from 'passport-microsoft';
+import { Strategy } from 'passport-microsoft';
 import { ConfigService } from '@nestjs/config';
 import { SocialProfile } from '@/auth/infrastructure/strategies/google.strategy';
+
+interface MicrosoftProfile {
+  id: string;
+  displayName: string;
+  emails?: Array<{ value: string; type?: string }>;
+  _json?: {
+    mail?: string;
+    userPrincipalName?: string;
+  };
+}
+
+type DoneCallback = (error: Error | null, user?: SocialProfile | false) => void;
 
 @Injectable()
 export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
@@ -19,13 +31,17 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
   validate(
     accessToken: string,
     refreshToken: string,
-    profile: Profile,
-    done: VerifyCallback,
+    profile: MicrosoftProfile,
+    done: DoneCallback,
   ): void {
-    const { id, emails, displayName } = profile;
+    const { id, displayName } = profile;
+
+    // Microsoft puede devolver el email en diferentes lugares
+    const email =
+      profile.emails?.[0]?.value || profile._json?.mail || profile._json?.userPrincipalName || '';
 
     const user: SocialProfile = {
-      email: emails?.[0]?.value || '',
+      email,
       displayName: displayName || '',
       provider: 'microsoft',
       providerId: id,
