@@ -43,10 +43,12 @@ import { JwtStrategy } from '@/auth/infrastructure/strategies/jwt.strategy';
 import { GoogleStrategy } from '@/auth/infrastructure/strategies/google.strategy';
 import { FacebookStrategy } from '@/auth/infrastructure/strategies/facebook.strategy';
 import { AppleStrategy } from '@/auth/infrastructure/strategies/apple.strategy';
+import { MicrosoftStrategy } from '@/auth/infrastructure/strategies/microsoft.strategy';
 import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
 import { GoogleAuthGuard } from '@/auth/infrastructure/guards/google-auth.guard';
 import { FacebookAuthGuard } from '@/auth/infrastructure/guards/facebook-auth.guard';
 import { AppleAuthGuard } from '@/auth/infrastructure/guards/apple-auth.guard';
+import { MicrosoftAuthGuard } from '@/auth/infrastructure/guards/microsoft-auth.guard';
 import { SignUpController } from '@/auth/infrastructure/controllers/sign-up/sign-up.controller';
 import { SignInController } from '@/auth/infrastructure/controllers/sign-in/sign-in.controller';
 import { SignOutController } from '@/auth/infrastructure/controllers/sign-out/sign-out.controller';
@@ -57,6 +59,9 @@ import { FacebookAuthController } from '@/auth/infrastructure/controllers/facebo
 import { FacebookCallbackController } from '@/auth/infrastructure/controllers/facebook-callback/facebook-callback.controller';
 import { AppleAuthController } from '@/auth/infrastructure/controllers/apple-auth/apple-auth.controller';
 import { AppleCallbackController } from '@/auth/infrastructure/controllers/apple-callback/apple-callback.controller';
+import { MicrosoftAuthController } from '@/auth/infrastructure/controllers/microsoft-auth/microsoft-auth.controller';
+import { MicrosoftCallbackController } from '@/auth/infrastructure/controllers/microsoft-callback/microsoft-callback.controller';
+import { AuthProvidersController } from '@/auth/infrastructure/controllers/auth-providers/auth-providers.controller';
 import { ForgotPasswordController } from '@/auth/infrastructure/controllers/forgot-password/forgot-password.controller';
 import { ResetPasswordController } from '@/auth/infrastructure/controllers/reset-password/reset-password.controller';
 import { AuthFacade } from '@/auth/infrastructure/facade/auth.facade';
@@ -95,13 +100,20 @@ const EventHandlers = [
   UserVerificationBlockedEventHandler,
 ];
 
-const Strategies = [JwtStrategy, GoogleStrategy, FacebookStrategy, AppleStrategy];
+const Strategies = [
+  JwtStrategy,
+  GoogleStrategy,
+  FacebookStrategy,
+  MicrosoftStrategy,
+  AppleStrategy, // DISABLED by default - See ADR-001
+];
 
 const Guards = [
   JwtAuthGuard,
   GoogleAuthGuard,
   FacebookAuthGuard,
-  AppleAuthGuard,
+  MicrosoftAuthGuard,
+  AppleAuthGuard, // DISABLED by default - See ADR-001
   EmailVerifiedGuard,
 ];
 
@@ -110,12 +122,15 @@ const Controllers = [
   SignInController,
   SignOutController,
   RefreshSessionController,
+  AuthProvidersController,
   GoogleAuthController,
   GoogleCallbackController,
   FacebookAuthController,
   FacebookCallbackController,
-  AppleAuthController,
-  AppleCallbackController,
+  MicrosoftAuthController,
+  MicrosoftCallbackController,
+  AppleAuthController, // DISABLED by default - returns 501
+  AppleCallbackController, // DISABLED by default - returns 501
   ForgotPasswordController,
   ResetPasswordController,
   VerifyEmailController,
