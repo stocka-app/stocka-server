@@ -1,4 +1,12 @@
 import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
+import { UuidVO } from '@/shared/domain/value-objects/compound/uuid.vo';
+import { VerificationCodeVO } from '@/shared/domain/value-objects/compound/verification-code.vo';
+import { EmailVO } from '@/user/domain/value-objects/email.vo';
+import { IpAddressVO } from '@/auth/domain/value-objects/ip-address.vo';
+import { UserAgentVO } from '@/auth/domain/value-objects/user-agent.vo';
+import { VerificationTypeVO } from '@/auth/domain/value-objects/verification-type.vo';
+import { VerificationResultVO } from '@/auth/domain/value-objects/verification-result.vo';
+import { AttemptedAtVO } from '@/auth/domain/value-objects/attempted-at.vo';
 import { EmailVerificationFailedEvent } from '@/auth/domain/events/email-verification-failed.event';
 
 export interface VerificationAttemptProps extends AggregateRootProps {
@@ -13,14 +21,14 @@ export interface VerificationAttemptProps extends AggregateRootProps {
 }
 
 export class VerificationAttemptModel extends AggregateRoot {
-  private _userUuid: string;
-  private _email: string;
-  private _ipAddress: string;
-  private _userAgent: string | null;
-  private _codeEntered: string;
-  private _success: boolean;
-  private _verificationType: string;
-  private _attemptedAt: Date;
+  private readonly _userUuid: UuidVO;
+  private readonly _email: EmailVO;
+  private readonly _ipAddress: IpAddressVO;
+  private readonly _userAgent: UserAgentVO | null;
+  private readonly _codeEntered: VerificationCodeVO;
+  private _result: VerificationResultVO;
+  private readonly _verificationType: VerificationTypeVO;
+  private readonly _attemptedAt: AttemptedAtVO;
 
   private constructor(props: VerificationAttemptProps) {
     super({
@@ -30,14 +38,16 @@ export class VerificationAttemptModel extends AggregateRoot {
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
     });
-    this._userUuid = props.userUuid;
-    this._email = props.email;
-    this._ipAddress = props.ipAddress;
-    this._userAgent = props.userAgent ?? null;
-    this._codeEntered = props.codeEntered;
-    this._success = props.success ?? false;
-    this._verificationType = props.verificationType ?? 'email_verification';
-    this._attemptedAt = props.attemptedAt ?? new Date();
+    this._userUuid = new UuidVO(props.userUuid);
+    this._email = new EmailVO(props.email);
+    this._ipAddress = new IpAddressVO(props.ipAddress);
+    this._userAgent = props.userAgent ? new UserAgentVO(props.userAgent) : null;
+    this._codeEntered = new VerificationCodeVO(props.codeEntered);
+    this._result = VerificationResultVO.fromBoolean(props.success ?? false);
+    this._verificationType = new VerificationTypeVO(props.verificationType ?? 'email_verification');
+    this._attemptedAt = props.attemptedAt
+      ? new AttemptedAtVO(props.attemptedAt)
+      : AttemptedAtVO.now();
   }
 
   static create(props: Omit<VerificationAttemptProps, 'id'>): VerificationAttemptModel {
@@ -66,40 +76,40 @@ export class VerificationAttemptModel extends AggregateRoot {
     return new VerificationAttemptModel(props);
   }
 
-  get userUuid(): string {
+  get userUuid(): UuidVO {
     return this._userUuid;
   }
 
-  get email(): string {
+  get email(): EmailVO {
     return this._email;
   }
 
-  get ipAddress(): string {
+  get ipAddress(): IpAddressVO {
     return this._ipAddress;
   }
 
-  get userAgent(): string | null {
+  get userAgent(): UserAgentVO | null {
     return this._userAgent;
   }
 
-  get codeEntered(): string {
+  get codeEntered(): VerificationCodeVO {
     return this._codeEntered;
   }
 
-  get success(): boolean {
-    return this._success;
+  get result(): VerificationResultVO {
+    return this._result;
   }
 
-  get verificationType(): string {
+  get verificationType(): VerificationTypeVO {
     return this._verificationType;
   }
 
-  get attemptedAt(): Date {
+  get attemptedAt(): AttemptedAtVO {
     return this._attemptedAt;
   }
 
   markAsSuccessful(): void {
-    this._success = true;
+    this._result = VerificationResultVO.success();
     this.touch();
   }
 }
