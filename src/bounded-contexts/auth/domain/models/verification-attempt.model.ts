@@ -1,7 +1,7 @@
 import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
 import { UuidVO } from '@/shared/domain/value-objects/compound/uuid.vo';
 import { VerificationCodeVO } from '@/shared/domain/value-objects/compound/verification-code.vo';
-import { EmailVO } from '@/user/domain/value-objects/email.vo';
+import { EmailVO } from '@/shared/domain/value-objects/compound/email.vo';
 import { IpAddressVO } from '@/auth/domain/value-objects/ip-address.vo';
 import { UserAgentVO } from '@/auth/domain/value-objects/user-agent.vo';
 import { VerificationTypeVO } from '@/auth/domain/value-objects/verification-type.vo';
@@ -40,7 +40,7 @@ export class VerificationAttemptModel extends AggregateRoot {
     });
     this._userUuid = new UuidVO(props.userUuid);
     this._email = new EmailVO(props.email);
-    this._ipAddress = new IpAddressVO(props.ipAddress);
+    this._ipAddress = IpAddressVO.create(props.ipAddress);
     this._userAgent = props.userAgent ? new UserAgentVO(props.userAgent) : null;
     this._codeEntered = new VerificationCodeVO(props.codeEntered);
     this._result = VerificationResultVO.fromBoolean(props.success ?? false);
