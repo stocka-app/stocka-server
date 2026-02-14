@@ -5,6 +5,7 @@ export enum VerificationTypeEnum {
   EMAIL_VERIFICATION = 'email_verification',
   PASSWORD_RESET = 'password_reset',
   TWO_FACTOR = 'two_factor',
+  SIGN_IN = 'sign_in',
 }
 
 export class VerificationTypeVO extends CompoundVO {
@@ -57,5 +58,13 @@ export class VerificationTypeVO extends CompoundVO {
 
   static twoFactor(): VerificationTypeVO {
     return new VerificationTypeVO(VerificationTypeEnum.TWO_FACTOR);
+  }
+
+  static signIn(): VerificationTypeVO {
+    return new VerificationTypeVO(VerificationTypeEnum.SIGN_IN);
+  }
+
+  isSignIn(): boolean {
+    return this._value === VerificationTypeEnum.SIGN_IN;
   }
 }
