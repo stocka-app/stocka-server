@@ -11,6 +11,22 @@ export interface IVerificationAttemptContract {
   countFailedByIpAddressInLastHour(ipAddress: string): Promise<number>;
   countFailedByEmailInLastHour(email: string): Promise<number>;
 
+  // Rate limiting queries filtered by attempt type
+  countFailedByIpAddressInLastHourByType(
+    ipAddress: string,
+    verificationType: string,
+  ): Promise<number>;
+
+  countFailedByIdentifierInLastHourByType(
+    identifier: string,
+    verificationType: string,
+  ): Promise<number>;
+
+  countFailedByUserUuidInLastHourByType(
+    userUuid: string,
+    verificationType: string,
+  ): Promise<number>;
+
   // For analysis
   findRecentByUserUuid(userUuid: string, limit: number): Promise<VerificationAttemptModel[]>;
 

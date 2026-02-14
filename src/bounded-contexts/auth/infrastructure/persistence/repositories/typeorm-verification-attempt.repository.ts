@@ -94,4 +94,49 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
 
     return result.affected || 0;
   }
+
+  async countFailedByIpAddressInLastHourByType(
+    ipAddress: string,
+    verificationType: string,
+  ): Promise<number> {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    return this.repository
+      .createQueryBuilder('attempt')
+      .where('attempt.ipAddress = :ipAddress', { ipAddress })
+      .andWhere('attempt.success = :success', { success: false })
+      .andWhere('attempt.verificationType = :verificationType', { verificationType })
+      .andWhere('attempt.attemptedAt > :oneHourAgo', { oneHourAgo })
+      .getCount();
+  }
+
+  async countFailedByIdentifierInLastHourByType(
+    identifier: string,
+    verificationType: string,
+  ): Promise<number> {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    return this.repository
+      .createQueryBuilder('attempt')
+      .where('(attempt.email = :identifier OR attempt.userUuid = :identifier)', { identifier })
+      .andWhere('attempt.success = :success', { success: false })
+      .andWhere('attempt.verificationType = :verificationType', { verificationType })
+      .andWhere('attempt.attemptedAt > :oneHourAgo', { oneHourAgo })
+      .getCount();
+  }
+
+  async countFailedByUserUuidInLastHourByType(
+    userUuid: string,
+    verificationType: string,
+  ): Promise<number> {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+    return this.repository
+      .createQueryBuilder('attempt')
+      .where('attempt.userUuid = :userUuid', { userUuid })
+      .andWhere('attempt.success = :success', { success: false })
+      .andWhere('attempt.verificationType = :verificationType', { verificationType })
+      .andWhere('attempt.attemptedAt > :oneHourAgo', { oneHourAgo })
+      .getCount();
+  }
 }
