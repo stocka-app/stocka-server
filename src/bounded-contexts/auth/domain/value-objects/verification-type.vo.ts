@@ -1,13 +1,5 @@
 import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
-
-class InvalidVerificationTypeException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid verification type: ${value}`, 'INVALID_VERIFICATION_TYPE', [
-      { field: 'verificationType', message: `Invalid verification type: ${value}` },
-    ]);
-  }
-}
+import { InvalidVerificationTypeException } from '@/auth/domain/exceptions/invalid-verification-type.exception';
 
 export enum VerificationTypeEnum {
   EMAIL_VERIFICATION = 'email_verification',

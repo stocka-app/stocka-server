@@ -1,37 +1,54 @@
-import { StringVO } from '@/shared/domain/value-objects/primitive/string.vo';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
+import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
+import { InvalidIpAddressException } from '@/auth/domain/exceptions/invalid-ip-address.exception';
+import { Ipv4AddressVO } from '@/auth/domain/value-objects/ipv4-address.vo';
+import { Ipv6AddressVO } from '@/auth/domain/value-objects/ipv6-address.vo';
 
-class InvalidIpAddressException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid IP address: ${value}`, 'INVALID_IP_ADDRESS', [
-      { field: 'ipAddress', message: 'Invalid IP address format' },
-    ]);
-  }
-}
+export class IpAddressVO extends CompoundVO {
+  private readonly _inner: Ipv4AddressVO | Ipv6AddressVO;
 
-export class IpAddressVO extends StringVO {
-  private static readonly IPV4_PATTERN =
-    /^(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
-
-  private static readonly IPV6_PATTERN =
-    /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::(?:[0-9a-fA-F]{1,4}:){0,5}[0-9a-fA-F]{1,4}$|^(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}$|^(?:[0-9a-fA-F]{1,4}:){1,5}(?::[0-9a-fA-F]{1,4}){1,2}$|^(?:[0-9a-fA-F]{1,4}:){1,4}(?::[0-9a-fA-F]{1,4}){1,3}$|^(?:[0-9a-fA-F]{1,4}:){1,3}(?::[0-9a-fA-F]{1,4}){1,4}$|^(?:[0-9a-fA-F]{1,4}:){1,2}(?::[0-9a-fA-F]{1,4}){1,5}$|^[0-9a-fA-F]{1,4}:(?::[0-9a-fA-F]{1,4}){1,6}$|^::$/;
-
-  constructor(value: string) {
-    super(value.trim());
-    this.ensureValid();
+  private constructor(inner: Ipv4AddressVO | Ipv6AddressVO) {
+    super();
+    this._inner = inner;
   }
 
-  protected ensureValid(): void {
-    if (!IpAddressVO.IPV4_PATTERN.test(this.value) && !IpAddressVO.IPV6_PATTERN.test(this.value)) {
-      throw new InvalidIpAddressException(this.value);
+  static create(value: string): IpAddressVO {
+    const trimmed = value.trim();
+
+    if (Ipv4AddressVO.isValid(trimmed)) {
+      return new IpAddressVO(new Ipv4AddressVO(trimmed));
     }
+
+    if (Ipv6AddressVO.isValid(trimmed)) {
+      return new IpAddressVO(new Ipv6AddressVO(trimmed));
+    }
+
+    throw new InvalidIpAddressException(trimmed);
+  }
+
+  static fromIpv4(value: string): IpAddressVO {
+    return new IpAddressVO(new Ipv4AddressVO(value));
+  }
+
+  static fromIpv6(value: string): IpAddressVO {
+    return new IpAddressVO(new Ipv6AddressVO(value));
   }
 
   isIPv4(): boolean {
-    return IpAddressVO.IPV4_PATTERN.test(this.value);
+    return this._inner instanceof Ipv4AddressVO;
   }
 
   isIPv6(): boolean {
-    return IpAddressVO.IPV6_PATTERN.test(this.value);
+    return this._inner instanceof Ipv6AddressVO;
+  }
+
+  toString(): string {
+    return this._inner.getValue();
+  }
+
+  equals(other: IpAddressVO): boolean {
+    if (!(other instanceof IpAddressVO)) {
+      return false;
+    }
+    return this._inner.getValue() === other._inner.getValue();
   }
 }

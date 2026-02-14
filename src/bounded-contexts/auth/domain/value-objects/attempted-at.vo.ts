@@ -1,11 +1,5 @@
 import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
-
-class InvalidAttemptedAtException extends DomainException {
-  constructor(message: string) {
-    super(message, 'INVALID_ATTEMPTED_AT', [{ field: 'attemptedAt', message }]);
-  }
-}
+import { InvalidAttemptedAtException } from '@/auth/domain/exceptions/invalid-attempted-at.exception';
 
 export class AttemptedAtVO extends CompoundVO {
   private static readonly MAX_FUTURE_TOLERANCE_MS = 5000;

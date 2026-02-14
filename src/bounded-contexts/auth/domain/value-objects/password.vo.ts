@@ -1,11 +1,5 @@
 import { StringVO } from '@/shared/domain/value-objects/primitive/string.vo';
-import { BusinessLogicException } from '@/shared/domain/exceptions/business-logic.exception';
-
-class InvalidPasswordException extends BusinessLogicException {
-  constructor(message: string) {
-    super(message, 'INVALID_PASSWORD', [{ field: 'password', message }]);
-  }
-}
+import { InvalidPasswordException } from '@/auth/domain/exceptions/invalid-password.exception';
 
 export class PasswordVO extends StringVO {
   private static readonly MIN_LENGTH = 8;

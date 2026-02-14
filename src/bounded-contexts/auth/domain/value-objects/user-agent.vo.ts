@@ -1,11 +1,5 @@
 import { StringVO } from '@/shared/domain/value-objects/primitive/string.vo';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
-
-class InvalidUserAgentException extends DomainException {
-  constructor(message: string) {
-    super(message, 'INVALID_USER_AGENT', [{ field: 'userAgent', message }]);
-  }
-}
+import { InvalidUserAgentException } from '@/auth/domain/exceptions/invalid-user-agent.exception';
 
 export class UserAgentVO extends StringVO {
   private static readonly MAX_LENGTH = 512;
