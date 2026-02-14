@@ -14,7 +14,7 @@ export interface VerificationAttemptProps extends AggregateRootProps {
   email: string | null;
   ipAddress: string;
   userAgent?: string | null;
-  codeEntered: string;
+  codeEntered: string | null;
   success?: boolean;
   verificationType?: string;
   attemptedAt?: Date;
@@ -25,7 +25,7 @@ export class VerificationAttemptModel extends AggregateRoot {
   private readonly _email: EmailVO | null;
   private readonly _ipAddress: IpAddressVO;
   private readonly _userAgent: UserAgentVO | null;
-  private readonly _codeEntered: VerificationCodeVO;
+  private readonly _codeEntered: VerificationCodeVO | null;
   private _result: VerificationResultVO;
   private readonly _verificationType: VerificationTypeVO;
   private readonly _attemptedAt: AttemptedAtVO;
@@ -42,7 +42,7 @@ export class VerificationAttemptModel extends AggregateRoot {
     this._email = props.email ? new EmailVO(props.email) : null;
     this._ipAddress = IpAddressVO.create(props.ipAddress);
     this._userAgent = props.userAgent ? new UserAgentVO(props.userAgent) : null;
-    this._codeEntered = new VerificationCodeVO(props.codeEntered);
+    this._codeEntered = props.codeEntered ? new VerificationCodeVO(props.codeEntered) : null;
     this._result = VerificationResultVO.fromBoolean(props.success ?? false);
     this._verificationType = new VerificationTypeVO(props.verificationType ?? 'email_verification');
     this._attemptedAt = props.attemptedAt
@@ -92,7 +92,7 @@ export class VerificationAttemptModel extends AggregateRoot {
     return this._userAgent;
   }
 
-  get codeEntered(): VerificationCodeVO {
+  get codeEntered(): VerificationCodeVO | null {
     return this._codeEntered;
   }
 
