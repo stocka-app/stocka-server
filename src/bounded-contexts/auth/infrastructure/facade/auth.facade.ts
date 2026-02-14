@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { SignUpCommand } from '@/auth/application/commands/sign-up/sign-up.command';
-import { SignInCommand } from '@/auth/application/commands/sign-in/sign-in.command';
-import { SignOutCommand } from '@/auth/application/commands/sign-out/sign-out.command';
-import { RefreshSessionCommand } from '@/auth/application/commands/refresh-session/refresh-session.command';
-import { SocialSignInCommand } from '@/auth/application/commands/social-sign-in/social-sign-in.command';
-import { ForgotPasswordCommand } from '@/auth/application/commands/forgot-password/forgot-password.command';
-import { ResetPasswordCommand } from '@/auth/application/commands/reset-password/reset-password.command';
+import { SignUpCommand } from '@auth/application/commands/sign-up/sign-up.command';
+import { SignInCommand } from '@auth/application/commands/sign-in/sign-in.command';
+import { SignOutCommand } from '@auth/application/commands/sign-out/sign-out.command';
+import { RefreshSessionCommand } from '@auth/application/commands/refresh-session/refresh-session.command';
+import { SocialSignInCommand } from '@auth/application/commands/social-sign-in/social-sign-in.command';
+import { ForgotPasswordCommand } from '@auth/application/commands/forgot-password/forgot-password.command';
+import { ResetPasswordCommand } from '@auth/application/commands/reset-password/reset-password.command';
 
 @Injectable()
 export class AuthFacade {

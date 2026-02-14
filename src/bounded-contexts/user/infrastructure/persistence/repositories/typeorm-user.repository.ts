@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IUserContract } from '@/user/domain/contracts/user.contract';
-import { UserModel } from '@/user/domain/models/user.model';
-import { UserEntity } from '@/user/infrastructure/persistence/entities/user.entity';
-import { UserMapper } from '@/user/infrastructure/persistence/mappers/user.mapper';
+import { IUserContract } from '@user/domain/contracts/user.contract';
+import { UserModel } from '@user/domain/models/user.model';
+import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
+import { UserMapper } from '@user/infrastructure/persistence/mappers/user.mapper';
 
 @Injectable()
 export class TypeOrmUserRepository implements IUserContract {

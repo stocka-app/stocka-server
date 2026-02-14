@@ -1,8 +1,8 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
-import { EmailVerificationRequestedEvent } from '@/auth/domain/events/email-verification-requested.event';
-import { IEmailProviderContract } from '@/shared/infrastructure/email/contracts/email-provider.contract';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
+import { EmailVerificationRequestedEvent } from '@auth/domain/events/email-verification-requested.event';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @EventsHandler(EmailVerificationRequestedEvent)
 export class EmailVerificationRequestedEventHandler implements IEventHandler<EmailVerificationRequestedEvent> {

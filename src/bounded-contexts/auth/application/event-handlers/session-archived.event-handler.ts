@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
-import { SessionArchivedEvent } from '@/auth/domain/events/session-archived.event';
+import { SessionArchivedEvent } from '@auth/domain/events/session-archived.event';
 
 @EventsHandler(SessionArchivedEvent)
 export class SessionArchivedEventHandler implements IEventHandler<SessionArchivedEvent> {

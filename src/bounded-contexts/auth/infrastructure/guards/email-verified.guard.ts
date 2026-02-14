@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { UserModel } from '@/user/domain/models/user.model';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { UserModel } from '@user/domain/models/user.model';
 
 export const SKIP_EMAIL_VERIFICATION_KEY = 'skipEmailVerification';
 

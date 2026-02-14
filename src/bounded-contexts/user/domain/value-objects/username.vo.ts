@@ -1,5 +1,5 @@
-import { StringVO } from '@/shared/domain/value-objects/primitive/string.vo';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
+import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 class InvalidUsernameException extends DomainException {
   constructor(message: string) {

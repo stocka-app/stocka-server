@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
-import { PasswordResetCompletedEvent } from '@/auth/domain/events/password-reset-completed.event';
+import { PasswordResetCompletedEvent } from '@auth/domain/events/password-reset-completed.event';
 
 @EventsHandler(PasswordResetCompletedEvent)
 export class PasswordResetCompletedEventHandler implements IEventHandler<PasswordResetCompletedEvent> {

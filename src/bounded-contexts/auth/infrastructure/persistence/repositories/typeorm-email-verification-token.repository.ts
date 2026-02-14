@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, MoreThan } from 'typeorm';
-import { IEmailVerificationTokenContract } from '@/auth/domain/contracts/email-verification-token.contract';
-import { EmailVerificationTokenModel } from '@/auth/domain/models/email-verification-token.model';
-import { EmailVerificationTokenEntity } from '@/auth/infrastructure/persistence/entities/email-verification-token.entity';
-import { EmailVerificationTokenMapper } from '@/auth/infrastructure/persistence/mappers/email-verification-token.mapper';
+import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
+import { EmailVerificationTokenModel } from '@auth/domain/models/email-verification-token.model';
+import { EmailVerificationTokenEntity } from '@auth/infrastructure/persistence/entities/email-verification-token.entity';
+import { EmailVerificationTokenMapper } from '@auth/infrastructure/persistence/mappers/email-verification-token.mapper';
 
 @Injectable()
 export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificationTokenContract {

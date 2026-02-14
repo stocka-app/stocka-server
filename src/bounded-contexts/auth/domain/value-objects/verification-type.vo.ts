@@ -1,5 +1,5 @@
-import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
-import { InvalidVerificationTypeException } from '@/auth/domain/exceptions/invalid-verification-type.exception';
+import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
+import { InvalidVerificationTypeException } from '@auth/domain/exceptions/invalid-verification-type.exception';
 
 export enum VerificationTypeEnum {
   EMAIL_VERIFICATION = 'email_verification',

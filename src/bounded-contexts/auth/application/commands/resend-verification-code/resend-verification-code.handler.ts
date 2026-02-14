@@ -1,16 +1,16 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ResendVerificationCodeCommand } from '@/auth/application/commands/resend-verification-code/resend-verification-code.command';
-import { IEmailVerificationTokenContract } from '@/auth/domain/contracts/email-verification-token.contract';
-import { ICodeGeneratorContract } from '@/shared/domain/contracts/code-generator.contract';
-import { IEmailProviderContract } from '@/shared/infrastructure/email/contracts/email-provider.contract';
-import { ResendCooldownActiveException } from '@/auth/domain/exceptions/resend-cooldown-active.exception';
-import { MaxResendsExceededException } from '@/auth/domain/exceptions/max-resends-exceeded.exception';
-import { UserAlreadyVerifiedException } from '@/auth/domain/exceptions/user-already-verified.exception';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { ResendVerificationCodeCommand } from '@auth/application/commands/resend-verification-code/resend-verification-code.command';
+import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
+import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { ResendCooldownActiveException } from '@auth/domain/exceptions/resend-cooldown-active.exception';
+import { MaxResendsExceededException } from '@auth/domain/exceptions/max-resends-exceeded.exception';
+import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-already-verified.exception';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 interface ResendResult {
   success: boolean;
@@ -102,7 +102,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
     const { EmailVerificationTokenModel } =
-      await import('@/auth/domain/models/email-verification-token.model');
+      await import('@auth/domain/models/email-verification-token.model');
 
     const token = EmailVerificationTokenModel.create({
       userId: user.id!,

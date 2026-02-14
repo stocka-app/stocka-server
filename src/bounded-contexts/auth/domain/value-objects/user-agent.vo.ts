@@ -1,5 +1,5 @@
-import { StringVO } from '@/shared/domain/value-objects/primitive/string.vo';
-import { InvalidUserAgentException } from '@/auth/domain/exceptions/invalid-user-agent.exception';
+import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
+import { InvalidUserAgentException } from '@auth/domain/exceptions/invalid-user-agent.exception';
 
 export class UserAgentVO extends StringVO {
   private static readonly MAX_LENGTH = 512;

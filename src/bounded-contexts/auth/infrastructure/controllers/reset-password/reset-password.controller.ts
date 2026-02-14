@@ -1,9 +1,9 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { ResetPasswordCommand } from '@/auth/application/commands/reset-password/reset-password.command';
-import { ResetPasswordResult } from '@/auth/application/types/auth-result.types';
-import { ResetPasswordInDto } from '@/auth/infrastructure/controllers/reset-password/reset-password-in.dto';
+import { ResetPasswordCommand } from '@auth/application/commands/reset-password/reset-password.command';
+import { ResetPasswordResult } from '@auth/application/types/auth-result.types';
+import { ResetPasswordInDto } from '@auth/infrastructure/controllers/reset-password/reset-password-in.dto';
 
 @ApiTags('Auth')
 @Controller('auth')

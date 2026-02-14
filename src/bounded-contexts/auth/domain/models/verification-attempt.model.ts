@@ -1,13 +1,13 @@
-import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
-import { UuidVO } from '@/shared/domain/value-objects/compound/uuid.vo';
-import { VerificationCodeVO } from '@/shared/domain/value-objects/compound/verification-code.vo';
-import { EmailVO } from '@/shared/domain/value-objects/compound/email.vo';
-import { IpAddressVO } from '@/auth/domain/value-objects/ip-address.vo';
-import { UserAgentVO } from '@/auth/domain/value-objects/user-agent.vo';
-import { VerificationTypeVO } from '@/auth/domain/value-objects/verification-type.vo';
-import { VerificationResultVO } from '@/auth/domain/value-objects/verification-result.vo';
-import { AttemptedAtVO } from '@/auth/domain/value-objects/attempted-at.vo';
-import { EmailVerificationFailedEvent } from '@/auth/domain/events/email-verification-failed.event';
+import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { UuidVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { VerificationCodeVO } from '@shared/domain/value-objects/compound/verification-code.vo';
+import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
+import { IpAddressVO } from '@auth/domain/value-objects/ip-address.vo';
+import { UserAgentVO } from '@auth/domain/value-objects/user-agent.vo';
+import { VerificationTypeVO } from '@auth/domain/value-objects/verification-type.vo';
+import { VerificationResultVO } from '@auth/domain/value-objects/verification-result.vo';
+import { AttemptedAtVO } from '@auth/domain/value-objects/attempted-at.vo';
+import { EmailVerificationFailedEvent } from '@auth/domain/events/email-verification-failed.event';
 
 export interface VerificationAttemptProps extends AggregateRootProps {
   userUuid: string;

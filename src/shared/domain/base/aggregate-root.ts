@@ -1,5 +1,5 @@
 import { AggregateRoot as CqrsAggregateRoot, IEvent } from '@nestjs/cqrs';
-import { UuidVO } from '@/shared/domain/value-objects/compound/uuid.vo';
+import { UuidVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
 export interface AggregateRootProps {
   id?: number;

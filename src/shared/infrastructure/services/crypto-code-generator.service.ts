@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import { Injectable } from '@nestjs/common';
-import { ICodeGeneratorContract } from '@/shared/domain/contracts/code-generator.contract';
+import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 
 @Injectable()
 export class CryptoCodeGeneratorService implements ICodeGeneratorContract {

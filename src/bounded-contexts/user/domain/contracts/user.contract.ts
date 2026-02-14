@@ -1,4 +1,4 @@
-import { UserModel } from '@/user/domain/models/user.model';
+import { UserModel } from '@user/domain/models/user.model';
 
 export interface IUserContract {
   findById(id: number): Promise<UserModel | null>;

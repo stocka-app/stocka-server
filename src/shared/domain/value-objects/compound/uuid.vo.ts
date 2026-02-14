@@ -1,6 +1,6 @@
 import { v4 as uuidv4, validate } from 'uuid';
-import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
+import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 class InvalidUuidException extends DomainException {
   constructor(value: string) {

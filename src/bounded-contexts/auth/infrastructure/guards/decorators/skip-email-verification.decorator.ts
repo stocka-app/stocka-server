@@ -1,5 +1,5 @@
 import { SetMetadata, CustomDecorator } from '@nestjs/common';
-import { SKIP_EMAIL_VERIFICATION_KEY } from '@/auth/infrastructure/guards/email-verified.guard';
+import { SKIP_EMAIL_VERIFICATION_KEY } from '@auth/infrastructure/guards/email-verified.guard';
 
 /**
  * Decorator to skip email verification check on specific routes.

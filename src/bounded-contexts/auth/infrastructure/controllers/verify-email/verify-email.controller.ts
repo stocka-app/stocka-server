@@ -2,10 +2,10 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { RateLimit } from '@/common/decorators/rate-limit.decorator';
-import { VerifyEmailCommand } from '@/auth/application/commands/verify-email/verify-email.command';
-import { VerifyEmailInDto } from '@/auth/infrastructure/controllers/verify-email/verify-email-in.dto';
-import { VerifyEmailOutDto } from '@/auth/infrastructure/controllers/verify-email/verify-email-out.dto';
+import { RateLimit } from '@common/decorators/rate-limit.decorator';
+import { VerifyEmailCommand } from '@auth/application/commands/verify-email/verify-email.command';
+import { VerifyEmailInDto } from '@auth/infrastructure/controllers/verify-email/verify-email-in.dto';
+import { VerifyEmailOutDto } from '@auth/infrastructure/controllers/verify-email/verify-email-out.dto';
 
 @ApiTags('Auth')
 @Controller('auth')

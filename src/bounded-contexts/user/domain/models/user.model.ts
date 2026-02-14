@@ -1,13 +1,13 @@
-import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
-import { EmailVO } from '@/shared/domain/value-objects/compound/email.vo';
-import { UsernameVO } from '@/user/domain/value-objects/username.vo';
+import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
+import { UsernameVO } from '@user/domain/value-objects/username.vo';
 import {
   UserStatusVO,
   UserStatusEnum,
-} from '@/shared/domain/value-objects/compound/user-status.vo';
-import { UserCreatedEvent } from '@/user/domain/events/user-created.event';
-import { UserCreatedFromSocialEvent } from '@/user/domain/events/user-created-from-social.event';
-import { UserPasswordUpdatedEvent } from '@/user/domain/events/user-password-updated.event';
+} from '@shared/domain/value-objects/compound/user-status.vo';
+import { UserCreatedEvent } from '@user/domain/events/user-created.event';
+import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
+import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
 
 export interface UserProps extends AggregateRootProps {
   email: string;

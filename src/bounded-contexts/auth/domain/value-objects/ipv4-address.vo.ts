@@ -1,5 +1,5 @@
-import { StringVO } from '@/shared/domain/value-objects/primitive/string.vo';
-import { InvalidIpAddressException } from '@/auth/domain/exceptions/invalid-ip-address.exception';
+import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
+import { InvalidIpAddressException } from '@auth/domain/exceptions/invalid-ip-address.exception';
 
 export class Ipv4AddressVO extends StringVO {
   private static readonly PATTERN =

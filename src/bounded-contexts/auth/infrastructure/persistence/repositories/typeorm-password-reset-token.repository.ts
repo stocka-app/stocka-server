@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
-import { IPasswordResetTokenContract } from '@/auth/domain/contracts/password-reset-token.contract';
-import { PasswordResetTokenModel } from '@/auth/domain/models/password-reset-token.model';
-import { PasswordResetTokenEntity } from '@/auth/infrastructure/persistence/entities/password-reset-token.entity';
-import { PasswordResetTokenMapper } from '@/auth/infrastructure/persistence/mappers/password-reset-token.mapper';
+import { IPasswordResetTokenContract } from '@auth/domain/contracts/password-reset-token.contract';
+import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-token.model';
+import { PasswordResetTokenEntity } from '@auth/infrastructure/persistence/entities/password-reset-token.entity';
+import { PasswordResetTokenMapper } from '@auth/infrastructure/persistence/mappers/password-reset-token.mapper';
 
 @Injectable()
 export class TypeOrmPasswordResetTokenRepository implements IPasswordResetTokenContract {

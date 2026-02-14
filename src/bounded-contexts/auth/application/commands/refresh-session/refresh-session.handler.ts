@@ -3,16 +3,16 @@ import { Inject } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
-import { RefreshSessionCommand } from '@/auth/application/commands/refresh-session/refresh-session.command';
-import { RefreshSessionResult } from '@/auth/application/types/auth-result.types';
-import { AuthDomainService } from '@/auth/domain/services/auth-domain.service';
-import { SessionModel } from '@/auth/domain/models/session.model';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { TokenExpiredException } from '@/auth/domain/exceptions/token-expired.exception';
-import { SessionRefreshedEvent } from '@/auth/domain/events/session-refreshed.event';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { RefreshSessionCommand } from '@auth/application/commands/refresh-session/refresh-session.command';
+import { RefreshSessionResult } from '@auth/application/types/auth-result.types';
+import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
+import { SessionModel } from '@auth/domain/models/session.model';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { TokenExpiredException } from '@auth/domain/exceptions/token-expired.exception';
+import { SessionRefreshedEvent } from '@auth/domain/events/session-refreshed.event';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 interface JwtPayload {
   sub: string;

@@ -1,5 +1,5 @@
-import { PasswordResetTokenModel } from '@/auth/domain/models/password-reset-token.model';
-import { PasswordResetTokenEntity } from '@/auth/infrastructure/persistence/entities/password-reset-token.entity';
+import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-token.model';
+import { PasswordResetTokenEntity } from '@auth/infrastructure/persistence/entities/password-reset-token.entity';
 
 export class PasswordResetTokenMapper {
   static toDomain(entity: PasswordResetTokenEntity): PasswordResetTokenModel {

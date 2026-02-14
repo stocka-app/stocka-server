@@ -1,4 +1,4 @@
-import { SessionModel } from '@/auth/domain/models/session.model';
+import { SessionModel } from '@auth/domain/models/session.model';
 
 export interface ISessionContract {
   findById(id: number): Promise<SessionModel | null>;

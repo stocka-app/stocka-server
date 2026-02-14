@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { APP_CONSTANTS } from '@/common/constants/app.constants';
+import { APP_CONSTANTS } from '@common/constants/app.constants';
 
 export class AuthDomainService {
   static async hashPassword(plain: string): Promise<string> {

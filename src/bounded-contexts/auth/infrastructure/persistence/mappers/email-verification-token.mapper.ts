@@ -1,5 +1,5 @@
-import { EmailVerificationTokenModel } from '@/auth/domain/models/email-verification-token.model';
-import { EmailVerificationTokenEntity } from '@/auth/infrastructure/persistence/entities/email-verification-token.entity';
+import { EmailVerificationTokenModel } from '@auth/domain/models/email-verification-token.model';
+import { EmailVerificationTokenEntity } from '@auth/infrastructure/persistence/entities/email-verification-token.entity';
 
 export class EmailVerificationTokenMapper {
   static toDomain(entity: EmailVerificationTokenEntity): EmailVerificationTokenModel {

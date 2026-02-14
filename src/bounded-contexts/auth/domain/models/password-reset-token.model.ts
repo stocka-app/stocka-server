@@ -1,6 +1,6 @@
-import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
-import { PasswordResetRequestedEvent } from '@/auth/domain/events/password-reset-requested.event';
-import { PasswordResetCompletedEvent } from '@/auth/domain/events/password-reset-completed.event';
+import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { PasswordResetRequestedEvent } from '@auth/domain/events/password-reset-requested.event';
+import { PasswordResetCompletedEvent } from '@auth/domain/events/password-reset-completed.event';
 
 export interface PasswordResetTokenProps extends AggregateRootProps {
   userId: number;

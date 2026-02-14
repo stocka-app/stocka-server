@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
-import { EmailVerificationFailedEvent } from '@/auth/domain/events/email-verification-failed.event';
+import { EmailVerificationFailedEvent } from '@auth/domain/events/email-verification-failed.event';
 
 @EventsHandler(EmailVerificationFailedEvent)
 export class EmailVerificationFailedEventHandler implements IEventHandler<EmailVerificationFailedEvent> {

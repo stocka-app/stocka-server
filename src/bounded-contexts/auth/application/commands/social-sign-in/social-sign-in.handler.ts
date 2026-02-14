@@ -3,15 +3,15 @@ import { Inject } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
-import { SocialSignInCommand } from '@/auth/application/commands/social-sign-in/social-sign-in.command';
-import { SocialSignInResult } from '@/auth/application/types/auth-result.types';
-import { AuthDomainService } from '@/auth/domain/services/auth-domain.service';
-import { SessionModel } from '@/auth/domain/models/session.model';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { UserSignedInEvent } from '@/auth/domain/events/user-signed-in.event';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { SocialSignInCommand } from '@auth/application/commands/social-sign-in/social-sign-in.command';
+import { SocialSignInResult } from '@auth/application/types/auth-result.types';
+import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
+import { SessionModel } from '@auth/domain/models/session.model';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { UserSignedInEvent } from '@auth/domain/events/user-signed-in.event';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 @CommandHandler(SocialSignInCommand)
 export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand> {

@@ -1,6 +1,6 @@
 import { Entity, Column, OneToMany, Index } from 'typeorm';
-import { BaseEntity } from '@/shared/infrastructure/base/base.entity';
-import { SocialAccountEntity } from '@/user/infrastructure/persistence/entities/social-account.entity';
+import { BaseEntity } from '@shared/infrastructure/base/base.entity';
+import { SocialAccountEntity } from '@user/infrastructure/persistence/entities/social-account.entity';
 
 @Entity('users')
 export class UserEntity extends BaseEntity {

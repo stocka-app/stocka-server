@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { FacebookAuthGuard } from '@/auth/infrastructure/guards/facebook-auth.guard';
+import { FacebookAuthGuard } from '@auth/infrastructure/guards/facebook-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')

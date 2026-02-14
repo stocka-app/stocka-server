@@ -1,4 +1,4 @@
-import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
+import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
 
 export class VerificationResultVO extends CompoundVO {
   private readonly _success: boolean;

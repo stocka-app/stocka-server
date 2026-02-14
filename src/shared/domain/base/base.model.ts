@@ -1,4 +1,4 @@
-import { UuidVO } from '@/shared/domain/value-objects/compound/uuid.vo';
+import { UuidVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
 export interface BaseModelProps {
   id?: number;

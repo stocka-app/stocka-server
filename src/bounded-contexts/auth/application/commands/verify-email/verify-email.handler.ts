@@ -1,14 +1,14 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { VerifyEmailCommand } from '@/auth/application/commands/verify-email/verify-email.command';
-import { IEmailVerificationTokenContract } from '@/auth/domain/contracts/email-verification-token.contract';
-import { ICodeGeneratorContract } from '@/shared/domain/contracts/code-generator.contract';
-import { InvalidVerificationCodeException } from '@/auth/domain/exceptions/invalid-verification-code.exception';
-import { VerificationCodeExpiredException } from '@/auth/domain/exceptions/verification-code-expired.exception';
-import { UserAlreadyVerifiedException } from '@/auth/domain/exceptions/user-already-verified.exception';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { VerifyEmailCommand } from '@auth/application/commands/verify-email/verify-email.command';
+import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
+import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
+import { InvalidVerificationCodeException } from '@auth/domain/exceptions/invalid-verification-code.exception';
+import { VerificationCodeExpiredException } from '@auth/domain/exceptions/verification-code-expired.exception';
+import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-already-verified.exception';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 interface VerifyEmailResult {
   success: boolean;

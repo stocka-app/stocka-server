@@ -1,5 +1,5 @@
-import { VerificationAttemptModel } from '@/auth/domain/models/verification-attempt.model';
-import { VerificationAttemptEntity } from '@/auth/infrastructure/persistence/entities/verification-attempt.entity';
+import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
+import { VerificationAttemptEntity } from '@auth/infrastructure/persistence/entities/verification-attempt.entity';
 
 export class VerificationAttemptMapper {
   static toDomain(entity: VerificationAttemptEntity): VerificationAttemptModel {

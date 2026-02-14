@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { SessionModel } from '@/auth/domain/models/session.model';
-import { SessionEntity } from '@/auth/infrastructure/persistence/entities/session.entity';
-import { SessionMapper } from '@/auth/infrastructure/persistence/mappers/session.mapper';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { SessionModel } from '@auth/domain/models/session.model';
+import { SessionEntity } from '@auth/infrastructure/persistence/entities/session.entity';
+import { SessionMapper } from '@auth/infrastructure/persistence/mappers/session.mapper';
 
 @Injectable()
 export class TypeOrmSessionRepository implements ISessionContract {

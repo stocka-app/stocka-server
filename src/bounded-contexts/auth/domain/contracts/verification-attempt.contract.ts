@@ -1,4 +1,4 @@
-import { VerificationAttemptModel } from '@/auth/domain/models/verification-attempt.model';
+import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
 
 export interface IVerificationAttemptContract {
   findById(id: number): Promise<VerificationAttemptModel | null>;

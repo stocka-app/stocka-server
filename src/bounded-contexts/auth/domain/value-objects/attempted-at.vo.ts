@@ -1,5 +1,5 @@
-import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
-import { InvalidAttemptedAtException } from '@/auth/domain/exceptions/invalid-attempted-at.exception';
+import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
+import { InvalidAttemptedAtException } from '@auth/domain/exceptions/invalid-attempted-at.exception';
 
 export class AttemptedAtVO extends CompoundVO {
   private static readonly MAX_FUTURE_TOLERANCE_MS = 5000;

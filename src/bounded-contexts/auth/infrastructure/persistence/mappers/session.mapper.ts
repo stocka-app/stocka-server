@@ -1,5 +1,5 @@
-import { SessionModel } from '@/auth/domain/models/session.model';
-import { SessionEntity } from '@/auth/infrastructure/persistence/entities/session.entity';
+import { SessionModel } from '@auth/domain/models/session.model';
+import { SessionEntity } from '@auth/infrastructure/persistence/entities/session.entity';
 
 export class SessionMapper {
   static toDomain(entity: SessionEntity): SessionModel {

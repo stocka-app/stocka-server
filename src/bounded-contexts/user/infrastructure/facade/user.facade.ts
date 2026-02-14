@@ -1,10 +1,10 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { IUserContract } from '@/user/domain/contracts/user.contract';
-import { UserModel } from '@/user/domain/models/user.model';
-import { CreateUserCommand } from '@/user/application/commands/create-user/create-user.command';
-import { CreateUserFromSocialCommand } from '@/user/application/commands/create-user-from-social/create-user-from-social.command';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
+import { IUserContract } from '@user/domain/contracts/user.contract';
+import { UserModel } from '@user/domain/models/user.model';
+import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
+import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
 export class UserFacade {

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from '@arendajaelu/nestjs-passport-apple';
 import { ConfigService } from '@nestjs/config';
-import { SocialProfile } from '@/auth/infrastructure/strategies/google.strategy';
+import { SocialProfile } from '@auth/infrastructure/strategies/google.strategy';
 
 interface AppleProfile {
   id: string;

@@ -1,11 +1,11 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/infrastructure/guards/jwt-auth.guard';
-import { CurrentUser } from '@/common/decorators/current-user.decorator';
-import { FindUserByUuidQuery } from '@/user/application/queries/find-user-by-uuid/find-user-by-uuid.query';
-import { UserModel } from '@/user/domain/models/user.model';
-import { GetMeOutDto } from '@/user/infrastructure/controllers/get-me/get-me-out.dto';
+import { JwtAuthGuard } from '@auth/infrastructure/guards/jwt-auth.guard';
+import { CurrentUser } from '@common/decorators/current-user.decorator';
+import { FindUserByUuidQuery } from '@user/application/queries/find-user-by-uuid/find-user-by-uuid.query';
+import { UserModel } from '@user/domain/models/user.model';
+import { GetMeOutDto } from '@user/infrastructure/controllers/get-me/get-me-out.dto';
 
 @ApiTags('Auth')
 @Controller('auth')

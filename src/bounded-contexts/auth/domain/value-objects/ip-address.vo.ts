@@ -1,7 +1,7 @@
-import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
-import { InvalidIpAddressException } from '@/auth/domain/exceptions/invalid-ip-address.exception';
-import { Ipv4AddressVO } from '@/auth/domain/value-objects/ipv4-address.vo';
-import { Ipv6AddressVO } from '@/auth/domain/value-objects/ipv6-address.vo';
+import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
+import { InvalidIpAddressException } from '@auth/domain/exceptions/invalid-ip-address.exception';
+import { Ipv4AddressVO } from '@auth/domain/value-objects/ipv4-address.vo';
+import { Ipv6AddressVO } from '@auth/domain/value-objects/ipv6-address.vo';
 
 export class IpAddressVO extends CompoundVO {
   private readonly _inner: Ipv4AddressVO | Ipv6AddressVO;

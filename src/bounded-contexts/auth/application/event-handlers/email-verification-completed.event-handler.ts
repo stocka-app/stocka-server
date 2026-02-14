@@ -1,10 +1,10 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
-import { EmailVerificationCompletedEvent } from '@/auth/domain/events/email-verification-completed.event';
-import { IEmailProviderContract } from '@/shared/infrastructure/email/contracts/email-provider.contract';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { EmailVerificationCompletedEvent } from '@auth/domain/events/email-verification-completed.event';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 @EventsHandler(EmailVerificationCompletedEvent)
 export class EmailVerificationCompletedEventHandler implements IEventHandler<EmailVerificationCompletedEvent> {

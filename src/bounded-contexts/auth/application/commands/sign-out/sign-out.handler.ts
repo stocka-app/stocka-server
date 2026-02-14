@@ -1,13 +1,13 @@
 import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { SignOutCommand } from '@/auth/application/commands/sign-out/sign-out.command';
-import { AuthDomainService } from '@/auth/domain/services/auth-domain.service';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { UserSignedOutEvent } from '@/auth/domain/events/user-signed-out.event';
-import { SessionArchivedEvent } from '@/auth/domain/events/session-archived.event';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { SignOutCommand } from '@auth/application/commands/sign-out/sign-out.command';
+import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { UserSignedOutEvent } from '@auth/domain/events/user-signed-out.event';
+import { SessionArchivedEvent } from '@auth/domain/events/session-archived.event';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 @CommandHandler(SignOutCommand)
 export class SignOutHandler implements ICommandHandler<SignOutCommand> {

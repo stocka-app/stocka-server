@@ -1,9 +1,9 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { CreateUserFromSocialCommand } from '@/user/application/commands/create-user-from-social/create-user-from-social.command';
-import { UserModel } from '@/user/domain/models/user.model';
-import { IUserContract } from '@/user/domain/contracts/user.contract';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
+import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
+import { UserModel } from '@user/domain/models/user.model';
+import { IUserContract } from '@user/domain/contracts/user.contract';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @CommandHandler(CreateUserFromSocialCommand)
 export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFromSocialCommand> {

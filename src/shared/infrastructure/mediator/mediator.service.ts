@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 export interface IUserFacade {
   createUser(email: string, username: string, passwordHash: string): Promise<unknown>;

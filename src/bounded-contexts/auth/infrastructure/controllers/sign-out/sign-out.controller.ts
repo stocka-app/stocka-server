@@ -1,8 +1,8 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { SignOutCommand } from '@/auth/application/commands/sign-out/sign-out.command';
-import { SignOutInDto } from '@/auth/infrastructure/controllers/sign-out/sign-out-in.dto';
+import { SignOutCommand } from '@auth/application/commands/sign-out/sign-out.command';
+import { SignOutInDto } from '@auth/infrastructure/controllers/sign-out/sign-out-in.dto';
 
 @ApiTags('Auth')
 @Controller('auth')

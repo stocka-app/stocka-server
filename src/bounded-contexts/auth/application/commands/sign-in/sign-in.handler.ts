@@ -3,17 +3,17 @@ import { Inject } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
-import { SignInCommand } from '@/auth/application/commands/sign-in/sign-in.command';
-import { AuthDomainService } from '@/auth/domain/services/auth-domain.service';
-import { SessionModel } from '@/auth/domain/models/session.model';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { InvalidCredentialsException } from '@/auth/domain/exceptions/invalid-credentials.exception';
-import { AccountDeactivatedException } from '@/auth/domain/exceptions/account-deactivated.exception';
-import { EmailNotVerifiedException } from '@/auth/domain/exceptions/email-not-verified.exception';
-import { UserSignedInEvent } from '@/auth/domain/events/user-signed-in.event';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { SignInCommand } from '@auth/application/commands/sign-in/sign-in.command';
+import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
+import { SessionModel } from '@auth/domain/models/session.model';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { InvalidCredentialsException } from '@auth/domain/exceptions/invalid-credentials.exception';
+import { AccountDeactivatedException } from '@auth/domain/exceptions/account-deactivated.exception';
+import { EmailNotVerifiedException } from '@auth/domain/exceptions/email-not-verified.exception';
+import { UserSignedInEvent } from '@auth/domain/events/user-signed-in.event';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 interface SignInResult {
   user: UserModel;

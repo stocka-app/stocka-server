@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
-import { VerificationCodeResentEvent } from '@/auth/domain/events/verification-code-resent.event';
+import { VerificationCodeResentEvent } from '@auth/domain/events/verification-code-resent.event';
 
 @EventsHandler(VerificationCodeResentEvent)
 export class VerificationCodeResentEventHandler implements IEventHandler<VerificationCodeResentEvent> {

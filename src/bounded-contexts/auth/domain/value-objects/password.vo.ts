@@ -1,5 +1,5 @@
-import { StringVO } from '@/shared/domain/value-objects/primitive/string.vo';
-import { InvalidPasswordException } from '@/auth/domain/exceptions/invalid-password.exception';
+import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
+import { InvalidPasswordException } from '@auth/domain/exceptions/invalid-password.exception';
 
 export class PasswordVO extends StringVO {
   private static readonly MIN_LENGTH = 8;

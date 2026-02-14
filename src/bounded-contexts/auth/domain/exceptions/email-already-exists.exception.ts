@@ -1,4 +1,4 @@
-import { BusinessLogicException } from '@/shared/domain/exceptions/business-logic.exception';
+import { BusinessLogicException } from '@shared/domain/exceptions/business-logic.exception';
 
 export class EmailAlreadyExistsException extends BusinessLogicException {
   constructor() {

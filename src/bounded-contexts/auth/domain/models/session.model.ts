@@ -1,5 +1,5 @@
-import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
-import { SessionCreatedEvent } from '@/auth/domain/events/session-created.event';
+import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { SessionCreatedEvent } from '@auth/domain/events/session-created.event';
 
 export interface SessionProps extends AggregateRootProps {
   userId: number;

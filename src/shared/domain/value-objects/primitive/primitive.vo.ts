@@ -1,4 +1,4 @@
-import { ValueObject } from '@/shared/domain/value-objects/value-object';
+import { ValueObject } from '@shared/domain/value-objects/value-object';
 
 export abstract class PrimitiveVO<T> extends ValueObject {
   protected readonly value: T;

@@ -1,6 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { UserModule } from '@/user/infrastructure/user.module';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { UserModule } from '@user/infrastructure/user.module';
 
 @Module({
   imports: [forwardRef(() => UserModule)],

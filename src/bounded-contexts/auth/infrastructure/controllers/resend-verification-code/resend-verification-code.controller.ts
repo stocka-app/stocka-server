@@ -2,9 +2,9 @@ import { Controller, Post, Body, Req, Headers } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
-import { ResendVerificationCodeCommand } from '@/auth/application/commands/resend-verification-code/resend-verification-code.command';
-import { ResendVerificationCodeInDto } from '@/auth/infrastructure/controllers/resend-verification-code/resend-verification-code-in.dto';
-import { ResendVerificationCodeOutDto } from '@/auth/infrastructure/controllers/resend-verification-code/resend-verification-code-out.dto';
+import { ResendVerificationCodeCommand } from '@auth/application/commands/resend-verification-code/resend-verification-code.command';
+import { ResendVerificationCodeInDto } from '@auth/infrastructure/controllers/resend-verification-code/resend-verification-code-in.dto';
+import { ResendVerificationCodeOutDto } from '@auth/infrastructure/controllers/resend-verification-code/resend-verification-code-out.dto';
 
 @ApiTags('Auth')
 @Controller('auth')

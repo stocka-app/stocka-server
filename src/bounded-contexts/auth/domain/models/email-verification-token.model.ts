@@ -1,7 +1,7 @@
-import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
-import { EmailVerificationRequestedEvent } from '@/auth/domain/events/email-verification-requested.event';
-import { EmailVerificationCompletedEvent } from '@/auth/domain/events/email-verification-completed.event';
-import { VerificationCodeResentEvent } from '@/auth/domain/events/verification-code-resent.event';
+import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { EmailVerificationRequestedEvent } from '@auth/domain/events/email-verification-requested.event';
+import { EmailVerificationCompletedEvent } from '@auth/domain/events/email-verification-completed.event';
+import { VerificationCodeResentEvent } from '@auth/domain/events/verification-code-resent.event';
 
 export interface EmailVerificationTokenProps extends AggregateRootProps {
   userId: number;

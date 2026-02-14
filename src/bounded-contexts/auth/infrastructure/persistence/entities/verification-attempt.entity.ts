@@ -1,5 +1,5 @@
 import { Entity, Column, Index } from 'typeorm';
-import { BaseEntity } from '@/shared/infrastructure/base/base.entity';
+import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 
 @Entity('verification_attempts')
 export class VerificationAttemptEntity extends BaseEntity {

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserOutDto } from '@/auth/infrastructure/controllers/sign-up/sign-up-out.dto';
+import { UserOutDto } from '@auth/infrastructure/controllers/sign-up/sign-up-out.dto';
 
 export class SignInOutDto {
   @ApiProperty({ type: UserOutDto })

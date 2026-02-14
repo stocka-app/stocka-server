@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { AppleAuthGuard } from '@/auth/infrastructure/guards/apple-auth.guard';
+import { AppleAuthGuard } from '@auth/infrastructure/guards/apple-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')

@@ -1,8 +1,8 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpStatus } from '@nestjs/common';
 import { Response } from 'express';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
-import { BusinessLogicException } from '@/shared/domain/exceptions/business-logic.exception';
-import { ResourceNotFoundException } from '@/shared/domain/exceptions/resource-not-found.exception';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { BusinessLogicException } from '@shared/domain/exceptions/business-logic.exception';
+import { ResourceNotFoundException } from '@shared/domain/exceptions/resource-not-found.exception';
 
 @Catch(DomainException)
 export class DomainExceptionFilter implements ExceptionFilter {

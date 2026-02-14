@@ -2,12 +2,12 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { RateLimit } from '@/common/decorators/rate-limit.decorator';
-import { SignInCommand } from '@/auth/application/commands/sign-in/sign-in.command';
-import { SignInInDto } from '@/auth/infrastructure/controllers/sign-in/sign-in-in.dto';
-import { SignInOutDto } from '@/auth/infrastructure/controllers/sign-in/sign-in-out.dto';
-import { UserOutDto } from '@/auth/infrastructure/controllers/sign-up/sign-up-out.dto';
-import { UserModel } from '@/user/domain/models/user.model';
+import { RateLimit } from '@common/decorators/rate-limit.decorator';
+import { SignInCommand } from '@auth/application/commands/sign-in/sign-in.command';
+import { SignInInDto } from '@auth/infrastructure/controllers/sign-in/sign-in-in.dto';
+import { SignInOutDto } from '@auth/infrastructure/controllers/sign-in/sign-in-out.dto';
+import { UserOutDto } from '@auth/infrastructure/controllers/sign-up/sign-up-out.dto';
+import { UserModel } from '@user/domain/models/user.model';
 
 interface SignInResult {
   user: UserModel;

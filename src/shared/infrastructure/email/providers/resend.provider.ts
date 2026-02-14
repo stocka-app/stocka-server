@@ -7,9 +7,9 @@ import {
   IEmailProviderContract,
   SendEmailOptions,
   SendEmailResult,
-} from '@/shared/infrastructure/email/contracts/email-provider.contract';
-import { VerificationCodeEmail } from '@/shared/infrastructure/email/templates/verification-code.email';
-import { WelcomeEmail } from '@/shared/infrastructure/email/templates/welcome.email';
+} from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { VerificationCodeEmail } from '@shared/infrastructure/email/templates/verification-code.email';
+import { WelcomeEmail } from '@shared/infrastructure/email/templates/welcome.email';
 
 @Injectable()
 export class ResendEmailProvider implements IEmailProviderContract {

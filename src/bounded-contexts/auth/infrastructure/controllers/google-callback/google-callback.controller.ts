@@ -3,10 +3,10 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { GoogleAuthGuard } from '@/auth/infrastructure/guards/google-auth.guard';
-import { SocialSignInCommand } from '@/auth/application/commands/social-sign-in/social-sign-in.command';
-import { SocialSignInResult } from '@/auth/application/types/auth-result.types';
-import { SocialProfile } from '@/auth/infrastructure/strategies/google.strategy';
+import { GoogleAuthGuard } from '@auth/infrastructure/guards/google-auth.guard';
+import { SocialSignInCommand } from '@auth/application/commands/social-sign-in/social-sign-in.command';
+import { SocialSignInResult } from '@auth/application/types/auth-result.types';
+import { SocialProfile } from '@auth/infrastructure/strategies/google.strategy';
 
 @ApiTags('Auth')
 @Controller('auth')

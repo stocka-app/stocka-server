@@ -1,14 +1,14 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ForgotPasswordCommand } from '@/auth/application/commands/forgot-password/forgot-password.command';
-import { ForgotPasswordResult } from '@/auth/application/types/auth-result.types';
-import { AuthDomainService } from '@/auth/domain/services/auth-domain.service';
-import { PasswordResetTokenModel } from '@/auth/domain/models/password-reset-token.model';
-import { IPasswordResetTokenContract } from '@/auth/domain/contracts/password-reset-token.contract';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { ForgotPasswordCommand } from '@auth/application/commands/forgot-password/forgot-password.command';
+import { ForgotPasswordResult } from '@auth/application/types/auth-result.types';
+import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
+import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-token.model';
+import { IPasswordResetTokenContract } from '@auth/domain/contracts/password-reset-token.contract';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 @CommandHandler(ForgotPasswordCommand)
 export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordCommand> {

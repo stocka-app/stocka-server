@@ -9,13 +9,13 @@ import {
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Request } from 'express';
-import { RateLimitConfig } from '@/common/decorators/rate-limit.decorator';
-import { IVerificationAttemptContract } from '@/auth/domain/contracts/verification-attempt.contract';
-import { VerificationAttemptModel } from '@/auth/domain/models/verification-attempt.model';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
-import { UserModel } from '@/user/domain/models/user.model';
+import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
+import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
+import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { UserModel } from '@user/domain/models/user.model';
 
 interface HttpErrorResponse {
   error?: string;
@@ -99,6 +99,19 @@ export class RateLimitInterceptor implements NestInterceptor {
 
         await this.evaluateBlock(user, totalFailed, config);
       }
+    } else {
+      // Track failed attempt by IP only (no user found)
+      const attempt = VerificationAttemptModel.create({
+        userUuid: null,
+        email: identifier || null,
+        ipAddress: ip,
+        userAgent: request.headers['user-agent'] || null,
+        codeEntered: '[redacted]',
+        success: false,
+        verificationType: config.type,
+      });
+
+      await this.attemptContract.persist(attempt);
     }
 
     this.logger.warn(

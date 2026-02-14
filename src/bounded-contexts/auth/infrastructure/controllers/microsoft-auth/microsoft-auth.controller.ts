@@ -1,6 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { MicrosoftAuthGuard } from '@/auth/infrastructure/guards/microsoft-auth.guard';
+import { MicrosoftAuthGuard } from '@auth/infrastructure/guards/microsoft-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')

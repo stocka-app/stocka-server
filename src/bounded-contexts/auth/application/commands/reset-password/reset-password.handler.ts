@@ -1,14 +1,14 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { ResetPasswordCommand } from '@/auth/application/commands/reset-password/reset-password.command';
-import { ResetPasswordResult } from '@/auth/application/types/auth-result.types';
-import { PasswordVO } from '@/auth/domain/value-objects/password.vo';
-import { AuthDomainService } from '@/auth/domain/services/auth-domain.service';
-import { IPasswordResetTokenContract } from '@/auth/domain/contracts/password-reset-token.contract';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { TokenExpiredException } from '@/auth/domain/exceptions/token-expired.exception';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
+import { ResetPasswordCommand } from '@auth/application/commands/reset-password/reset-password.command';
+import { ResetPasswordResult } from '@auth/application/types/auth-result.types';
+import { PasswordVO } from '@auth/domain/value-objects/password.vo';
+import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
+import { IPasswordResetTokenContract } from '@auth/domain/contracts/password-reset-token.contract';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { TokenExpiredException } from '@auth/domain/exceptions/token-expired.exception';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @CommandHandler(ResetPasswordCommand)
 export class ResetPasswordHandler implements ICommandHandler<ResetPasswordCommand> {

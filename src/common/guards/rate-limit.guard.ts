@@ -9,11 +9,11 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import { RATE_LIMIT_KEY, RateLimitConfig } from '@/common/decorators/rate-limit.decorator';
-import { IVerificationAttemptContract } from '@/auth/domain/contracts/verification-attempt.contract';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserModel } from '@/user/domain/models/user.model';
+import { RATE_LIMIT_KEY, RateLimitConfig } from '@common/decorators/rate-limit.decorator';
+import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserModel } from '@user/domain/models/user.model';
 
 // Extend Request type to include rate limit properties
 declare module 'express' {

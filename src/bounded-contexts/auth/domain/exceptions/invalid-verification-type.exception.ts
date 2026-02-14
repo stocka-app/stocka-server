@@ -1,4 +1,4 @@
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 export class InvalidVerificationTypeException extends DomainException {
   constructor(value: string) {

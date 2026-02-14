@@ -1,4 +1,4 @@
-import { EmailVerificationTokenModel } from '@/auth/domain/models/email-verification-token.model';
+import { EmailVerificationTokenModel } from '@auth/domain/models/email-verification-token.model';
 
 export interface IEmailVerificationTokenContract {
   findById(id: number): Promise<EmailVerificationTokenModel | null>;

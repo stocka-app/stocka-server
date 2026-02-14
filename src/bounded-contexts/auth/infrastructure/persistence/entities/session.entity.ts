@@ -1,6 +1,6 @@
 import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
-import { BaseEntity } from '@/shared/infrastructure/base/base.entity';
-import { UserEntity } from '@/user/infrastructure/persistence/entities/user.entity';
+import { BaseEntity } from '@shared/infrastructure/base/base.entity';
+import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 
 @Entity('sessions')
 export class SessionEntity extends BaseEntity {

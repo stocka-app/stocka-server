@@ -1,4 +1,4 @@
-import { PasswordResetTokenModel } from '@/auth/domain/models/password-reset-token.model';
+import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-token.model';
 
 export interface IPasswordResetTokenContract {
   findById(id: number): Promise<PasswordResetTokenModel | null>;

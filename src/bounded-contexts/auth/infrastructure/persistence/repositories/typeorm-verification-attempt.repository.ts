@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { IVerificationAttemptContract } from '@/auth/domain/contracts/verification-attempt.contract';
-import { VerificationAttemptModel } from '@/auth/domain/models/verification-attempt.model';
-import { VerificationAttemptEntity } from '@/auth/infrastructure/persistence/entities/verification-attempt.entity';
-import { VerificationAttemptMapper } from '@/auth/infrastructure/persistence/mappers/verification-attempt.mapper';
+import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
+import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
+import { VerificationAttemptEntity } from '@auth/infrastructure/persistence/entities/verification-attempt.entity';
+import { VerificationAttemptMapper } from '@auth/infrastructure/persistence/mappers/verification-attempt.mapper';
 
 @Injectable()
 export class TypeOrmVerificationAttemptRepository implements IVerificationAttemptContract {

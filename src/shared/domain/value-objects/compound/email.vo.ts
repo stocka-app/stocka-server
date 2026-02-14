@@ -1,5 +1,5 @@
-import { CompoundVO } from '@/shared/domain/value-objects/compound/compound.vo';
-import { InvalidEmailFormatException } from '@/shared/domain/exceptions/invalid-email-format.exception';
+import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
+import { InvalidEmailFormatException } from '@shared/domain/exceptions/invalid-email-format.exception';
 
 export class EmailVO extends CompoundVO {
   private static readonly EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

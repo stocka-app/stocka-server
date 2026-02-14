@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger } from '@nestjs/common';
-import { UserPasswordUpdatedEvent } from '@/user/domain/events/user-password-updated.event';
+import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
 
 @EventsHandler(UserPasswordUpdatedEvent)
 export class UserPasswordUpdatedEventHandler implements IEventHandler<UserPasswordUpdatedEvent> {

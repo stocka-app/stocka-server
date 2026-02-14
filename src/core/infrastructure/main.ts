@@ -1,16 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import { AppModule } from '@/core/infrastructure/app.module';
-import { APP_CONSTANTS } from '@/common/constants/app.constants';
-import { globalValidationPipe } from '@/common/pipes/validation.pipe';
-import { DomainExceptionFilter } from '@/common/filters/domain-exception.filter';
-import { HttpExceptionFilter } from '@/common/filters/http-exception.filter';
-import { AllExceptionsFilter } from '@/common/filters/all-exceptions.filter';
-import { LoggingInterceptor } from '@/common/interceptors/logging.interceptor';
-import { TimeoutInterceptor } from '@/common/interceptors/timeout.interceptor';
-import { TransformInterceptor } from '@/shared/infrastructure/interceptors/transform.interceptor';
-import { setupSwagger } from '@/core/config/swagger/swagger.config';
+import { AppModule } from '@core/infrastructure/app.module';
+import { APP_CONSTANTS } from '@common/constants/app.constants';
+import { globalValidationPipe } from '@common/pipes/validation.pipe';
+import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
+import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
+import { AllExceptionsFilter } from '@common/filters/all-exceptions.filter';
+import { LoggingInterceptor } from '@common/interceptors/logging.interceptor';
+import { TimeoutInterceptor } from '@common/interceptors/timeout.interceptor';
+import { TransformInterceptor } from '@shared/infrastructure/interceptors/transform.interceptor';
+import { setupSwagger } from '@core/config/swagger/swagger.config';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);

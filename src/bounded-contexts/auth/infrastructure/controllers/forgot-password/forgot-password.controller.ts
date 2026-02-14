@@ -2,10 +2,10 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import { RateLimit } from '@/common/decorators/rate-limit.decorator';
-import { ForgotPasswordCommand } from '@/auth/application/commands/forgot-password/forgot-password.command';
-import { ForgotPasswordResult } from '@/auth/application/types/auth-result.types';
-import { ForgotPasswordInDto } from '@/auth/infrastructure/controllers/forgot-password/forgot-password-in.dto';
+import { RateLimit } from '@common/decorators/rate-limit.decorator';
+import { ForgotPasswordCommand } from '@auth/application/commands/forgot-password/forgot-password.command';
+import { ForgotPasswordResult } from '@auth/application/types/auth-result.types';
+import { ForgotPasswordInDto } from '@auth/infrastructure/controllers/forgot-password/forgot-password-in.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
