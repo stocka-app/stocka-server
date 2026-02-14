@@ -5,7 +5,8 @@ export abstract class BusinessLogicException extends DomainException {
     message: string,
     errorCode: string = 'BUSINESS_LOGIC_ERROR',
     details: { field: string; message: string }[] = [],
+    metadata?: Record<string, unknown>,
   ) {
-    super(message, errorCode, details);
+    super(message, errorCode, details, metadata);
   }
 }
