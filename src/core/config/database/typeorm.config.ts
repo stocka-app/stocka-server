@@ -1,5 +1,11 @@
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
+import { UserEntity } from '@/user/infrastructure/persistence/entities/user.entity';
+import { SocialAccountEntity } from '@/user/infrastructure/persistence/entities/social-account.entity';
+import { SessionEntity } from '@/auth/infrastructure/persistence/entities/session.entity';
+import { PasswordResetTokenEntity } from '@/auth/infrastructure/persistence/entities/password-reset-token.entity';
+import { EmailVerificationTokenEntity } from '@/auth/infrastructure/persistence/entities/email-verification-token.entity';
+import { VerificationAttemptEntity } from '@/auth/infrastructure/persistence/entities/verification-attempt.entity';
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
   useFactory: (configService: ConfigService) => ({
@@ -9,9 +15,18 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     username: configService.get<string>('database.username'),
     password: configService.get<string>('database.password'),
     database: configService.get<string>('database.database'),
-    entities: [__dirname + '/../../../**/*.entity{.ts,.js}'],
-    migrations: [__dirname + '/../../infrastructure/migrations/*{.ts,.js}'],
-    synchronize: false,
+    entities: [
+      UserEntity,
+      SocialAccountEntity,
+      SessionEntity,
+      PasswordResetTokenEntity,
+      EmailVerificationTokenEntity,
+      VerificationAttemptEntity,
+    ],
+    // Migrations are run manually via CLI, not auto-loaded in app
+    migrationsRun: false,
+    // In development, sync schema automatically (disable in production!)
+    synchronize: configService.get<string>('NODE_ENV') === 'development',
     logging: configService.get<string>('NODE_ENV') === 'development',
   }),
   inject: [ConfigService],

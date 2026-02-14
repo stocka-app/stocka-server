@@ -3,7 +3,7 @@ services:
     image: postgres:15-alpine
     container_name: stocka-postgres
     ports:
-      - "5432:5432"
+      - "5434:5432"
     environment:
       POSTGRES_DB: stocka_db
       POSTGRES_USER: stocka
