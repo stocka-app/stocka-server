@@ -16,7 +16,6 @@ describe('SignInHandler', () => {
   let handler: SignInHandler;
   let mediatorService: jest.Mocked<MediatorService>;
   let jwtService: jest.Mocked<JwtService>;
-  let configService: jest.Mocked<ConfigService>;
   let sessionContract: jest.Mocked<ISessionContract>;
 
   const validPasswordHash = bcrypt.hashSync('Password1', 12);
@@ -82,7 +81,6 @@ describe('SignInHandler', () => {
     handler = module.get<SignInHandler>(SignInHandler);
     mediatorService = module.get(MediatorService);
     jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
     sessionContract = module.get(INJECTION_TOKENS.SESSION_CONTRACT);
 
     // Default JWT signs

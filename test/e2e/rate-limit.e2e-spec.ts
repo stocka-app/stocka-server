@@ -107,12 +107,10 @@ describe('Rate Limiting (e2e)', () => {
 
   describe('POST /api/auth/sign-in', () => {
     it('should return 401 for invalid credentials', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/sign-in')
-        .send({
-          emailOrUsername: 'nonexistent@example.com',
-          password: 'WrongPassword1',
-        });
+      const response = await request(app.getHttpServer()).post('/api/auth/sign-in').send({
+        emailOrUsername: 'nonexistent@example.com',
+        password: 'WrongPassword1',
+      });
 
       expect(response.status).toBe(HttpStatus.UNAUTHORIZED);
       expect(response.body.error).toBe('INVALID_CREDENTIALS');
@@ -144,12 +142,10 @@ describe('Rate Limiting (e2e)', () => {
 
   describe('POST /api/auth/verify-email', () => {
     it('should return 400 for invalid verification code', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/verify-email')
-        .send({
-          email: 'test@example.com',
-          code: 'INVALID',
-        });
+      const response = await request(app.getHttpServer()).post('/api/auth/verify-email').send({
+        email: 'test@example.com',
+        code: 'INVALID',
+      });
 
       // Should return domain exception (user not found or invalid code)
       expect([HttpStatus.BAD_REQUEST, HttpStatus.NOT_FOUND]).toContain(response.status);
@@ -181,11 +177,9 @@ describe('Rate Limiting (e2e)', () => {
 
   describe('POST /api/auth/forgot-password', () => {
     it('should return 200 even for non-existent email (security)', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/forgot-password')
-        .send({
-          email: 'nonexistent@example.com',
-        });
+      const response = await request(app.getHttpServer()).post('/api/auth/forgot-password').send({
+        email: 'nonexistent@example.com',
+      });
 
       // Should not reveal if email exists
       expect(response.status).toBe(HttpStatus.OK);
@@ -216,12 +210,10 @@ describe('Rate Limiting (e2e)', () => {
 
   describe('Rate Limit Headers', () => {
     it('should include rate limit headers in response', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/api/auth/sign-in')
-        .send({
-          emailOrUsername: 'test@example.com',
-          password: 'Password1',
-        });
+      const response = await request(app.getHttpServer()).post('/api/auth/sign-in').send({
+        emailOrUsername: 'test@example.com',
+        password: 'Password1',
+      });
 
       // Throttler adds X-RateLimit headers
       // Note: Exact header names depend on @nestjs/throttler configuration

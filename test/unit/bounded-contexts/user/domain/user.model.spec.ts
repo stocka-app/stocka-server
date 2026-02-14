@@ -148,8 +148,6 @@ describe('UserModel', () => {
         passwordHash: 'oldhash',
       });
 
-      const oldUpdatedAt = user.updatedAt;
-
       // Wait a bit to ensure updatedAt changes
       user.updatePasswordHash('newhash');
 

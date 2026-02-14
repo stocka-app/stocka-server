@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'dist/**', 'node_modules/**', 'test/**'],
+    ignores: ['eslint.config.mjs', 'dist/**', 'node_modules/**'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -42,17 +42,23 @@ export default tseslint.config(
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
   },
-  // Allow relative imports only in index.ts barrel files
+  // Relaxed rules for test files
   {
-    files: ['**/index.ts'],
+    files: ['test/**/*.ts'],
     rules: {
-      'no-restricted-imports': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
-  // Restrict relative imports in non-index files
+  // Restrict relative imports in all files
   {
     files: ['**/*.ts'],
-    ignores: ['**/index.ts'],
     rules: {
       'no-restricted-imports': [
         'error',

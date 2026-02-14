@@ -20,8 +20,8 @@ export const VerificationCodeEmail: React.FC<VerificationCodeEmailProps> = ({
       <Section style={content}>
         <Heading style={heading}>{greeting},</Heading>
         <Text style={paragraph}>
-          Gracias por registrarte en Stocka. Para completar tu registro, utiliza el siguiente
-          código de verificación:
+          Gracias por registrarte en Stocka. Para completar tu registro, utiliza el siguiente código
+          de verificación:
         </Text>
         <Section style={codeContainer}>
           <Text style={codeText}>{code}</Text>

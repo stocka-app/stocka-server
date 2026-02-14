@@ -3,10 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SignUpCommand } from '@auth/application/commands/sign-up/sign-up.command';
 import { SignUpInDto } from '@auth/infrastructure/controllers/sign-up/sign-up-in.dto';
-import {
-  SignUpOutDto,
-  UserOutDto,
-} from '@auth/infrastructure/controllers/sign-up/sign-up-out.dto';
+import { SignUpOutDto, UserOutDto } from '@auth/infrastructure/controllers/sign-up/sign-up-out.dto';
 import { UserModel } from '@user/domain/models/user.model';
 
 interface SignUpResult {

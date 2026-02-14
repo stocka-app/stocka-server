@@ -18,7 +18,6 @@ describe('SignUpHandler', () => {
   let handler: SignUpHandler;
   let mediatorService: jest.Mocked<MediatorService>;
   let jwtService: jest.Mocked<JwtService>;
-  let configService: jest.Mocked<ConfigService>;
   let sessionContract: jest.Mocked<ISessionContract>;
   let verificationTokenContract: jest.Mocked<IEmailVerificationTokenContract>;
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
@@ -102,7 +101,6 @@ describe('SignUpHandler', () => {
     handler = module.get<SignUpHandler>(SignUpHandler);
     mediatorService = module.get(MediatorService);
     jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
     sessionContract = module.get(INJECTION_TOKENS.SESSION_CONTRACT);
     verificationTokenContract = module.get(INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT);
     codeGenerator = module.get(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT);

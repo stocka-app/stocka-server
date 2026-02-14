@@ -60,7 +60,7 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
     }
 
     // Get the user
-    const decoded = this.jwtService.decode(command.refreshToken);
+    const decoded: unknown = this.jwtService.decode(command.refreshToken);
     if (!isValidJwtPayload(decoded)) {
       throw new TokenExpiredException();
     }

@@ -1,19 +1,21 @@
 import { UserModel } from '@user/domain/models/user.model';
 
 export class UserMother {
-  static create(overrides: Partial<{
-    id: number;
-    uuid: string;
-    email: string;
-    username: string;
-    passwordHash: string | null;
-    status: string;
-    emailVerifiedAt: Date | null;
-    verificationBlockedUntil: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
-    archivedAt: Date | null;
-  }> = {}): UserModel {
+  static create(
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      email: string;
+      username: string;
+      passwordHash: string | null;
+      status: string;
+      emailVerifiedAt: Date | null;
+      verificationBlockedUntil: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+      archivedAt: Date | null;
+    }> = {},
+  ): UserModel {
     const defaults = {
       id: 1,
       uuid: '550e8400-e29b-41d4-a716-446655440000',
@@ -45,31 +47,35 @@ export class UserMother {
     });
   }
 
-  static createArchived(overrides: Partial<{
-    id: number;
-    uuid: string;
-    email: string;
-    username: string;
-    passwordHash: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    archivedAt: Date;
-  }> = {}): UserModel {
+  static createArchived(
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      email: string;
+      username: string;
+      passwordHash: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      archivedAt: Date;
+    }> = {},
+  ): UserModel {
     return this.create({
       ...overrides,
       archivedAt: overrides.archivedAt ?? new Date('2024-06-01T00:00:00Z'),
     });
   }
 
-  static createSocialOnly(overrides: Partial<{
-    id: number;
-    uuid: string;
-    email: string;
-    username: string;
-    createdAt: Date;
-    updatedAt: Date;
-    archivedAt: Date | null;
-  }> = {}): UserModel {
+  static createSocialOnly(
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      email: string;
+      username: string;
+      createdAt: Date;
+      updatedAt: Date;
+      archivedAt: Date | null;
+    }> = {},
+  ): UserModel {
     return this.create({
       ...overrides,
       passwordHash: null,
@@ -84,33 +90,38 @@ export class UserMother {
     return this.create({ username });
   }
 
-  static createBlocked(overrides: Partial<{
-    id: number;
-    uuid: string;
-    email: string;
-    username: string;
-    passwordHash: string | null;
-    verificationBlockedUntil: Date;
-    createdAt: Date;
-    updatedAt: Date;
-    archivedAt: Date | null;
-  }> = {}): UserModel {
+  static createBlocked(
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      email: string;
+      username: string;
+      passwordHash: string | null;
+      verificationBlockedUntil: Date;
+      createdAt: Date;
+      updatedAt: Date;
+      archivedAt: Date | null;
+    }> = {},
+  ): UserModel {
     return this.create({
       ...overrides,
-      verificationBlockedUntil: overrides.verificationBlockedUntil ?? new Date(Date.now() + 5 * 60 * 1000),
+      verificationBlockedUntil:
+        overrides.verificationBlockedUntil ?? new Date(Date.now() + 5 * 60 * 1000),
     });
   }
 
-  static createVerified(overrides: Partial<{
-    id: number;
-    uuid: string;
-    email: string;
-    username: string;
-    passwordHash: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    archivedAt: Date | null;
-  }> = {}): UserModel {
+  static createVerified(
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      email: string;
+      username: string;
+      passwordHash: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      archivedAt: Date | null;
+    }> = {},
+  ): UserModel {
     return this.create({
       ...overrides,
       status: 'active',
@@ -118,16 +129,18 @@ export class UserMother {
     });
   }
 
-  static createPendingVerification(overrides: Partial<{
-    id: number;
-    uuid: string;
-    email: string;
-    username: string;
-    passwordHash: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    archivedAt: Date | null;
-  }> = {}): UserModel {
+  static createPendingVerification(
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      email: string;
+      username: string;
+      passwordHash: string | null;
+      createdAt: Date;
+      updatedAt: Date;
+      archivedAt: Date | null;
+    }> = {},
+  ): UserModel {
     return this.create({
       ...overrides,
       status: 'pending_verification',

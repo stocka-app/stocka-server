@@ -19,14 +19,16 @@ describe('VerifyEmailHandler', () => {
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
   let eventPublisher: jest.Mocked<EventPublisher>;
 
-  const createMockToken = (overrides: Partial<{
-    id: number;
-    uuid: string;
-    userId: number;
-    codeHash: string;
-    expiresAt: Date;
-    usedAt: Date | null;
-  }> = {}): EmailVerificationTokenModel => {
+  const createMockToken = (
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      userId: number;
+      codeHash: string;
+      expiresAt: Date;
+      usedAt: Date | null;
+    }> = {},
+  ): EmailVerificationTokenModel => {
     const defaults = {
       id: 1,
       uuid: '550e8400-e29b-41d4-a716-446655440099',
@@ -83,7 +85,10 @@ describe('VerifyEmailHandler', () => {
         VerifyEmailHandler,
         { provide: MediatorService, useValue: mockMediatorService },
         { provide: EventPublisher, useValue: mockEventPublisher },
-        { provide: INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT, useValue: mockTokenContract },
+        {
+          provide: INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT,
+          useValue: mockTokenContract,
+        },
         { provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT, useValue: mockCodeGenerator },
       ],
     }).compile();

@@ -272,7 +272,7 @@ describe('RateLimitInterceptor', () => {
         next: () => done.fail('Should have thrown'),
         error: () => {
           const blockCall = mediator.blockUserVerification.mock.calls[0];
-          const blockedUntil = blockCall[1] as Date;
+          const blockedUntil = blockCall[1];
           const minutesBlocked = Math.round((blockedUntil.getTime() - Date.now()) / 60000);
           // Should be 15 minutes (second threshold), not 5 minutes (first threshold)
           expect(minutesBlocked).toBe(15);
