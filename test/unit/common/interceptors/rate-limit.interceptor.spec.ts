@@ -10,6 +10,18 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 
+// Utility to wait for async operations with retries
+const waitForCondition = async (
+  condition: () => boolean,
+  maxWait = 100,
+  interval = 5,
+): Promise<void> => {
+  const startTime = Date.now();
+  while (!condition() && Date.now() - startTime < maxWait) {
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+};
+
 class InvalidCredentialsException extends DomainException {
   constructor() {
     super('Invalid credentials', 'INVALID_CREDENTIALS', []);
@@ -170,7 +182,7 @@ describe('RateLimitInterceptor', () => {
       });
     });
 
-    it('should track failed attempts when errorCode matches failureErrorCodes', (done) => {
+    it('should track failed attempts when errorCode matches failureErrorCodes', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
       const context = createMockExecutionContext(
         signInRateLimitConfig,
@@ -184,17 +196,22 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
-      interceptor.intercept(context, callHandler).subscribe({
-        next: () => done.fail('Should have thrown'),
-        error: (err) => {
-          expect(err).toBe(error);
-          expect(attemptContract.persist).toHaveBeenCalled();
-          done();
-        },
+      await new Promise<void>((resolve, reject) => {
+        interceptor.intercept(context, callHandler).subscribe({
+          next: () => reject(new Error('Should have thrown')),
+          error: (err) => {
+            expect(err).toBe(error);
+            resolve();
+          },
+        });
       });
+
+      // Wait for persist to be called
+      await waitForCondition(() => attemptContract.persist.mock.calls.length > 0);
+      expect(attemptContract.persist).toHaveBeenCalled();
     });
 
-    it('should track attempt with correct verification type', (done) => {
+    it('should track attempt with correct verification type', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
       const context = createMockExecutionContext(
         signInRateLimitConfig,
@@ -208,19 +225,22 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
-      interceptor.intercept(context, callHandler).subscribe({
-        next: () => done.fail('Should have thrown'),
-        error: () => {
-          const persistCall = attemptContract.persist.mock.calls[0][0];
-          expect(persistCall.verificationType.toString()).toBe('sign_in');
-          expect(persistCall.result.isSuccessful()).toBe(false);
-          expect(persistCall.ipAddress.toString()).toBe('192.168.1.1');
-          done();
-        },
+      await new Promise<void>((resolve, reject) => {
+        interceptor.intercept(context, callHandler).subscribe({
+          next: () => reject(new Error('Should have thrown')),
+          error: () => resolve(),
+        });
       });
+
+      // Wait for persist to be called
+      await waitForCondition(() => attemptContract.persist.mock.calls.length > 0);
+      const persistCall = attemptContract.persist.mock.calls[0][0];
+      expect(persistCall.verificationType.toString()).toBe('sign_in');
+      expect(persistCall.result.isSuccessful()).toBe(false);
+      expect(persistCall.ipAddress.toString()).toBe('192.168.1.1');
     });
 
-    it('should activate progressive block when threshold is exceeded', (done) => {
+    it('should activate progressive block when threshold is exceeded', async () => {
       const mockUser = UserMother.create({
         uuid: '550e8400-e29b-41d4-a716-446655440001',
         email: 'test@example.com',
@@ -238,19 +258,22 @@ describe('RateLimitInterceptor', () => {
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
       mediator.blockUserVerification.mockResolvedValue(undefined);
 
-      interceptor.intercept(context, callHandler).subscribe({
-        next: () => done.fail('Should have thrown'),
-        error: () => {
-          expect(mediator.blockUserVerification).toHaveBeenCalledWith(
-            '550e8400-e29b-41d4-a716-446655440001',
-            expect.any(Date),
-          );
-          done();
-        },
+      await new Promise<void>((resolve, reject) => {
+        interceptor.intercept(context, callHandler).subscribe({
+          next: () => reject(new Error('Should have thrown')),
+          error: () => resolve(),
+        });
       });
+
+      // Wait for blockUserVerification to be called
+      await waitForCondition(() => mediator.blockUserVerification.mock.calls.length > 0);
+      expect(mediator.blockUserVerification).toHaveBeenCalledWith(
+        '550e8400-e29b-41d4-a716-446655440001',
+        expect.any(Date),
+      );
     });
 
-    it('should apply highest matching threshold', (done) => {
+    it('should apply highest matching threshold', async () => {
       const mockUser = UserMother.create({
         uuid: '550e8400-e29b-41d4-a716-446655440001',
         email: 'test@example.com',
@@ -268,20 +291,23 @@ describe('RateLimitInterceptor', () => {
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
       mediator.blockUserVerification.mockResolvedValue(undefined);
 
-      interceptor.intercept(context, callHandler).subscribe({
-        next: () => done.fail('Should have thrown'),
-        error: () => {
-          const blockCall = mediator.blockUserVerification.mock.calls[0];
-          const blockedUntil = blockCall[1];
-          const minutesBlocked = Math.round((blockedUntil.getTime() - Date.now()) / 60000);
-          // Should be 15 minutes (second threshold), not 5 minutes (first threshold)
-          expect(minutesBlocked).toBe(15);
-          done();
-        },
+      await new Promise<void>((resolve, reject) => {
+        interceptor.intercept(context, callHandler).subscribe({
+          next: () => reject(new Error('Should have thrown')),
+          error: () => resolve(),
+        });
       });
+
+      // Wait for blockUserVerification to be called
+      await waitForCondition(() => mediator.blockUserVerification.mock.calls.length > 0);
+      const blockCall = mediator.blockUserVerification.mock.calls[0];
+      const blockedUntil = blockCall[1];
+      const minutesBlocked = Math.round((blockedUntil.getTime() - Date.now()) / 60000);
+      // Should be 15 minutes (second threshold), not 5 minutes (first threshold)
+      expect(minutesBlocked).toBe(15);
     });
 
-    it('should not block when below all thresholds', (done) => {
+    it('should not block when below all thresholds', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
       const context = createMockExecutionContext(
         signInRateLimitConfig,
@@ -295,16 +321,19 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3); // Below first threshold
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
-      interceptor.intercept(context, callHandler).subscribe({
-        next: () => done.fail('Should have thrown'),
-        error: () => {
-          expect(mediator.blockUserVerification).not.toHaveBeenCalled();
-          done();
-        },
+      await new Promise<void>((resolve, reject) => {
+        interceptor.intercept(context, callHandler).subscribe({
+          next: () => reject(new Error('Should have thrown')),
+          error: () => resolve(),
+        });
       });
+
+      // Wait for persist to be called (this ensures handleError has completed)
+      await waitForCondition(() => attemptContract.persist.mock.calls.length > 0);
+      expect(mediator.blockUserVerification).not.toHaveBeenCalled();
     });
 
-    it('should not track when user is not found', (done) => {
+    it('should track by IP when user is not found', async () => {
       const context = createMockExecutionContext(
         signInRateLimitConfig,
         '192.168.1.1',
@@ -314,18 +343,28 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
-      interceptor.intercept(context, callHandler).subscribe({
-        next: () => done.fail('Should have thrown'),
-        error: (err) => {
-          expect(err).toBe(error);
-          expect(attemptContract.persist).not.toHaveBeenCalled();
-          done();
-        },
+      await new Promise<void>((resolve, reject) => {
+        interceptor.intercept(context, callHandler).subscribe({
+          next: () => reject(new Error('Should have thrown')),
+          error: (err) => {
+            expect(err).toBe(error);
+            resolve();
+          },
+        });
       });
+
+      // Wait for persist to be called
+      await waitForCondition(() => attemptContract.persist.mock.calls.length > 0);
+      // Should still track the attempt by IP even if user not found
+      expect(attemptContract.persist).toHaveBeenCalled();
+      const persistCall = attemptContract.persist.mock.calls[0][0];
+      expect(persistCall.userUuid).toBeNull();
+      expect(persistCall.email?.toString()).toBe('nonexistent@example.com');
     });
 
-    it('should always re-throw the original exception', (done) => {
+    it('should always re-throw the original exception', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
       const context = createMockExecutionContext(
         signInRateLimitConfig,
@@ -339,14 +378,19 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
-      interceptor.intercept(context, callHandler).subscribe({
-        next: () => done.fail('Should have thrown'),
-        error: (err) => {
-          expect(err).toBe(originalError);
-          expect(err).toBeInstanceOf(InvalidCredentialsException);
-          done();
-        },
+      let caughtError: Error | undefined;
+      await new Promise<void>((resolve) => {
+        interceptor.intercept(context, callHandler).subscribe({
+          next: () => resolve(),
+          error: (err) => {
+            caughtError = err;
+            resolve();
+          },
+        });
       });
+
+      expect(caughtError).toBe(originalError);
+      expect(caughtError).toBeInstanceOf(InvalidCredentialsException);
     });
   });
 });
