@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 
 import { validate } from '@/core/config/environment/env.validation';
 import databaseConfig from '@/core/config/database/database.config';
@@ -9,6 +11,8 @@ import { UserModule } from '@/bounded-contexts/user/infrastructure/user.module';
 import { AuthModule } from '@/bounded-contexts/auth/infrastructure/auth.module';
 import { MediatorModule } from '@/shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@/shared/infrastructure/email/email.module';
+import { RateLimitGuard } from '@/common/guards/rate-limit.guard';
+import { RateLimitInterceptor } from '@/common/interceptors/rate-limit.interceptor';
 
 @Module({
   imports: [
@@ -18,12 +22,37 @@ import { EmailModule } from '@/shared/infrastructure/email/email.module';
       validate,
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 3,
+      },
+      {
+        name: 'medium',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     EmailModule,
     UserModule,
     AuthModule,
     MediatorModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RateLimitInterceptor,
+    },
+  ],
 })
 export class AppModule {}

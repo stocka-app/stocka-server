@@ -187,6 +187,12 @@ const Controllers = [
     ...Guards,
     AuthFacade,
   ],
-  exports: [JwtAuthGuard, JwtStrategy, AuthFacade, EmailVerifiedGuard],
+  exports: [
+    JwtAuthGuard,
+    JwtStrategy,
+    AuthFacade,
+    EmailVerifiedGuard,
+    INJECTION_TOKENS.VERIFICATION_ATTEMPT_CONTRACT,
+  ],
 })
 export class AuthModule {}
