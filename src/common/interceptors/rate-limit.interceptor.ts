@@ -84,7 +84,7 @@ export class RateLimitInterceptor implements NestInterceptor {
         email: user.email,
         ipAddress: ip,
         userAgent: request.headers['user-agent'] || null,
-        codeEntered: '[redacted]',
+        codeEntered: null,
         success: false,
         verificationType: config.type,
       });
@@ -106,7 +106,7 @@ export class RateLimitInterceptor implements NestInterceptor {
         email: identifier || null,
         ipAddress: ip,
         userAgent: request.headers['user-agent'] || null,
-        codeEntered: '[redacted]',
+        codeEntered: null,
         success: false,
         verificationType: config.type,
       });
