@@ -2,17 +2,17 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EventPublisher, EventBus } from '@nestjs/cqrs';
-import { SignUpHandler } from '@/auth/application/commands/sign-up/sign-up.handler';
-import { SignUpCommand } from '@/auth/application/commands/sign-up/sign-up.command';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { IEmailVerificationTokenContract } from '@/auth/domain/contracts/email-verification-token.contract';
-import { ICodeGeneratorContract } from '@/shared/domain/contracts/code-generator.contract';
-import { IEmailProviderContract } from '@/shared/infrastructure/email/contracts/email-provider.contract';
-import { EmailAlreadyExistsException } from '@/auth/domain/exceptions/email-already-exists.exception';
-import { UsernameAlreadyExistsException } from '@/auth/domain/exceptions/username-already-exists.exception';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserMother } from '../../../../helpers/object-mother/user.mother';
+import { SignUpHandler } from '@auth/application/commands/sign-up/sign-up.handler';
+import { SignUpCommand } from '@auth/application/commands/sign-up/sign-up.command';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
+import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { EmailAlreadyExistsException } from '@auth/domain/exceptions/email-already-exists.exception';
+import { UsernameAlreadyExistsException } from '@auth/domain/exceptions/username-already-exists.exception';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserMother } from '@test/helpers/object-mother/user.mother';
 
 describe('SignUpHandler', () => {
   let handler: SignUpHandler;

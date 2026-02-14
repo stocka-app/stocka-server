@@ -1,5 +1,5 @@
-import { SessionModel } from '@/auth/domain/models/session.model';
-import { SessionCreatedEvent } from '@/auth/domain/events/session-created.event';
+import { SessionModel } from '@auth/domain/models/session.model';
+import { SessionCreatedEvent } from '@auth/domain/events/session-created.event';
 
 describe('SessionModel', () => {
   describe('create', () => {

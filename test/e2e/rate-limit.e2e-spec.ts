@@ -1,20 +1,21 @@
+/// <reference types="jest" />
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 
-import { AuthModule } from '@/bounded-contexts/auth/infrastructure/auth.module';
-import { UserModule } from '@/bounded-contexts/user/infrastructure/user.module';
-import { MediatorModule } from '@/shared/infrastructure/mediator/mediator.module';
-import { EmailModule } from '@/shared/infrastructure/email/email.module';
-import { RateLimitGuard } from '@/common/guards/rate-limit.guard';
-import { RateLimitInterceptor } from '@/common/interceptors/rate-limit.interceptor';
-import { validate } from '@/core/config/environment/env.validation';
-import databaseConfig from '@/core/config/database/database.config';
+import { AuthModule } from '@auth/infrastructure/auth.module';
+import { UserModule } from '@user/infrastructure/user.module';
+import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
+import { EmailModule } from '@shared/infrastructure/email/email.module';
+import { RateLimitGuard } from '@common/guards/rate-limit.guard';
+import { RateLimitInterceptor } from '@common/interceptors/rate-limit.interceptor';
+import { validate } from '@core/config/environment/env.validation';
+import databaseConfig from '@core/config/database/database.config';
 
 describe('Rate Limiting (e2e)', () => {
   let app: INestApplication;

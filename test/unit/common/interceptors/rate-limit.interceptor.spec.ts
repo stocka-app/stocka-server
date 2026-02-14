@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { of, throwError } from 'rxjs';
-import { RateLimitInterceptor } from '@/common/interceptors/rate-limit.interceptor';
-import { RateLimitConfig } from '@/common/decorators/rate-limit.decorator';
-import { IVerificationAttemptContract } from '@/auth/domain/contracts/verification-attempt.contract';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { DomainException } from '@/shared/domain/exceptions/domain.exception';
-import { VerificationAttemptModel } from '@/auth/domain/models/verification-attempt.model';
-import { UserMother } from '../../../helpers/object-mother/user.mother';
+import { RateLimitInterceptor } from '@common/interceptors/rate-limit.interceptor';
+import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
+import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
+import { UserMother } from '@test/helpers/object-mother/user.mother';
 
 class InvalidCredentialsException extends DomainException {
   constructor() {

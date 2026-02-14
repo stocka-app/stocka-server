@@ -1,4 +1,4 @@
-import { UserModel } from '@/user/domain/models/user.model';
+import { UserModel } from '@user/domain/models/user.model';
 
 export class UserMother {
   static create(overrides: Partial<{

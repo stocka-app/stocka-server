@@ -2,14 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { EventPublisher, EventBus } from '@nestjs/cqrs';
-import { SignInHandler } from '@/auth/application/commands/sign-in/sign-in.handler';
-import { SignInCommand } from '@/auth/application/commands/sign-in/sign-in.command';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { ISessionContract } from '@/auth/domain/contracts/session.contract';
-import { InvalidCredentialsException } from '@/auth/domain/exceptions/invalid-credentials.exception';
-import { AccountDeactivatedException } from '@/auth/domain/exceptions/account-deactivated.exception';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserMother } from '../../../../helpers/object-mother/user.mother';
+import { SignInHandler } from '@auth/application/commands/sign-in/sign-in.handler';
+import { SignInCommand } from '@auth/application/commands/sign-in/sign-in.command';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { ISessionContract } from '@auth/domain/contracts/session.contract';
+import { InvalidCredentialsException } from '@auth/domain/exceptions/invalid-credentials.exception';
+import { AccountDeactivatedException } from '@auth/domain/exceptions/account-deactivated.exception';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserMother } from '@test/helpers/object-mother/user.mother';
 import * as bcrypt from 'bcrypt';
 
 describe('SignInHandler', () => {

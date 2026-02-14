@@ -1,6 +1,6 @@
-import { PasswordResetTokenModel } from '@/auth/domain/models/password-reset-token.model';
-import { PasswordResetRequestedEvent } from '@/auth/domain/events/password-reset-requested.event';
-import { PasswordResetCompletedEvent } from '@/auth/domain/events/password-reset-completed.event';
+import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-token.model';
+import { PasswordResetRequestedEvent } from '@auth/domain/events/password-reset-requested.event';
+import { PasswordResetCompletedEvent } from '@auth/domain/events/password-reset-completed.event';
 
 describe('PasswordResetTokenModel', () => {
   describe('create', () => {

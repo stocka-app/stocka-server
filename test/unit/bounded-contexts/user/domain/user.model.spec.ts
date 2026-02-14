@@ -1,7 +1,7 @@
-import { UserModel } from '@/user/domain/models/user.model';
-import { UserCreatedEvent } from '@/user/domain/events/user-created.event';
-import { UserCreatedFromSocialEvent } from '@/user/domain/events/user-created-from-social.event';
-import { UserPasswordUpdatedEvent } from '@/user/domain/events/user-password-updated.event';
+import { UserModel } from '@user/domain/models/user.model';
+import { UserCreatedEvent } from '@user/domain/events/user-created.event';
+import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
+import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
 
 describe('UserModel', () => {
   describe('create', () => {

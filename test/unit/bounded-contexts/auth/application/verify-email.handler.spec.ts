@@ -1,16 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { EventPublisher } from '@nestjs/cqrs';
-import { VerifyEmailHandler } from '@/auth/application/commands/verify-email/verify-email.handler';
-import { VerifyEmailCommand } from '@/auth/application/commands/verify-email/verify-email.command';
-import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
-import { IEmailVerificationTokenContract } from '@/auth/domain/contracts/email-verification-token.contract';
-import { ICodeGeneratorContract } from '@/shared/domain/contracts/code-generator.contract';
-import { InvalidVerificationCodeException } from '@/auth/domain/exceptions/invalid-verification-code.exception';
-import { VerificationCodeExpiredException } from '@/auth/domain/exceptions/verification-code-expired.exception';
-import { UserAlreadyVerifiedException } from '@/auth/domain/exceptions/user-already-verified.exception';
-import { INJECTION_TOKENS } from '@/common/constants/app.constants';
-import { UserMother } from '../../../../helpers/object-mother/user.mother';
-import { EmailVerificationTokenModel } from '@/auth/domain/models/email-verification-token.model';
+import { VerifyEmailHandler } from '@auth/application/commands/verify-email/verify-email.handler';
+import { VerifyEmailCommand } from '@auth/application/commands/verify-email/verify-email.command';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
+import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
+import { InvalidVerificationCodeException } from '@auth/domain/exceptions/invalid-verification-code.exception';
+import { VerificationCodeExpiredException } from '@auth/domain/exceptions/verification-code-expired.exception';
+import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-already-verified.exception';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { EmailVerificationTokenModel } from '@auth/domain/models/email-verification-token.model';
 
 describe('VerifyEmailHandler', () => {
   let handler: VerifyEmailHandler;
