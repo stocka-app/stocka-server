@@ -212,9 +212,9 @@ describe('RateLimitInterceptor', () => {
         next: () => done.fail('Should have thrown'),
         error: () => {
           const persistCall = attemptContract.persist.mock.calls[0][0];
-          expect(persistCall.verificationType).toBe('sign_in');
-          expect(persistCall.success).toBe(false);
-          expect(persistCall.ipAddress).toBe('192.168.1.1');
+          expect(persistCall.verificationType.toString()).toBe('sign_in');
+          expect(persistCall.result.isSuccessful()).toBe(false);
+          expect(persistCall.ipAddress.toString()).toBe('192.168.1.1');
           done();
         },
       });

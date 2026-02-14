@@ -23,14 +23,14 @@ export class VerificationAttemptMapper {
   static toEntity(model: VerificationAttemptModel): Partial<VerificationAttemptEntity> {
     const entity: Partial<VerificationAttemptEntity> = {
       uuid: model.uuid,
-      userUuid: model.userUuid,
-      email: model.email,
-      ipAddress: model.ipAddress,
-      userAgent: model.userAgent,
-      codeEntered: model.codeEntered,
-      success: model.success,
-      verificationType: model.verificationType,
-      attemptedAt: model.attemptedAt,
+      userUuid: model.userUuid?.toString() ?? null,
+      email: model.email?.toString() ?? null,
+      ipAddress: model.ipAddress.toString(),
+      userAgent: model.userAgent?.toString() ?? null,
+      codeEntered: model.codeEntered.toString(),
+      success: model.result.isSuccessful(),
+      verificationType: model.verificationType.toString(),
+      attemptedAt: model.attemptedAt.toDate(),
       archivedAt: model.archivedAt,
     };
 

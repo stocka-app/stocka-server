@@ -10,8 +10,8 @@ import { AttemptedAtVO } from '@auth/domain/value-objects/attempted-at.vo';
 import { EmailVerificationFailedEvent } from '@auth/domain/events/email-verification-failed.event';
 
 export interface VerificationAttemptProps extends AggregateRootProps {
-  userUuid: string;
-  email: string;
+  userUuid: string | null;
+  email: string | null;
   ipAddress: string;
   userAgent?: string | null;
   codeEntered: string;
@@ -21,8 +21,8 @@ export interface VerificationAttemptProps extends AggregateRootProps {
 }
 
 export class VerificationAttemptModel extends AggregateRoot {
-  private readonly _userUuid: UuidVO;
-  private readonly _email: EmailVO;
+  private readonly _userUuid: UuidVO | null;
+  private readonly _email: EmailVO | null;
   private readonly _ipAddress: IpAddressVO;
   private readonly _userAgent: UserAgentVO | null;
   private readonly _codeEntered: VerificationCodeVO;
@@ -38,8 +38,8 @@ export class VerificationAttemptModel extends AggregateRoot {
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
     });
-    this._userUuid = new UuidVO(props.userUuid);
-    this._email = new EmailVO(props.email);
+    this._userUuid = props.userUuid ? new UuidVO(props.userUuid) : null;
+    this._email = props.email ? new EmailVO(props.email) : null;
     this._ipAddress = IpAddressVO.create(props.ipAddress);
     this._userAgent = props.userAgent ? new UserAgentVO(props.userAgent) : null;
     this._codeEntered = new VerificationCodeVO(props.codeEntered);
@@ -55,7 +55,7 @@ export class VerificationAttemptModel extends AggregateRoot {
   }
 
   static createFailed(
-    props: Omit<VerificationAttemptProps, 'id' | 'success'>,
+    props: Omit<VerificationAttemptProps, 'id' | 'success'> & { userUuid: string; email: string },
     failedAttempts: number,
   ): VerificationAttemptModel {
     const attempt = new VerificationAttemptModel({ ...props, success: false });
@@ -76,11 +76,11 @@ export class VerificationAttemptModel extends AggregateRoot {
     return new VerificationAttemptModel(props);
   }
 
-  get userUuid(): UuidVO {
+  get userUuid(): UuidVO | null {
     return this._userUuid;
   }
 
-  get email(): EmailVO {
+  get email(): EmailVO | null {
     return this._email;
   }
 

@@ -3,13 +3,13 @@ import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 
 @Entity('verification_attempts')
 export class VerificationAttemptEntity extends BaseEntity {
-  @Column({ name: 'user_uuid', type: 'varchar', length: 36 })
+  @Column({ name: 'user_uuid', type: 'varchar', length: 36, nullable: true })
   @Index()
-  userUuid!: string;
+  userUuid!: string | null;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   @Index()
-  email!: string;
+  email!: string | null;
 
   @Column({ name: 'ip_address', type: 'inet' })
   @Index()
