@@ -12,3 +12,7 @@ export * from './resend-cooldown-active.exception';
 export * from './max-resends-exceeded.exception';
 export * from './user-already-verified.exception';
 export * from './rate-limit-exceeded.exception';
+export * from './invalid-ip-address.exception';
+export * from './invalid-user-agent.exception';
+export * from './invalid-verification-type.exception';
+export * from './invalid-attempted-at.exception';
