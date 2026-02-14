@@ -7,6 +7,9 @@ export class UserMother {
     email: string;
     username: string;
     passwordHash: string | null;
+    status: string;
+    emailVerifiedAt: Date | null;
+    verificationBlockedUntil: Date | null;
     createdAt: Date;
     updatedAt: Date;
     archivedAt: Date | null;
@@ -17,6 +20,9 @@ export class UserMother {
       email: 'test@example.com',
       username: 'testuser',
       passwordHash: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.z9OYHvJpzZ9y7u', // "Password1"
+      status: 'active',
+      emailVerifiedAt: null,
+      verificationBlockedUntil: null,
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-01T00:00:00Z'),
       archivedAt: null,
@@ -30,6 +36,9 @@ export class UserMother {
       email: props.email,
       username: props.username,
       passwordHash: props.passwordHash,
+      status: props.status,
+      emailVerifiedAt: props.emailVerifiedAt,
+      verificationBlockedUntil: props.verificationBlockedUntil,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
@@ -73,5 +82,56 @@ export class UserMother {
 
   static createWithUsername(username: string): UserModel {
     return this.create({ username });
+  }
+
+  static createBlocked(overrides: Partial<{
+    id: number;
+    uuid: string;
+    email: string;
+    username: string;
+    passwordHash: string | null;
+    verificationBlockedUntil: Date;
+    createdAt: Date;
+    updatedAt: Date;
+    archivedAt: Date | null;
+  }> = {}): UserModel {
+    return this.create({
+      ...overrides,
+      verificationBlockedUntil: overrides.verificationBlockedUntil ?? new Date(Date.now() + 5 * 60 * 1000),
+    });
+  }
+
+  static createVerified(overrides: Partial<{
+    id: number;
+    uuid: string;
+    email: string;
+    username: string;
+    passwordHash: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    archivedAt: Date | null;
+  }> = {}): UserModel {
+    return this.create({
+      ...overrides,
+      status: 'active',
+      emailVerifiedAt: new Date('2024-01-02T00:00:00Z'),
+    });
+  }
+
+  static createPendingVerification(overrides: Partial<{
+    id: number;
+    uuid: string;
+    email: string;
+    username: string;
+    passwordHash: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    archivedAt: Date | null;
+  }> = {}): UserModel {
+    return this.create({
+      ...overrides,
+      status: 'pending_verification',
+      emailVerifiedAt: null,
+    });
   }
 }
