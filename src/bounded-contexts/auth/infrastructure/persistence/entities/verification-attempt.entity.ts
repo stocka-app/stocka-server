@@ -18,8 +18,8 @@ export class VerificationAttemptEntity extends BaseEntity {
   @Column({ name: 'user_agent', type: 'text', nullable: true })
   userAgent!: string | null;
 
-  @Column({ name: 'code_entered', type: 'varchar', length: 10 })
-  codeEntered!: string;
+  @Column({ name: 'code_entered', type: 'varchar', length: 10, nullable: true })
+  codeEntered!: string | null;
 
   @Column({ type: 'boolean', default: false })
   success!: boolean;
