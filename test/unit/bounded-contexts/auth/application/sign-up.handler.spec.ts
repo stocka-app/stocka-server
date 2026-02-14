@@ -8,6 +8,7 @@ import { MediatorService } from '@/shared/infrastructure/mediator/mediator.servi
 import { ISessionContract } from '@/auth/domain/contracts/session.contract';
 import { IEmailVerificationTokenContract } from '@/auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@/shared/domain/contracts/code-generator.contract';
+import { IEmailProviderContract } from '@/shared/infrastructure/email/contracts/email-provider.contract';
 import { EmailAlreadyExistsException } from '@/auth/domain/exceptions/email-already-exists.exception';
 import { UsernameAlreadyExistsException } from '@/auth/domain/exceptions/username-already-exists.exception';
 import { INJECTION_TOKENS } from '@/common/constants/app.constants';
@@ -21,6 +22,7 @@ describe('SignUpHandler', () => {
   let sessionContract: jest.Mocked<ISessionContract>;
   let verificationTokenContract: jest.Mocked<IEmailVerificationTokenContract>;
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
+  let emailProvider: jest.Mocked<IEmailProviderContract>;
 
   const configValues: Record<string, string | number> = {
     JWT_ACCESS_SECRET: 'test-access-secret',
@@ -32,7 +34,7 @@ describe('SignUpHandler', () => {
 
   beforeEach(async () => {
     const mockMediatorService = {
-      existsUserByEmail: jest.fn(),
+      findUserByEmail: jest.fn(),
       existsUserByUsername: jest.fn(),
       createUser: jest.fn(),
     };
@@ -65,6 +67,12 @@ describe('SignUpHandler', () => {
       hashCode: jest.fn().mockReturnValue('hashed-code'),
     };
 
+    const mockEmailProvider = {
+      sendVerificationEmail: jest.fn().mockResolvedValue({ success: true }),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ success: true }),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue({ success: true }),
+    };
+
     const mockEventPublisher = {
       mergeObjectContext: jest.fn().mockImplementation((obj) => obj),
     };
@@ -87,6 +95,7 @@ describe('SignUpHandler', () => {
           useValue: mockVerificationTokenContract,
         },
         { provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT, useValue: mockCodeGenerator },
+        { provide: INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT, useValue: mockEmailProvider },
       ],
     }).compile();
 
@@ -97,6 +106,7 @@ describe('SignUpHandler', () => {
     sessionContract = module.get(INJECTION_TOKENS.SESSION_CONTRACT);
     verificationTokenContract = module.get(INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT);
     codeGenerator = module.get(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT);
+    emailProvider = module.get(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT);
 
     // Default JWT signs
     jwtService.signAsync.mockResolvedValue('mock-token');
@@ -110,7 +120,7 @@ describe('SignUpHandler', () => {
       username: 'testuser',
     });
 
-    mediatorService.existsUserByEmail.mockResolvedValue(false);
+    mediatorService.findUserByEmail.mockResolvedValue(null);
     mediatorService.existsUserByUsername.mockResolvedValue(false);
     mediatorService.createUser.mockResolvedValue(mockUser);
     sessionContract.persist.mockResolvedValue(expect.anything());
@@ -131,12 +141,18 @@ describe('SignUpHandler', () => {
     expect(sessionContract.persist).toHaveBeenCalled();
     expect(verificationTokenContract.persist).toHaveBeenCalled();
     expect(codeGenerator.generateVerificationCode).toHaveBeenCalled();
+    expect(emailProvider.sendVerificationEmail).toHaveBeenCalledWith(
+      'test@example.com',
+      'ABC123',
+      'testuser',
+    );
   });
 
   it('should throw EmailAlreadyExistsException when email is taken', async () => {
     const command = new SignUpCommand('existing@example.com', 'testuser', 'Password1');
+    const existingUser = UserMother.create({ email: 'existing@example.com' });
 
-    mediatorService.existsUserByEmail.mockResolvedValue(true);
+    mediatorService.findUserByEmail.mockResolvedValue(existingUser);
 
     await expect(handler.execute(command)).rejects.toThrow(EmailAlreadyExistsException);
     expect(mediatorService.createUser).not.toHaveBeenCalled();
@@ -145,7 +161,7 @@ describe('SignUpHandler', () => {
   it('should throw UsernameAlreadyExistsException when username is taken', async () => {
     const command = new SignUpCommand('test@example.com', 'existinguser', 'Password1');
 
-    mediatorService.existsUserByEmail.mockResolvedValue(false);
+    mediatorService.findUserByEmail.mockResolvedValue(null);
     mediatorService.existsUserByUsername.mockResolvedValue(true);
 
     await expect(handler.execute(command)).rejects.toThrow(UsernameAlreadyExistsException);
@@ -156,20 +172,20 @@ describe('SignUpHandler', () => {
     const command = new SignUpCommand('test@example.com', 'testuser', 'password1');
 
     await expect(handler.execute(command)).rejects.toThrow();
-    expect(mediatorService.existsUserByEmail).not.toHaveBeenCalled();
+    expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
   });
 
   it('should throw error when password is invalid (no number)', async () => {
     const command = new SignUpCommand('test@example.com', 'testuser', 'Password');
 
     await expect(handler.execute(command)).rejects.toThrow();
-    expect(mediatorService.existsUserByEmail).not.toHaveBeenCalled();
+    expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
   });
 
   it('should throw error when password is too short', async () => {
     const command = new SignUpCommand('test@example.com', 'testuser', 'Pass1');
 
     await expect(handler.execute(command)).rejects.toThrow();
-    expect(mediatorService.existsUserByEmail).not.toHaveBeenCalled();
+    expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
   });
 });
