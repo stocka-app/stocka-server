@@ -6,3 +6,4 @@ export * from './compound/compound.vo';
 export * from './compound/uuid.vo';
 export * from './compound/verification-code.vo';
 export * from './compound/user-status.vo';
+export * from './compound/email.vo';

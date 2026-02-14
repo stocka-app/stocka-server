@@ -1,5 +1,5 @@
 import { AggregateRoot, AggregateRootProps } from '@/shared/domain/base/aggregate-root';
-import { EmailVO } from '@/user/domain/value-objects/email.vo';
+import { EmailVO } from '@/shared/domain/value-objects/compound/email.vo';
 import { UsernameVO } from '@/user/domain/value-objects/username.vo';
 import {
   UserStatusVO,
