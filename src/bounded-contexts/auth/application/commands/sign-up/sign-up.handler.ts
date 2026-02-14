@@ -11,8 +11,10 @@ import { EmailVerificationTokenModel } from '@/auth/domain/models/email-verifica
 import { ISessionContract } from '@/auth/domain/contracts/session.contract';
 import { IEmailVerificationTokenContract } from '@/auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@/shared/domain/contracts/code-generator.contract';
+import { IEmailProviderContract } from '@/shared/infrastructure/email/contracts/email-provider.contract';
 import { EmailAlreadyExistsException } from '@/auth/domain/exceptions/email-already-exists.exception';
 import { UsernameAlreadyExistsException } from '@/auth/domain/exceptions/username-already-exists.exception';
+import { EmailDeliveryFailedException } from '@/auth/domain/exceptions/email-delivery-failed.exception';
 import { UserSignedUpEvent } from '@/auth/domain/events/user-signed-up.event';
 import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@/common/constants/app.constants';
@@ -39,13 +41,17 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     private readonly verificationTokenContract: IEmailVerificationTokenContract,
     @Inject(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT)
     private readonly codeGenerator: ICodeGeneratorContract,
+    @Inject(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
+    private readonly emailProvider: IEmailProviderContract,
   ) {}
 
   async execute(command: SignUpCommand): Promise<SignUpResult> {
+    // 1. Validate password format
     new PasswordVO(command.password);
 
-    const emailExists = await this.mediator.existsUserByEmail(command.email);
-    if (emailExists) {
+    // 2. Check if email/username already exist
+    const existingUser = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
+    if (existingUser) {
       throw new EmailAlreadyExistsException();
     }
 
@@ -54,6 +60,21 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
       throw new UsernameAlreadyExistsException();
     }
 
+    // 3. Generate verification code BEFORE any persistence
+    const verificationCode = this.codeGenerator.generateVerificationCode();
+
+    // 4. Send verification email FIRST - if this fails, nothing is persisted
+    const emailResult = await this.emailProvider.sendVerificationEmail(
+      command.email,
+      verificationCode,
+      command.username,
+    );
+
+    if (!emailResult.success) {
+      throw new EmailDeliveryFailedException(emailResult.error);
+    }
+
+    // 5. Email sent successfully - now persist everything
     const passwordHash = await AuthDomainService.hashPassword(command.password);
 
     const user = (await this.mediator.createUser(
@@ -66,15 +87,13 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
 
     const session = await this.createSession(user.id!, refreshToken);
 
-    // Create email verification token
-    const verificationToken = await this.createVerificationToken(user);
+    // Create email verification token (email already sent, just persist the hash)
+    await this.createVerificationToken(user, verificationCode);
 
     this.eventPublisher.mergeObjectContext(session);
     session.commit();
 
-    this.eventPublisher.mergeObjectContext(verificationToken);
-    verificationToken.commit();
-
+    // Don't emit EmailVerificationRequestedEvent since email was already sent
     this.eventBus.publish(new UserSignedUpEvent(user.uuid, user.email));
 
     return {
@@ -126,8 +145,10 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     return session;
   }
 
-  private async createVerificationToken(user: UserModel): Promise<EmailVerificationTokenModel> {
-    const code = this.codeGenerator.generateVerificationCode();
+  private async createVerificationToken(
+    user: UserModel,
+    code: string,
+  ): Promise<EmailVerificationTokenModel> {
     const codeHash = this.codeGenerator.hashCode(code);
     const expirationMinutes = this.configService.get<number>(
       'VERIFICATION_CODE_EXPIRATION_MINUTES',
