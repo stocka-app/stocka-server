@@ -260,7 +260,7 @@ describe('RateLimitInterceptor', () => {
       expect(mediator.blockUserVerification).not.toHaveBeenCalled();
     });
 
-    it('should track by IP when user is not found', async () => {
+    it('should track by IP with email when user not found and identifier is email', async () => {
       const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'nonexistent@example.com');
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
@@ -275,6 +275,23 @@ describe('RateLimitInterceptor', () => {
       const persistCall = attemptContract.persist.mock.calls[0][0];
       expect(persistCall.userUuid).toBeNull();
       expect(persistCall.email?.toString()).toBe('nonexistent@example.com');
+    });
+
+    it('should track by IP with null email when user not found and identifier is username', async () => {
+      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'randomusername');
+      const error = new InvalidCredentialsException();
+      const callHandler = createMockCallHandler(undefined, error);
+
+      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+
+      const caughtError = await interceptAndCatchError(context, callHandler);
+
+      expect(caughtError).toBe(error);
+      expect(attemptContract.persist).toHaveBeenCalled();
+      const persistCall = attemptContract.persist.mock.calls[0][0];
+      expect(persistCall.userUuid).toBeNull();
+      expect(persistCall.email).toBeNull();
     });
 
     it('should always re-throw the original exception', async () => {

@@ -101,9 +101,12 @@ export class RateLimitInterceptor implements NestInterceptor {
       }
     } else {
       // Track failed attempt by IP only (no user found)
+      // Only set email if identifier has valid email format (could be username)
+      const emailValue = identifier && this.isValidEmail(identifier) ? identifier : null;
+
       const attempt = VerificationAttemptModel.create({
         userUuid: null,
-        email: identifier || null,
+        email: emailValue,
         ipAddress: ip,
         userAgent: request.headers['user-agent'] || null,
         codeEntered: null,
@@ -133,6 +136,11 @@ export class RateLimitInterceptor implements NestInterceptor {
     }
 
     return null;
+  }
+
+  private isValidEmail(value: string): boolean {
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailPattern.test(value);
   }
 
   private async evaluateBlock(
