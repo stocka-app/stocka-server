@@ -21,15 +21,14 @@
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["src/*"],
-      "@/bounded-contexts/*": ["src/bounded-contexts/*"],
-      "@/auth/*": ["src/bounded-contexts/auth/*"],
-      "@/user/*": ["src/bounded-contexts/user/*"],
-      "@/shared/*": ["src/shared/*"],
-      "@/common/*": ["src/common/*"],
-      "@/core/*": ["src/core/*"]
+      "@auth/*": ["src/bounded-contexts/auth/*"],
+      "@user/*": ["src/bounded-contexts/user/*"],
+      "@shared/*": ["src/shared/*"],
+      "@common/*": ["src/common/*"],
+      "@core/*": ["src/core/*"],
+      "@test/*": ["test/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test"]
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
