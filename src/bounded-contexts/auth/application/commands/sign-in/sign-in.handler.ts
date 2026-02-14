@@ -9,6 +9,7 @@ import { SessionModel } from '@/auth/domain/models/session.model';
 import { ISessionContract } from '@/auth/domain/contracts/session.contract';
 import { InvalidCredentialsException } from '@/auth/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@/auth/domain/exceptions/account-deactivated.exception';
+import { EmailNotVerifiedException } from '@/auth/domain/exceptions/email-not-verified.exception';
 import { UserSignedInEvent } from '@/auth/domain/events/user-signed-in.event';
 import { MediatorService } from '@/shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@/common/constants/app.constants';
@@ -18,6 +19,7 @@ interface SignInResult {
   user: UserModel;
   accessToken: string;
   refreshToken: string;
+  emailVerificationRequired: boolean;
 }
 
 @CommandHandler(SignInCommand)
@@ -58,6 +60,10 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
       throw new AccountDeactivatedException();
     }
 
+    if (user.status.isPendingVerification()) {
+      throw new EmailNotVerifiedException();
+    }
+
     const { accessToken, refreshToken } = await this.generateTokens(user);
 
     const session = await this.createSession(user.id!, refreshToken);
@@ -71,6 +77,7 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
       user,
       accessToken,
       refreshToken,
+      emailVerificationRequired: false, // User is verified if they reach this point
     };
   }
 

@@ -16,4 +16,10 @@ export class SignInOutDto {
     description: 'JWT refresh token',
   })
   refreshToken!: string;
+
+  @ApiProperty({
+    example: false,
+    description: 'Whether email verification is required before accessing the app',
+  })
+  emailVerificationRequired!: boolean;
 }
