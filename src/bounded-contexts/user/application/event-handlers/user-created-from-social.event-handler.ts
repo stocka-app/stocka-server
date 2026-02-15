@@ -8,7 +8,7 @@ export class UserCreatedFromSocialEventHandler implements IEventHandler<UserCrea
 
   handle(event: UserCreatedFromSocialEvent): void {
     this.logger.log(
-      `User created from social: uuid=${event.userUuid}, email=${event.email}, provider=${event.provider}`,
+      `User created from social: uuid=${event.userUUID}, email=${event.email}, provider=${event.provider}`,
     );
   }
 }

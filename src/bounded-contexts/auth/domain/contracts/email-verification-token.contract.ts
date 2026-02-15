@@ -2,7 +2,7 @@ import { EmailVerificationTokenModel } from '@auth/domain/models/email-verificat
 
 export interface IEmailVerificationTokenContract {
   findById(id: number): Promise<EmailVerificationTokenModel | null>;
-  findByUuid(uuid: string): Promise<EmailVerificationTokenModel | null>;
+  findByUUID(uuid: string): Promise<EmailVerificationTokenModel | null>;
   findActiveByUserId(userId: number): Promise<EmailVerificationTokenModel | null>;
   findByCodeHash(codeHash: string): Promise<EmailVerificationTokenModel | null>;
   persist(token: EmailVerificationTokenModel): Promise<EmailVerificationTokenModel>;

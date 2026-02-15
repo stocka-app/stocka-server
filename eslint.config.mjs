@@ -38,6 +38,19 @@ export default tseslint.config(
       '@typescript-eslint/interface-name-prefix': 'off',
       '@typescript-eslint/unbound-method': 'warn',
 
+      // Acronyms must be fully uppercased (UUID, CQRS, IPv4, IPv6, VO, etc.)
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'default',
+          format: null,
+          custom: {
+            regex: 'Uuid|Cqrs|Ipv[46]',
+            match: false,
+          },
+        },
+      ],
+
       // Prettier
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },

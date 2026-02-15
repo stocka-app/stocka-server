@@ -7,6 +7,6 @@ export class UserSignedInEventHandler implements IEventHandler<UserSignedInEvent
   private readonly logger = new Logger(UserSignedInEventHandler.name);
 
   handle(event: UserSignedInEvent): void {
-    this.logger.log(`User signed in: uuid=${event.userUuid}`);
+    this.logger.log(`User signed in: uuid=${event.userUUID}`);
   }
 }

@@ -64,14 +64,14 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
     if (!isValidJwtPayload(decoded)) {
       throw new TokenExpiredException();
     }
-    const user = (await this.mediator.findUserByUuid(decoded.sub)) as UserModel | null;
+    const user = (await this.mediator.findUserByUUID(decoded.sub)) as UserModel | null;
 
     if (!user) {
       throw new TokenExpiredException();
     }
 
     // Archive the old session
-    const oldSessionUuid = session.uuid;
+    const oldSessionUUID = session.uuid;
     await this.sessionContract.archive(session.uuid);
 
     // Generate new tokens
@@ -83,7 +83,7 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
     // Publish events
     this.eventPublisher.mergeObjectContext(newSession);
     newSession.commit();
-    this.eventBus.publish(new SessionRefreshedEvent(oldSessionUuid, newSession.uuid));
+    this.eventBus.publish(new SessionRefreshedEvent(oldSessionUUID, newSession.uuid));
 
     return { accessToken, refreshToken };
   }

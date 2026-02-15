@@ -1,3 +1,3 @@
-export class FindUserByUuidQuery {
+export class FindUserByUUIDQuery {
   constructor(public readonly uuid: string) {}
 }

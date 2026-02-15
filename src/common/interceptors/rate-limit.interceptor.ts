@@ -80,7 +80,7 @@ export class RateLimitInterceptor implements NestInterceptor {
     // Persist failed attempt
     if (user) {
       const attempt = VerificationAttemptModel.create({
-        userUuid: user.uuid,
+        userUUID: user.uuid,
         email: user.email,
         ipAddress: ip,
         userAgent: request.headers['user-agent'] || null,
@@ -92,7 +92,7 @@ export class RateLimitInterceptor implements NestInterceptor {
 
       // Check progressive blocking
       if (config.progressiveBlock) {
-        const totalFailed = await this.attemptContract.countFailedByUserUuidInLastHourByType(
+        const totalFailed = await this.attemptContract.countFailedByUserUUIDInLastHourByType(
           user.uuid,
           config.type,
         );
@@ -105,7 +105,7 @@ export class RateLimitInterceptor implements NestInterceptor {
       const emailValue = identifier && this.isValidEmail(identifier) ? identifier : null;
 
       const attempt = VerificationAttemptModel.create({
-        userUuid: null,
+        userUUID: null,
         email: emailValue,
         ipAddress: ip,
         userAgent: request.headers['user-agent'] || null,
@@ -162,7 +162,7 @@ export class RateLimitInterceptor implements NestInterceptor {
         await this.mediator.blockUserVerification(user.uuid, blockedUntil);
 
         this.logger.warn(
-          `Account blocked | userUuid=${user.uuid} | ` +
+          `Account blocked | userUUID=${user.uuid} | ` +
             `attempts=${failedAttempts} | blockedMinutes=${threshold.blockMinutes}`,
         );
         break;

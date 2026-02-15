@@ -34,8 +34,8 @@ export class UserFacade {
     return this.userContract.findById(id);
   }
 
-  async findByUuid(uuid: string): Promise<UserModel | null> {
-    return this.userContract.findByUuid(uuid);
+  async findByUUID(uuid: string): Promise<UserModel | null> {
+    return this.userContract.findByUUID(uuid);
   }
 
   async findByEmail(email: string): Promise<UserModel | null> {
@@ -55,7 +55,7 @@ export class UserFacade {
   }
 
   async updatePasswordHash(uuid: string, newHash: string): Promise<void> {
-    const user = await this.userContract.findByUuid(uuid);
+    const user = await this.userContract.findByUUID(uuid);
     if (user) {
       user.updatePasswordHash(newHash);
       await this.userContract.persist(user);
@@ -71,7 +71,7 @@ export class UserFacade {
   }
 
   async verifyUserEmail(uuid: string): Promise<void> {
-    const user = await this.userContract.findByUuid(uuid);
+    const user = await this.userContract.findByUUID(uuid);
     if (user) {
       user.verifyEmail();
       await this.userContract.persist(user);
@@ -79,7 +79,7 @@ export class UserFacade {
   }
 
   async blockUserVerification(uuid: string, blockedUntil: Date): Promise<void> {
-    const user = await this.userContract.findByUuid(uuid);
+    const user = await this.userContract.findByUUID(uuid);
     if (user) {
       user.blockVerification(blockedUntil);
       await this.userContract.persist(user);

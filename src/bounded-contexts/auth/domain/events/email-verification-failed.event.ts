@@ -2,7 +2,7 @@ import { IEvent } from '@nestjs/cqrs';
 
 export class EmailVerificationFailedEvent implements IEvent {
   constructor(
-    public readonly userUuid: string,
+    public readonly userUUID: string,
     public readonly email: string,
     public readonly ipAddress: string,
     public readonly failedAttempts: number,

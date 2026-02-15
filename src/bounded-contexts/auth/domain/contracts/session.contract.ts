@@ -2,7 +2,7 @@ import { SessionModel } from '@auth/domain/models/session.model';
 
 export interface ISessionContract {
   findById(id: number): Promise<SessionModel | null>;
-  findByUuid(uuid: string): Promise<SessionModel | null>;
+  findByUUID(uuid: string): Promise<SessionModel | null>;
   findByTokenHash(tokenHash: string): Promise<SessionModel | null>;
   findActiveByUserId(userId: number): Promise<SessionModel[]>;
   persist(session: SessionModel): Promise<SessionModel>;

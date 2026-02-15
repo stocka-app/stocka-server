@@ -10,7 +10,7 @@ export interface IUserFacade {
     providerId: string,
   ): Promise<unknown>;
   findById(id: number): Promise<unknown>;
-  findByUuid(uuid: string): Promise<unknown>;
+  findByUUID(uuid: string): Promise<unknown>;
   findByEmail(email: string): Promise<unknown>;
   findByEmailOrUsername(identifier: string): Promise<unknown>;
   existsByEmail(email: string): Promise<boolean>;
@@ -43,8 +43,8 @@ export class MediatorService {
     return this.userFacade.findById(id);
   }
 
-  async findUserByUuid(uuid: string): Promise<unknown> {
-    return this.userFacade.findByUuid(uuid);
+  async findUserByUUID(uuid: string): Promise<unknown> {
+    return this.userFacade.findByUUID(uuid);
   }
 
   async findUserByEmail(email: string): Promise<unknown> {

@@ -7,6 +7,6 @@ export class SessionArchivedEventHandler implements IEventHandler<SessionArchive
   private readonly logger = new Logger(SessionArchivedEventHandler.name);
 
   handle(event: SessionArchivedEvent): void {
-    this.logger.log(`Session archived: sessionUuid=${event.sessionUuid}`);
+    this.logger.log(`Session archived: sessionUUID=${event.sessionUUID}`);
   }
 }

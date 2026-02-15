@@ -168,7 +168,7 @@ describe('UserModel', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toBeInstanceOf(UserCreatedEvent);
       const event = events[0] as UserCreatedEvent;
-      expect(event.userUuid).toBe(user.uuid);
+      expect(event.userUUID).toBe(user.uuid);
       expect(event.email).toBe('test@example.com');
       expect(event.username).toBe('testuser');
     });
@@ -186,7 +186,7 @@ describe('UserModel', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toBeInstanceOf(UserCreatedFromSocialEvent);
       const event = events[0] as UserCreatedFromSocialEvent;
-      expect(event.userUuid).toBe(user.uuid);
+      expect(event.userUUID).toBe(user.uuid);
       expect(event.email).toBe('social@example.com');
       expect(event.provider).toBe('google');
     });
@@ -223,7 +223,7 @@ describe('UserModel', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toBeInstanceOf(UserPasswordUpdatedEvent);
       const event = events[0] as UserPasswordUpdatedEvent;
-      expect(event.userUuid).toBe(user.uuid);
+      expect(event.userUUID).toBe(user.uuid);
     });
 
     it('should clear events after commit()', () => {

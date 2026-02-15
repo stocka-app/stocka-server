@@ -20,7 +20,7 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     return entity ? EmailVerificationTokenMapper.toDomain(entity) : null;
   }
 
-  async findByUuid(uuid: string): Promise<EmailVerificationTokenModel | null> {
+  async findByUUID(uuid: string): Promise<EmailVerificationTokenModel | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: IsNull() },
     });

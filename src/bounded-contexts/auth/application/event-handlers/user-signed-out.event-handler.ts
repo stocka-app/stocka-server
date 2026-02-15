@@ -7,6 +7,6 @@ export class UserSignedOutEventHandler implements IEventHandler<UserSignedOutEve
   private readonly logger = new Logger(UserSignedOutEventHandler.name);
 
   handle(event: UserSignedOutEvent): void {
-    this.logger.log(`User signed out: uuid=${event.userUuid}`);
+    this.logger.log(`User signed out: uuid=${event.userUUID}`);
   }
 }

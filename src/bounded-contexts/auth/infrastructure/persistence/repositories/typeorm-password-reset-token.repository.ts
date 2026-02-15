@@ -20,7 +20,7 @@ export class TypeOrmPasswordResetTokenRepository implements IPasswordResetTokenC
     return entity ? PasswordResetTokenMapper.toDomain(entity) : null;
   }
 
-  async findByUuid(uuid: string): Promise<PasswordResetTokenModel | null> {
+  async findByUUID(uuid: string): Promise<PasswordResetTokenModel | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: IsNull() },
     });

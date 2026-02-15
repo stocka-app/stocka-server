@@ -7,6 +7,6 @@ export class UserSignedUpEventHandler implements IEventHandler<UserSignedUpEvent
   private readonly logger = new Logger(UserSignedUpEventHandler.name);
 
   handle(event: UserSignedUpEvent): void {
-    this.logger.log(`User signed up: uuid=${event.userUuid}, email=${event.email}`);
+    this.logger.log(`User signed up: uuid=${event.userUUID}, email=${event.email}`);
   }
 }

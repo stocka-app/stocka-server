@@ -7,6 +7,6 @@ export class SessionCreatedEventHandler implements IEventHandler<SessionCreatedE
   private readonly logger = new Logger(SessionCreatedEventHandler.name);
 
   handle(event: SessionCreatedEvent): void {
-    this.logger.log(`Session created: sessionUuid=${event.sessionUuid}, userId=${event.userId}`);
+    this.logger.log(`Session created: sessionUUID=${event.sessionUUID}, userId=${event.userId}`);
   }
 }

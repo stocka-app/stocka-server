@@ -68,7 +68,7 @@ describe('RateLimitGuard', () => {
     const mockAttemptContract = {
       countFailedByIpAddressInLastHourByType: jest.fn(),
       countFailedByIdentifierInLastHourByType: jest.fn(),
-      countFailedByUserUuidInLastHourByType: jest.fn(),
+      countFailedByUserUUIDInLastHourByType: jest.fn(),
       persist: jest.fn(),
     };
 

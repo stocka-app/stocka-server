@@ -8,7 +8,7 @@ export class UserCreatedEventHandler implements IEventHandler<UserCreatedEvent> 
 
   handle(event: UserCreatedEvent): void {
     this.logger.log(
-      `User created: uuid=${event.userUuid}, email=${event.email}, username=${event.username}`,
+      `User created: uuid=${event.userUUID}, email=${event.email}, username=${event.username}`,
     );
   }
 }

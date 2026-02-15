@@ -31,7 +31,7 @@ export class EmailVerifiedGuard implements CanActivate {
     }
 
     // Get full user from database to check status
-    const fullUser = (await this.mediator.findUserByUuid(user.sub)) as UserModel | null;
+    const fullUser = (await this.mediator.findUserByUUID(user.sub)) as UserModel | null;
 
     if (!fullUser) {
       throw new ForbiddenException('User not found');

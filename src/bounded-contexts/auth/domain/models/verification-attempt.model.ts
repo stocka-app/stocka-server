@@ -1,5 +1,5 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
-import { UuidVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { VerificationCodeVO } from '@shared/domain/value-objects/compound/verification-code.vo';
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
 import { IpAddressVO } from '@auth/domain/value-objects/ip-address.vo';
@@ -10,7 +10,7 @@ import { AttemptedAtVO } from '@auth/domain/value-objects/attempted-at.vo';
 import { EmailVerificationFailedEvent } from '@auth/domain/events/email-verification-failed.event';
 
 export interface VerificationAttemptProps extends AggregateRootProps {
-  userUuid: string | null;
+  userUUID: string | null;
   email: string | null;
   ipAddress: string;
   userAgent?: string | null;
@@ -21,7 +21,7 @@ export interface VerificationAttemptProps extends AggregateRootProps {
 }
 
 export class VerificationAttemptModel extends AggregateRoot {
-  private readonly _userUuid: UuidVO | null;
+  private readonly _userUUID: UUIDVO | null;
   private readonly _email: EmailVO | null;
   private readonly _ipAddress: IpAddressVO;
   private readonly _userAgent: UserAgentVO | null;
@@ -38,7 +38,7 @@ export class VerificationAttemptModel extends AggregateRoot {
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
     });
-    this._userUuid = props.userUuid ? new UuidVO(props.userUuid) : null;
+    this._userUUID = props.userUUID ? new UUIDVO(props.userUUID) : null;
     this._email = props.email ? new EmailVO(props.email) : null;
     this._ipAddress = IpAddressVO.create(props.ipAddress);
     this._userAgent = props.userAgent ? new UserAgentVO(props.userAgent) : null;
@@ -55,13 +55,13 @@ export class VerificationAttemptModel extends AggregateRoot {
   }
 
   static createFailed(
-    props: Omit<VerificationAttemptProps, 'id' | 'success'> & { userUuid: string; email: string },
+    props: Omit<VerificationAttemptProps, 'id' | 'success'> & { userUUID: string; email: string },
     failedAttempts: number,
   ): VerificationAttemptModel {
     const attempt = new VerificationAttemptModel({ ...props, success: false });
     attempt.apply(
       new EmailVerificationFailedEvent(
-        props.userUuid,
+        props.userUUID,
         props.email,
         props.ipAddress,
         failedAttempts,
@@ -76,8 +76,8 @@ export class VerificationAttemptModel extends AggregateRoot {
     return new VerificationAttemptModel(props);
   }
 
-  get userUuid(): UuidVO | null {
-    return this._userUuid;
+  get userUUID(): UUIDVO | null {
+    return this._userUUID;
   }
 
   get email(): EmailVO | null {

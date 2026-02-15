@@ -8,7 +8,7 @@ export class SessionRefreshedEventHandler implements IEventHandler<SessionRefres
 
   handle(event: SessionRefreshedEvent): void {
     this.logger.log(
-      `Session refreshed: oldSessionUuid=${event.oldSessionUuid}, newSessionUuid=${event.newSessionUuid}`,
+      `Session refreshed: oldSessionUUID=${event.oldSessionUUID}, newSessionUUID=${event.newSessionUUID}`,
     );
   }
 }

@@ -8,7 +8,7 @@ export class UserVerificationBlockedEventHandler implements IEventHandler<UserVe
 
   handle(event: UserVerificationBlockedEvent): void {
     this.logger.warn(
-      `User verification blocked: userUuid=${event.userUuid}, email=${event.email}, ` +
+      `User verification blocked: userUUID=${event.userUUID}, email=${event.email}, ` +
         `blockedUntil=${event.blockedUntil.toISOString()}, reason=${event.reason}`,
     );
   }

@@ -1,5 +1,5 @@
-import { AggregateRoot as CqrsAggregateRoot, IEvent } from '@nestjs/cqrs';
-import { UuidVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { AggregateRoot as CQRSAggregateRoot, IEvent } from '@nestjs/cqrs';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
 export interface AggregateRootProps {
   id?: number;
@@ -11,9 +11,9 @@ export interface AggregateRootProps {
 
 export abstract class AggregateRoot<
   EventBase extends IEvent = IEvent,
-> extends CqrsAggregateRoot<EventBase> {
+> extends CQRSAggregateRoot<EventBase> {
   protected _id: number | undefined;
-  protected _uuid: UuidVO;
+  protected _uuid: UUIDVO;
   protected _createdAt: Date;
   protected _updatedAt: Date;
   protected _archivedAt: Date | null;
@@ -21,7 +21,7 @@ export abstract class AggregateRoot<
   constructor(props?: AggregateRootProps) {
     super();
     this._id = props?.id;
-    this._uuid = new UuidVO(props?.uuid);
+    this._uuid = new UUIDVO(props?.uuid);
     this._createdAt = props?.createdAt ?? new Date();
     this._updatedAt = props?.updatedAt ?? new Date();
     this._archivedAt = props?.archivedAt ?? null;

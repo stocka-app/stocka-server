@@ -18,7 +18,7 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
     return entity ? VerificationAttemptMapper.toDomain(entity) : null;
   }
 
-  async findByUuid(uuid: string): Promise<VerificationAttemptModel | null> {
+  async findByUUID(uuid: string): Promise<VerificationAttemptModel | null> {
     const entity = await this.repository.findOne({ where: { uuid } });
     return entity ? VerificationAttemptMapper.toDomain(entity) : null;
   }
@@ -29,23 +29,23 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
     return VerificationAttemptMapper.toDomain(savedEntity as VerificationAttemptEntity);
   }
 
-  async countFailedByUserUuidInLastHour(userUuid: string): Promise<number> {
+  async countFailedByUserUUIDInLastHour(userUUID: string): Promise<number> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     return this.repository
       .createQueryBuilder('attempt')
-      .where('attempt.userUuid = :userUuid', { userUuid })
+      .where('attempt.userUUID = :userUUID', { userUUID })
       .andWhere('attempt.success = false')
       .andWhere('attempt.attemptedAt > :oneHourAgo', { oneHourAgo })
       .getCount();
   }
 
-  async countFailedByUserUuidInLast24Hours(userUuid: string): Promise<number> {
+  async countFailedByUserUUIDInLast24Hours(userUUID: string): Promise<number> {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
     return this.repository
       .createQueryBuilder('attempt')
-      .where('attempt.userUuid = :userUuid', { userUuid })
+      .where('attempt.userUUID = :userUUID', { userUUID })
       .andWhere('attempt.success = false')
       .andWhere('attempt.attemptedAt > :twentyFourHoursAgo', { twentyFourHoursAgo })
       .getCount();
@@ -73,9 +73,9 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
       .getCount();
   }
 
-  async findRecentByUserUuid(userUuid: string, limit: number): Promise<VerificationAttemptModel[]> {
+  async findRecentByUserUUID(userUUID: string, limit: number): Promise<VerificationAttemptModel[]> {
     const entities = await this.repository.find({
-      where: { userUuid },
+      where: { userUUID },
       order: { attemptedAt: 'DESC' },
       take: limit,
     });
@@ -118,22 +118,22 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
 
     return this.repository
       .createQueryBuilder('attempt')
-      .where('(attempt.email = :identifier OR attempt.userUuid = :identifier)', { identifier })
+      .where('(attempt.email = :identifier OR attempt.userUUID = :identifier)', { identifier })
       .andWhere('attempt.success = :success', { success: false })
       .andWhere('attempt.verificationType = :verificationType', { verificationType })
       .andWhere('attempt.attemptedAt > :oneHourAgo', { oneHourAgo })
       .getCount();
   }
 
-  async countFailedByUserUuidInLastHourByType(
-    userUuid: string,
+  async countFailedByUserUUIDInLastHourByType(
+    userUUID: string,
     verificationType: string,
   ): Promise<number> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     return this.repository
       .createQueryBuilder('attempt')
-      .where('attempt.userUuid = :userUuid', { userUuid })
+      .where('attempt.userUUID = :userUUID', { userUUID })
       .andWhere('attempt.success = :success', { success: false })
       .andWhere('attempt.verificationType = :verificationType', { verificationType })
       .andWhere('attempt.attemptedAt > :oneHourAgo', { oneHourAgo })

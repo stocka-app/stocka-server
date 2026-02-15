@@ -7,6 +7,6 @@ export class UserPasswordUpdatedEventHandler implements IEventHandler<UserPasswo
   private readonly logger = new Logger(UserPasswordUpdatedEventHandler.name);
 
   handle(event: UserPasswordUpdatedEvent): void {
-    this.logger.log(`User password updated: uuid=${event.userUuid}`);
+    this.logger.log(`User password updated: uuid=${event.userUUID}`);
   }
 }

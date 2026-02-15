@@ -93,10 +93,10 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     return !this.isArchived() && !this.isExpired() && !this.isUsed();
   }
 
-  markAsUsed(userUuid: string, email: string): void {
+  markAsUsed(userUUID: string, email: string): void {
     this._usedAt = new Date();
     this.touch();
-    this.apply(new EmailVerificationCompletedEvent(userUuid, email));
+    this.apply(new EmailVerificationCompletedEvent(userUUID, email));
   }
 
   canResend(): boolean {

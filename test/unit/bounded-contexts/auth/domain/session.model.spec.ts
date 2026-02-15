@@ -112,7 +112,7 @@ describe('SessionModel', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toBeInstanceOf(SessionCreatedEvent);
       const event = events[0] as SessionCreatedEvent;
-      expect(event.sessionUuid).toBe(session.uuid);
+      expect(event.sessionUUID).toBe(session.uuid);
       expect(event.userId).toBe(1);
     });
 

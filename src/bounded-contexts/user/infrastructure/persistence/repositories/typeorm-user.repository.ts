@@ -20,7 +20,7 @@ export class TypeOrmUserRepository implements IUserContract {
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
-  async findByUuid(uuid: string): Promise<UserModel | null> {
+  async findByUUID(uuid: string): Promise<UserModel | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: undefined },
     });

@@ -20,7 +20,7 @@ export class TypeOrmSessionRepository implements ISessionContract {
     return entity ? SessionMapper.toDomain(entity) : null;
   }
 
-  async findByUuid(uuid: string): Promise<SessionModel | null> {
+  async findByUUID(uuid: string): Promise<SessionModel | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: IsNull() },
     });

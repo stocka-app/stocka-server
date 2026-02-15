@@ -18,12 +18,12 @@ export class EmailVerificationCompletedEventHandler implements IEventHandler<Ema
 
   async handle(event: EmailVerificationCompletedEvent): Promise<void> {
     this.logger.log(
-      `Email verification completed: userUuid=${event.userUuid}, email=${event.email}`,
+      `Email verification completed: userUUID=${event.userUUID}, email=${event.email}`,
     );
 
     try {
       // Get user to fetch username for welcome email
-      const user = (await this.mediator.findUserByUuid(event.userUuid)) as UserModel | null;
+      const user = (await this.mediator.findUserByUUID(event.userUUID)) as UserModel | null;
       if (user) {
         const result = await this.emailProvider.sendWelcomeEmail(event.email, user.username);
         if (result.success) {

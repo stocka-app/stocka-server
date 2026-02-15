@@ -97,7 +97,7 @@ describe('RateLimitInterceptor', () => {
     const mockAttemptContract = {
       countFailedByIpAddressInLastHourByType: jest.fn(),
       countFailedByIdentifierInLastHourByType: jest.fn(),
-      countFailedByUserUuidInLastHourByType: jest.fn(),
+      countFailedByUserUUIDInLastHourByType: jest.fn(),
       persist: jest.fn(),
     };
 
@@ -174,7 +174,7 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
-      attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3);
+      attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
@@ -190,7 +190,7 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
-      attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3);
+      attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       await interceptAndCatchError(context, callHandler);
@@ -211,7 +211,7 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
-      attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(7);
+      attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(7);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
       mediator.blockUserVerification.mockResolvedValue(undefined);
 
@@ -233,7 +233,7 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
-      attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(10);
+      attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(10);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
       mediator.blockUserVerification.mockResolvedValue(undefined);
 
@@ -252,7 +252,7 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
-      attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3);
+      attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       await interceptAndCatchError(context, callHandler);
@@ -273,7 +273,7 @@ describe('RateLimitInterceptor', () => {
       expect(caughtError).toBe(error);
       expect(attemptContract.persist).toHaveBeenCalled();
       const persistCall = attemptContract.persist.mock.calls[0][0];
-      expect(persistCall.userUuid).toBeNull();
+      expect(persistCall.userUUID).toBeNull();
       expect(persistCall.email?.toString()).toBe('nonexistent@example.com');
     });
 
@@ -290,7 +290,7 @@ describe('RateLimitInterceptor', () => {
       expect(caughtError).toBe(error);
       expect(attemptContract.persist).toHaveBeenCalled();
       const persistCall = attemptContract.persist.mock.calls[0][0];
-      expect(persistCall.userUuid).toBeNull();
+      expect(persistCall.userUUID).toBeNull();
       expect(persistCall.email).toBeNull();
     });
 
@@ -301,7 +301,7 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, originalError);
 
       mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
-      attemptContract.countFailedByUserUuidInLastHourByType.mockResolvedValue(3);
+      attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       const caughtError = await interceptAndCatchError(context, callHandler);

@@ -6,7 +6,7 @@ export class VerificationAttemptMapper {
     return VerificationAttemptModel.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
-      userUuid: entity.userUuid,
+      userUUID: entity.userUUID,
       email: entity.email,
       ipAddress: entity.ipAddress,
       userAgent: entity.userAgent,
@@ -23,7 +23,7 @@ export class VerificationAttemptMapper {
   static toEntity(model: VerificationAttemptModel): Partial<VerificationAttemptEntity> {
     const entity: Partial<VerificationAttemptEntity> = {
       uuid: model.uuid,
-      userUuid: model.userUuid?.toString() ?? null,
+      userUUID: model.userUUID?.toString() ?? null,
       email: model.email?.toString() ?? null,
       ipAddress: model.ipAddress.toString(),
       userAgent: model.userAgent?.getValue() ?? null,

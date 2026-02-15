@@ -7,7 +7,7 @@ import { SocialAccountEntity } from '@user/infrastructure/persistence/entities/s
 import { TypeOrmUserRepository } from '@user/infrastructure/persistence/repositories/typeorm-user.repository';
 import { CreateUserHandler } from '@user/application/commands/create-user/create-user.handler';
 import { CreateUserFromSocialHandler } from '@user/application/commands/create-user-from-social/create-user-from-social.handler';
-import { FindUserByUuidHandler } from '@user/application/queries/find-user-by-uuid/find-user-by-uuid.handler';
+import { FindUserByUUIDHandler } from '@user/application/queries/find-user-by-uuid/find-user-by-uuid.handler';
 import { FindUserByEmailHandler } from '@user/application/queries/find-user-by-email/find-user-by-email.handler';
 import { FindUserByEmailOrUsernameHandler } from '@user/application/queries/find-user-by-email-or-username/find-user-by-email-or-username.handler';
 import { UserCreatedEventHandler } from '@user/application/event-handlers/user-created.event-handler';
@@ -20,7 +20,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 const CommandHandlers = [CreateUserHandler, CreateUserFromSocialHandler];
 const QueryHandlers = [
-  FindUserByUuidHandler,
+  FindUserByUUIDHandler,
   FindUserByEmailHandler,
   FindUserByEmailOrUsernameHandler,
 ];

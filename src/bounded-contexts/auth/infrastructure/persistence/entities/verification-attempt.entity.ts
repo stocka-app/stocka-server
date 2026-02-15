@@ -5,7 +5,7 @@ import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 export class VerificationAttemptEntity extends BaseEntity {
   @Column({ name: 'user_uuid', type: 'varchar', length: 36, nullable: true })
   @Index()
-  userUuid!: string | null;
+  userUUID!: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   @Index()

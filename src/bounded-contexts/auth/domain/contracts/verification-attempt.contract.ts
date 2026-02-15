@@ -2,12 +2,12 @@ import { VerificationAttemptModel } from '@auth/domain/models/verification-attem
 
 export interface IVerificationAttemptContract {
   findById(id: number): Promise<VerificationAttemptModel | null>;
-  findByUuid(uuid: string): Promise<VerificationAttemptModel | null>;
+  findByUUID(uuid: string): Promise<VerificationAttemptModel | null>;
   persist(attempt: VerificationAttemptModel): Promise<VerificationAttemptModel>;
 
   // Rate limiting queries
-  countFailedByUserUuidInLastHour(userUuid: string): Promise<number>;
-  countFailedByUserUuidInLast24Hours(userUuid: string): Promise<number>;
+  countFailedByUserUUIDInLastHour(userUUID: string): Promise<number>;
+  countFailedByUserUUIDInLast24Hours(userUUID: string): Promise<number>;
   countFailedByIpAddressInLastHour(ipAddress: string): Promise<number>;
   countFailedByEmailInLastHour(email: string): Promise<number>;
 
@@ -22,13 +22,13 @@ export interface IVerificationAttemptContract {
     verificationType: string,
   ): Promise<number>;
 
-  countFailedByUserUuidInLastHourByType(
-    userUuid: string,
+  countFailedByUserUUIDInLastHourByType(
+    userUUID: string,
     verificationType: string,
   ): Promise<number>;
 
   // For analysis
-  findRecentByUserUuid(userUuid: string, limit: number): Promise<VerificationAttemptModel[]>;
+  findRecentByUserUUID(userUUID: string, limit: number): Promise<VerificationAttemptModel[]>;
 
   // Cleanup
   archiveOlderThan(date: Date): Promise<number>;
