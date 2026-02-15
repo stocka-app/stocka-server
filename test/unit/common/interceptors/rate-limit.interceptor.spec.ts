@@ -131,7 +131,7 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should not track errors when no rate limit config is present', async () => {
-      const context = createMockExecutionContext(undefined);
+      const context = createMockExecutionContext();
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 

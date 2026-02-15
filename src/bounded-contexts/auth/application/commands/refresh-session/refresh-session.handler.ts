@@ -46,7 +46,7 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
     const session = await this.sessionContract.findByTokenHash(tokenHash);
 
     // Check if session exists and is valid
-    if (!session || !session.isValid()) {
+    if (!session?.isValid()) {
       throw new TokenExpiredException();
     }
 

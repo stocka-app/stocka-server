@@ -14,7 +14,7 @@ export interface EmailVerificationTokenProps extends AggregateRootProps {
 }
 
 export class EmailVerificationTokenModel extends AggregateRoot {
-  private _userId: number;
+  private readonly _userId: number;
   private _codeHash: string;
   private _expiresAt: Date;
   private _usedAt: Date | null;

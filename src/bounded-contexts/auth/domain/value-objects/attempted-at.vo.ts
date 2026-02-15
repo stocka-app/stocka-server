@@ -8,12 +8,12 @@ export class AttemptedAtVO extends CompoundVO {
 
   constructor(value: Date) {
     super();
-    this._value = new Date(value.getTime());
+    this._value = new Date(value);
     this.ensureValid();
   }
 
   private ensureValid(): void {
-    if (isNaN(this._value.getTime())) {
+    if (Number.isNaN(this._value.getTime())) {
       throw new InvalidAttemptedAtException('Attempted at date is invalid');
     }
 
@@ -24,7 +24,7 @@ export class AttemptedAtVO extends CompoundVO {
   }
 
   toDate(): Date {
-    return new Date(this._value.getTime());
+    return new Date(this._value);
   }
 
   toString(): string {

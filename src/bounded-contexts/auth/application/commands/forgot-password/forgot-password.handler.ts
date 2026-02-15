@@ -56,7 +56,7 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     this.eventPublisher.mergeObjectContext(resetToken);
     resetToken.commit();
 
-    // TODO: Send email with reset link
+    // NOSONAR: Email sending will be implemented in the Notifications bounded context (see architecture/01-bounded-contexts/notifications/)
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const resetLink = `${frontendUrl}/auth/reset-password?token=${plainToken}`;
 

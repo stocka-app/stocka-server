@@ -26,7 +26,7 @@ export class EmailVerifiedGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<{ user?: { sub?: string } }>();
     const user = request.user;
 
-    if (!user || !user.sub) {
+    if (!user?.sub) {
       throw new ForbiddenException('User not authenticated');
     }
 
@@ -38,7 +38,7 @@ export class EmailVerifiedGuard implements CanActivate {
     }
 
     // Check if user's email is verified
-    if (fullUser.status && fullUser.status.requiresEmailVerification()) {
+    if (fullUser.status?.requiresEmailVerification()) {
       throw new ForbiddenException({
         statusCode: 403,
         error: 'Email Not Verified',

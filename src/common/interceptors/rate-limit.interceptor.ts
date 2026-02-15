@@ -53,7 +53,7 @@ export class RateLimitInterceptor implements NestInterceptor {
     const config: RateLimitConfig | undefined = request.__rateLimitConfig;
 
     // No rate limit config or not tracking → just re-throw
-    if (!config || !config.trackFailedAttempts) {
+    if (!config?.trackFailedAttempts) {
       return;
     }
 
