@@ -17,9 +17,7 @@ export class EmailVerificationCompletedEventHandler implements IEventHandler<Ema
   ) {}
 
   async handle(event: EmailVerificationCompletedEvent): Promise<void> {
-    this.logger.log(
-      `Email verification completed: userUUID=${event.userUUID}, email=${event.email}`,
-    );
+    this.logger.log(`Email verification completed: userUUID=${event.userUUID}`);
 
     try {
       // Get user to fetch username for welcome email

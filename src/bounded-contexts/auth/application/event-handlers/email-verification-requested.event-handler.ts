@@ -14,7 +14,7 @@ export class EmailVerificationRequestedEventHandler implements IEventHandler<Ema
   ) {}
 
   async handle(event: EmailVerificationRequestedEvent): Promise<void> {
-    this.logger.log(`Email verification requested: userId=${event.userId}, email=${event.email}`);
+    this.logger.log(`Email verification requested: userId=${event.userId}`);
 
     try {
       const result = await this.emailProvider.sendVerificationEmail(event.email, event.code);

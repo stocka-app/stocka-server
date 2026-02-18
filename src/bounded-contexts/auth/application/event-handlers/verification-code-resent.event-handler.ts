@@ -8,7 +8,7 @@ export class VerificationCodeResentEventHandler implements IEventHandler<Verific
 
   handle(event: VerificationCodeResentEvent): void {
     this.logger.log(
-      `Verification code resent: userId=${event.userId}, email=${event.email}, resendCount=${event.resendCount}`,
+      `Verification code resent: userId=${event.userId}, resendCount=${event.resendCount}`,
     );
   }
 }

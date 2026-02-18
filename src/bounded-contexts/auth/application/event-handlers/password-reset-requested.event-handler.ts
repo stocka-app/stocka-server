@@ -7,6 +7,6 @@ export class PasswordResetRequestedEventHandler implements IEventHandler<Passwor
   private readonly logger = new Logger(PasswordResetRequestedEventHandler.name);
 
   handle(event: PasswordResetRequestedEvent): void {
-    this.logger.log(`Password reset requested: userId=${event.userId}, email=${event.email}`);
+    this.logger.log(`Password reset requested: userId=${event.userId}`);
   }
 }

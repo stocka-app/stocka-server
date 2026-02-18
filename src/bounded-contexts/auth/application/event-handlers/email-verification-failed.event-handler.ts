@@ -8,8 +8,7 @@ export class EmailVerificationFailedEventHandler implements IEventHandler<EmailV
 
   handle(event: EmailVerificationFailedEvent): void {
     this.logger.warn(
-      `Email verification failed: userUUID=${event.userUUID}, email=${event.email}, ` +
-        `ipAddress=${event.ipAddress}, failedAttempts=${event.failedAttempts}`,
+      `Email verification failed: userUUID=${event.userUUID}, ipAddress=${event.ipAddress}, failedAttempts=${event.failedAttempts}`,
     );
 
     // Log additional warning for suspicious activity

@@ -60,8 +60,7 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const resetLink = `${frontendUrl}/auth/reset-password?token=${plainToken}`;
 
-    // Log the reset link for development
-    this.logger.log(`Password reset link generated for ${command.email}: ${resetLink}`);
+    this.logger.debug(`Password reset token generated for userId=${user.uuid}`);
 
     return { message: genericMessage };
   }
