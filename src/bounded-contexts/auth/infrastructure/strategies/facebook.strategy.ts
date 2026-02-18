@@ -23,14 +23,12 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     done: (error: Error | null, user?: SocialProfile) => void,
   ): void {
     const { id, emails, displayName, name } = profile;
-
     const user: SocialProfile = {
       email: emails?.[0]?.value || '',
       displayName: displayName || `${name?.givenName || ''} ${name?.familyName || ''}`.trim(),
       provider: 'facebook',
       providerId: id,
     };
-
     done(null, user);
   }
 }

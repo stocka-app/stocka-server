@@ -48,6 +48,7 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
       tokenHash,
       expiresAt,
       email: command.email,
+      plainToken,
     });
 
     await this.passwordResetTokenContract.persist(resetToken);

@@ -31,10 +31,10 @@ export class PasswordResetTokenModel extends AggregateRoot {
   }
 
   static create(
-    props: Omit<PasswordResetTokenProps, 'id'> & { email: string },
+    props: Omit<PasswordResetTokenProps, 'id'> & { email: string; plainToken: string },
   ): PasswordResetTokenModel {
     const token = new PasswordResetTokenModel(props);
-    token.apply(new PasswordResetRequestedEvent(token.userId, props.email));
+    token.apply(new PasswordResetRequestedEvent(token.userId, props.email, props.plainToken));
     return token;
   }
 

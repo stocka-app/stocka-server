@@ -15,6 +15,7 @@ module.exports = {
   moduleNameMapper: {
     '^@auth/(.*)$': '<rootDir>/src/bounded-contexts/auth/$1',
     '^@user/(.*)$': '<rootDir>/src/bounded-contexts/user/$1',
+    '^@test-mockup/(.*)$': '<rootDir>/test/__mocks__/$1',
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@common/(.*)$': '<rootDir>/src/common/$1',
     '^@core/(.*)$': '<rootDir>/src/core/$1',

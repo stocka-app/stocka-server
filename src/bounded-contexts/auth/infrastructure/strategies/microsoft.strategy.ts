@@ -35,18 +35,14 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     done: DoneCallback,
   ): void {
     const { id, displayName } = profile;
-
-    // Microsoft puede devolver el email en diferentes lugares
     const email =
       profile.emails?.[0]?.value || profile._json?.mail || profile._json?.userPrincipalName || '';
-
     const user: SocialProfile = {
       email,
       displayName: displayName || '',
       provider: 'microsoft',
       providerId: id,
     };
-
     done(null, user);
   }
 }

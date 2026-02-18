@@ -8,7 +8,7 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { emailProviderMock, IEmailProviderContract } from '@test-mockup/resend.mock';
 import { EmailAlreadyExistsException } from '@auth/domain/exceptions/email-already-exists.exception';
 import { UsernameAlreadyExistsException } from '@auth/domain/exceptions/username-already-exists.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -21,7 +21,7 @@ describe('SignUpHandler', () => {
   let sessionContract: jest.Mocked<ISessionContract>;
   let verificationTokenContract: jest.Mocked<IEmailVerificationTokenContract>;
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
-  let emailProvider: jest.Mocked<IEmailProviderContract>;
+  let emailProvider: jest.Mocked<IEmailProviderContract>; // This line remains unchanged
 
   const configValues: Record<string, string | number> = {
     JWT_ACCESS_SECRET: 'test-access-secret',
@@ -94,7 +94,7 @@ describe('SignUpHandler', () => {
           useValue: mockVerificationTokenContract,
         },
         { provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT, useValue: mockCodeGenerator },
-        { provide: INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT, useValue: mockEmailProvider },
+        { provide: INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT, useValue: emailProviderMock }, // Updated to use emailProviderMock
       ],
     }).compile();
 

@@ -37,14 +37,12 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
       profile.name?.firstName && profile.name?.lastName
         ? `${profile.name.firstName} ${profile.name.lastName}`
         : profile.email?.split('@')[0] || 'Apple User';
-
     const user: SocialProfile = {
       email: profile.email || '',
       displayName,
       provider: 'apple',
       providerId: profile.id,
     };
-
     done(null, user);
   }
 }

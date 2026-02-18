@@ -13,6 +13,7 @@ describe('PasswordResetTokenModel', () => {
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
+        plainToken: 'plain-token',
       });
 
       expect(token.userId).toBe(1);
@@ -57,6 +58,7 @@ describe('PasswordResetTokenModel', () => {
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
+        plainToken: 'plain-token',
       });
 
       expect(token.isValid()).toBe(true);
@@ -133,6 +135,7 @@ describe('PasswordResetTokenModel', () => {
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
+        plainToken: 'plain-token',
       });
 
       expect(token.isUsed()).toBe(false);
@@ -154,6 +157,7 @@ describe('PasswordResetTokenModel', () => {
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
+        plainToken: 'plain-token',
       });
 
       const events = token.getUncommittedEvents();
@@ -195,6 +199,7 @@ describe('PasswordResetTokenModel', () => {
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
+        plainToken: 'plain-token',
       });
       token.commit(); // Clear creation event
 
@@ -217,6 +222,7 @@ describe('PasswordResetTokenModel', () => {
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
+        plainToken: 'plain-token',
       });
 
       expect(token.getUncommittedEvents()).toHaveLength(1);
