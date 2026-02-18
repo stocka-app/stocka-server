@@ -21,6 +21,16 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
   }
 
+  /**
+   * Este método es invocado automáticamente por Passport (passport-google-oauth20)
+   * para agregar parámetros personalizados a la URL de autorización de Google.
+   * No se llama manualmente. Aquí forzamos el parámetro 'prompt' para que
+   * siempre se muestre el selector de cuenta de Google al iniciar sesión.
+   */
+  authorizationParams(): Record<string, string> {
+    return { prompt: 'select_account' };
+  }
+
   validate(
     accessToken: string,
     refreshToken: string,
