@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
 import { UserModel } from '@user/domain/models/user.model';
 import { IUserContract } from '@user/domain/contracts/user.contract';
@@ -11,6 +12,8 @@ export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFr
     @Inject(INJECTION_TOKENS.USER_CONTRACT)
     private readonly userContract: IUserContract,
     private readonly eventPublisher: EventPublisher,
+    @Inject(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT)
+    private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
   async execute(command: CreateUserFromSocialCommand): Promise<UserModel> {
@@ -22,6 +25,12 @@ export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFr
     });
 
     const persistedUser = await this.userContract.persist(user);
+
+    await this.socialAccountContract.persist({
+      userId: persistedUser.id!,
+      provider: command.provider,
+      providerId: command.providerId,
+    });
 
     this.eventPublisher.mergeObjectContext(user);
     user.commit();

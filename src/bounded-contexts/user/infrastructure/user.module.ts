@@ -5,6 +5,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 import { SocialAccountEntity } from '@user/infrastructure/persistence/entities/social-account.entity';
 import { TypeOrmUserRepository } from '@user/infrastructure/persistence/repositories/typeorm-user.repository';
+import { TypeOrmSocialAccountRepository } from '@user/infrastructure/persistence/repositories/typeorm-social-account.repository';
 import { CreateUserHandler } from '@user/application/commands/create-user/create-user.handler';
 import { CreateUserFromSocialHandler } from '@user/application/commands/create-user-from-social/create-user-from-social.handler';
 import { FindUserByUUIDHandler } from '@user/application/queries/find-user-by-uuid/find-user-by-uuid.handler';
@@ -41,6 +42,10 @@ const EventHandlers = [
     {
       provide: INJECTION_TOKENS.USER_CONTRACT,
       useClass: TypeOrmUserRepository,
+    },
+    {
+      provide: INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT,
+      useClass: TypeOrmSocialAccountRepository,
     },
     {
       provide: INJECTION_TOKENS.USER_FACADE,
