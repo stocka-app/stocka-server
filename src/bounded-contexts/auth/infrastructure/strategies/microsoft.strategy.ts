@@ -28,6 +28,15 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     });
   }
 
+  /**
+   * Invocado automáticamente por Passport para agregar parámetros personalizados
+   * a la URL de autorización de Microsoft. Forzamos 'select_account' para que
+   * siempre se muestre el selector de cuenta, igual que en Google.
+   */
+  authorizationParams(): Record<string, string> {
+    return { prompt: 'select_account' };
+  }
+
   validate(
     accessToken: string,
     refreshToken: string,
