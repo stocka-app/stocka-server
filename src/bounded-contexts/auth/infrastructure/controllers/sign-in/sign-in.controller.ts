@@ -1,13 +1,15 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Res } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { Response } from 'express';
 import { RateLimit } from '@common/decorators/rate-limit.decorator';
 import { SignInCommand } from '@auth/application/commands/sign-in/sign-in.command';
 import { SignInInDto } from '@auth/infrastructure/controllers/sign-in/sign-in-in.dto';
 import { SignInOutDto } from '@auth/infrastructure/controllers/sign-in/sign-in-out.dto';
 import { UserOutDto } from '@auth/infrastructure/controllers/sign-up/sign-up-out.dto';
 import { UserModel } from '@user/domain/models/user.model';
+import { setRefreshCookie } from '@auth/infrastructure/helpers/refresh-cookie.helper';
 
 interface SignInResult {
   user: UserModel;
@@ -51,10 +53,15 @@ export class SignInController {
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
   @ApiResponse({ status: 429, description: 'Too many attempts or rate limit exceeded' })
-  async handle(@Body() dto: SignInInDto): Promise<SignInOutDto> {
+  async handle(
+    @Body() dto: SignInInDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SignInOutDto> {
     const result: SignInResult = await this.commandBus.execute(
       new SignInCommand(dto.emailOrUsername, dto.password),
     );
+
+    setRefreshCookie(res, result.refreshToken);
 
     const userOut: UserOutDto = {
       id: result.user.uuid,
@@ -66,7 +73,6 @@ export class SignInController {
     return {
       user: userOut,
       accessToken: result.accessToken,
-      refreshToken: result.refreshToken,
       emailVerificationRequired: result.emailVerificationRequired,
     };
   }

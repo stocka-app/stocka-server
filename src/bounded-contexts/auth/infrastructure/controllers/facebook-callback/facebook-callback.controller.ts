@@ -7,6 +7,7 @@ import { FacebookAuthGuard } from '@auth/infrastructure/guards/facebook-auth.gua
 import { SocialSignInCommand } from '@auth/application/commands/social-sign-in/social-sign-in.command';
 import { SocialSignInResult } from '@auth/application/types/auth-result.types';
 import { SocialProfile } from '@auth/infrastructure/strategies/google.strategy';
+import { setRefreshCookie } from '@auth/infrastructure/helpers/refresh-cookie.helper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -21,7 +22,7 @@ export class FacebookCallbackController {
   @ApiOperation({ summary: 'Facebook OAuth callback' })
   @ApiResponse({
     status: 302,
-    description: 'Redirects to frontend with tokens',
+    description: 'Redirects to frontend with access token',
   })
   async handle(@Req() req: Request, @Res() res: Response): Promise<void> {
     const profile = req.user as SocialProfile;
@@ -35,9 +36,9 @@ export class FacebookCallbackController {
       ),
     );
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    const redirectUrl = `${frontendUrl}/auth/callback?accessToken=${result.accessToken}&refreshToken=${result.refreshToken}`;
+    setRefreshCookie(res, result.refreshToken);
 
-    res.redirect(redirectUrl);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    res.redirect(`${frontendUrl}/auth/callback?accessToken=${result.accessToken}`);
   }
 }
