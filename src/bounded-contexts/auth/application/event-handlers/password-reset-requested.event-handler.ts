@@ -1,12 +1,9 @@
-import * as React from 'react';
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PasswordResetRequestedEvent } from '@auth/domain/events/password-reset-requested.event';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { render } from '@react-email/render';
-import { PasswordResetEmail } from '@shared/infrastructure/email/templates/password-reset.email';
 
 @EventsHandler(PasswordResetRequestedEvent)
 export class PasswordResetRequestedEventHandler implements IEventHandler<PasswordResetRequestedEvent> {
@@ -24,22 +21,17 @@ export class PasswordResetRequestedEventHandler implements IEventHandler<Passwor
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const resetLink = `${frontendUrl}/auth/reset-password?token=${event.token}`;
 
-    // Renderizar el template de email
-    const html = await render(
-      React.createElement(
-        PasswordResetEmail,
-        {
-          resetLink,
-          userEmail: event.email,
-        },
-        null,
-      ),
+    const result = await this.emailProvider.sendPasswordResetEmail(
+      event.email,
+      resetLink,
+      event.email,
+      event.lang,
     );
 
-    await this.emailProvider.sendEmail({
-      to: event.email,
-      subject: 'Restablece tu contraseña en Stocka',
-      html,
-    });
+    if (result.success) {
+      this.logger.log(`Password reset email sent: emailId=${result.id}`);
+    } else {
+      this.logger.error(`Failed to send password reset email: ${result.error}`);
+    }
   }
 }

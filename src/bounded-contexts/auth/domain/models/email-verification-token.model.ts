@@ -46,9 +46,32 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     props: Omit<EmailVerificationTokenProps, 'id'> & { email: string; code?: string },
   ): EmailVerificationTokenModel {
     const token = new EmailVerificationTokenModel(props);
+
     if (props.code) {
       token.apply(new EmailVerificationRequestedEvent(token.userId, props.email, props.code));
     }
+
+    return token;
+  }
+
+  /**
+   * Factory para el caso de reenvío cuando no existe token previo.
+   * Emite VerificationCodeResentEvent (no EmailVerificationRequestedEvent)
+   * para que el event handler de reenvío sea el único responsable del correo.
+   */
+  static createForResend(
+    props: Omit<EmailVerificationTokenProps, 'id'> & { email: string; code: string; lang?: Locale },
+  ): EmailVerificationTokenModel {
+    const token = new EmailVerificationTokenModel({
+      ...props,
+      resendCount: 1,
+      lastResentAt: new Date(),
+    });
+
+    token.apply(
+      new VerificationCodeResentEvent(token.userId, props.email, props.code, 1, props.lang ?? 'es'),
+    );
+
     return token;
   }
 
@@ -135,13 +158,19 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     return Math.max(0, cooldownSeconds - secondsSinceLastResend);
   }
 
-  updateCode(newCodeHash: string, newExpiresAt: Date, email: string, code: string): void {
+  updateCode(
+    newCodeHash: string,
+    newExpiresAt: Date,
+    email: string,
+    code: string,
+    lang: Locale = 'es',
+  ): void {
     this._codeHash = newCodeHash;
     this._expiresAt = newExpiresAt;
     this._resendCount += 1;
     this._lastResentAt = new Date();
     this.touch();
-    this.apply(new VerificationCodeResentEvent(this.userId, email, code, this._resendCount));
+    this.apply(new VerificationCodeResentEvent(this.userId, email, code, this._resendCount, lang));
   }
 
   getMaxResendsPerHour(): number {

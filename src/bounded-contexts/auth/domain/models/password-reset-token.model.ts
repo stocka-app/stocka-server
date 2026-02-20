@@ -1,6 +1,7 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
 import { PasswordResetRequestedEvent } from '@auth/domain/events/password-reset-requested.event';
 import { PasswordResetCompletedEvent } from '@auth/domain/events/password-reset-completed.event';
+import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 
 export interface PasswordResetTokenProps extends AggregateRootProps {
   userId: number;
@@ -31,10 +32,21 @@ export class PasswordResetTokenModel extends AggregateRoot {
   }
 
   static create(
-    props: Omit<PasswordResetTokenProps, 'id'> & { email: string; plainToken: string },
+    props: Omit<PasswordResetTokenProps, 'id'> & {
+      email: string;
+      plainToken: string;
+      lang?: Locale;
+    },
   ): PasswordResetTokenModel {
     const token = new PasswordResetTokenModel(props);
-    token.apply(new PasswordResetRequestedEvent(token.userId, props.email, props.plainToken));
+    token.apply(
+      new PasswordResetRequestedEvent(
+        token.userId,
+        props.email,
+        props.plainToken,
+        props.lang ?? 'es',
+      ),
+    );
     return token;
   }
 

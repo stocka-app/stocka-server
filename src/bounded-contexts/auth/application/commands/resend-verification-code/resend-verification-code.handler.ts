@@ -2,9 +2,9 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ResendVerificationCodeCommand } from '@auth/application/commands/resend-verification-code/resend-verification-code.command';
+import { EmailVerificationTokenModel } from '@auth/domain/models/email-verification-token.model';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { ResendCooldownActiveException } from '@auth/domain/exceptions/resend-cooldown-active.exception';
 import { MaxResendsExceededException } from '@auth/domain/exceptions/max-resends-exceeded.exception';
 import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-already-verified.exception';
@@ -29,8 +29,6 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     private readonly tokenContract: IEmailVerificationTokenContract,
     @Inject(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT)
     private readonly codeGenerator: ICodeGeneratorContract,
-    @Inject(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
-    private readonly emailProvider: IEmailProviderContract,
   ) {}
 
   async execute(command: ResendVerificationCodeCommand): Promise<ResendResult> {
@@ -76,13 +74,11 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       const newExpiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
       // Update the token
+      // updateCode() emits VerificationCodeResentEvent — el event handler envía el correo
       const tokenWithContext = this.eventPublisher.mergeObjectContext(existingToken);
-      tokenWithContext.updateCode(newCodeHash, newExpiresAt, command.email, newCode);
+      tokenWithContext.updateCode(newCodeHash, newExpiresAt, command.email, newCode, command.lang);
       await this.tokenContract.persist(tokenWithContext);
       tokenWithContext.commit();
-
-      // Send email
-      await this.emailProvider.sendVerificationEmail(command.email, newCode, user.username, command.lang);
 
       return {
         success: true,
@@ -92,7 +88,9 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       };
     }
 
-    // No existing token, create a new one
+    // No existing token — crear uno nuevo via createForResend()
+    // createForResend() emite VerificationCodeResentEvent (no EmailVerificationRequestedEvent)
+    // para que el VerificationCodeResentEventHandler sea el único responsable del correo
     const code = this.codeGenerator.generateVerificationCode();
     const codeHash = this.codeGenerator.hashCode(code);
     const expirationMinutes = this.configService.get<number>(
@@ -101,29 +99,24 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     );
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
-    const { EmailVerificationTokenModel } =
-      await import('@auth/domain/models/email-verification-token.model');
-
-    const token = EmailVerificationTokenModel.create({
+    const token = EmailVerificationTokenModel.createForResend({
       userId: user.id!,
       codeHash,
       expiresAt,
       email: command.email,
       code,
+      lang: command.lang,
     });
 
     const tokenWithContext = this.eventPublisher.mergeObjectContext(token);
     await this.tokenContract.persist(tokenWithContext);
     tokenWithContext.commit();
 
-    // Send email
-    await this.emailProvider.sendVerificationEmail(command.email, code, user.username, command.lang);
-
     return {
       success: true,
       message: 'Verification code sent successfully.',
       cooldownSeconds: 0,
-      remainingResends: token.getMaxResendsPerHour() - 1,
+      remainingResends: token.getRemainingResends(),
     };
   }
 }

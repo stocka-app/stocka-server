@@ -143,6 +143,7 @@ describe('SignUpHandler', () => {
       'test@example.com',
       'ABC123',
       'testuser',
+      'es',
     );
   });
 
