@@ -14,6 +14,7 @@ import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { RateLimitGuard } from '@common/guards/rate-limit.guard';
 import { RateLimitInterceptor } from '@common/interceptors/rate-limit.interceptor';
 import { AppController } from '@core/infrastructure/app.controller';
+import { HealthModule } from '@core/infrastructure/health/health.module';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
 
 @Module({
@@ -36,6 +37,7 @@ import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
         limit: 100,
       },
     ]),
+    HealthModule,
     EmailModule,
     UserModule,
     AuthModule,
