@@ -25,8 +25,8 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     ],
     // Migrations are run manually via CLI, not auto-loaded in app
     migrationsRun: false,
-    // In development, sync schema automatically (disable in production!)
-    synchronize: configService.get<string>('NODE_ENV') === 'development',
+    // Schema changes must go through migrations — never auto-sync
+    synchronize: false,
     logging: configService.get<string>('NODE_ENV') === 'development',
   }),
   inject: [ConfigService],
