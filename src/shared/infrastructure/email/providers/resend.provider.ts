@@ -19,10 +19,7 @@ export class ResendEmailProvider implements IEmailProviderContract {
 
   constructor(private readonly configService: ConfigService) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
-    if (!apiKey) {
-      this.logger.warn('RESEND_API_KEY is not configured. Email sending will be disabled.');
-    }
-    this.resend = new Resend(apiKey || 'dummy_key');
+    this.resend = new Resend(apiKey);
     this.defaultFrom =
       this.configService.get<string>('EMAIL_FROM') || 'Stocka <noreply@stocka.app>';
   }

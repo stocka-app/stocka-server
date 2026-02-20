@@ -139,8 +139,7 @@ class EnvironmentVariables {
 
   // Email (Resend)
   @IsString()
-  @IsOptional()
-  RESEND_API_KEY?: string;
+  RESEND_API_KEY!: string;
 
   @IsString()
   @IsOptional()
