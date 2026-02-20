@@ -1,0 +1,123 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { CqrsModule } from '@nestjs/cqrs';
+import { ConfigService } from '@nestjs/config';
+import { ForgotPasswordHandler } from '@auth/application/commands/forgot-password/forgot-password.handler';
+import { PasswordResetRequestedEventHandler } from '@auth/application/event-handlers/password-reset-requested.event-handler';
+import { ForgotPasswordCommand } from '@auth/application/commands/forgot-password/forgot-password.command';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserMother } from '@test/helpers/object-mother/user.mother';
+
+/** Waits for all async event handlers to finish executing */
+const flushPromises = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+describe('Password recovery — transactional email delivery', () => {
+  let handler: ForgotPasswordHandler;
+  let emailProvider: jest.Mocked<IEmailProviderContract>;
+  let mediatorService: { findUserByEmail: jest.Mock };
+
+  // A real Stocka customer who already has an account
+  const registeredCustomer = UserMother.create({
+    id: 1,
+    uuid: '550e8400-e29b-41d4-a716-446655440001',
+    email: 'maria.garcia@mitienda.mx',
+    username: 'maria_garcia',
+  });
+
+  beforeEach(async () => {
+    mediatorService = { findUserByEmail: jest.fn() };
+
+    emailProvider = {
+      sendEmail: jest.fn().mockResolvedValue({ success: true, id: 'email-reset-001' }),
+      sendVerificationEmail: jest.fn().mockResolvedValue({ success: true, id: 'email-reset-001' }),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ success: true, id: 'email-reset-001' }),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue({ success: true, id: 'email-reset-001' }),
+    } as jest.Mocked<IEmailProviderContract>;
+
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [CqrsModule],
+      providers: [
+        ForgotPasswordHandler,
+        PasswordResetRequestedEventHandler,
+        { provide: MediatorService, useValue: mediatorService },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('https://app.stocka.mx') },
+        },
+        {
+          provide: INJECTION_TOKENS.PASSWORD_RESET_TOKEN_CONTRACT,
+          useValue: { persist: jest.fn().mockResolvedValue(undefined) },
+        },
+        {
+          provide: INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
+          useValue: emailProvider,
+        },
+      ],
+    }).compile();
+
+    await module.init();
+    handler = module.get(ForgotPasswordHandler);
+  });
+
+  describe('Given a Stocka customer who forgot their password and needs to recover account access', () => {
+    describe('When they enter their email on the "Forgot your password?" screen', () => {
+      it('Then the system sends exactly one email with the password reset link', async () => {
+        // Given
+        mediatorService.findUserByEmail.mockResolvedValue(registeredCustomer);
+
+        // When
+        await handler.execute(new ForgotPasswordCommand('maria.garcia@mitienda.mx', 'es'));
+        await flushPromises();
+
+        // Then
+        expect(emailProvider.sendPasswordResetEmail).toHaveBeenCalledTimes(1);
+      });
+
+      it('Then the recovery email arrives in the language the customer uses in the app', async () => {
+        // Given
+        mediatorService.findUserByEmail.mockResolvedValue(registeredCustomer);
+
+        // When
+        await handler.execute(new ForgotPasswordCommand('maria.garcia@mitienda.mx', 'en'));
+        await flushPromises();
+
+        // Then
+        expect(emailProvider.sendPasswordResetEmail).toHaveBeenCalledWith(
+          'maria.garcia@mitienda.mx',
+          expect.stringContaining('reset-password'),
+          'maria.garcia@mitienda.mx',
+          'en',
+        );
+      });
+
+      it('Then no other email type is sent (no verification, no welcome) by mistake', async () => {
+        // Given
+        mediatorService.findUserByEmail.mockResolvedValue(registeredCustomer);
+
+        // When
+        await handler.execute(new ForgotPasswordCommand('maria.garcia@mitienda.mx', 'es'));
+        await flushPromises();
+
+        // Then
+        expect(emailProvider.sendVerificationEmail).not.toHaveBeenCalled();
+        expect(emailProvider.sendWelcomeEmail).not.toHaveBeenCalled();
+        expect(emailProvider.sendEmail).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('When the email entered does not match any registered account in Stocka', () => {
+      it('Then no email is sent — the system protects the privacy of registered users', async () => {
+        // Given
+        mediatorService.findUserByEmail.mockResolvedValue(null);
+
+        // When
+        await handler.execute(new ForgotPasswordCommand('nonexistent@domain.com', 'es'));
+        await flushPromises();
+
+        // Then
+        expect(emailProvider.sendPasswordResetEmail).not.toHaveBeenCalled();
+      });
+    });
+  });
+});
