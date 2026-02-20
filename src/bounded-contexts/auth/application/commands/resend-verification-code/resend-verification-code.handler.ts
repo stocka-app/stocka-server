@@ -82,7 +82,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       tokenWithContext.commit();
 
       // Send email
-      await this.emailProvider.sendVerificationEmail(command.email, newCode, user.username);
+      await this.emailProvider.sendVerificationEmail(command.email, newCode, user.username, command.lang);
 
       return {
         success: true,
@@ -117,7 +117,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     tokenWithContext.commit();
 
     // Send email
-    await this.emailProvider.sendVerificationEmail(command.email, code, user.username);
+    await this.emailProvider.sendVerificationEmail(command.email, code, user.username, command.lang);
 
     return {
       success: true,

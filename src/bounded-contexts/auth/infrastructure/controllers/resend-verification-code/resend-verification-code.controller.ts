@@ -5,6 +5,7 @@ import { Request } from 'express';
 import { ResendVerificationCodeCommand } from '@auth/application/commands/resend-verification-code/resend-verification-code.command';
 import { ResendVerificationCodeInDto } from '@auth/infrastructure/controllers/resend-verification-code/resend-verification-code-in.dto';
 import { ResendVerificationCodeOutDto } from '@auth/infrastructure/controllers/resend-verification-code/resend-verification-code-out.dto';
+import { extractLocale } from '@shared/infrastructure/i18n/locale.helper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -26,11 +27,12 @@ export class ResendVerificationCodeController {
     @Headers('user-agent') userAgent?: string,
   ): Promise<ResendVerificationCodeOutDto> {
     const ipAddress = this.getClientIp(req);
+    const lang = extractLocale(req.headers as Record<string, string | string[] | undefined>);
 
     const result = await this.commandBus.execute<
       ResendVerificationCodeCommand,
       { success: boolean; message: string; cooldownSeconds?: number; remainingResends?: number }
-    >(new ResendVerificationCodeCommand(dto.email, ipAddress, userAgent));
+    >(new ResendVerificationCodeCommand(dto.email, ipAddress, userAgent, lang));
 
     return {
       success: result.success,

@@ -1,38 +1,61 @@
 import * as React from 'react';
 import { Section, Text, Heading } from '@react-email/components';
 import { EmailLayout } from '@shared/infrastructure/email/templates/components/email-layout';
+import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 
 interface VerificationCodeEmailProps {
   code: string;
   userName?: string;
   expirationMinutes?: number;
+  lang?: Locale;
 }
+
+const i18n = {
+  es: {
+    preview: (code: string) => `Tu código de verificación es: ${code}`,
+    greeting: (name?: string) => (name ? `Hola ${name}` : 'Hola'),
+    body: 'Gracias por registrarte en Stocka. Para completar tu registro, utiliza el siguiente código de verificación:',
+    expiry: (mins: number) => (
+      <>
+        Este código expirará en <strong>{mins} minutos</strong>.
+      </>
+    ),
+    ignore: 'Si no has solicitado este código, puedes ignorar este correo de forma segura.',
+    signoff: 'El equipo de Stocka',
+  },
+  en: {
+    preview: (code: string) => `Your verification code is: ${code}`,
+    greeting: (name?: string) => (name ? `Hello ${name}` : 'Hello'),
+    body: 'Thank you for signing up to Stocka. To complete your registration, use the following verification code:',
+    expiry: (mins: number) => (
+      <>
+        This code expires in <strong>{mins} minutes</strong>.
+      </>
+    ),
+    ignore: 'If you did not request this code, you can safely ignore this email.',
+    signoff: 'The Stocka team',
+  },
+};
 
 export const VerificationCodeEmail: React.FC<VerificationCodeEmailProps> = ({
   code,
   userName,
   expirationMinutes = 10,
+  lang = 'es',
 }) => {
-  const greeting = userName ? `Hola ${userName}` : 'Hola';
+  const t = i18n[lang];
 
   return (
-    <EmailLayout preview={`Tu código de verificación es: ${code}`}>
+    <EmailLayout preview={t.preview(code)}>
       <Section style={content}>
-        <Heading style={heading}>{greeting},</Heading>
-        <Text style={paragraph}>
-          Gracias por registrarte en Stocka. Para completar tu registro, utiliza el siguiente código
-          de verificación:
-        </Text>
+        <Heading style={heading}>{t.greeting(userName)},</Heading>
+        <Text style={paragraph}>{t.body}</Text>
         <Section style={codeContainer}>
           <Text style={codeText}>{code}</Text>
         </Section>
-        <Text style={paragraph}>
-          Este código expirará en <strong>{expirationMinutes} minutos</strong>.
-        </Text>
-        <Text style={paragraph}>
-          Si no has solicitado este código, puedes ignorar este correo de forma segura.
-        </Text>
-        <Text style={signoff}>El equipo de Stocka</Text>
+        <Text style={paragraph}>{t.expiry(expirationMinutes)}</Text>
+        <Text style={paragraph}>{t.ignore}</Text>
+        <Text style={signoff}>{t.signoff}</Text>
       </Section>
     </EmailLayout>
   );

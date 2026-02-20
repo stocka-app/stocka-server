@@ -2,6 +2,7 @@ import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate
 import { EmailVerificationRequestedEvent } from '@auth/domain/events/email-verification-requested.event';
 import { EmailVerificationCompletedEvent } from '@auth/domain/events/email-verification-completed.event';
 import { VerificationCodeResentEvent } from '@auth/domain/events/verification-code-resent.event';
+import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 
 export interface EmailVerificationTokenProps extends AggregateRootProps {
   userId: number;
@@ -93,10 +94,10 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     return !this.isArchived() && !this.isExpired() && !this.isUsed();
   }
 
-  markAsUsed(userUUID: string, email: string): void {
+  markAsUsed(userUUID: string, email: string, lang: Locale = 'es'): void {
     this._usedAt = new Date();
     this.touch();
-    this.apply(new EmailVerificationCompletedEvent(userUUID, email));
+    this.apply(new EmailVerificationCompletedEvent(userUUID, email, lang));
   }
 
   canResend(): boolean {

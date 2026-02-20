@@ -1,39 +1,72 @@
 import * as React from 'react';
 import { Section, Text, Heading, Button } from '@react-email/components';
 import { EmailLayout } from '@shared/infrastructure/email/templates/components/email-layout';
+import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 
 interface WelcomeEmailProps {
   userName: string;
   loginUrl?: string;
+  lang?: Locale;
 }
+
+const i18n = {
+  es: {
+    preview: '¡Bienvenido a Stocka! Tu cuenta ha sido verificada.',
+    heading: (name: string) => `¡Bienvenido a Stocka, ${name}!`,
+    verified: 'Tu cuenta ha sido verificada exitosamente. Ahora puedes acceder a todas las funcionalidades de Stocka.',
+    features: 'Con Stocka podrás:',
+    featureList: [
+      'Gestionar tu inventario de forma eficiente',
+      'Controlar tus productos y stock en tiempo real',
+      'Generar reportes y análisis de tu negocio',
+    ],
+    cta: 'Iniciar Sesión',
+    help: 'Si tienes alguna pregunta, no dudes en contactarnos. Estamos aquí para ayudarte.',
+    signoff: 'El equipo de Stocka',
+  },
+  en: {
+    preview: 'Welcome to Stocka! Your account has been verified.',
+    heading: (name: string) => `Welcome to Stocka, ${name}!`,
+    verified: 'Your account has been successfully verified. You can now access all Stocka features.',
+    features: 'With Stocka you can:',
+    featureList: [
+      'Manage your inventory efficiently',
+      'Track your products and stock in real time',
+      'Generate reports and business analytics',
+    ],
+    cta: 'Sign In',
+    help: 'If you have any questions, feel free to contact us. We are here to help.',
+    signoff: 'The Stocka team',
+  },
+};
 
 export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
   userName,
   loginUrl = 'https://stocka.app/login',
+  lang = 'es',
 }) => {
+  const t = i18n[lang];
+
   return (
-    <EmailLayout preview="¡Bienvenido a Stocka! Tu cuenta ha sido verificada.">
+    <EmailLayout preview={t.preview}>
       <Section style={content}>
-        <Heading style={heading}>¡Bienvenido a Stocka, {userName}!</Heading>
-        <Text style={paragraph}>
-          Tu cuenta ha sido verificada exitosamente. Ahora puedes acceder a todas las
-          funcionalidades de Stocka.
-        </Text>
-        <Text style={paragraph}>Con Stocka podrás:</Text>
+        <Heading style={heading}>{t.heading(userName)}</Heading>
+        <Text style={paragraph}>{t.verified}</Text>
+        <Text style={paragraph}>{t.features}</Text>
         <ul style={list}>
-          <li style={listItem}>Gestionar tu inventario de forma eficiente</li>
-          <li style={listItem}>Controlar tus productos y stock en tiempo real</li>
-          <li style={listItem}>Generar reportes y análisis de tu negocio</li>
+          {t.featureList.map((item, idx) => (
+            <li key={idx} style={listItem}>
+              {item}
+            </li>
+          ))}
         </ul>
         <Section style={buttonContainer}>
           <Button style={button} href={loginUrl}>
-            Iniciar Sesión
+            {t.cta}
           </Button>
         </Section>
-        <Text style={paragraph}>
-          Si tienes alguna pregunta, no dudes en contactarnos. Estamos aquí para ayudarte.
-        </Text>
-        <Text style={signoff}>El equipo de Stocka</Text>
+        <Text style={paragraph}>{t.help}</Text>
+        <Text style={signoff}>{t.signoff}</Text>
       </Section>
     </EmailLayout>
   );

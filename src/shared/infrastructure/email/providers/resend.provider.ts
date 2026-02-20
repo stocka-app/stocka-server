@@ -8,8 +8,10 @@ import {
   SendEmailOptions,
   SendEmailResult,
 } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 import { VerificationCodeEmail } from '@shared/infrastructure/email/templates/verification-code.email';
 import { WelcomeEmail } from '@shared/infrastructure/email/templates/welcome.email';
+import { PasswordResetEmail } from '@shared/infrastructure/email/templates/password-reset.email';
 
 @Injectable()
 export class ResendEmailProvider implements IEmailProviderContract {
@@ -65,23 +67,30 @@ export class ResendEmailProvider implements IEmailProviderContract {
     to: string,
     code: string,
     userName?: string,
+    lang: Locale = 'es',
   ): Promise<SendEmailResult> {
     const expirationMinutes = this.configService.get<number>(
       'VERIFICATION_CODE_EXPIRATION_MINUTES',
       10,
     );
 
+    const subject =
+      lang === 'en'
+        ? `${code} is your Stocka verification code`
+        : `${code} es tu código de verificación de Stocka`;
+
     const html = await render(
       React.createElement(VerificationCodeEmail, {
         code,
         userName,
         expirationMinutes,
+        lang,
       }),
     );
 
     return this.sendEmail({
       to,
-      subject: `${code} es tu código de verificación de Stocka`,
+      subject,
       html,
       tags: [
         { name: 'category', value: 'verification' },
@@ -90,24 +99,55 @@ export class ResendEmailProvider implements IEmailProviderContract {
     });
   }
 
-  async sendWelcomeEmail(to: string, userName: string): Promise<SendEmailResult> {
+  async sendWelcomeEmail(to: string, userName: string, lang: Locale = 'es'): Promise<SendEmailResult> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://stocka.app');
     const loginUrl = `${frontendUrl}/login`;
+
+    const subject = lang === 'en' ? 'Welcome to Stocka!' : '¡Bienvenido a Stocka!';
 
     const html = await render(
       React.createElement(WelcomeEmail, {
         userName,
         loginUrl,
+        lang,
       }),
     );
 
     return this.sendEmail({
       to,
-      subject: '¡Bienvenido a Stocka!',
+      subject,
       html,
       tags: [
         { name: 'category', value: 'transactional' },
         { name: 'type', value: 'welcome' },
+      ],
+    });
+  }
+
+  async sendPasswordResetEmail(
+    to: string,
+    resetLink: string,
+    userEmail: string,
+    lang: Locale = 'es',
+  ): Promise<SendEmailResult> {
+    const subject =
+      lang === 'en' ? 'Reset your Stocka password' : 'Restablece tu contraseña de Stocka';
+
+    const html = await render(
+      React.createElement(PasswordResetEmail, {
+        resetLink,
+        userEmail,
+        lang,
+      }),
+    );
+
+    return this.sendEmail({
+      to,
+      subject,
+      html,
+      tags: [
+        { name: 'category', value: 'transactional' },
+        { name: 'type', value: 'password_reset' },
       ],
     });
   }

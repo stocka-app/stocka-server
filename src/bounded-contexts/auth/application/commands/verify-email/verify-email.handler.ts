@@ -58,9 +58,9 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
       throw new InvalidVerificationCodeException();
     }
 
-    // Mark token as used
+    // Mark token as used (lang is passed so EmailVerificationCompletedEvent carries locale for welcome email)
     const tokenWithContext = this.eventPublisher.mergeObjectContext(token);
-    tokenWithContext.markAsUsed(user.uuid, command.email);
+    tokenWithContext.markAsUsed(user.uuid, command.email, command.lang);
     await this.tokenContract.persist(tokenWithContext);
     tokenWithContext.commit();
 

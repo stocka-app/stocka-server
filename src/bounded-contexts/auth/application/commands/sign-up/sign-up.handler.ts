@@ -68,6 +68,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
       command.email,
       verificationCode,
       command.username,
+      command.lang,
     );
 
     if (!emailResult.success) {

@@ -6,6 +6,7 @@ import { ForgotPasswordResult } from '@auth/application/types/auth-result.types'
 import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
 import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-token.model';
 import { IPasswordResetTokenContract } from '@auth/domain/contracts/password-reset-token.contract';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserModel } from '@user/domain/models/user.model';
@@ -20,6 +21,8 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     private readonly eventPublisher: EventPublisher,
     @Inject(INJECTION_TOKENS.PASSWORD_RESET_TOKEN_CONTRACT)
     private readonly passwordResetTokenContract: IPasswordResetTokenContract,
+    @Inject(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
+    private readonly emailProvider: IEmailProviderContract,
   ) {}
 
   async execute(command: ForgotPasswordCommand): Promise<ForgotPasswordResult> {
@@ -57,11 +60,24 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     this.eventPublisher.mergeObjectContext(resetToken);
     resetToken.commit();
 
-    // NOSONAR: Email sending will be implemented in the Notifications bounded context (see architecture/01-bounded-contexts/notifications/)
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const resetLink = `${frontendUrl}/auth/reset-password?token=${plainToken}`;
 
     this.logger.debug(`Password reset token generated for userId=${user.uuid}`);
+
+    // Send password reset email (fire-and-forget: failure should not block the response)
+    this.emailProvider
+      .sendPasswordResetEmail(command.email, resetLink, command.email, command.lang)
+      .then((result) => {
+        if (result.success) {
+          this.logger.log(`Password reset email sent: emailId=${result.id}`);
+        } else {
+          this.logger.error(`Failed to send password reset email: ${result.error}`);
+        }
+      })
+      .catch((err: unknown) => {
+        this.logger.error(`Error sending password reset email: ${String(err)}`);
+      });
 
     return { message: genericMessage };
   }
