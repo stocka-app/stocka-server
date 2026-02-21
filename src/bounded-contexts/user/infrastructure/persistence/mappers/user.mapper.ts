@@ -12,6 +12,8 @@ export class UserMapper {
       status: entity.status,
       emailVerifiedAt: entity.emailVerifiedAt,
       verificationBlockedUntil: entity.verificationBlockedUntil,
+      createdWith: entity.createdWith,
+      accountType: entity.accountType,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       archivedAt: entity.archivedAt,
@@ -27,6 +29,8 @@ export class UserMapper {
       status: model.status.toString(),
       emailVerifiedAt: model.emailVerifiedAt,
       verificationBlockedUntil: model.verificationBlockedUntil,
+      createdWith: model.createdWith,
+      accountType: model.accountType,
       archivedAt: model.archivedAt,
     };
 

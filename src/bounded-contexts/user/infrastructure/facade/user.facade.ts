@@ -4,6 +4,7 @@ import { IUserContract } from '@user/domain/contracts/user.contract';
 import { UserModel } from '@user/domain/models/user.model';
 import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
 import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
+import { LinkProviderToUserCommand } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
@@ -84,5 +85,15 @@ export class UserFacade {
       user.blockVerification(blockedUntil);
       await this.userContract.persist(user);
     }
+  }
+
+  async linkProviderToUser(
+    userId: number,
+    provider: string,
+    providerId: string,
+  ): Promise<void> {
+    return this.commandBus.execute(
+      new LinkProviderToUserCommand(userId, provider, providerId),
+    );
   }
 }

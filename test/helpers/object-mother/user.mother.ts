@@ -1,4 +1,4 @@
-import { UserModel } from '@user/domain/models/user.model';
+import { AccountType, UserModel } from '@user/domain/models/user.model';
 
 export class UserMother {
   static create(
@@ -11,6 +11,8 @@ export class UserMother {
       status: string;
       emailVerifiedAt: Date | null;
       verificationBlockedUntil: Date | null;
+      createdWith: string;
+      accountType: string;
       createdAt: Date;
       updatedAt: Date;
       archivedAt: Date | null;
@@ -25,6 +27,8 @@ export class UserMother {
       status: 'active',
       emailVerifiedAt: null,
       verificationBlockedUntil: null,
+      createdWith: 'email',
+      accountType: AccountType.MANUAL,
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-01T00:00:00Z'),
       archivedAt: null,
@@ -41,6 +45,8 @@ export class UserMother {
       status: props.status,
       emailVerifiedAt: props.emailVerifiedAt,
       verificationBlockedUntil: props.verificationBlockedUntil,
+      createdWith: props.createdWith,
+      accountType: props.accountType,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
@@ -71,14 +77,39 @@ export class UserMother {
       uuid: string;
       email: string;
       username: string;
+      provider: string;
       createdAt: Date;
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
   ): UserModel {
+    const provider = overrides.provider ?? 'google';
     return this.create({
       ...overrides,
       passwordHash: null,
+      status: 'email_verified_by_provider',
+      createdWith: provider,
+      accountType: AccountType.SOCIAL,
+    });
+  }
+
+  static createFlexible(
+    overrides: Partial<{
+      id: number;
+      uuid: string;
+      email: string;
+      username: string;
+      provider: string;
+      createdAt: Date;
+      updatedAt: Date;
+      archivedAt: Date | null;
+    }> = {},
+  ): UserModel {
+    const provider = overrides.provider ?? 'google';
+    return this.create({
+      ...overrides,
+      accountType: AccountType.FLEXIBLE,
+      createdWith: 'email',
     });
   }
 

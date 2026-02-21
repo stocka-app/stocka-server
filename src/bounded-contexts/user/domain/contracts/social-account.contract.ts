@@ -6,4 +6,9 @@ export interface ISocialAccountContract {
     provider: string;
     providerId: string;
   }): Promise<SocialAccountEntity>;
+
+  findByProviderAndProviderId(
+    provider: string,
+    providerId: string,
+  ): Promise<SocialAccountEntity | null>;
 }

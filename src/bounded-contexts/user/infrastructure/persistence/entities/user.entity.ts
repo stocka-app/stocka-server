@@ -23,6 +23,13 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'verification_blocked_until', type: 'timestamptz', nullable: true })
   verificationBlockedUntil!: Date | null;
 
+  @Column({ name: 'created_with', type: 'varchar', length: 20, default: 'email' })
+  createdWith!: string;
+
+  @Column({ name: 'account_type', type: 'varchar', length: 10, default: 'manual' })
+  @Index()
+  accountType!: string;
+
   @OneToMany(() => SocialAccountEntity, (socialAccount) => socialAccount.user)
   socialAccounts!: SocialAccountEntity[];
 }

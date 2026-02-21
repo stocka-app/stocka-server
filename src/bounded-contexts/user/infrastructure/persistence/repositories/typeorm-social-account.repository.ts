@@ -19,4 +19,13 @@ export class TypeOrmSocialAccountRepository implements ISocialAccountContract {
     const entity = this.repository.create(data);
     return this.repository.save(entity);
   }
+
+  async findByProviderAndProviderId(
+    provider: string,
+    providerId: string,
+  ): Promise<SocialAccountEntity | null> {
+    return this.repository.findOne({
+      where: { provider, providerId },
+    });
+  }
 }

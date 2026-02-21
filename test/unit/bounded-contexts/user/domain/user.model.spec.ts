@@ -1,7 +1,9 @@
-import { UserModel } from '@user/domain/models/user.model';
+import { AccountType, UserModel } from '@user/domain/models/user.model';
 import { UserCreatedEvent } from '@user/domain/events/user-created.event';
 import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
 import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
+import { ProviderLinkedEvent } from '@user/domain/events/provider-linked.event';
+import { AccountBecameFlexibleEvent } from '@user/domain/events/account-became-flexible.event';
 
 describe('UserModel', () => {
   describe('create', () => {
@@ -238,6 +240,104 @@ describe('UserModel', () => {
       user.commit();
 
       expect(user.getUncommittedEvents()).toHaveLength(0);
+    });
+  });
+
+  describe('accountType and createdWith', () => {
+    it('should default to manual accountType and email createdWith for create()', () => {
+      const user = UserModel.create({
+        email: 'test@example.com',
+        username: 'testuser',
+        passwordHash: 'hash',
+      });
+
+      expect(user.accountType).toBe(AccountType.MANUAL);
+      expect(user.createdWith).toBe('email');
+    });
+
+    it('should set social accountType and provider createdWith for createFromSocial()', () => {
+      const user = UserModel.createFromSocial({
+        email: 'social@example.com',
+        username: 'socialuser',
+        passwordHash: null,
+        provider: 'google',
+      });
+
+      expect(user.accountType).toBe(AccountType.SOCIAL);
+      expect(user.createdWith).toBe('google');
+    });
+
+    it('should restore accountType and createdWith on reconstitute()', () => {
+      const user = UserModel.reconstitute({
+        id: 1,
+        uuid: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        username: 'testuser',
+        passwordHash: 'hash',
+        createdWith: 'email',
+        accountType: AccountType.FLEXIBLE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        archivedAt: null,
+      });
+
+      expect(user.accountType).toBe(AccountType.FLEXIBLE);
+      expect(user.createdWith).toBe('email');
+    });
+  });
+
+  describe('becomeFlexible', () => {
+    it('should set accountType to flexible and emit events for a manual account', () => {
+      const user = UserModel.reconstitute({
+        id: 1,
+        uuid: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        username: 'testuser',
+        passwordHash: 'hash',
+        accountType: AccountType.MANUAL,
+        createdWith: 'email',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        archivedAt: null,
+      });
+
+      user.becomeFlexible('google');
+
+      expect(user.accountType).toBe(AccountType.FLEXIBLE);
+
+      const events = user.getUncommittedEvents();
+      expect(events).toHaveLength(2);
+      expect(events[0]).toBeInstanceOf(ProviderLinkedEvent);
+      expect(events[1]).toBeInstanceOf(AccountBecameFlexibleEvent);
+
+      const linked = events[0] as ProviderLinkedEvent;
+      expect(linked.provider).toBe('google');
+      expect(linked.userUUID).toBe(user.uuid);
+
+      const flexible = events[1] as AccountBecameFlexibleEvent;
+      expect(flexible.provider).toBe('google');
+      expect(flexible.userUUID).toBe(user.uuid);
+    });
+
+    it('should emit only ProviderLinkedEvent if already flexible', () => {
+      const user = UserModel.reconstitute({
+        id: 1,
+        uuid: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        username: 'testuser',
+        passwordHash: 'hash',
+        accountType: AccountType.FLEXIBLE,
+        createdWith: 'email',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        archivedAt: null,
+      });
+
+      user.becomeFlexible('facebook');
+
+      const events = user.getUncommittedEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(ProviderLinkedEvent);
     });
   });
 });

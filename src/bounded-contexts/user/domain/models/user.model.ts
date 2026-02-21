@@ -5,6 +5,14 @@ import { UserStatusVO, UserStatusEnum } from '@shared/domain/value-objects/compo
 import { UserCreatedEvent } from '@user/domain/events/user-created.event';
 import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
 import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
+import { ProviderLinkedEvent } from '@user/domain/events/provider-linked.event';
+import { AccountBecameFlexibleEvent } from '@user/domain/events/account-became-flexible.event';
+
+export enum AccountType {
+  MANUAL = 'manual',
+  SOCIAL = 'social',
+  FLEXIBLE = 'flexible',
+}
 
 export interface UserProps extends AggregateRootProps {
   email: string;
@@ -14,6 +22,8 @@ export interface UserProps extends AggregateRootProps {
   status?: string;
   emailVerifiedAt?: Date | null;
   verificationBlockedUntil?: Date | null;
+  createdWith?: string;
+  accountType?: string;
 }
 
 export class UserModel extends AggregateRoot {
@@ -23,6 +33,8 @@ export class UserModel extends AggregateRoot {
   private _status: UserStatusVO;
   private _emailVerifiedAt: Date | null;
   private _verificationBlockedUntil: Date | null;
+  private readonly _createdWith: string;
+  private _accountType: string;
 
   private constructor(props: UserProps) {
     super({
@@ -38,12 +50,16 @@ export class UserModel extends AggregateRoot {
     this._status = new UserStatusVO(props.status || UserStatusEnum.PENDING_VERIFICATION);
     this._emailVerifiedAt = props.emailVerifiedAt ?? null;
     this._verificationBlockedUntil = props.verificationBlockedUntil ?? null;
+    this._createdWith = props.createdWith ?? 'email';
+    this._accountType = props.accountType ?? AccountType.MANUAL;
   }
 
   static create(props: Omit<UserProps, 'id'>): UserModel {
     const user = new UserModel({
       ...props,
       status: UserStatusEnum.PENDING_VERIFICATION,
+      createdWith: 'email',
+      accountType: AccountType.MANUAL,
     });
     user.apply(new UserCreatedEvent(user.uuid, user.email, user.username));
     return user;
@@ -54,6 +70,8 @@ export class UserModel extends AggregateRoot {
       ...props,
       status: UserStatusEnum.EMAIL_VERIFIED_BY_PROVIDER,
       emailVerifiedAt: new Date(),
+      createdWith: props.provider,
+      accountType: AccountType.SOCIAL,
     });
     user.apply(new UserCreatedFromSocialEvent(user.uuid, user.email, props.provider));
     return user;
@@ -87,6 +105,14 @@ export class UserModel extends AggregateRoot {
     return this._verificationBlockedUntil;
   }
 
+  get createdWith(): string {
+    return this._createdWith;
+  }
+
+  get accountType(): string {
+    return this._accountType;
+  }
+
   hasPassword(): boolean {
     return this._passwordHash !== null;
   }
@@ -116,5 +142,14 @@ export class UserModel extends AggregateRoot {
   unblockVerification(): void {
     this._verificationBlockedUntil = null;
     this.touch();
+  }
+
+  becomeFlexible(provider: string): void {
+    this.apply(new ProviderLinkedEvent(this.uuid, provider));
+    if (this._accountType !== AccountType.FLEXIBLE) {
+      this._accountType = AccountType.FLEXIBLE;
+      this.touch();
+      this.apply(new AccountBecameFlexibleEvent(this.uuid, provider));
+    }
   }
 }
