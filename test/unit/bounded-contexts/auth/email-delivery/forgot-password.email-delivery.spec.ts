@@ -25,6 +25,15 @@ describe('Password recovery — transactional email delivery', () => {
     username: 'maria_garcia',
   });
 
+  // A customer who signed up exclusively via Google OAuth
+  const socialOnlyCustomer = UserMother.createSocialOnly({
+    id: 2,
+    uuid: '550e8400-e29b-41d4-a716-446655440002',
+    email: 'juan.lopez@gmail.com',
+    username: 'juan_lopez',
+    provider: 'google',
+  });
+
   beforeEach(async () => {
     mediatorService = { findUserByEmail: jest.fn() };
 
@@ -88,6 +97,8 @@ describe('Password recovery — transactional email delivery', () => {
           expect.stringContaining('reset-password'),
           'maria.garcia@mitienda.mx',
           'en',
+          false,
+          null,
         );
       });
 
@@ -117,6 +128,62 @@ describe('Password recovery — transactional email delivery', () => {
 
         // Then
         expect(emailProvider.sendPasswordResetEmail).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a customer who signed up with Google and has never set a password', () => {
+    describe('When they enter their email on the "Forgot your password?" screen', () => {
+      it('Then the system sends an email with isSocialAccount=true and the provider name', async () => {
+        // Given
+        mediatorService.findUserByEmail.mockResolvedValue(socialOnlyCustomer);
+
+        // When
+        await handler.execute(new ForgotPasswordCommand('juan.lopez@gmail.com', 'es'));
+        await flushPromises();
+
+        // Then
+        expect(emailProvider.sendPasswordResetEmail).toHaveBeenCalledWith(
+          'juan.lopez@gmail.com',
+          expect.stringContaining('reset-password'),
+          'juan.lopez@gmail.com',
+          'es',
+          true,
+          'google',
+        );
+      });
+
+      it('Then only the informational email is sent — no other email type', async () => {
+        // Given
+        mediatorService.findUserByEmail.mockResolvedValue(socialOnlyCustomer);
+
+        // When
+        await handler.execute(new ForgotPasswordCommand('juan.lopez@gmail.com', 'es'));
+        await flushPromises();
+
+        // Then
+        expect(emailProvider.sendPasswordResetEmail).toHaveBeenCalledTimes(1);
+        expect(emailProvider.sendVerificationEmail).not.toHaveBeenCalled();
+        expect(emailProvider.sendWelcomeEmail).not.toHaveBeenCalled();
+      });
+
+      it('Then the email respects the language preference of the customer', async () => {
+        // Given
+        mediatorService.findUserByEmail.mockResolvedValue(socialOnlyCustomer);
+
+        // When
+        await handler.execute(new ForgotPasswordCommand('juan.lopez@gmail.com', 'en'));
+        await flushPromises();
+
+        // Then
+        expect(emailProvider.sendPasswordResetEmail).toHaveBeenCalledWith(
+          'juan.lopez@gmail.com',
+          expect.stringContaining('reset-password'),
+          'juan.lopez@gmail.com',
+          'en',
+          true,
+          'google',
+        );
       });
     });
   });

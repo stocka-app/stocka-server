@@ -7,6 +7,8 @@ export class PasswordResetRequestedEvent implements IEvent {
     public readonly email: string,
     public readonly token: string,
     public readonly lang: Locale = 'es',
+    public readonly isSocialAccount: boolean = false,
+    public readonly provider: string | null = null,
     public readonly occurredOn: Date = new Date(),
   ) {}
 }

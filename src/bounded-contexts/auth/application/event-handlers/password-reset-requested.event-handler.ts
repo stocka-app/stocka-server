@@ -26,6 +26,8 @@ export class PasswordResetRequestedEventHandler implements IEventHandler<Passwor
       resetLink,
       event.email,
       event.lang,
+      event.isSocialAccount,
+      event.provider,
     );
 
     if (result.success) {

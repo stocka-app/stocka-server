@@ -30,5 +30,7 @@ export interface IEmailProviderContract {
     resetLink: string,
     userEmail: string,
     lang?: Locale,
+    isSocialAccount?: boolean,
+    provider?: string | null,
   ): Promise<SendEmailResult>;
 }

@@ -35,6 +35,8 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
 
+    const isSocialAccount = !user.hasPassword();
+
     const resetToken = PasswordResetTokenModel.create({
       userId: user.id!,
       tokenHash,
@@ -42,6 +44,8 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
       email: command.email,
       plainToken,
       lang: command.lang,
+      isSocialAccount,
+      provider: isSocialAccount ? user.createdWith : null,
     });
 
     await this.passwordResetTokenContract.persist(resetToken);

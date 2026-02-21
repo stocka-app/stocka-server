@@ -36,6 +36,8 @@ export class PasswordResetTokenModel extends AggregateRoot {
       email: string;
       plainToken: string;
       lang?: Locale;
+      isSocialAccount?: boolean;
+      provider?: string | null;
     },
   ): PasswordResetTokenModel {
     const token = new PasswordResetTokenModel(props);
@@ -45,6 +47,8 @@ export class PasswordResetTokenModel extends AggregateRoot {
         props.email,
         props.plainToken,
         props.lang ?? 'es',
+        props.isSocialAccount ?? false,
+        props.provider ?? null,
       ),
     );
     return token;

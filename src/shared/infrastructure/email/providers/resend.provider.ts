@@ -129,15 +129,24 @@ export class ResendEmailProvider implements IEmailProviderContract {
     resetLink: string,
     userEmail: string,
     lang: Locale = 'es',
+    isSocialAccount: boolean = false,
+    provider: string | null = null,
   ): Promise<SendEmailResult> {
-    const subject =
-      lang === 'en' ? 'Reset your Stocka password' : 'Restablece tu contraseña de Stocka';
+    const subject = isSocialAccount
+      ? lang === 'en'
+        ? 'Set a password for your Stocka account'
+        : 'Establece una contraseña para tu cuenta de Stocka'
+      : lang === 'en'
+        ? 'Reset your Stocka password'
+        : 'Restablece tu contraseña de Stocka';
 
     const html = await render(
       React.createElement(PasswordResetEmail, {
         resetLink,
         userEmail,
         lang,
+        isSocialAccount,
+        provider,
       }),
     );
 
