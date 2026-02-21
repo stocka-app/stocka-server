@@ -24,6 +24,7 @@ export class UserEntity extends BaseEntity {
   verificationBlockedUntil!: Date | null;
 
   @Column({ name: 'created_with', type: 'varchar', length: 20, default: 'email' })
+  @Index()
   createdWith!: string;
 
   @Column({ name: 'account_type', type: 'varchar', length: 10, default: 'manual' })
