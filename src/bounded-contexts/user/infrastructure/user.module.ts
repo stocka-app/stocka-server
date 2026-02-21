@@ -18,6 +18,7 @@ import { UserCreatedFromSocialEventHandler } from '@user/application/event-handl
 import { UserPasswordUpdatedEventHandler } from '@user/application/event-handlers/user-password-updated.event-handler';
 import { GetMeController } from '@user/infrastructure/controllers/get-me/get-me.controller';
 import { UserFacade } from '@user/infrastructure/facade/user.facade';
+import { PurgeUnverifiedUsersService } from '@user/application/services/purge-unverified-users.service';
 import { AuthModule } from '@auth/infrastructure/auth.module';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -62,6 +63,7 @@ const EventHandlers = [
     ...QueryHandlers,
     ...EventHandlers,
     UserFacade,
+    PurgeUnverifiedUsersService,
   ],
   exports: [INJECTION_TOKENS.USER_FACADE, UserFacade],
 })

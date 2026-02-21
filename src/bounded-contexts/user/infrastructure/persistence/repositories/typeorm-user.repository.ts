@@ -90,4 +90,20 @@ export class TypeOrmUserRepository implements IUserContract {
   async destroy(uuid: string): Promise<void> {
     await this.repository.delete({ uuid });
   }
+
+  async destroyStaleUnverifiedUsers(olderThanDays: number): Promise<number> {
+    const result = await this.repository
+      .createQueryBuilder()
+      .delete()
+      .from(UserEntity)
+      .where('status = :status', { status: 'pending_verification' })
+      .andWhere('account_type != :flexible', { flexible: 'flexible' })
+      .andWhere('archived_at IS NULL')
+      .andWhere('created_at < NOW() - INTERVAL :interval', {
+        interval: `${olderThanDays} days`,
+      })
+      .execute();
+
+    return result.affected ?? 0;
+  }
 }

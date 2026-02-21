@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 
@@ -25,6 +26,7 @@ import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
       validate,
     }),
     TypeOrmModule.forRootAsync(typeOrmAsyncConfig),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         name: 'short',

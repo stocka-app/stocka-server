@@ -11,4 +11,5 @@ export interface IUserContract {
   persist(user: UserModel): Promise<UserModel>;
   archive(uuid: string): Promise<void>;
   destroy(uuid: string): Promise<void>;
+  destroyStaleUnverifiedUsers(olderThanDays: number): Promise<number>;
 }
