@@ -26,18 +26,39 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
   ) {}
 
   async execute(command: SocialSignInCommand): Promise<SocialSignInResult> {
-    // Try to find existing user by email
-    let user = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
+    let user: UserModel | null;
+
+    // Step 1: Find by (provider, providerId) — already linked, fast path
+    user = (await this.mediator.findUserBySocialProvider(
+      command.provider,
+      command.providerId,
+    )) as UserModel | null;
 
     if (!user) {
-      // Create new user with unique username
-      const username = await this.generateUniqueUsername(command.displayName);
-      user = (await this.mediator.createUserFromSocial(
+      // Step 2: Find by email — existing account with a different auth method
+      const existingUser = (await this.mediator.findUserByEmail(
         command.email,
-        username,
-        command.provider,
-        command.providerId,
-      )) as UserModel;
+      )) as UserModel | null;
+
+      if (existingUser) {
+        // Step 3: Link this OAuth provider to the existing account (EC-002)
+        await this.mediator.linkProviderToUser(
+          existingUser.id!,
+          command.provider,
+          command.providerId,
+        );
+        // Reload so we have the updated accountType on the model
+        user = (await this.mediator.findUserById(existingUser.id!)) as UserModel;
+      } else {
+        // Step 4: No account at all — create a new social user
+        const username = await this.generateUniqueUsername(command.displayName);
+        user = (await this.mediator.createUserFromSocial(
+          command.email,
+          username,
+          command.provider,
+          command.providerId,
+        )) as UserModel;
+      }
     }
 
     // Generate tokens

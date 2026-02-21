@@ -21,6 +21,7 @@ export interface IUserFacade {
   blockUserVerification(uuid: string, blockedUntil: Date): Promise<void>;
   linkProviderToUser(userId: number, provider: string, providerId: string): Promise<void>;
   setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void>;
+  findUserBySocialProvider(provider: string, providerId: string): Promise<unknown>;
 }
 
 @Injectable()
@@ -91,5 +92,9 @@ export class MediatorService {
 
   async setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void> {
     return this.userFacade.setPasswordForSocialUser(userId, passwordHash);
+  }
+
+  async findUserBySocialProvider(provider: string, providerId: string): Promise<unknown> {
+    return this.userFacade.findUserBySocialProvider(provider, providerId);
   }
 }

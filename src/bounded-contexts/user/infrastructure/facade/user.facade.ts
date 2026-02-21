@@ -1,6 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { IUserContract } from '@user/domain/contracts/user.contract';
+import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import { UserModel } from '@user/domain/models/user.model';
 import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
 import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
@@ -15,6 +16,8 @@ export class UserFacade {
     private readonly queryBus: QueryBus,
     @Inject(INJECTION_TOKENS.USER_CONTRACT)
     private readonly userContract: IUserContract,
+    @Inject(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT)
+    private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
   async createUser(email: string, username: string, passwordHash: string): Promise<UserModel> {
@@ -102,5 +105,17 @@ export class UserFacade {
     return this.commandBus.execute(
       new SetPasswordForSocialUserCommand(userId, passwordHash),
     );
+  }
+
+  async findUserBySocialProvider(
+    provider: string,
+    providerId: string,
+  ): Promise<UserModel | null> {
+    const socialAccount = await this.socialAccountContract.findByProviderAndProviderId(
+      provider,
+      providerId,
+    );
+    if (!socialAccount) return null;
+    return this.userContract.findById(socialAccount.userId);
   }
 }
