@@ -301,7 +301,7 @@ describe('UserModel', () => {
         archivedAt: null,
       });
 
-      user.becomeFlexible('google');
+      user.becomeFlexible('google', false);
 
       expect(user.accountType).toBe(AccountType.FLEXIBLE);
 
@@ -313,10 +313,33 @@ describe('UserModel', () => {
       const linked = events[0] as ProviderLinkedEvent;
       expect(linked.provider).toBe('google');
       expect(linked.userUUID).toBe(user.uuid);
+      expect(linked.isFlexiblePending).toBe(false);
 
       const flexible = events[1] as AccountBecameFlexibleEvent;
-      expect(flexible.provider).toBe('google');
+      expect(flexible.trigger).toBe('oauth_link');
       expect(flexible.userUUID).toBe(user.uuid);
+    });
+
+    it('should set isFlexiblePending to true when account is pending verification', () => {
+      const user = UserModel.reconstitute({
+        id: 1,
+        uuid: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        username: 'testuser',
+        passwordHash: 'hash',
+        accountType: AccountType.MANUAL,
+        status: 'pending_verification',
+        createdWith: 'email',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        archivedAt: null,
+      });
+
+      user.becomeFlexible('google', true);
+
+      const events = user.getUncommittedEvents();
+      const linked = events[0] as ProviderLinkedEvent;
+      expect(linked.isFlexiblePending).toBe(true);
     });
 
     it('should emit only ProviderLinkedEvent if already flexible', () => {
@@ -333,11 +356,41 @@ describe('UserModel', () => {
         archivedAt: null,
       });
 
-      user.becomeFlexible('facebook');
+      user.becomeFlexible('facebook', false);
 
       const events = user.getUncommittedEvents();
       expect(events).toHaveLength(1);
       expect(events[0]).toBeInstanceOf(ProviderLinkedEvent);
+    });
+  });
+
+  describe('setPasswordAndBecomeFlexible', () => {
+    it('should set password hash, change accountType to flexible, and emit AccountBecameFlexibleEvent with trigger password_set', () => {
+      const user = UserModel.reconstitute({
+        id: 1,
+        uuid: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'social@example.com',
+        username: 'socialuser',
+        passwordHash: null,
+        accountType: AccountType.SOCIAL,
+        createdWith: 'google',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        archivedAt: null,
+      });
+
+      user.setPasswordAndBecomeFlexible('newhashedpassword');
+
+      expect(user.accountType).toBe(AccountType.FLEXIBLE);
+      expect(user.passwordHash).toBe('newhashedpassword');
+
+      const events = user.getUncommittedEvents();
+      expect(events).toHaveLength(1);
+      expect(events[0]).toBeInstanceOf(AccountBecameFlexibleEvent);
+
+      const flexible = events[0] as AccountBecameFlexibleEvent;
+      expect(flexible.trigger).toBe('password_set');
+      expect(flexible.userUUID).toBe(user.uuid);
     });
   });
 });

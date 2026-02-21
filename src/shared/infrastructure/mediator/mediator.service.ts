@@ -20,6 +20,7 @@ export interface IUserFacade {
   verifyUserEmail(uuid: string): Promise<void>;
   blockUserVerification(uuid: string, blockedUntil: Date): Promise<void>;
   linkProviderToUser(userId: number, provider: string, providerId: string): Promise<void>;
+  setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void>;
 }
 
 @Injectable()
@@ -86,5 +87,9 @@ export class MediatorService {
     providerId: string,
   ): Promise<void> {
     return this.userFacade.linkProviderToUser(userId, provider, providerId);
+  }
+
+  async setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void> {
+    return this.userFacade.setPasswordForSocialUser(userId, passwordHash);
   }
 }

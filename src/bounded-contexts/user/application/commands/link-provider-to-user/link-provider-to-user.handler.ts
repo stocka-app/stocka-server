@@ -28,10 +28,11 @@ export class LinkProviderToUserHandler
       providerId: command.providerId,
     });
 
-    // Only manual accounts (with a password) become flexible
+    // Manual accounts with a password become flexible; detect pending state
     if (user.accountType === AccountType.MANUAL && user.hasPassword()) {
+      const isFlexiblePending = user.status.isPendingVerification();
       this.eventPublisher.mergeObjectContext(user);
-      user.becomeFlexible(command.provider);
+      user.becomeFlexible(command.provider, isFlexiblePending);
       await this.userContract.persist(user);
       user.commit();
     }

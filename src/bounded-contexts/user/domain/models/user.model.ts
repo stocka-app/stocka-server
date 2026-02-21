@@ -144,12 +144,19 @@ export class UserModel extends AggregateRoot {
     this.touch();
   }
 
-  becomeFlexible(provider: string): void {
-    this.apply(new ProviderLinkedEvent(this.uuid, provider));
+  becomeFlexible(provider: string, isFlexiblePending: boolean): void {
+    this.apply(new ProviderLinkedEvent(this.uuid, provider, isFlexiblePending));
     if (this._accountType !== AccountType.FLEXIBLE) {
       this._accountType = AccountType.FLEXIBLE;
       this.touch();
-      this.apply(new AccountBecameFlexibleEvent(this.uuid, provider));
+      this.apply(new AccountBecameFlexibleEvent(this.uuid, 'oauth_link'));
     }
+  }
+
+  setPasswordAndBecomeFlexible(hash: string): void {
+    this._passwordHash = hash;
+    this._accountType = AccountType.FLEXIBLE;
+    this.touch();
+    this.apply(new AccountBecameFlexibleEvent(this.uuid, 'password_set'));
   }
 }
