@@ -8,6 +8,8 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { InvalidCredentialsException } from '@auth/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@auth/domain/exceptions/account-deactivated.exception';
+import { SocialAccountRequiredException } from '@auth/domain/exceptions/social-account-required.exception';
+import { AccountType } from '@user/domain/models/user.model';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 import * as bcrypt from 'bcrypt';
@@ -176,6 +178,24 @@ describe('SignInHandler', () => {
     mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
 
     await expect(handler.execute(command)).rejects.toThrow(AccountDeactivatedException);
+    expect(sessionContract.persist).not.toHaveBeenCalled();
+  });
+
+  it('should throw SocialAccountRequiredException when user is Flexible Pendiente (linked OAuth but email unverified)', async () => {
+    // A manual user who linked Google before verifying their email — EC-002 "Flexible Pendiente" state
+    const command = new SignInCommand('flex@example.com', 'Password1');
+    const flexiblePendingUser = UserMother.create({
+      id: 10,
+      email: 'flex@example.com',
+      username: 'flex_user',
+      passwordHash: validPasswordHash,
+      status: 'pending_verification',
+      accountType: AccountType.FLEXIBLE,
+    });
+
+    mediatorService.findUserByEmailOrUsername.mockResolvedValue(flexiblePendingUser);
+
+    await expect(handler.execute(command)).rejects.toThrow(SocialAccountRequiredException);
     expect(sessionContract.persist).not.toHaveBeenCalled();
   });
 });

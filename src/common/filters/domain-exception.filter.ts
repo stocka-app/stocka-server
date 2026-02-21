@@ -12,6 +12,7 @@ export class DomainExceptionFilter implements ExceptionFilter {
     ACCOUNT_DEACTIVATED: HttpStatus.UNAUTHORIZED,
     TOKEN_EXPIRED: HttpStatus.UNAUTHORIZED,
     EMAIL_NOT_VERIFIED: HttpStatus.FORBIDDEN,
+    SOCIAL_ACCOUNT_REQUIRED: HttpStatus.FORBIDDEN,
     // Conflict errors
     EMAIL_ALREADY_EXISTS: HttpStatus.CONFLICT,
     USERNAME_ALREADY_EXISTS: HttpStatus.CONFLICT,

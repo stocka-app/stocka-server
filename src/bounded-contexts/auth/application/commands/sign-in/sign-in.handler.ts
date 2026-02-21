@@ -10,6 +10,7 @@ import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { InvalidCredentialsException } from '@auth/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@auth/domain/exceptions/account-deactivated.exception';
 import { EmailNotVerifiedException } from '@auth/domain/exceptions/email-not-verified.exception';
+import { SocialAccountRequiredException } from '@auth/domain/exceptions/social-account-required.exception';
 import { UserSignedInEvent } from '@auth/domain/events/user-signed-in.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -58,6 +59,10 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
 
     if (user.isArchived()) {
       throw new AccountDeactivatedException();
+    }
+
+    if (user.isFlexiblePending()) {
+      throw new SocialAccountRequiredException();
     }
 
     if (user.status.isPendingVerification()) {

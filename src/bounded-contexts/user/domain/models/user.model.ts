@@ -117,6 +117,12 @@ export class UserModel extends AggregateRoot {
     return this._passwordHash !== null;
   }
 
+  isFlexiblePending(): boolean {
+    return (
+      this._accountType === AccountType.FLEXIBLE && this._status.isPendingVerification()
+    );
+  }
+
   isEmailVerified(): boolean {
     return this._status.canAccessApplication();
   }
