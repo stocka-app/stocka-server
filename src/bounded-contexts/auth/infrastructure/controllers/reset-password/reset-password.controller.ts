@@ -2,8 +2,9 @@ import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ResetPasswordCommand } from '@auth/application/commands/reset-password/reset-password.command';
-import { ResetPasswordResult } from '@auth/application/types/auth-result.types';
+import { ResetPasswordCommandResult } from '@auth/application/types/auth-result.types';
 import { ResetPasswordInDto } from '@auth/infrastructure/controllers/reset-password/reset-password-in.dto';
+import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -20,10 +21,15 @@ export class ResetPasswordController {
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Token expired or invalid' })
   async handle(@Body() dto: ResetPasswordInDto): Promise<{ message: string }> {
-    const result = await this.commandBus.execute<ResetPasswordCommand, ResetPasswordResult>(
+    const result = await this.commandBus.execute<ResetPasswordCommand, ResetPasswordCommandResult>(
       new ResetPasswordCommand(dto.token, dto.newPassword),
     );
 
-    return { message: result.message };
+    return result.match(
+      (data) => ({ message: data.message }),
+      (error) => {
+        throw mapDomainErrorToHttp(error);
+      },
+    );
   }
 }
