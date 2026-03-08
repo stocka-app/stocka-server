@@ -103,10 +103,12 @@ describe('SignInHandler', () => {
 
     const result = await handler.execute(command);
 
-    expect(result.user).toBeDefined();
-    expect(result.user.email).toBe('test@example.com');
-    expect(result.accessToken).toBe('mock-token');
-    expect(result.refreshToken).toBe('mock-token');
+    expect(result.isOk()).toBe(true);
+    const data = result._unsafeUnwrap();
+    expect(data.user).toBeDefined();
+    expect(data.user.email).toBe('test@example.com');
+    expect(data.accessToken).toBe('mock-token');
+    expect(data.refreshToken).toBe('mock-token');
     expect(sessionContract.persist).toHaveBeenCalled();
   });
 
@@ -124,20 +126,23 @@ describe('SignInHandler', () => {
 
     const result = await handler.execute(command);
 
-    expect(result.user).toBeDefined();
-    expect(result.user.username).toBe('testuser');
+    expect(result.isOk()).toBe(true);
+    expect(result._unsafeUnwrap().user.username).toBe('testuser');
   });
 
-  it('should throw InvalidCredentialsException when user does not exist', async () => {
+  it('should return InvalidCredentialsException error when user does not exist', async () => {
     const command = new SignInCommand('nonexistent@example.com', 'Password1');
 
     mediatorService.findUserByEmailOrUsername.mockResolvedValue(null);
 
-    await expect(handler.execute(command)).rejects.toThrow(InvalidCredentialsException);
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidCredentialsException);
     expect(sessionContract.persist).not.toHaveBeenCalled();
   });
 
-  it('should throw InvalidCredentialsException when password is incorrect', async () => {
+  it('should return InvalidCredentialsException error when password is incorrect', async () => {
     const command = new SignInCommand('test@example.com', 'WrongPassword1');
     const mockUser = UserMother.create({
       id: 1,
@@ -148,11 +153,14 @@ describe('SignInHandler', () => {
 
     mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
 
-    await expect(handler.execute(command)).rejects.toThrow(InvalidCredentialsException);
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidCredentialsException);
     expect(sessionContract.persist).not.toHaveBeenCalled();
   });
 
-  it('should throw InvalidCredentialsException when user has no password (social-only)', async () => {
+  it('should return InvalidCredentialsException error when user has no password (social-only)', async () => {
     const command = new SignInCommand('social@example.com', 'Password1');
     const mockUser = UserMother.createSocialOnly({
       id: 1,
@@ -162,11 +170,14 @@ describe('SignInHandler', () => {
 
     mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
 
-    await expect(handler.execute(command)).rejects.toThrow(InvalidCredentialsException);
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidCredentialsException);
     expect(sessionContract.persist).not.toHaveBeenCalled();
   });
 
-  it('should throw AccountDeactivatedException when user is archived', async () => {
+  it('should return AccountDeactivatedException error when user is archived', async () => {
     const command = new SignInCommand('archived@example.com', 'Password1');
     const mockUser = UserMother.createArchived({
       id: 1,
@@ -177,11 +188,14 @@ describe('SignInHandler', () => {
 
     mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
 
-    await expect(handler.execute(command)).rejects.toThrow(AccountDeactivatedException);
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(AccountDeactivatedException);
     expect(sessionContract.persist).not.toHaveBeenCalled();
   });
 
-  it('should throw SocialAccountRequiredException when user is Flexible Pendiente (linked OAuth but email unverified)', async () => {
+  it('should return SocialAccountRequiredException error when user is Flexible Pendiente (linked OAuth but email unverified)', async () => {
     // A manual user who linked Google before verifying their email — EC-002 "Flexible Pendiente" state
     const command = new SignInCommand('flex@example.com', 'Password1');
     const flexiblePendingUser = UserMother.create({
@@ -195,7 +209,10 @@ describe('SignInHandler', () => {
 
     mediatorService.findUserByEmailOrUsername.mockResolvedValue(flexiblePendingUser);
 
-    await expect(handler.execute(command)).rejects.toThrow(SocialAccountRequiredException);
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(SocialAccountRequiredException);
     expect(sessionContract.persist).not.toHaveBeenCalled();
   });
 });

@@ -11,6 +11,7 @@ import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.
 import { emailProviderMock, IEmailProviderContract } from '@test-mockup/resend.mock';
 import { EmailAlreadyExistsException } from '@auth/domain/exceptions/email-already-exists.exception';
 import { UsernameAlreadyExistsException } from '@auth/domain/exceptions/username-already-exists.exception';
+import { InvalidPasswordException } from '@auth/domain/exceptions/invalid-password.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 
@@ -126,11 +127,13 @@ describe('SignUpHandler', () => {
 
     const result = await handler.execute(command);
 
-    expect(result.user).toBeDefined();
-    expect(result.user.email).toBe('test@example.com');
-    expect(result.accessToken).toBe('mock-token');
-    expect(result.refreshToken).toBe('mock-token');
-    expect(result.emailVerificationRequired).toBe(true);
+    expect(result.isOk()).toBe(true);
+    const data = result._unsafeUnwrap();
+    expect(data.user).toBeDefined();
+    expect(data.user.email).toBe('test@example.com');
+    expect(data.accessToken).toBe('mock-token');
+    expect(data.refreshToken).toBe('mock-token');
+    expect(data.emailVerificationRequired).toBe(true);
     expect(mediatorService.createUser).toHaveBeenCalledWith(
       'test@example.com',
       'testuser',
@@ -147,44 +150,59 @@ describe('SignUpHandler', () => {
     );
   });
 
-  it('should throw EmailAlreadyExistsException when email is taken', async () => {
+  it('should return EmailAlreadyExistsException error when email is taken', async () => {
     const command = new SignUpCommand('existing@example.com', 'testuser', 'Password1');
     const existingUser = UserMother.create({ email: 'existing@example.com' });
 
     mediatorService.findUserByEmail.mockResolvedValue(existingUser);
 
-    await expect(handler.execute(command)).rejects.toThrow(EmailAlreadyExistsException);
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(EmailAlreadyExistsException);
     expect(mediatorService.createUser).not.toHaveBeenCalled();
   });
 
-  it('should throw UsernameAlreadyExistsException when username is taken', async () => {
+  it('should return UsernameAlreadyExistsException error when username is taken', async () => {
     const command = new SignUpCommand('test@example.com', 'existinguser', 'Password1');
 
     mediatorService.findUserByEmail.mockResolvedValue(null);
     mediatorService.existsUserByUsername.mockResolvedValue(true);
 
-    await expect(handler.execute(command)).rejects.toThrow(UsernameAlreadyExistsException);
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(UsernameAlreadyExistsException);
     expect(mediatorService.createUser).not.toHaveBeenCalled();
   });
 
-  it('should throw error when password is invalid (no uppercase)', async () => {
+  it('should return InvalidPasswordException error when password has no uppercase', async () => {
     const command = new SignUpCommand('test@example.com', 'testuser', 'password1');
 
-    await expect(handler.execute(command)).rejects.toThrow();
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidPasswordException);
     expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
   });
 
-  it('should throw error when password is invalid (no number)', async () => {
+  it('should return InvalidPasswordException error when password has no number', async () => {
     const command = new SignUpCommand('test@example.com', 'testuser', 'Password');
 
-    await expect(handler.execute(command)).rejects.toThrow();
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidPasswordException);
     expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
   });
 
-  it('should throw error when password is too short', async () => {
+  it('should return InvalidPasswordException error when password is too short', async () => {
     const command = new SignUpCommand('test@example.com', 'testuser', 'Pass1');
 
-    await expect(handler.execute(command)).rejects.toThrow();
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidPasswordException);
     expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
   });
 });

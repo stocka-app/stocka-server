@@ -120,22 +120,27 @@ describe('VerifyEmailHandler', () => {
 
       const result = await handler.execute(command);
 
-      expect(result.success).toBe(true);
-      expect(result.message).toBe('Email verified successfully');
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      expect(data.success).toBe(true);
+      expect(data.message).toBe('Email verified successfully');
       expect(mediatorService.verifyUserEmail).toHaveBeenCalledWith(mockUser.uuid);
       expect(tokenContract.persist).toHaveBeenCalled();
     });
 
-    it('should throw InvalidVerificationCodeException when user not found', async () => {
+    it('should return InvalidVerificationCodeException error when user not found', async () => {
       const command = new VerifyEmailCommand('nonexistent@example.com', 'ABC123');
 
       mediatorService.findUserByEmail.mockResolvedValue(null);
 
-      await expect(handler.execute(command)).rejects.toThrow(InvalidVerificationCodeException);
+      const result = await handler.execute(command);
+
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
       expect(tokenContract.findActiveByUserId).not.toHaveBeenCalled();
     });
 
-    it('should throw UserAlreadyVerifiedException when user is already verified', async () => {
+    it('should return UserAlreadyVerifiedException error when user is already verified', async () => {
       const command = new VerifyEmailCommand('verified@example.com', 'ABC123');
       const mockUser = UserMother.createVerified({
         id: 1,
@@ -144,11 +149,14 @@ describe('VerifyEmailHandler', () => {
 
       mediatorService.findUserByEmail.mockResolvedValue(mockUser);
 
-      await expect(handler.execute(command)).rejects.toThrow(UserAlreadyVerifiedException);
+      const result = await handler.execute(command);
+
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(UserAlreadyVerifiedException);
       expect(tokenContract.findActiveByUserId).not.toHaveBeenCalled();
     });
 
-    it('should throw InvalidVerificationCodeException when no active token exists', async () => {
+    it('should return InvalidVerificationCodeException error when no active token exists', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'ABC123');
       const mockUser = UserMother.createPendingVerification({
         id: 1,
@@ -158,10 +166,13 @@ describe('VerifyEmailHandler', () => {
       mediatorService.findUserByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(null);
 
-      await expect(handler.execute(command)).rejects.toThrow(InvalidVerificationCodeException);
+      const result = await handler.execute(command);
+
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
     });
 
-    it('should throw VerificationCodeExpiredException when token is expired', async () => {
+    it('should return VerificationCodeExpiredException error when token is expired', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'ABC123');
       const mockUser = UserMother.createPendingVerification({
         id: 1,
@@ -176,10 +187,13 @@ describe('VerifyEmailHandler', () => {
       mediatorService.findUserByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(expiredToken);
 
-      await expect(handler.execute(command)).rejects.toThrow(VerificationCodeExpiredException);
+      const result = await handler.execute(command);
+
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(VerificationCodeExpiredException);
     });
 
-    it('should throw InvalidVerificationCodeException when code does not match', async () => {
+    it('should return InvalidVerificationCodeException error when code does not match', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'WRONG1');
       const mockUser = UserMother.createPendingVerification({
         id: 1,
@@ -194,7 +208,10 @@ describe('VerifyEmailHandler', () => {
       tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('wrong-hash');
 
-      await expect(handler.execute(command)).rejects.toThrow(InvalidVerificationCodeException);
+      const result = await handler.execute(command);
+
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
       expect(mediatorService.verifyUserEmail).not.toHaveBeenCalled();
     });
 
@@ -267,7 +284,7 @@ describe('VerifyEmailHandler', () => {
       expect(privateProps.some((p) => p.toLowerCase().includes('block'))).toBe(false);
     });
 
-    it('should throw domain exceptions without tracking attempts', async () => {
+    it('should return domain exception errors without tracking attempts', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'WRONG1');
       const mockUser = UserMother.createPendingVerification({
         id: 1,
@@ -282,12 +299,14 @@ describe('VerifyEmailHandler', () => {
       tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('wrong-hash');
 
-      // Should throw the exception cleanly without any side effects
+      // Should return err() cleanly without any side effects
       // Rate limiting is now handled by RateLimitInterceptor
-      await expect(handler.execute(command)).rejects.toThrow(InvalidVerificationCodeException);
+      const result = await handler.execute(command);
+
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
 
       // Verify no verification tracking occurred in the handler
-      // The mediator should NOT have been called for blocking
       expect(mediatorService.verifyUserEmail).not.toHaveBeenCalled();
     });
   });
