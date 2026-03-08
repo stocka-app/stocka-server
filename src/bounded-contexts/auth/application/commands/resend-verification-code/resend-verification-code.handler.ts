@@ -2,6 +2,7 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ResendVerificationCodeCommand } from '@auth/application/commands/resend-verification-code/resend-verification-code.command';
+import { ResendVerificationCodeCommandResult } from '@auth/application/types/auth-result.types';
 import { EmailVerificationTokenModel } from '@auth/domain/models/email-verification-token.model';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
@@ -11,13 +12,7 @@ import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-alrea
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserModel } from '@user/domain/models/user.model';
-
-interface ResendResult {
-  success: boolean;
-  message: string;
-  cooldownSeconds?: number;
-  remainingResends?: number;
-}
+import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(ResendVerificationCodeCommand)
 export class ResendVerificationCodeHandler implements ICommandHandler<ResendVerificationCodeCommand> {
@@ -31,20 +26,20 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     private readonly codeGenerator: ICodeGeneratorContract,
   ) {}
 
-  async execute(command: ResendVerificationCodeCommand): Promise<ResendResult> {
+  async execute(command: ResendVerificationCodeCommand): Promise<ResendVerificationCodeCommandResult> {
     // Find user by email
     const user = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
     if (!user) {
       // Return success to prevent email enumeration
-      return {
+      return ok({
         success: true,
         message: 'If your email exists, a new code has been sent.',
-      };
+      });
     }
 
     // Check if user is already verified
     if (user.status && !user.status.requiresEmailVerification()) {
-      throw new UserAlreadyVerifiedException();
+      return err(new UserAlreadyVerifiedException());
     }
 
     // Get existing token
@@ -55,12 +50,12 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       if (!existingToken.canResend()) {
         const secondsRemaining = existingToken.getSecondsUntilCanResend();
         if (secondsRemaining > 0) {
-          throw new ResendCooldownActiveException(secondsRemaining);
+          return err(new ResendCooldownActiveException(secondsRemaining));
         }
 
         // Check max resends
         if (existingToken.getRemainingResends() <= 0) {
-          throw new MaxResendsExceededException();
+          return err(new MaxResendsExceededException());
         }
       }
 
@@ -80,12 +75,12 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       await this.tokenContract.persist(tokenWithContext);
       tokenWithContext.commit();
 
-      return {
+      return ok({
         success: true,
         message: 'Verification code resent successfully.',
         cooldownSeconds: existingToken.getCurrentCooldownSeconds(),
         remainingResends: existingToken.getRemainingResends() - 1,
-      };
+      });
     }
 
     // No existing token — crear uno nuevo via createForResend()
@@ -112,11 +107,11 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     await this.tokenContract.persist(tokenWithContext);
     tokenWithContext.commit();
 
-    return {
+    return ok({
       success: true,
       message: 'Verification code sent successfully.',
       cooldownSeconds: 0,
       remainingResends: token.getRemainingResends(),
-    };
+    });
   }
 }

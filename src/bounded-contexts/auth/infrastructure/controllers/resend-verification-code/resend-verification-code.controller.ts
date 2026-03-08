@@ -3,9 +3,11 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
 import { ResendVerificationCodeCommand } from '@auth/application/commands/resend-verification-code/resend-verification-code.command';
+import { ResendVerificationCodeCommandResult } from '@auth/application/types/auth-result.types';
 import { ResendVerificationCodeInDto } from '@auth/infrastructure/controllers/resend-verification-code/resend-verification-code-in.dto';
 import { ResendVerificationCodeOutDto } from '@auth/infrastructure/controllers/resend-verification-code/resend-verification-code-out.dto';
 import { extractLocale } from '@shared/infrastructure/i18n/locale.helper';
+import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -31,15 +33,20 @@ export class ResendVerificationCodeController {
 
     const result = await this.commandBus.execute<
       ResendVerificationCodeCommand,
-      { success: boolean; message: string; cooldownSeconds?: number; remainingResends?: number }
+      ResendVerificationCodeCommandResult
     >(new ResendVerificationCodeCommand(dto.email, ipAddress, userAgent, lang));
 
-    return {
-      success: result.success,
-      message: result.message,
-      cooldownSeconds: result.cooldownSeconds,
-      remainingResends: result.remainingResends,
-    };
+    return result.match(
+      (data) => ({
+        success: data.success,
+        message: data.message,
+        cooldownSeconds: data.cooldownSeconds,
+        remainingResends: data.remainingResends,
+      }),
+      (error) => {
+        throw mapDomainErrorToHttp(error);
+      },
+    );
   }
 
   private getClientIp(req: Request): string {
