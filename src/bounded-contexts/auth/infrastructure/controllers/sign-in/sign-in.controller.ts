@@ -5,18 +5,12 @@ import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { RateLimit } from '@common/decorators/rate-limit.decorator';
 import { SignInCommand } from '@auth/application/commands/sign-in/sign-in.command';
+import { SignInCommandResult } from '@auth/application/types/auth-result.types';
 import { SignInInDto } from '@auth/infrastructure/controllers/sign-in/sign-in-in.dto';
 import { SignInOutDto } from '@auth/infrastructure/controllers/sign-in/sign-in-out.dto';
 import { UserOutDto } from '@auth/infrastructure/controllers/sign-up/sign-up-out.dto';
-import { UserModel } from '@user/domain/models/user.model';
 import { setRefreshCookie } from '@auth/infrastructure/helpers/refresh-cookie.helper';
-
-interface SignInResult {
-  user: UserModel;
-  accessToken: string;
-  refreshToken: string;
-  emailVerificationRequired: boolean;
-}
+import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -57,23 +51,30 @@ export class SignInController {
     @Body() dto: SignInInDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<SignInOutDto> {
-    const result: SignInResult = await this.commandBus.execute(
+    const result = await this.commandBus.execute<SignInCommand, SignInCommandResult>(
       new SignInCommand(dto.emailOrUsername, dto.password),
     );
 
-    setRefreshCookie(res, result.refreshToken);
+    return result.match(
+      (data) => {
+        setRefreshCookie(res, data.refreshToken);
 
-    const userOut: UserOutDto = {
-      id: result.user.uuid,
-      email: result.user.email,
-      username: result.user.username,
-      createdAt: result.user.createdAt.toISOString(),
-    };
+        const userOut: UserOutDto = {
+          id: data.user.uuid,
+          email: data.user.email,
+          username: data.user.username,
+          createdAt: data.user.createdAt.toISOString(),
+        };
 
-    return {
-      user: userOut,
-      accessToken: result.accessToken,
-      emailVerificationRequired: result.emailVerificationRequired,
-    };
+        return {
+          user: userOut,
+          accessToken: data.accessToken,
+          emailVerificationRequired: data.emailVerificationRequired,
+        };
+      },
+      (error) => {
+        throw mapDomainErrorToHttp(error);
+      },
+    );
   }
 }

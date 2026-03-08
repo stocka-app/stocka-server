@@ -4,6 +4,7 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 import { SignInCommand } from '@auth/application/commands/sign-in/sign-in.command';
+import { SignInCommandResult } from '@auth/application/types/auth-result.types';
 import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
 import { SessionModel } from '@auth/domain/models/session.model';
 import { ISessionContract } from '@auth/domain/contracts/session.contract';
@@ -15,13 +16,7 @@ import { UserSignedInEvent } from '@auth/domain/events/user-signed-in.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserModel } from '@user/domain/models/user.model';
-
-interface SignInResult {
-  user: UserModel;
-  accessToken: string;
-  refreshToken: string;
-  emailVerificationRequired: boolean;
-}
+import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(SignInCommand)
 export class SignInHandler implements ICommandHandler<SignInCommand> {
@@ -35,17 +30,17 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
     private readonly sessionContract: ISessionContract,
   ) {}
 
-  async execute(command: SignInCommand): Promise<SignInResult> {
+  async execute(command: SignInCommand): Promise<SignInCommandResult> {
     const user = (await this.mediator.findUserByEmailOrUsername(
       command.emailOrUsername,
     )) as UserModel | null;
 
     if (!user) {
-      throw new InvalidCredentialsException();
+      return err(new InvalidCredentialsException());
     }
 
     if (!user.hasPassword()) {
-      throw new InvalidCredentialsException();
+      return err(new InvalidCredentialsException());
     }
 
     const isPasswordValid = await AuthDomainService.comparePasswords(
@@ -54,19 +49,19 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
     );
 
     if (!isPasswordValid) {
-      throw new InvalidCredentialsException();
+      return err(new InvalidCredentialsException());
     }
 
     if (user.isArchived()) {
-      throw new AccountDeactivatedException();
+      return err(new AccountDeactivatedException());
     }
 
     if (user.isFlexiblePending()) {
-      throw new SocialAccountRequiredException();
+      return err(new SocialAccountRequiredException());
     }
 
     if (user.status.isPendingVerification()) {
-      throw new EmailNotVerifiedException();
+      return err(new EmailNotVerifiedException());
     }
 
     const { accessToken, refreshToken } = await this.generateTokens(user);
@@ -78,12 +73,12 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
 
     this.eventBus.publish(new UserSignedInEvent(user.uuid));
 
-    return {
+    return ok({
       user,
       accessToken,
       refreshToken,
-      emailVerificationRequired: false, // User is verified if they reach this point
-    };
+      emailVerificationRequired: false,
+    });
   }
 
   private async generateTokens(
