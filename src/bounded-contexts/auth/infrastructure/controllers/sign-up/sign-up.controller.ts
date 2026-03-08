@@ -3,17 +3,12 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { SignUpCommand } from '@auth/application/commands/sign-up/sign-up.command';
+import { SignUpCommandResult } from '@auth/application/types/auth-result.types';
 import { SignUpInDto } from '@auth/infrastructure/controllers/sign-up/sign-up-in.dto';
 import { SignUpOutDto, UserOutDto } from '@auth/infrastructure/controllers/sign-up/sign-up-out.dto';
-import { UserModel } from '@user/domain/models/user.model';
 import { extractLocale } from '@shared/infrastructure/i18n/locale.helper';
 import { setRefreshCookie } from '@auth/infrastructure/helpers/refresh-cookie.helper';
-
-interface SignUpResult {
-  user: UserModel;
-  accessToken: string;
-  refreshToken: string;
-}
+import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -36,22 +31,29 @@ export class SignUpController {
   ): Promise<SignUpOutDto> {
     const lang = extractLocale(req.headers as Record<string, string | string[] | undefined>);
 
-    const result: SignUpResult = await this.commandBus.execute(
+    const result = await this.commandBus.execute<SignUpCommand, SignUpCommandResult>(
       new SignUpCommand(dto.email, dto.username, dto.password, lang),
     );
 
-    setRefreshCookie(res, result.refreshToken);
+    return result.match(
+      (data) => {
+        setRefreshCookie(res, data.refreshToken);
 
-    const userOut: UserOutDto = {
-      id: result.user.uuid,
-      email: result.user.email,
-      username: result.user.username,
-      createdAt: result.user.createdAt.toISOString(),
-    };
+        const userOut: UserOutDto = {
+          id: data.user.uuid,
+          email: data.user.email,
+          username: data.user.username,
+          createdAt: data.user.createdAt.toISOString(),
+        };
 
-    return {
-      user: userOut,
-      accessToken: result.accessToken,
-    };
+        return {
+          user: userOut,
+          accessToken: data.accessToken,
+        };
+      },
+      (error) => {
+        throw mapDomainErrorToHttp(error);
+      },
+    );
   }
 }

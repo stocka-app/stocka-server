@@ -4,6 +4,7 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 import { SignUpCommand } from '@auth/application/commands/sign-up/sign-up.command';
+import { SignUpCommandResult } from '@auth/application/types/auth-result.types';
 import { PasswordVO } from '@auth/domain/value-objects/password.vo';
 import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
 import { SessionModel } from '@auth/domain/models/session.model';
@@ -19,13 +20,8 @@ import { UserSignedUpEvent } from '@auth/domain/events/user-signed-up.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserModel } from '@user/domain/models/user.model';
-
-interface SignUpResult {
-  user: UserModel;
-  accessToken: string;
-  refreshToken: string;
-  emailVerificationRequired: boolean;
-}
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(SignUpCommand)
 export class SignUpHandler implements ICommandHandler<SignUpCommand> {
@@ -45,19 +41,24 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     private readonly emailProvider: IEmailProviderContract,
   ) {}
 
-  async execute(command: SignUpCommand): Promise<SignUpResult> {
+  async execute(command: SignUpCommand): Promise<SignUpCommandResult> {
     // 1. Validate password format
-    new PasswordVO(command.password);
+    try {
+      new PasswordVO(command.password);
+    } catch (e) {
+      if (e instanceof DomainException) return err(e);
+      throw e;
+    }
 
     // 2. Check if email/username already exist
     const existingUser = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
     if (existingUser) {
-      throw new EmailAlreadyExistsException();
+      return err(new EmailAlreadyExistsException());
     }
 
     const usernameExists = await this.mediator.existsUserByUsername(command.username);
     if (usernameExists) {
-      throw new UsernameAlreadyExistsException();
+      return err(new UsernameAlreadyExistsException());
     }
 
     // 3. Generate verification code BEFORE any persistence
@@ -72,7 +73,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     );
 
     if (!emailResult.success) {
-      throw new EmailDeliveryFailedException(emailResult.error);
+      return err(new EmailDeliveryFailedException(emailResult.error));
     }
 
     // 5. Email sent successfully - now persist everything
@@ -97,12 +98,12 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     // Don't emit EmailVerificationRequestedEvent since email was already sent
     this.eventBus.publish(new UserSignedUpEvent(user.uuid, user.email));
 
-    return {
+    return ok({
       user,
       accessToken,
       refreshToken,
       emailVerificationRequired: true,
-    };
+    });
   }
 
   private async generateTokens(
