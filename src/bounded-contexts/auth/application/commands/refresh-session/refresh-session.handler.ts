@@ -4,7 +4,7 @@ import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 import { RefreshSessionCommand } from '@auth/application/commands/refresh-session/refresh-session.command';
-import { RefreshSessionResult } from '@auth/application/types/auth-result.types';
+import { RefreshSessionCommandResult } from '@auth/application/types/auth-result.types';
 import { AuthDomainService } from '@auth/domain/services/auth-domain.service';
 import { SessionModel } from '@auth/domain/models/session.model';
 import { ISessionContract } from '@auth/domain/contracts/session.contract';
@@ -13,6 +13,7 @@ import { SessionRefreshedEvent } from '@auth/domain/events/session-refreshed.eve
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserModel } from '@user/domain/models/user.model';
+import { ok, err } from '@shared/domain/result';
 
 interface JwtPayload {
   sub: string;
@@ -40,14 +41,14 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
     private readonly sessionContract: ISessionContract,
   ) {}
 
-  async execute(command: RefreshSessionCommand): Promise<RefreshSessionResult> {
+  async execute(command: RefreshSessionCommand): Promise<RefreshSessionCommandResult> {
     // Hash the token and find the session
     const tokenHash = AuthDomainService.hashToken(command.refreshToken);
     const session = await this.sessionContract.findByTokenHash(tokenHash);
 
     // Check if session exists and is valid
     if (!session?.isValid()) {
-      throw new TokenExpiredException();
+      return err(new TokenExpiredException());
     }
 
     // Verify the JWT token is valid
@@ -56,18 +57,18 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
-      throw new TokenExpiredException();
+      return err(new TokenExpiredException());
     }
 
     // Get the user
     const decoded: unknown = this.jwtService.decode(command.refreshToken);
     if (!isValidJwtPayload(decoded)) {
-      throw new TokenExpiredException();
+      return err(new TokenExpiredException());
     }
     const user = (await this.mediator.findUserByUUID(decoded.sub)) as UserModel | null;
 
     if (!user) {
-      throw new TokenExpiredException();
+      return err(new TokenExpiredException());
     }
 
     // Archive the old session
@@ -85,7 +86,7 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
     newSession.commit();
     this.eventBus.publish(new SessionRefreshedEvent(oldSessionUUID, newSession.uuid));
 
-    return { accessToken, refreshToken };
+    return ok({ accessToken, refreshToken });
   }
 
   private async generateTokens(

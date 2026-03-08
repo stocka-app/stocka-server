@@ -3,9 +3,10 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { RefreshSessionCommand } from '@auth/application/commands/refresh-session/refresh-session.command';
-import { RefreshSessionResult } from '@auth/application/types/auth-result.types';
+import { RefreshSessionCommandResult } from '@auth/application/types/auth-result.types';
 import { RefreshSessionOutDto } from '@auth/infrastructure/controllers/refresh-session/refresh-session-out.dto';
 import { setRefreshCookie } from '@auth/infrastructure/helpers/refresh-cookie.helper';
+import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -36,12 +37,18 @@ export class RefreshSessionController {
       throw new UnauthorizedException('Refresh token missing');
     }
 
-    const result = await this.commandBus.execute<RefreshSessionCommand, RefreshSessionResult>(
+    const result = await this.commandBus.execute<RefreshSessionCommand, RefreshSessionCommandResult>(
       new RefreshSessionCommand(token),
     );
 
-    setRefreshCookie(res, result.refreshToken);
-
-    return { accessToken: result.accessToken };
+    return result.match(
+      (data) => {
+        setRefreshCookie(res, data.refreshToken);
+        return { accessToken: data.accessToken };
+      },
+      (error) => {
+        throw mapDomainErrorToHttp(error);
+      },
+    );
   }
 }
