@@ -5,9 +5,11 @@ import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { RateLimit } from '@common/decorators/rate-limit.decorator';
 import { VerifyEmailCommand } from '@auth/application/commands/verify-email/verify-email.command';
+import { VerifyEmailCommandResult } from '@auth/application/types/auth-result.types';
 import { VerifyEmailInDto } from '@auth/infrastructure/controllers/verify-email/verify-email-in.dto';
 import { VerifyEmailOutDto } from '@auth/infrastructure/controllers/verify-email/verify-email-out.dto';
 import { extractLocale } from '@shared/infrastructure/i18n/locale.helper';
+import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -45,14 +47,18 @@ export class VerifyEmailController {
   async handle(@Body() dto: VerifyEmailInDto, @Req() req: Request): Promise<VerifyEmailOutDto> {
     const lang = extractLocale(req.headers as Record<string, string | string[] | undefined>);
 
-    const result = await this.commandBus.execute<
-      VerifyEmailCommand,
-      { success: boolean; message: string }
-    >(new VerifyEmailCommand(dto.email, dto.code, lang));
+    const result = await this.commandBus.execute<VerifyEmailCommand, VerifyEmailCommandResult>(
+      new VerifyEmailCommand(dto.email, dto.code, lang),
+    );
 
-    return {
-      success: result.success,
-      message: result.message,
-    };
+    return result.match(
+      (data) => ({
+        success: data.success,
+        message: data.message,
+      }),
+      (error) => {
+        throw mapDomainErrorToHttp(error);
+      },
+    );
   }
 }

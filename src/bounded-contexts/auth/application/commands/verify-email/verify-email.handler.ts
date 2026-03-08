@@ -1,6 +1,7 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { VerifyEmailCommand } from '@auth/application/commands/verify-email/verify-email.command';
+import { VerifyEmailCommandResult } from '@auth/application/types/auth-result.types';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { InvalidVerificationCodeException } from '@auth/domain/exceptions/invalid-verification-code.exception';
@@ -9,11 +10,7 @@ import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-alrea
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserModel } from '@user/domain/models/user.model';
-
-interface VerifyEmailResult {
-  success: boolean;
-  message: string;
-}
+import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(VerifyEmailCommand)
 export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
@@ -26,27 +23,27 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
     private readonly codeGenerator: ICodeGeneratorContract,
   ) {}
 
-  async execute(command: VerifyEmailCommand): Promise<VerifyEmailResult> {
+  async execute(command: VerifyEmailCommand): Promise<VerifyEmailCommandResult> {
     // Find user by email
     const user = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
     if (!user) {
-      throw new InvalidVerificationCodeException();
+      return err(new InvalidVerificationCodeException());
     }
 
     // Check if user is already verified
     if (user.status && !user.status.requiresEmailVerification()) {
-      throw new UserAlreadyVerifiedException();
+      return err(new UserAlreadyVerifiedException());
     }
 
     // Get active verification token
     const token = await this.tokenContract.findActiveByUserId(user.id!);
     if (!token) {
-      throw new InvalidVerificationCodeException();
+      return err(new InvalidVerificationCodeException());
     }
 
     // Check if token is expired
     if (token.isExpired()) {
-      throw new VerificationCodeExpiredException();
+      return err(new VerificationCodeExpiredException());
     }
 
     // Verify the code
@@ -55,7 +52,7 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
 
     if (!isValidCode) {
       // Rate limiting and attempt tracking is handled by RateLimitInterceptor
-      throw new InvalidVerificationCodeException();
+      return err(new InvalidVerificationCodeException());
     }
 
     // Mark token as used (lang is passed so EmailVerificationCompletedEvent carries locale for welcome email)
@@ -67,9 +64,9 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
     // Update user status to active
     await this.mediator.verifyUserEmail(user.uuid);
 
-    return {
+    return ok({
       success: true,
       message: 'Email verified successfully',
-    };
+    });
   }
 }
