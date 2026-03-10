@@ -42,16 +42,13 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
   ) {}
 
   async execute(command: RefreshSessionCommand): Promise<RefreshSessionCommandResult> {
-    // Hash the token and find the session
     const tokenHash = AuthDomainService.hashToken(command.refreshToken);
     const session = await this.sessionContract.findByTokenHash(tokenHash);
 
-    // Check if session exists and is valid
     if (!session?.isValid()) {
       return err(new TokenExpiredException());
     }
 
-    // Verify the JWT token is valid
     try {
       await this.jwtService.verifyAsync(command.refreshToken, {
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
@@ -60,7 +57,6 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
       return err(new TokenExpiredException());
     }
 
-    // Get the user
     const decoded: unknown = this.jwtService.decode(command.refreshToken);
     if (!isValidJwtPayload(decoded)) {
       return err(new TokenExpiredException());
@@ -71,17 +67,12 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
       return err(new TokenExpiredException());
     }
 
-    // Archive the old session
     const oldSessionUUID = session.uuid;
     await this.sessionContract.archive(session.uuid);
 
-    // Generate new tokens
     const { accessToken, refreshToken } = await this.generateTokens(user);
-
-    // Create new session
     const newSession = await this.createSession(user.id!, refreshToken);
 
-    // Publish events
     this.eventPublisher.mergeObjectContext(newSession);
     newSession.commit();
     this.eventBus.publish(new SessionRefreshedEvent(oldSessionUUID, newSession.uuid));

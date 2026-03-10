@@ -56,13 +56,9 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
       }
     }
 
-    // Generate tokens
     const { accessToken, refreshToken } = await this.generateTokens(user);
-
-    // Create and persist session
     const session = await this.createSession(user.id!, refreshToken);
 
-    // Publish events
     this.eventPublisher.mergeObjectContext(session);
     session.commit();
     this.eventBus.publish(new UserSignedInEvent(user.uuid));
@@ -75,7 +71,6 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
   }
 
   private async generateUniqueUsername(displayName: string): Promise<string> {
-    // Sanitize display name to create a valid username
     const sanitized = displayName
       .toLowerCase()
       .replace(/[^a-z0-9_]/g, '_')
@@ -85,7 +80,6 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
 
     let username = sanitized || 'user';
 
-    // Check if username exists, add random suffix if it does
     let exists = await this.mediator.user.existsByUsername(username);
     while (exists) {
       const suffix = Math.random().toString(36).substring(2, 8);

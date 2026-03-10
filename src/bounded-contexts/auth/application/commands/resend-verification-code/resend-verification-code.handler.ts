@@ -54,13 +54,12 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
           return err(new ResendCooldownActiveException(secondsRemaining));
         }
 
-        // Check max resends
-        if (existingToken.getRemainingResends() <= 0) {
+        const hasExceededMaxResends = existingToken.getRemainingResends() <= 0;
+        if (hasExceededMaxResends) {
           return err(new MaxResendsExceededException());
         }
       }
 
-      // Generate new code
       const newCode = this.codeGenerator.generateVerificationCode();
       const newCodeHash = this.codeGenerator.hashCode(newCode);
       const expirationMinutes = this.configService.get<number>(
@@ -69,8 +68,6 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       );
       const newExpiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
-      // Update the token
-      // updateCode() emits VerificationCodeResentEvent — el event handler envía el correo
       const tokenWithContext = this.eventPublisher.mergeObjectContext(existingToken);
       tokenWithContext.updateCode(newCodeHash, newExpiresAt, command.email, newCode, command.lang);
       await this.tokenContract.persist(tokenWithContext);
@@ -84,9 +81,6 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       });
     }
 
-    // No existing token — crear uno nuevo via createForResend()
-    // createForResend() emite VerificationCodeResentEvent (no EmailVerificationRequestedEvent)
-    // para que el VerificationCodeResentEventHandler sea el único responsable del correo
     const code = this.codeGenerator.generateVerificationCode();
     const codeHash = this.codeGenerator.hashCode(code);
     const expirationMinutes = this.configService.get<number>(

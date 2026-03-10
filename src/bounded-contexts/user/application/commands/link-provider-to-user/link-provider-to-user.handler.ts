@@ -31,8 +31,9 @@ export class LinkProviderToUserHandler implements ICommandHandler<LinkProviderTo
       providerId: command.providerId,
     });
 
-    // Manual accounts with a password become flexible; detect pending state
-    if (user.accountType === AccountType.MANUAL && user.hasPassword()) {
+    const isManualAccountWithPassword =
+      user.accountType === AccountType.MANUAL && user.hasPassword();
+    if (isManualAccountWithPassword) {
       const isFlexiblePending = user.status.isPendingVerification();
       this.eventPublisher.mergeObjectContext(user);
       user.becomeFlexible(command.provider, isFlexiblePending);

@@ -11,8 +11,8 @@ export class EmailVerificationFailedEventHandler implements IEventHandler<EmailV
       `Email verification failed: userUUID=${event.userUUID}, ipAddress=${event.ipAddress}, failedAttempts=${event.failedAttempts}`,
     );
 
-    // Log additional warning for suspicious activity
-    if (event.failedAttempts >= 5) {
+    const isSuspiciousActivity = event.failedAttempts >= 5;
+    if (isSuspiciousActivity) {
       this.logger.warn(
         `Suspicious verification activity detected: userUUID=${event.userUUID}, ` +
           `failedAttempts=${event.failedAttempts}, ipAddress=${event.ipAddress}`,
