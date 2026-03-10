@@ -10,6 +10,8 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { EventBus } from '@nestjs/cqrs';
+import { UserVerificationBlockedByAuthEvent } from '@shared/domain/events/integration';
 
 class InvalidCredentialsException extends DomainException {
   constructor() {
@@ -26,7 +28,8 @@ class OtherException extends DomainException {
 describe('RateLimitInterceptor', () => {
   let interceptor: RateLimitInterceptor;
   let attemptContract: jest.Mocked<IVerificationAttemptContract>;
-  let mediator: jest.Mocked<MediatorService>;
+  let mediator: { user: { findByEmailOrUsername: jest.Mock } };
+  let eventBus: jest.Mocked<EventBus>;
 
   const signInRateLimitConfig: RateLimitConfig = {
     type: 'sign_in',
@@ -102,8 +105,13 @@ describe('RateLimitInterceptor', () => {
     };
 
     const mockMediator = {
-      findUserByEmailOrUsername: jest.fn(),
-      blockUserVerification: jest.fn(),
+      user: {
+        findByEmailOrUsername: jest.fn(),
+      },
+    };
+
+    const mockEventBus = {
+      publish: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -111,12 +119,14 @@ describe('RateLimitInterceptor', () => {
         RateLimitInterceptor,
         { provide: INJECTION_TOKENS.VERIFICATION_ATTEMPT_CONTRACT, useValue: mockAttemptContract },
         { provide: MediatorService, useValue: mockMediator },
+        { provide: EventBus, useValue: mockEventBus },
       ],
     }).compile();
 
     interceptor = module.get<RateLimitInterceptor>(RateLimitInterceptor);
     attemptContract = module.get(INJECTION_TOKENS.VERIFICATION_ATTEMPT_CONTRACT);
     mediator = module.get(MediatorService);
+    eventBus = module.get(EventBus);
   });
 
   describe('intercept', () => {
@@ -157,7 +167,11 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should not track errors with errorCode not in failureErrorCodes', async () => {
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
       const error = new OtherException();
       const callHandler = createMockCallHandler(undefined, error);
 
@@ -169,11 +183,15 @@ describe('RateLimitInterceptor', () => {
 
     it('should track failed attempts when errorCode matches failureErrorCodes', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -185,11 +203,15 @@ describe('RateLimitInterceptor', () => {
 
     it('should track attempt with correct verification type', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -206,20 +228,25 @@ describe('RateLimitInterceptor', () => {
         uuid: '550e8400-e29b-41d4-a716-446655440001',
         email: 'test@example.com',
       });
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(7);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
-      mediator.blockUserVerification.mockResolvedValue(undefined);
 
       await interceptAndCatchError(context, callHandler);
 
-      expect(mediator.blockUserVerification).toHaveBeenCalledWith(
-        '550e8400-e29b-41d4-a716-446655440001',
-        expect.any(Date),
+      expect(eventBus.publish).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userUUID: '550e8400-e29b-41d4-a716-446655440001',
+          blockedUntil: expect.any(Date),
+        }),
       );
     });
 
@@ -228,44 +255,55 @@ describe('RateLimitInterceptor', () => {
         uuid: '550e8400-e29b-41d4-a716-446655440001',
         email: 'test@example.com',
       });
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(10);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
-      mediator.blockUserVerification.mockResolvedValue(undefined);
 
       await interceptAndCatchError(context, callHandler);
 
-      const blockCall = mediator.blockUserVerification.mock.calls[0];
-      const blockedUntil = blockCall[1];
-      const minutesBlocked = Math.round((blockedUntil.getTime() - Date.now()) / 60000);
+      const publishCall = (eventBus.publish as jest.Mock).mock
+        .calls[0][0] as UserVerificationBlockedByAuthEvent;
+      const minutesBlocked = Math.round((publishCall.blockedUntil.getTime() - Date.now()) / 60000);
       expect(minutesBlocked).toBe(15);
     });
 
     it('should not block when below all thresholds', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       await interceptAndCatchError(context, callHandler);
 
-      expect(mediator.blockUserVerification).not.toHaveBeenCalled();
+      expect(eventBus.publish).not.toHaveBeenCalled();
     });
 
     it('should track by IP with email when user not found and identifier is email', async () => {
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'nonexistent@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'nonexistent@example.com',
+      );
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
@@ -278,11 +316,15 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should track by IP with null email when user not found and identifier is username', async () => {
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'randomusername');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'randomusername',
+      );
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
@@ -296,11 +338,15 @@ describe('RateLimitInterceptor', () => {
 
     it('should always re-throw the original exception', async () => {
       const mockUser = UserMother.create({ email: 'test@example.com' });
-      const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
       const originalError = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, originalError);
 
-      mediator.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 

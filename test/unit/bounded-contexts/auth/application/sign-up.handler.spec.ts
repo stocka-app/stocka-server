@@ -17,7 +17,9 @@ import { UserMother } from '@test/helpers/object-mother/user.mother';
 
 describe('SignUpHandler', () => {
   let handler: SignUpHandler;
-  let mediatorService: jest.Mocked<MediatorService>;
+  let mediatorService: {
+    user: { findByEmail: jest.Mock; existsByUsername: jest.Mock; createUser: jest.Mock };
+  };
   let jwtService: jest.Mocked<JwtService>;
   let sessionContract: jest.Mocked<ISessionContract>;
   let verificationTokenContract: jest.Mocked<IEmailVerificationTokenContract>;
@@ -34,9 +36,11 @@ describe('SignUpHandler', () => {
 
   beforeEach(async () => {
     const mockMediatorService = {
-      findUserByEmail: jest.fn(),
-      existsUserByUsername: jest.fn(),
-      createUser: jest.fn(),
+      user: {
+        findByEmail: jest.fn(),
+        existsByUsername: jest.fn(),
+        createUser: jest.fn(),
+      },
     };
 
     const mockJwtService = {
@@ -65,12 +69,6 @@ describe('SignUpHandler', () => {
     const mockCodeGenerator = {
       generateVerificationCode: jest.fn().mockReturnValue('ABC123'),
       hashCode: jest.fn().mockReturnValue('hashed-code'),
-    };
-
-    const mockEmailProvider = {
-      sendVerificationEmail: jest.fn().mockResolvedValue({ success: true }),
-      sendWelcomeEmail: jest.fn().mockResolvedValue({ success: true }),
-      sendPasswordResetEmail: jest.fn().mockResolvedValue({ success: true }),
     };
 
     const mockEventPublisher = {
@@ -119,9 +117,9 @@ describe('SignUpHandler', () => {
       username: 'testuser',
     });
 
-    mediatorService.findUserByEmail.mockResolvedValue(null);
-    mediatorService.existsUserByUsername.mockResolvedValue(false);
-    mediatorService.createUser.mockResolvedValue(mockUser);
+    mediatorService.user.findByEmail.mockResolvedValue(null);
+    mediatorService.user.existsByUsername.mockResolvedValue(false);
+    mediatorService.user.createUser.mockResolvedValue(mockUser);
     sessionContract.persist.mockResolvedValue(expect.anything());
     verificationTokenContract.persist.mockResolvedValue(expect.anything());
 
@@ -134,7 +132,7 @@ describe('SignUpHandler', () => {
     expect(data.accessToken).toBe('mock-token');
     expect(data.refreshToken).toBe('mock-token');
     expect(data.emailVerificationRequired).toBe(true);
-    expect(mediatorService.createUser).toHaveBeenCalledWith(
+    expect(mediatorService.user.createUser).toHaveBeenCalledWith(
       'test@example.com',
       'testuser',
       expect.any(String), // hashed password
@@ -154,26 +152,26 @@ describe('SignUpHandler', () => {
     const command = new SignUpCommand('existing@example.com', 'testuser', 'Password1');
     const existingUser = UserMother.create({ email: 'existing@example.com' });
 
-    mediatorService.findUserByEmail.mockResolvedValue(existingUser);
+    mediatorService.user.findByEmail.mockResolvedValue(existingUser);
 
     const result = await handler.execute(command);
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(EmailAlreadyExistsException);
-    expect(mediatorService.createUser).not.toHaveBeenCalled();
+    expect(mediatorService.user.createUser).not.toHaveBeenCalled();
   });
 
   it('should return UsernameAlreadyExistsException error when username is taken', async () => {
     const command = new SignUpCommand('test@example.com', 'existinguser', 'Password1');
 
-    mediatorService.findUserByEmail.mockResolvedValue(null);
-    mediatorService.existsUserByUsername.mockResolvedValue(true);
+    mediatorService.user.findByEmail.mockResolvedValue(null);
+    mediatorService.user.existsByUsername.mockResolvedValue(true);
 
     const result = await handler.execute(command);
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(UsernameAlreadyExistsException);
-    expect(mediatorService.createUser).not.toHaveBeenCalled();
+    expect(mediatorService.user.createUser).not.toHaveBeenCalled();
   });
 
   it('should return InvalidPasswordException error when password has no uppercase', async () => {
@@ -183,7 +181,7 @@ describe('SignUpHandler', () => {
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidPasswordException);
-    expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
+    expect(mediatorService.user.findByEmail).not.toHaveBeenCalled();
   });
 
   it('should return InvalidPasswordException error when password has no number', async () => {
@@ -193,7 +191,7 @@ describe('SignUpHandler', () => {
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidPasswordException);
-    expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
+    expect(mediatorService.user.findByEmail).not.toHaveBeenCalled();
   });
 
   it('should return InvalidPasswordException error when password is too short', async () => {
@@ -203,6 +201,6 @@ describe('SignUpHandler', () => {
 
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidPasswordException);
-    expect(mediatorService.findUserByEmail).not.toHaveBeenCalled();
+    expect(mediatorService.user.findByEmail).not.toHaveBeenCalled();
   });
 });

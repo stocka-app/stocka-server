@@ -12,7 +12,7 @@ describe('RateLimitGuard', () => {
   let guard: RateLimitGuard;
   let reflector: jest.Mocked<Reflector>;
   let attemptContract: jest.Mocked<IVerificationAttemptContract>;
-  let mediator: jest.Mocked<MediatorService>;
+  let mediator: { user: { findByEmailOrUsername: jest.Mock } };
 
   const createMockExecutionContext = (
     body: Record<string, unknown> = {},
@@ -73,7 +73,9 @@ describe('RateLimitGuard', () => {
     };
 
     const mockMediator = {
-      findUserByEmailOrUsername: jest.fn(),
+      user: {
+        findByEmailOrUsername: jest.fn(),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -106,7 +108,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(2);
-      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'test@example.com' });
 
@@ -165,7 +167,7 @@ describe('RateLimitGuard', () => {
         email: 'blocked@example.com',
         verificationBlockedUntil: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
       });
-      mediator.findUserByEmailOrUsername.mockResolvedValue(blockedUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(blockedUser);
 
       const context = createMockExecutionContext({ emailOrUsername: 'blocked@example.com' });
 
@@ -191,7 +193,7 @@ describe('RateLimitGuard', () => {
         email: 'unlocked@example.com',
         verificationBlockedUntil: new Date(Date.now() - 1000), // Already expired
       });
-      mediator.findUserByEmailOrUsername.mockResolvedValue(unlockedUser);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(unlockedUser);
 
       const context = createMockExecutionContext({ emailOrUsername: 'unlocked@example.com' });
 
@@ -204,7 +206,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(5);
-      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'nonexistent@example.com' });
 
@@ -217,7 +219,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext(
         { emailOrUsername: 'test@example.com' },
@@ -237,7 +239,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'extracted@example.com' });
 
@@ -253,7 +255,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.findUserByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'test@example.com' });
       const request = context.switchToHttp().getRequest();

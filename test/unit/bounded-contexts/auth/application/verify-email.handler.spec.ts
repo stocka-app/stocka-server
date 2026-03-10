@@ -14,7 +14,7 @@ import { EmailVerificationTokenModel } from '@auth/domain/models/email-verificat
 
 describe('VerifyEmailHandler', () => {
   let handler: VerifyEmailHandler;
-  let mediatorService: jest.Mocked<MediatorService>;
+  let mediatorService: { user: { findByEmail: jest.Mock } };
   let tokenContract: jest.Mocked<IEmailVerificationTokenContract>;
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
   let eventPublisher: jest.Mocked<EventPublisher>;
@@ -58,8 +58,9 @@ describe('VerifyEmailHandler', () => {
 
   beforeEach(async () => {
     const mockMediatorService = {
-      findUserByEmail: jest.fn(),
-      verifyUserEmail: jest.fn(),
+      user: {
+        findByEmail: jest.fn(),
+      },
     };
 
     const mockTokenContract = {
@@ -112,11 +113,10 @@ describe('VerifyEmailHandler', () => {
         codeHash: 'valid-hash',
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('valid-hash');
       tokenContract.persist.mockResolvedValue({} as EmailVerificationTokenModel);
-      mediatorService.verifyUserEmail.mockResolvedValue(undefined);
 
       const result = await handler.execute(command);
 
@@ -124,14 +124,13 @@ describe('VerifyEmailHandler', () => {
       const data = result._unsafeUnwrap();
       expect(data.success).toBe(true);
       expect(data.message).toBe('Email verified successfully');
-      expect(mediatorService.verifyUserEmail).toHaveBeenCalledWith(mockUser.uuid);
       expect(tokenContract.persist).toHaveBeenCalled();
     });
 
     it('should return InvalidVerificationCodeException error when user not found', async () => {
       const command = new VerifyEmailCommand('nonexistent@example.com', 'ABC123');
 
-      mediatorService.findUserByEmail.mockResolvedValue(null);
+      mediatorService.user.findByEmail.mockResolvedValue(null);
 
       const result = await handler.execute(command);
 
@@ -147,7 +146,7 @@ describe('VerifyEmailHandler', () => {
         email: 'verified@example.com',
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
 
       const result = await handler.execute(command);
 
@@ -163,7 +162,7 @@ describe('VerifyEmailHandler', () => {
         email: 'test@example.com',
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(null);
 
       const result = await handler.execute(command);
@@ -184,7 +183,7 @@ describe('VerifyEmailHandler', () => {
         expiresAt: new Date(Date.now() - 1000), // Already expired
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(expiredToken);
 
       const result = await handler.execute(command);
@@ -204,7 +203,7 @@ describe('VerifyEmailHandler', () => {
         codeHash: 'correct-hash',
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('wrong-hash');
 
@@ -212,7 +211,6 @@ describe('VerifyEmailHandler', () => {
 
       expect(result.isErr()).toBe(true);
       expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
-      expect(mediatorService.verifyUserEmail).not.toHaveBeenCalled();
     });
 
     it('should convert code to uppercase before hashing', async () => {
@@ -226,11 +224,10 @@ describe('VerifyEmailHandler', () => {
         codeHash: 'valid-hash',
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('valid-hash');
       tokenContract.persist.mockResolvedValue({} as EmailVerificationTokenModel);
-      mediatorService.verifyUserEmail.mockResolvedValue(undefined);
 
       await handler.execute(command);
 
@@ -249,11 +246,10 @@ describe('VerifyEmailHandler', () => {
         codeHash: 'valid-hash',
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('valid-hash');
       tokenContract.persist.mockResolvedValue({} as EmailVerificationTokenModel);
-      mediatorService.verifyUserEmail.mockResolvedValue(undefined);
 
       await handler.execute(command);
 
@@ -295,7 +291,7 @@ describe('VerifyEmailHandler', () => {
         codeHash: 'correct-hash',
       });
 
-      mediatorService.findUserByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
       tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('wrong-hash');
 
@@ -305,9 +301,6 @@ describe('VerifyEmailHandler', () => {
 
       expect(result.isErr()).toBe(true);
       expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
-
-      // Verify no verification tracking occurred in the handler
-      expect(mediatorService.verifyUserEmail).not.toHaveBeenCalled();
     });
   });
 });
