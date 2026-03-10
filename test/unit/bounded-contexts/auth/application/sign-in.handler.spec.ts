@@ -16,7 +16,7 @@ import * as bcrypt from 'bcrypt';
 
 describe('SignInHandler', () => {
   let handler: SignInHandler;
-  let mediatorService: jest.Mocked<MediatorService>;
+  let mediatorService: { user: { findByEmailOrUsername: jest.Mock } };
   let jwtService: jest.Mocked<JwtService>;
   let sessionContract: jest.Mocked<ISessionContract>;
 
@@ -24,7 +24,9 @@ describe('SignInHandler', () => {
 
   beforeEach(async () => {
     const mockMediatorService = {
-      findUserByEmailOrUsername: jest.fn(),
+      user: {
+        findByEmailOrUsername: jest.fn(),
+      },
     };
 
     const mockJwtService = {
@@ -98,7 +100,7 @@ describe('SignInHandler', () => {
       passwordHash: validPasswordHash,
     });
 
-    mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(mockUser);
     sessionContract.persist.mockResolvedValue(expect.anything());
 
     const result = await handler.execute(command);
@@ -121,7 +123,7 @@ describe('SignInHandler', () => {
       passwordHash: validPasswordHash,
     });
 
-    mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(mockUser);
     sessionContract.persist.mockResolvedValue(expect.anything());
 
     const result = await handler.execute(command);
@@ -133,7 +135,7 @@ describe('SignInHandler', () => {
   it('should return InvalidCredentialsException error when user does not exist', async () => {
     const command = new SignInCommand('nonexistent@example.com', 'Password1');
 
-    mediatorService.findUserByEmailOrUsername.mockResolvedValue(null);
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(null);
 
     const result = await handler.execute(command);
 
@@ -151,7 +153,7 @@ describe('SignInHandler', () => {
       passwordHash: validPasswordHash,
     });
 
-    mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(mockUser);
 
     const result = await handler.execute(command);
 
@@ -168,7 +170,7 @@ describe('SignInHandler', () => {
       username: 'socialuser',
     });
 
-    mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(mockUser);
 
     const result = await handler.execute(command);
 
@@ -186,7 +188,7 @@ describe('SignInHandler', () => {
       passwordHash: validPasswordHash,
     });
 
-    mediatorService.findUserByEmailOrUsername.mockResolvedValue(mockUser);
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(mockUser);
 
     const result = await handler.execute(command);
 
@@ -207,7 +209,7 @@ describe('SignInHandler', () => {
       accountType: AccountType.FLEXIBLE,
     });
 
-    mediatorService.findUserByEmailOrUsername.mockResolvedValue(flexiblePendingUser);
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(flexiblePendingUser);
 
     const result = await handler.execute(command);
 

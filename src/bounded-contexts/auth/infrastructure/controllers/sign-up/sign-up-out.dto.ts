@@ -35,5 +35,4 @@ export class SignUpOutDto {
     description: 'JWT access token',
   })
   accessToken!: string;
-
 }

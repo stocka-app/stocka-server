@@ -7,7 +7,6 @@ import { UserSignedOutEvent } from '@auth/domain/events/user-signed-out.event';
 import { SessionArchivedEvent } from '@auth/domain/events/session-archived.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 @CommandHandler(SignOutCommand)
 export class SignOutHandler implements ICommandHandler<SignOutCommand> {
@@ -23,7 +22,7 @@ export class SignOutHandler implements ICommandHandler<SignOutCommand> {
     const session = await this.sessionContract.findByTokenHash(tokenHash);
 
     if (session) {
-      const user = (await this.mediator.findUserById(session.userId)) as UserAggregate | null;
+      const user = await this.mediator.user.findById(session.userId);
 
       await this.sessionContract.archiveAllByUserId(session.userId);
 

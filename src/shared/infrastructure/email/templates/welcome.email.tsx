@@ -13,7 +13,8 @@ const i18n = {
   es: {
     preview: '¡Bienvenido a Stocka! Tu cuenta ha sido verificada.',
     heading: (name: string) => `¡Bienvenido a Stocka, ${name}!`,
-    verified: 'Tu cuenta ha sido verificada exitosamente. Ahora puedes acceder a todas las funcionalidades de Stocka.',
+    verified:
+      'Tu cuenta ha sido verificada exitosamente. Ahora puedes acceder a todas las funcionalidades de Stocka.',
     features: 'Con Stocka podrás:',
     featureList: [
       'Gestionar tu inventario de forma eficiente',
@@ -27,7 +28,8 @@ const i18n = {
   en: {
     preview: 'Welcome to Stocka! Your account has been verified.',
     heading: (name: string) => `Welcome to Stocka, ${name}!`,
-    verified: 'Your account has been successfully verified. You can now access all Stocka features.',
+    verified:
+      'Your account has been successfully verified. You can now access all Stocka features.',
     features: 'With Stocka you can:',
     featureList: [
       'Manage your inventory efficiently',

@@ -1,4 +1,5 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { IUserView } from '@shared/domain/contracts/user-view.contract';
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
 import { PasswordHashVO } from '@shared/domain/value-objects/primitive/password-hash.vo';
 import { UsernameVO } from '@user/domain/value-objects/username.vo';
@@ -26,7 +27,7 @@ export interface UserProps extends AggregateRootProps {
   accountType?: string;
 }
 
-export class UserAggregate extends AggregateRoot {
+export class UserAggregate extends AggregateRoot implements IUserView {
   private _email: EmailVO;
   private _username: UsernameVO;
   private _passwordHash: PasswordHashVO | null;
@@ -123,6 +124,14 @@ export class UserAggregate extends AggregateRoot {
 
   isEmailVerified(): boolean {
     return this._status.canAccessApplication();
+  }
+
+  isPendingVerification(): boolean {
+    return this._status.isPendingVerification();
+  }
+
+  requiresEmailVerification(): boolean {
+    return this._status.requiresEmailVerification();
   }
 
   updatePasswordHash(hash: string): void {

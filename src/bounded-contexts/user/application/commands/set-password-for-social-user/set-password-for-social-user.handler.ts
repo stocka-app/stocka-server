@@ -10,16 +10,16 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(SetPasswordForSocialUserCommand)
-export class SetPasswordForSocialUserHandler
-  implements ICommandHandler<SetPasswordForSocialUserCommand>
-{
+export class SetPasswordForSocialUserHandler implements ICommandHandler<SetPasswordForSocialUserCommand> {
   constructor(
     @Inject(INJECTION_TOKENS.USER_CONTRACT)
     private readonly userContract: IUserContract,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
-  async execute(command: SetPasswordForSocialUserCommand): Promise<SetPasswordForSocialUserCommandResult> {
+  async execute(
+    command: SetPasswordForSocialUserCommand,
+  ): Promise<SetPasswordForSocialUserCommandResult> {
     const user = await this.userContract.findById(command.userId);
     if (!user) return err(new UserNotFoundException(String(command.userId)));
 

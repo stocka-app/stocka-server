@@ -35,7 +35,7 @@ const buildActiveVerificationToken = (): EmailVerificationTokenModel =>
 describe('Verification code resend — transactional email delivery', () => {
   let handler: ResendVerificationCodeHandler;
   let emailProvider: jest.Mocked<IEmailProviderContract>;
-  let mediatorService: { findUserByEmail: jest.Mock };
+  let mediatorService: { user: { findByEmail: jest.Mock } };
   let tokenContract: { findActiveByUserId: jest.Mock; persist: jest.Mock };
 
   // Customer who completed registration but has not yet activated their account
@@ -47,7 +47,7 @@ describe('Verification code resend — transactional email delivery', () => {
 
   beforeEach(async () => {
     mediatorService = {
-      findUserByEmail: jest.fn().mockResolvedValue(pendingVerificationCustomer),
+      user: { findByEmail: jest.fn().mockResolvedValue(pendingVerificationCustomer) },
     };
 
     tokenContract = {

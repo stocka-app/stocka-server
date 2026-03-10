@@ -19,7 +19,7 @@ import { EmailDeliveryFailedException } from '@auth/domain/exceptions/email-deli
 import { UserSignedUpEvent } from '@auth/domain/events/user-signed-up.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { IUserView } from '@shared/domain/contracts/user-view.contract';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { ok, err } from '@shared/domain/result';
 
@@ -51,12 +51,12 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     }
 
     // 2. Check if email/username already exist
-    const existingUser = (await this.mediator.findUserByEmail(command.email)) as UserAggregate | null;
+    const existingUser = await this.mediator.user.findByEmail(command.email);
     if (existingUser) {
       return err(new EmailAlreadyExistsException());
     }
 
-    const usernameExists = await this.mediator.existsUserByUsername(command.username);
+    const usernameExists = await this.mediator.user.existsByUsername(command.username);
     if (usernameExists) {
       return err(new UsernameAlreadyExistsException());
     }
@@ -79,11 +79,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     // 5. Email sent successfully - now persist everything
     const passwordHash = await AuthDomainService.hashPassword(command.password);
 
-    const user = (await this.mediator.createUser(
-      command.email,
-      command.username,
-      passwordHash,
-    )) as UserAggregate;
+    const user = await this.mediator.user.createUser(command.email, command.username, passwordHash);
 
     const { accessToken, refreshToken } = await this.generateTokens(user);
 
@@ -107,7 +103,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
   }
 
   private async generateTokens(
-    user: UserAggregate,
+    user: IUserView,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.uuid, email: user.email };
 
@@ -148,7 +144,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
   }
 
   private async createVerificationToken(
-    user: UserAggregate,
+    user: IUserView,
     code: string,
   ): Promise<EmailVerificationTokenModel> {
     const codeHash = this.codeGenerator.hashCode(code);

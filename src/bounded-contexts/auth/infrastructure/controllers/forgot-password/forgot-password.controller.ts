@@ -35,7 +35,10 @@ export class ForgotPasswordController {
   })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 429, description: 'Too many requests' })
-  async handle(@Body() dto: ForgotPasswordInDto, @Req() req: Request): Promise<{ message: string }> {
+  async handle(
+    @Body() dto: ForgotPasswordInDto,
+    @Req() req: Request,
+  ): Promise<{ message: string }> {
     const lang = extractLocale(req.headers as Record<string, string | string[] | undefined>);
 
     const result = await this.commandBus.execute<ForgotPasswordCommand, ForgotPasswordResult>(

@@ -16,10 +16,7 @@ export class PurgeUnverifiedUsersService {
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
   async purgeStaleUnverifiedUsers(): Promise<void> {
-    const olderThanDays = this.configService.get<number>(
-      'UNVERIFIED_USER_PURGE_DAYS',
-      30,
-    );
+    const olderThanDays = this.configService.get<number>('UNVERIFIED_USER_PURGE_DAYS', 30);
 
     this.logger.log(
       `Running purge job: deleting unverified users inactive for more than ${olderThanDays} days`,

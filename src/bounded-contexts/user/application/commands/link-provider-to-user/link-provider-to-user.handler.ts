@@ -12,9 +12,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(LinkProviderToUserCommand)
-export class LinkProviderToUserHandler
-  implements ICommandHandler<LinkProviderToUserCommand>
-{
+export class LinkProviderToUserHandler implements ICommandHandler<LinkProviderToUserCommand> {
   constructor(
     @Inject(INJECTION_TOKENS.USER_CONTRACT)
     private readonly userContract: IUserContract,

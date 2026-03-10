@@ -19,9 +19,11 @@ describe('New account registration — transactional email delivery', () => {
   let handler: SignUpHandler;
   let emailProvider: jest.Mocked<IEmailProviderContract>;
   let mediatorService: {
-    findUserByEmail: jest.Mock;
-    existsUserByUsername: jest.Mock;
-    createUser: jest.Mock;
+    user: {
+      findByEmail: jest.Mock;
+      existsByUsername: jest.Mock;
+      createUser: jest.Mock;
+    };
   };
 
   // The new customer who just discovered Stocka
@@ -34,9 +36,11 @@ describe('New account registration — transactional email delivery', () => {
 
   beforeEach(async () => {
     mediatorService = {
-      findUserByEmail: jest.fn().mockResolvedValue(null),
-      existsUserByUsername: jest.fn().mockResolvedValue(false),
-      createUser: jest.fn().mockResolvedValue(newCustomer),
+      user: {
+        findByEmail: jest.fn().mockResolvedValue(null),
+        existsByUsername: jest.fn().mockResolvedValue(false),
+        createUser: jest.fn().mockResolvedValue(newCustomer),
+      },
     };
 
     emailProvider = {

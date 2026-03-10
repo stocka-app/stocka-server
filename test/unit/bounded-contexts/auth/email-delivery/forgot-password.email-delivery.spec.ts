@@ -15,7 +15,7 @@ const flushPromises = () => new Promise<void>((resolve) => setImmediate(resolve)
 describe('Password recovery — transactional email delivery', () => {
   let handler: ForgotPasswordHandler;
   let emailProvider: jest.Mocked<IEmailProviderContract>;
-  let mediatorService: { findUserByEmail: jest.Mock };
+  let mediatorService: { user: { findByEmail: jest.Mock } };
 
   // A real Stocka customer who already has an account
   const registeredCustomer = UserMother.create({
@@ -35,7 +35,7 @@ describe('Password recovery — transactional email delivery', () => {
   });
 
   beforeEach(async () => {
-    mediatorService = { findUserByEmail: jest.fn() };
+    mediatorService = { user: { findByEmail: jest.fn() } };
 
     emailProvider = {
       sendEmail: jest.fn().mockResolvedValue({ success: true, id: 'email-reset-001' }),
@@ -73,7 +73,7 @@ describe('Password recovery — transactional email delivery', () => {
     describe('When they enter their email on the "Forgot your password?" screen', () => {
       it('Then the system sends exactly one email with the password reset link', async () => {
         // Given
-        mediatorService.findUserByEmail.mockResolvedValue(registeredCustomer);
+        mediatorService.user.findByEmail.mockResolvedValue(registeredCustomer);
 
         // When
         await handler.execute(new ForgotPasswordCommand('maria.garcia@mitienda.mx', 'es'));
@@ -85,7 +85,7 @@ describe('Password recovery — transactional email delivery', () => {
 
       it('Then the recovery email arrives in the language the customer uses in the app', async () => {
         // Given
-        mediatorService.findUserByEmail.mockResolvedValue(registeredCustomer);
+        mediatorService.user.findByEmail.mockResolvedValue(registeredCustomer);
 
         // When
         await handler.execute(new ForgotPasswordCommand('maria.garcia@mitienda.mx', 'en'));
@@ -104,7 +104,7 @@ describe('Password recovery — transactional email delivery', () => {
 
       it('Then no other email type is sent (no verification, no welcome) by mistake', async () => {
         // Given
-        mediatorService.findUserByEmail.mockResolvedValue(registeredCustomer);
+        mediatorService.user.findByEmail.mockResolvedValue(registeredCustomer);
 
         // When
         await handler.execute(new ForgotPasswordCommand('maria.garcia@mitienda.mx', 'es'));
@@ -120,7 +120,7 @@ describe('Password recovery — transactional email delivery', () => {
     describe('When the email entered does not match any registered account in Stocka', () => {
       it('Then no email is sent — the system protects the privacy of registered users', async () => {
         // Given
-        mediatorService.findUserByEmail.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(null);
 
         // When
         await handler.execute(new ForgotPasswordCommand('nonexistent@domain.com', 'es'));
@@ -136,7 +136,7 @@ describe('Password recovery — transactional email delivery', () => {
     describe('When they enter their email on the "Forgot your password?" screen', () => {
       it('Then the system sends an email with isSocialAccount=true and the provider name', async () => {
         // Given
-        mediatorService.findUserByEmail.mockResolvedValue(socialOnlyCustomer);
+        mediatorService.user.findByEmail.mockResolvedValue(socialOnlyCustomer);
 
         // When
         await handler.execute(new ForgotPasswordCommand('juan.lopez@gmail.com', 'es'));
@@ -155,7 +155,7 @@ describe('Password recovery — transactional email delivery', () => {
 
       it('Then only the informational email is sent — no other email type', async () => {
         // Given
-        mediatorService.findUserByEmail.mockResolvedValue(socialOnlyCustomer);
+        mediatorService.user.findByEmail.mockResolvedValue(socialOnlyCustomer);
 
         // When
         await handler.execute(new ForgotPasswordCommand('juan.lopez@gmail.com', 'es'));
@@ -169,7 +169,7 @@ describe('Password recovery — transactional email delivery', () => {
 
       it('Then the email respects the language preference of the customer', async () => {
         // Given
-        mediatorService.findUserByEmail.mockResolvedValue(socialOnlyCustomer);
+        mediatorService.user.findByEmail.mockResolvedValue(socialOnlyCustomer);
 
         // When
         await handler.execute(new ForgotPasswordCommand('juan.lopez@gmail.com', 'en'));
