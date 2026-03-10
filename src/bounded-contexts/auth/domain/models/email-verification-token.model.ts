@@ -1,4 +1,8 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { CodeHashVO } from '@shared/domain/value-objects/primitive/code-hash.vo';
+import { ExpiresAtVO } from '@shared/domain/value-objects/compound/expires-at.vo';
+import { UsedAtVO } from '@auth/domain/value-objects/used-at.vo';
+import { ResendCountVO } from '@auth/domain/value-objects/resend-count.vo';
 import { EmailVerificationRequestedEvent } from '@auth/domain/events/email-verification-requested.event';
 import { EmailVerificationCompletedEvent } from '@auth/domain/events/email-verification-completed.event';
 import { VerificationCodeResentEvent } from '@auth/domain/events/verification-code-resent.event';
@@ -16,10 +20,10 @@ export interface EmailVerificationTokenProps extends AggregateRootProps {
 
 export class EmailVerificationTokenModel extends AggregateRoot {
   private readonly _userId: number;
-  private _codeHash: string;
-  private _expiresAt: Date;
-  private _usedAt: Date | null;
-  private _resendCount: number;
+  private _codeHash: CodeHashVO;
+  private _expiresAt: ExpiresAtVO;
+  private _usedAt: UsedAtVO | null;
+  private _resendCount: ResendCountVO;
   private _lastResentAt: Date | null;
 
   // Cooldown constants (in seconds)
@@ -35,10 +39,10 @@ export class EmailVerificationTokenModel extends AggregateRoot {
       archivedAt: props.archivedAt,
     });
     this._userId = props.userId;
-    this._codeHash = props.codeHash;
-    this._expiresAt = props.expiresAt;
-    this._usedAt = props.usedAt ?? null;
-    this._resendCount = props.resendCount ?? 0;
+    this._codeHash = new CodeHashVO(props.codeHash);
+    this._expiresAt = new ExpiresAtVO(props.expiresAt);
+    this._usedAt = props.usedAt ? new UsedAtVO(props.usedAt) : null;
+    this._resendCount = new ResendCountVO(props.resendCount ?? 0);
     this._lastResentAt = props.lastResentAt ?? null;
   }
 
@@ -86,19 +90,19 @@ export class EmailVerificationTokenModel extends AggregateRoot {
   }
 
   get codeHash(): string {
-    return this._codeHash;
+    return this._codeHash.getValue();
   }
 
   get expiresAt(): Date {
-    return this._expiresAt;
+    return this._expiresAt.toDate();
   }
 
   get usedAt(): Date | null {
-    return this._usedAt;
+    return this._usedAt?.toDate() ?? null;
   }
 
   get resendCount(): number {
-    return this._resendCount;
+    return this._resendCount.getValue();
   }
 
   get lastResentAt(): Date | null {
@@ -106,7 +110,7 @@ export class EmailVerificationTokenModel extends AggregateRoot {
   }
 
   isExpired(): boolean {
-    return new Date() > this._expiresAt;
+    return this._expiresAt.isExpired();
   }
 
   isUsed(): boolean {
@@ -118,13 +122,13 @@ export class EmailVerificationTokenModel extends AggregateRoot {
   }
 
   markAsUsed(userUUID: string, email: string, lang: Locale = 'es'): void {
-    this._usedAt = new Date();
+    this._usedAt = UsedAtVO.now();
     this.touch();
     this.apply(new EmailVerificationCompletedEvent(userUUID, email, lang));
   }
 
   canResend(): boolean {
-    if (this._resendCount >= EmailVerificationTokenModel.MAX_RESENDS_PER_HOUR) {
+    if (this._resendCount.getValue() >= EmailVerificationTokenModel.MAX_RESENDS_PER_HOUR) {
       return false;
     }
 
@@ -142,7 +146,7 @@ export class EmailVerificationTokenModel extends AggregateRoot {
 
   getCurrentCooldownSeconds(): number {
     const cooldownIndex = Math.min(
-      this._resendCount,
+      this._resendCount.getValue(),
       EmailVerificationTokenModel.RESEND_COOLDOWNS.length - 1,
     );
     return EmailVerificationTokenModel.RESEND_COOLDOWNS[cooldownIndex];
@@ -165,12 +169,14 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     code: string,
     lang: Locale = 'es',
   ): void {
-    this._codeHash = newCodeHash;
-    this._expiresAt = newExpiresAt;
-    this._resendCount += 1;
+    this._codeHash = new CodeHashVO(newCodeHash);
+    this._expiresAt = new ExpiresAtVO(newExpiresAt);
+    this._resendCount = this._resendCount.increment();
     this._lastResentAt = new Date();
     this.touch();
-    this.apply(new VerificationCodeResentEvent(this.userId, email, code, this._resendCount, lang));
+    this.apply(
+      new VerificationCodeResentEvent(this.userId, email, code, this._resendCount.getValue(), lang),
+    );
   }
 
   getMaxResendsPerHour(): number {
@@ -178,6 +184,9 @@ export class EmailVerificationTokenModel extends AggregateRoot {
   }
 
   getRemainingResends(): number {
-    return Math.max(0, EmailVerificationTokenModel.MAX_RESENDS_PER_HOUR - this._resendCount);
+    return Math.max(
+      0,
+      EmailVerificationTokenModel.MAX_RESENDS_PER_HOUR - this._resendCount.getValue(),
+    );
   }
 }

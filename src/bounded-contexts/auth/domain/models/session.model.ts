@@ -1,4 +1,6 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { TokenHashVO } from '@shared/domain/value-objects/primitive/token-hash.vo';
+import { ExpiresAtVO } from '@shared/domain/value-objects/compound/expires-at.vo';
 import { SessionCreatedEvent } from '@auth/domain/events/session-created.event';
 
 export interface SessionProps extends AggregateRootProps {
@@ -9,8 +11,8 @@ export interface SessionProps extends AggregateRootProps {
 
 export class SessionModel extends AggregateRoot {
   private _userId: number;
-  private _tokenHash: string;
-  private _expiresAt: Date;
+  private _tokenHash: TokenHashVO;
+  private _expiresAt: ExpiresAtVO;
 
   private constructor(props: SessionProps) {
     super({
@@ -21,8 +23,8 @@ export class SessionModel extends AggregateRoot {
       archivedAt: props.archivedAt,
     });
     this._userId = props.userId;
-    this._tokenHash = props.tokenHash;
-    this._expiresAt = props.expiresAt;
+    this._tokenHash = new TokenHashVO(props.tokenHash);
+    this._expiresAt = new ExpiresAtVO(props.expiresAt);
   }
 
   static create(props: Omit<SessionProps, 'id'>): SessionModel {
@@ -40,15 +42,15 @@ export class SessionModel extends AggregateRoot {
   }
 
   get tokenHash(): string {
-    return this._tokenHash;
+    return this._tokenHash.getValue();
   }
 
   get expiresAt(): Date {
-    return this._expiresAt;
+    return this._expiresAt.toDate();
   }
 
   isExpired(): boolean {
-    return new Date() > this._expiresAt;
+    return this._expiresAt.isExpired();
   }
 
   isValid(): boolean {
