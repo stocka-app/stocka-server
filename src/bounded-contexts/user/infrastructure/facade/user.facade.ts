@@ -3,10 +3,10 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
-import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
-import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
-import { LinkProviderToUserCommand } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
-import { SetPasswordForSocialUserCommand } from '@user/application/commands/set-password-for-social-user/set-password-for-social-user.command';
+import { CreateUserCommand, CreateUserCommandResult } from '@user/application/commands/create-user/create-user.command';
+import { CreateUserFromSocialCommand, CreateUserFromSocialCommandResult } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
+import { LinkProviderToUserCommand, LinkProviderToUserCommandResult } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
+import { SetPasswordForSocialUserCommand, SetPasswordForSocialUserCommandResult } from '@user/application/commands/set-password-for-social-user/set-password-for-social-user.command';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
@@ -21,7 +21,13 @@ export class UserFacade {
   ) {}
 
   async createUser(email: string, username: string, passwordHash: string): Promise<UserAggregate> {
-    return this.commandBus.execute(new CreateUserCommand(email, username, passwordHash));
+    const result = await this.commandBus.execute<CreateUserCommand, CreateUserCommandResult>(
+      new CreateUserCommand(email, username, passwordHash),
+    );
+    return result.match(
+      (user) => user,
+      (error) => { throw error; },
+    );
   }
 
   async createUserFromSocial(
@@ -30,8 +36,12 @@ export class UserFacade {
     provider: string,
     providerId: string,
   ): Promise<UserAggregate> {
-    return this.commandBus.execute(
+    const result = await this.commandBus.execute<CreateUserFromSocialCommand, CreateUserFromSocialCommandResult>(
       new CreateUserFromSocialCommand(email, username, provider, providerId),
+    );
+    return result.match(
+      (user) => user,
+      (error) => { throw error; },
     );
   }
 
@@ -96,14 +106,22 @@ export class UserFacade {
     provider: string,
     providerId: string,
   ): Promise<void> {
-    return this.commandBus.execute(
+    const result = await this.commandBus.execute<LinkProviderToUserCommand, LinkProviderToUserCommandResult>(
       new LinkProviderToUserCommand(userId, provider, providerId),
+    );
+    result.match(
+      () => {},
+      (error) => { throw error; },
     );
   }
 
   async setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void> {
-    return this.commandBus.execute(
+    const result = await this.commandBus.execute<SetPasswordForSocialUserCommand, SetPasswordForSocialUserCommandResult>(
       new SetPasswordForSocialUserCommand(userId, passwordHash),
+    );
+    result.match(
+      () => {},
+      (error) => { throw error; },
     );
   }
 
