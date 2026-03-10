@@ -2,7 +2,10 @@ import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
 import { VerificationCodeResentEvent } from '@auth/domain/events/verification-code-resent.event';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { withRetry, RetryExhaustedException } from '@shared/domain/utils/with-retry';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+
+const RETRY_OPTIONS = { maxAttempts: 3, backoffMs: 1000 };
 
 @EventsHandler(VerificationCodeResentEvent)
 export class VerificationCodeResentEventHandler implements IEventHandler<VerificationCodeResentEvent> {
@@ -18,17 +21,29 @@ export class VerificationCodeResentEventHandler implements IEventHandler<Verific
       `Verification code resent: userId=${event.userId}, resendCount=${event.resendCount}`,
     );
 
-    const result = await this.emailProvider.sendVerificationEmail(
-      event.email,
-      event.code,
-      undefined,
-      event.lang,
-    );
+    try {
+      const result = await withRetry(
+        () =>
+          this.emailProvider.sendVerificationEmail(event.email, event.code, undefined, event.lang),
+        RETRY_OPTIONS,
+        this.logger,
+        {
+          handler: VerificationCodeResentEventHandler.name,
+          event: VerificationCodeResentEvent.name,
+        },
+      );
 
-    if (result.success) {
-      this.logger.log(`Verification email resent successfully: emailId=${result.id}`);
-    } else {
-      this.logger.error(`Failed to resend verification email: ${result.error}`);
+      if (result.success) {
+        this.logger.log(`Verification email resent successfully: emailId=${result.id}`);
+      } else {
+        this.logger.error(`Failed to resend verification email: ${result.error}`);
+      }
+    } catch (error) {
+      if (error instanceof RetryExhaustedException) {
+        this.logger.error(error.message);
+      } else {
+        this.logger.error(`Unexpected error resending verification email: ${error}`);
+      }
     }
   }
 }
