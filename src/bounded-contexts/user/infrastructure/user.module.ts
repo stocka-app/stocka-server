@@ -16,6 +16,9 @@ import { FindUserByEmailOrUsernameHandler } from '@user/application/queries/find
 import { UserCreatedEventHandler } from '@user/application/event-handlers/user-created.event-handler';
 import { UserCreatedFromSocialEventHandler } from '@user/application/event-handlers/user-created-from-social.event-handler';
 import { UserPasswordUpdatedEventHandler } from '@user/application/event-handlers/user-password-updated.event-handler';
+import { VerifyUserEmailOnVerificationCompletedHandler } from '@user/application/event-handlers/verify-user-email-on-verification-completed.handler';
+import { UpdatePasswordOnResetHandler } from '@user/application/event-handlers/update-password-on-reset.handler';
+import { BlockVerificationOnRateLimitHandler } from '@user/application/event-handlers/block-verification-on-rate-limit.handler';
 import { GetMeController } from '@user/infrastructure/controllers/get-me/get-me.controller';
 import { UserFacade } from '@user/infrastructure/facade/user.facade';
 import { PurgeUnverifiedUsersService } from '@user/application/services/purge-unverified-users.service';
@@ -37,6 +40,9 @@ const EventHandlers = [
   UserCreatedEventHandler,
   UserCreatedFromSocialEventHandler,
   UserPasswordUpdatedEventHandler,
+  VerifyUserEmailOnVerificationCompletedHandler,
+  UpdatePasswordOnResetHandler,
+  BlockVerificationOnRateLimitHandler,
 ];
 
 @Module({

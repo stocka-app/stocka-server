@@ -6,6 +6,7 @@ import {
   Inject,
   Logger,
 } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Request } from 'express';
@@ -13,9 +14,10 @@ import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
 import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
 import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { UserVerificationBlockedByAuthEvent } from '@shared/domain/events/integration';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { IUserView } from '@shared/domain/contracts/user-view.contract';
 
 interface HttpErrorResponse {
   error?: string;
@@ -29,6 +31,7 @@ export class RateLimitInterceptor implements NestInterceptor {
     @Inject(INJECTION_TOKENS.VERIFICATION_ATTEMPT_CONTRACT)
     private readonly attemptContract: IVerificationAttemptContract,
     private readonly mediator: MediatorService,
+    private readonly eventBus: EventBus,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -68,10 +71,10 @@ export class RateLimitInterceptor implements NestInterceptor {
     const identifier: string | undefined = request.__rateLimitIdentifier;
 
     // Try to find user for tracking
-    let user: UserAggregate | null = null;
+    let user: IUserView | null = null;
     if (identifier) {
       try {
-        user = (await this.mediator.findUserByEmailOrUsername(identifier)) as UserAggregate | null;
+        user = await this.mediator.user.findByEmailOrUsername(identifier);
       } catch {
         // User not found — track by IP only
       }
@@ -97,7 +100,7 @@ export class RateLimitInterceptor implements NestInterceptor {
           config.type,
         );
 
-        await this.evaluateBlock(user, totalFailed, config);
+        this.evaluateBlock(user, totalFailed, config);
       }
     } else {
       // Track failed attempt by IP only (no user found)
@@ -143,11 +146,7 @@ export class RateLimitInterceptor implements NestInterceptor {
     return emailPattern.test(value);
   }
 
-  private async evaluateBlock(
-    user: UserAggregate,
-    failedAttempts: number,
-    config: RateLimitConfig,
-  ): Promise<void> {
+  private evaluateBlock(user: IUserView, failedAttempts: number, config: RateLimitConfig): void {
     if (!config.progressiveBlock) return;
 
     // Find the highest matching threshold
@@ -159,7 +158,7 @@ export class RateLimitInterceptor implements NestInterceptor {
       if (failedAttempts >= threshold.attempts) {
         const blockedUntil = new Date(Date.now() + threshold.blockMinutes * 60 * 1000);
 
-        await this.mediator.blockUserVerification(user.uuid, blockedUntil);
+        this.eventBus.publish(new UserVerificationBlockedByAuthEvent(user.uuid, blockedUntil));
 
         this.logger.warn(
           `Account blocked | userUUID=${user.uuid} | ` +

@@ -11,7 +11,6 @@ import { MaxResendsExceededException } from '@auth/domain/exceptions/max-resends
 import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-already-verified.exception';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(ResendVerificationCodeCommand)
@@ -26,9 +25,11 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     private readonly codeGenerator: ICodeGeneratorContract,
   ) {}
 
-  async execute(command: ResendVerificationCodeCommand): Promise<ResendVerificationCodeCommandResult> {
+  async execute(
+    command: ResendVerificationCodeCommand,
+  ): Promise<ResendVerificationCodeCommandResult> {
     // Find user by email
-    const user = (await this.mediator.findUserByEmail(command.email)) as UserAggregate | null;
+    const user = await this.mediator.user.findByEmail(command.email);
     if (!user) {
       // Return success to prevent email enumeration
       return ok({
@@ -38,7 +39,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     }
 
     // Check if user is already verified
-    if (user.status && !user.status.requiresEmailVerification()) {
+    if (!user.requiresEmailVerification()) {
       return err(new UserAlreadyVerifiedException());
     }
 

@@ -1,4 +1,7 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { TokenHashVO } from '@shared/domain/value-objects/primitive/token-hash.vo';
+import { ExpiresAtVO } from '@shared/domain/value-objects/compound/expires-at.vo';
+import { UsedAtVO } from '@auth/domain/value-objects/used-at.vo';
 import { PasswordResetRequestedEvent } from '@auth/domain/events/password-reset-requested.event';
 import { PasswordResetCompletedEvent } from '@auth/domain/events/password-reset-completed.event';
 import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
@@ -13,9 +16,9 @@ export interface PasswordResetTokenProps extends AggregateRootProps {
 
 export class PasswordResetTokenModel extends AggregateRoot {
   private _userId: number;
-  private _tokenHash: string;
-  private _expiresAt: Date;
-  private _usedAt: Date | null;
+  private _tokenHash: TokenHashVO;
+  private _expiresAt: ExpiresAtVO;
+  private _usedAt: UsedAtVO | null;
 
   private constructor(props: PasswordResetTokenProps) {
     super({
@@ -26,9 +29,9 @@ export class PasswordResetTokenModel extends AggregateRoot {
       archivedAt: props.archivedAt,
     });
     this._userId = props.userId;
-    this._tokenHash = props.tokenHash;
-    this._expiresAt = props.expiresAt;
-    this._usedAt = props.usedAt ?? null;
+    this._tokenHash = new TokenHashVO(props.tokenHash);
+    this._expiresAt = new ExpiresAtVO(props.expiresAt);
+    this._usedAt = props.usedAt ? new UsedAtVO(props.usedAt) : null;
   }
 
   static create(
@@ -65,19 +68,19 @@ export class PasswordResetTokenModel extends AggregateRoot {
   }
 
   get tokenHash(): string {
-    return this._tokenHash;
+    return this._tokenHash.getValue();
   }
 
   get expiresAt(): Date {
-    return this._expiresAt;
+    return this._expiresAt.toDate();
   }
 
   get usedAt(): Date | null {
-    return this._usedAt;
+    return this._usedAt?.toDate() ?? null;
   }
 
   isExpired(): boolean {
-    return new Date() > this._expiresAt;
+    return this._expiresAt.isExpired();
   }
 
   isUsed(): boolean {
@@ -89,7 +92,7 @@ export class PasswordResetTokenModel extends AggregateRoot {
   }
 
   markAsUsed(): void {
-    this._usedAt = new Date();
+    this._usedAt = UsedAtVO.now();
     this.touch();
     this.apply(new PasswordResetCompletedEvent(this.userId));
   }

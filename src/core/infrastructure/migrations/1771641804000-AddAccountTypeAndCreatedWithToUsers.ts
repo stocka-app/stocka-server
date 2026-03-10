@@ -36,12 +36,8 @@ export class AddAccountTypeAndCreatedWithToUsers1771641804000 implements Migrati
     `);
 
     // Indexes for frequent queries
-    await queryRunner.query(
-      `CREATE INDEX "IDX_users_account_type" ON "users" ("account_type")`,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_users_created_with" ON "users" ("created_with")`,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_users_account_type" ON "users" ("account_type")`);
+    await queryRunner.query(`CREATE INDEX "IDX_users_created_with" ON "users" ("created_with")`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

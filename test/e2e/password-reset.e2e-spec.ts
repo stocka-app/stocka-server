@@ -58,7 +58,7 @@ describe('Password Reset (e2e)', () => {
         'users',
         'sessions',
         'email_verification_tokens',
-        'verification_attempts'
+        'verification_attempts',
       ];
       for (const table of tables) {
         await dataSource.query(`TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE`);

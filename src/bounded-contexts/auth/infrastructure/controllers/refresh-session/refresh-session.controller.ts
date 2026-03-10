@@ -37,9 +37,10 @@ export class RefreshSessionController {
       throw new UnauthorizedException('Refresh token missing');
     }
 
-    const result = await this.commandBus.execute<RefreshSessionCommand, RefreshSessionCommandResult>(
-      new RefreshSessionCommand(token),
-    );
+    const result = await this.commandBus.execute<
+      RefreshSessionCommand,
+      RefreshSessionCommandResult
+    >(new RefreshSessionCommand(token));
 
     return result.match(
       (data) => {

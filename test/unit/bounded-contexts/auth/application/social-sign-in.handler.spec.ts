@@ -12,12 +12,14 @@ import { UserMother } from '@test/helpers/object-mother/user.mother';
 describe('Social sign-in — OAuth provider linking (EC-002)', () => {
   let handler: SocialSignInHandler;
   let mediatorService: {
-    findUserBySocialProvider: jest.Mock;
-    findUserByEmail: jest.Mock;
-    findUserById: jest.Mock;
-    linkProviderToUser: jest.Mock;
-    createUserFromSocial: jest.Mock;
-    existsUserByUsername: jest.Mock;
+    user: {
+      findUserBySocialProvider: jest.Mock;
+      findByEmail: jest.Mock;
+      findById: jest.Mock;
+      linkProviderToUser: jest.Mock;
+      createUserFromSocial: jest.Mock;
+      existsByUsername: jest.Mock;
+    };
   };
   let sessionContract: jest.Mocked<ISessionContract>;
 
@@ -30,12 +32,14 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
 
   beforeEach(async () => {
     mediatorService = {
-      findUserBySocialProvider: jest.fn(),
-      findUserByEmail: jest.fn(),
-      findUserById: jest.fn(),
-      linkProviderToUser: jest.fn().mockResolvedValue(undefined),
-      createUserFromSocial: jest.fn(),
-      existsUserByUsername: jest.fn().mockResolvedValue(false),
+      user: {
+        findUserBySocialProvider: jest.fn(),
+        findByEmail: jest.fn(),
+        findById: jest.fn(),
+        linkProviderToUser: jest.fn().mockResolvedValue(undefined),
+        createUserFromSocial: jest.fn(),
+        existsByUsername: jest.fn().mockResolvedValue(false),
+      },
     };
 
     const mockJwtService = {
@@ -100,15 +104,15 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
           email: 'ana.torres@gmail.com',
           provider: 'google',
         });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(alreadyLinkedUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(alreadyLinkedUser);
 
         // When
         const result = await handler.execute(googleCommand);
 
         // Then
         expect(result.accessToken).toBe('mock-token');
-        expect(mediatorService.linkProviderToUser).not.toHaveBeenCalled();
-        expect(mediatorService.createUserFromSocial).not.toHaveBeenCalled();
+        expect(mediatorService.user.linkProviderToUser).not.toHaveBeenCalled();
+        expect(mediatorService.user.createUserFromSocial).not.toHaveBeenCalled();
       });
     });
   });
@@ -118,15 +122,15 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
       it('Then the system automatically links Google to their existing account', async () => {
         // Given
         const manualUser = UserMother.create({ id: 10, email: 'ana.torres@gmail.com' });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(null);
-        mediatorService.findUserByEmail.mockResolvedValue(manualUser);
-        mediatorService.findUserById.mockResolvedValue(manualUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(manualUser);
+        mediatorService.user.findById.mockResolvedValue(manualUser);
 
         // When
         await handler.execute(googleCommand);
 
         // Then
-        expect(mediatorService.linkProviderToUser).toHaveBeenCalledWith(
+        expect(mediatorService.user.linkProviderToUser).toHaveBeenCalledWith(
           10,
           'google',
           'google-uid-999',
@@ -136,9 +140,9 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
       it('Then the customer receives valid tokens to access their account', async () => {
         // Given
         const manualUser = UserMother.create({ id: 10, email: 'ana.torres@gmail.com' });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(null);
-        mediatorService.findUserByEmail.mockResolvedValue(manualUser);
-        mediatorService.findUserById.mockResolvedValue(manualUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(manualUser);
+        mediatorService.user.findById.mockResolvedValue(manualUser);
 
         // When
         const result = await handler.execute(googleCommand);
@@ -152,15 +156,15 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
       it('Then no new account is created — only the existing one is used', async () => {
         // Given
         const manualUser = UserMother.create({ id: 10, email: 'ana.torres@gmail.com' });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(null);
-        mediatorService.findUserByEmail.mockResolvedValue(manualUser);
-        mediatorService.findUserById.mockResolvedValue(manualUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(manualUser);
+        mediatorService.user.findById.mockResolvedValue(manualUser);
 
         // When
         await handler.execute(googleCommand);
 
         // Then
-        expect(mediatorService.createUserFromSocial).not.toHaveBeenCalled();
+        expect(mediatorService.user.createUserFromSocial).not.toHaveBeenCalled();
       });
     });
   });
@@ -173,15 +177,15 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
           id: 11,
           email: 'ana.torres@gmail.com',
         });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(null);
-        mediatorService.findUserByEmail.mockResolvedValue(pendingUser);
-        mediatorService.findUserById.mockResolvedValue(pendingUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(pendingUser);
+        mediatorService.user.findById.mockResolvedValue(pendingUser);
 
         // When
         await handler.execute(googleCommand);
 
         // Then
-        expect(mediatorService.linkProviderToUser).toHaveBeenCalledWith(
+        expect(mediatorService.user.linkProviderToUser).toHaveBeenCalledWith(
           11,
           'google',
           'google-uid-999',
@@ -194,9 +198,9 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
           id: 11,
           email: 'ana.torres@gmail.com',
         });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(null);
-        mediatorService.findUserByEmail.mockResolvedValue(pendingUser);
-        mediatorService.findUserById.mockResolvedValue(pendingUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(pendingUser);
+        mediatorService.user.findById.mockResolvedValue(pendingUser);
 
         // When
         const result = await handler.execute(googleCommand);
@@ -213,15 +217,15 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
       it('Then the system creates a new Stocka account for them automatically', async () => {
         // Given
         const newUser = UserMother.createSocialOnly({ id: 99, email: 'ana.torres@gmail.com' });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(null);
-        mediatorService.findUserByEmail.mockResolvedValue(null);
-        mediatorService.createUserFromSocial.mockResolvedValue(newUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(null);
+        mediatorService.user.createUserFromSocial.mockResolvedValue(newUser);
 
         // When
         const result = await handler.execute(googleCommand);
 
         // Then
-        expect(mediatorService.createUserFromSocial).toHaveBeenCalledWith(
+        expect(mediatorService.user.createUserFromSocial).toHaveBeenCalledWith(
           'ana.torres@gmail.com',
           expect.any(String),
           'google',
@@ -233,15 +237,15 @@ describe('Social sign-in — OAuth provider linking (EC-002)', () => {
       it('Then no provider linking happens — the new account is already social', async () => {
         // Given
         const newUser = UserMother.createSocialOnly({ id: 99, email: 'ana.torres@gmail.com' });
-        mediatorService.findUserBySocialProvider.mockResolvedValue(null);
-        mediatorService.findUserByEmail.mockResolvedValue(null);
-        mediatorService.createUserFromSocial.mockResolvedValue(newUser);
+        mediatorService.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediatorService.user.findByEmail.mockResolvedValue(null);
+        mediatorService.user.createUserFromSocial.mockResolvedValue(newUser);
 
         // When
         await handler.execute(googleCommand);
 
         // Then
-        expect(mediatorService.linkProviderToUser).not.toHaveBeenCalled();
+        expect(mediatorService.user.linkProviderToUser).not.toHaveBeenCalled();
       });
     });
   });
