@@ -39,9 +39,7 @@ describe('Health Check (e2e)', () => {
   describe('GET /api/health', () => {
     describe('Given the application is running with a connected database', () => {
       it('When the health endpoint is called, Then it returns status ok with db connected', async () => {
-        const response = await request(app.getHttpServer())
-          .get('/api/health')
-          .expect(200);
+        const response = await request(app.getHttpServer()).get('/api/health').expect(200);
 
         expect(response.body).toEqual({
           status: 'ok',

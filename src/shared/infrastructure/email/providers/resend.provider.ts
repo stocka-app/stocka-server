@@ -99,7 +99,11 @@ export class ResendEmailProvider implements IEmailProviderContract {
     });
   }
 
-  async sendWelcomeEmail(to: string, userName: string, lang: Locale = 'es'): Promise<SendEmailResult> {
+  async sendWelcomeEmail(
+    to: string,
+    userName: string,
+    lang: Locale = 'es',
+  ): Promise<SendEmailResult> {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'https://stocka.app');
     const loginUrl = `${frontendUrl}/login`;
 

@@ -18,7 +18,9 @@ export class FindUserByEmailOrUsernameHandler implements IQueryHandler<
     private readonly userContract: IUserContract,
   ) {}
 
-  async execute(query: FindUserByEmailOrUsernameQuery): Promise<FindUserByEmailOrUsernameQueryResult> {
+  async execute(
+    query: FindUserByEmailOrUsernameQuery,
+  ): Promise<FindUserByEmailOrUsernameQueryResult> {
     const user = await this.userContract.findByEmailOrUsername(query.identifier);
     return ok(user);
   }
