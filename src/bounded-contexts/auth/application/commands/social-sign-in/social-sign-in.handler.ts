@@ -11,7 +11,7 @@ import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { UserSignedInEvent } from '@auth/domain/events/user-signed-in.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { IUserView } from '@shared/domain/contracts/user-view.contract';
 
 @CommandHandler(SocialSignInCommand)
 export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand> {
@@ -26,38 +26,33 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
   ) {}
 
   async execute(command: SocialSignInCommand): Promise<SocialSignInResult> {
-    let user: UserAggregate | null;
+    let user: IUserView | null;
 
     // Step 1: Find by (provider, providerId) — already linked, fast path
-    user = (await this.mediator.findUserBySocialProvider(
-      command.provider,
-      command.providerId,
-    )) as UserAggregate | null;
+    user = await this.mediator.user.findUserBySocialProvider(command.provider, command.providerId);
 
     if (!user) {
       // Step 2: Find by email — existing account with a different auth method
-      const existingUser = (await this.mediator.findUserByEmail(
-        command.email,
-      )) as UserAggregate | null;
+      const existingUser = await this.mediator.user.findByEmail(command.email);
 
       if (existingUser) {
         // Step 3: Link this OAuth provider to the existing account (EC-002)
-        await this.mediator.linkProviderToUser(
+        await this.mediator.user.linkProviderToUser(
           existingUser.id!,
           command.provider,
           command.providerId,
         );
         // Reload so we have the updated accountType on the model
-        user = (await this.mediator.findUserById(existingUser.id!)) as UserAggregate;
+        user = (await this.mediator.user.findById(existingUser.id!))!;
       } else {
         // Step 4: No account at all — create a new social user
         const username = await this.generateUniqueUsername(command.displayName);
-        user = (await this.mediator.createUserFromSocial(
+        user = (await this.mediator.user.createUserFromSocial(
           command.email,
           username,
           command.provider,
           command.providerId,
-        )) as UserAggregate;
+        ))!;
       }
     }
 
@@ -91,18 +86,18 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
     let username = sanitized || 'user';
 
     // Check if username exists, add random suffix if it does
-    let exists = await this.mediator.existsUserByUsername(username);
+    let exists = await this.mediator.user.existsByUsername(username);
     while (exists) {
       const suffix = Math.random().toString(36).substring(2, 8);
       username = `${sanitized}_${suffix}`.substring(0, 30);
-      exists = await this.mediator.existsUserByUsername(username);
+      exists = await this.mediator.user.existsByUsername(username);
     }
 
     return username;
   }
 
   private async generateTokens(
-    user: UserAggregate,
+    user: IUserView,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.uuid, email: user.email };
 

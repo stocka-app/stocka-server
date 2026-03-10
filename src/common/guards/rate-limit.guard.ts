@@ -13,7 +13,6 @@ import { RATE_LIMIT_KEY, RateLimitConfig } from '@common/decorators/rate-limit.d
 import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 // Extend Request type to include rate limit properties
 declare module 'express' {
@@ -109,7 +108,7 @@ export class RateLimitGuard implements CanActivate {
 
   private async checkAccountBlock(identifier: string): Promise<void> {
     try {
-      const user = (await this.mediator.findUserByEmailOrUsername(identifier)) as UserAggregate | null;
+      const user = await this.mediator.user.findByEmailOrUsername(identifier);
 
       if (user?.verificationBlockedUntil && user.verificationBlockedUntil > new Date()) {
         const minutesRemaining = Math.ceil(

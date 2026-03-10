@@ -1,7 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 export const SKIP_EMAIL_VERIFICATION_KEY = 'skipEmailVerification';
 
@@ -31,14 +30,14 @@ export class EmailVerifiedGuard implements CanActivate {
     }
 
     // Get full user from database to check status
-    const fullUser = (await this.mediator.findUserByUUID(user.sub)) as UserAggregate | null;
+    const fullUser = await this.mediator.user.findByUUID(user.sub);
 
     if (!fullUser) {
       throw new ForbiddenException('User not found');
     }
 
     // Check if user's email is verified
-    if (fullUser.status?.requiresEmailVerification()) {
+    if (fullUser.requiresEmailVerification()) {
       throw new ForbiddenException({
         statusCode: 403,
         error: 'Email Not Verified',

@@ -1,6 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result } from '@shared/domain/result';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { IUserView } from '@shared/domain/contracts/user-view.contract';
 
 export interface AuthTokens {
   accessToken: string;
@@ -8,7 +8,7 @@ export interface AuthTokens {
 }
 
 export interface AuthResult extends AuthTokens {
-  user: UserAggregate;
+  user: IUserView;
 }
 
 export interface SignInResult extends AuthResult {
@@ -46,6 +46,9 @@ export interface ForgotPasswordResult {
 export type SignInCommandResult = Result<SignInResult, DomainException>;
 export type SignUpCommandResult = Result<SignUpResult, DomainException>;
 export type VerifyEmailCommandResult = Result<VerifyEmailResult, DomainException>;
-export type ResendVerificationCodeCommandResult = Result<ResendVerificationCodeResult, DomainException>;
+export type ResendVerificationCodeCommandResult = Result<
+  ResendVerificationCodeResult,
+  DomainException
+>;
 export type ResetPasswordCommandResult = Result<ResetPasswordResult, DomainException>;
 export type RefreshSessionCommandResult = Result<RefreshSessionResult, DomainException>;
