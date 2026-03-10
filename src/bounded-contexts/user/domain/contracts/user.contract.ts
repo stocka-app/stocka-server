@@ -8,7 +8,7 @@ export interface IUserContract {
   findByEmailOrUsername(identifier: string): Promise<UserAggregate | null>;
   existsByEmail(email: string): Promise<boolean>;
   existsByUsername(username: string): Promise<boolean>;
-  persist(user: UserAggregate): Promise<UserAggregate>;
+  persist(user: UserAggregate, transactionContext?: unknown): Promise<UserAggregate>;
   archive(uuid: string): Promise<void>;
   destroy(uuid: string): Promise<void>;
   destroyStaleUnverifiedUsers(olderThanDays: number): Promise<number>;

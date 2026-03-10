@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository, IsNull, EntityManager } from 'typeorm';
 import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { SessionModel } from '@auth/domain/models/session.model';
 import { SessionEntity } from '@auth/infrastructure/persistence/entities/session.entity';
@@ -45,9 +45,12 @@ export class TypeOrmSessionRepository implements ISessionContract {
     return entities.map((entity) => SessionMapper.toDomain(entity));
   }
 
-  async persist(session: SessionModel): Promise<SessionModel> {
+  async persist(session: SessionModel, transactionContext?: unknown): Promise<SessionModel> {
     const entityData = SessionMapper.toEntity(session);
-    const savedEntity = await this.repository.save(entityData);
+    const repo = transactionContext
+      ? (transactionContext as EntityManager).getRepository(SessionEntity)
+      : this.repository;
+    const savedEntity = await repo.save(entityData);
     return SessionMapper.toDomain(savedEntity as SessionEntity);
   }
 

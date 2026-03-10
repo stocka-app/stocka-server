@@ -64,6 +64,7 @@ import { ForgotPasswordController } from '@auth/infrastructure/controllers/forgo
 import { ResetPasswordController } from '@auth/infrastructure/controllers/reset-password/reset-password.controller';
 import { AuthFacade } from '@auth/infrastructure/facade/auth.facade';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
+import { TypeOrmUnitOfWork } from '@shared/infrastructure/database/typeorm-unit-of-work';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 import { VerifyEmailController } from '@auth/infrastructure/controllers/verify-email/verify-email.controller';
@@ -178,6 +179,10 @@ const Controllers = [
     {
       provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT,
       useClass: CryptoCodeGeneratorService,
+    },
+    {
+      provide: INJECTION_TOKENS.UNIT_OF_WORK,
+      useClass: TypeOrmUnitOfWork,
     },
     ...CommandHandlers,
     ...EventHandlers,

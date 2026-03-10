@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull, MoreThan } from 'typeorm';
+import { Repository, IsNull, MoreThan, EntityManager } from 'typeorm';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { EmailVerificationTokenModel } from '@auth/domain/models/email-verification-token.model';
 import { EmailVerificationTokenEntity } from '@auth/infrastructure/persistence/entities/email-verification-token.entity';
@@ -51,9 +51,15 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     return entity ? EmailVerificationTokenMapper.toDomain(entity) : null;
   }
 
-  async persist(token: EmailVerificationTokenModel): Promise<EmailVerificationTokenModel> {
+  async persist(
+    token: EmailVerificationTokenModel,
+    transactionContext?: unknown,
+  ): Promise<EmailVerificationTokenModel> {
     const entityData = EmailVerificationTokenMapper.toEntity(token);
-    const savedEntity = await this.repository.save(entityData);
+    const repo = transactionContext
+      ? (transactionContext as EntityManager).getRepository(EmailVerificationTokenEntity)
+      : this.repository;
+    const savedEntity = await repo.save(entityData);
     return EmailVerificationTokenMapper.toDomain(savedEntity as EmailVerificationTokenEntity);
   }
 

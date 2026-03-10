@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
@@ -77,9 +77,12 @@ export class TypeOrmUserRepository implements IUserContract {
     return count > 0;
   }
 
-  async persist(user: UserAggregate): Promise<UserAggregate> {
+  async persist(user: UserAggregate, transactionContext?: unknown): Promise<UserAggregate> {
     const entityData = UserMapper.toEntity(user);
-    const savedEntity = await this.repository.save(entityData);
+    const repo = transactionContext
+      ? (transactionContext as EntityManager).getRepository(UserEntity)
+      : this.repository;
+    const savedEntity = await repo.save(entityData);
     return UserMapper.toDomain(savedEntity as UserEntity);
   }
 

@@ -4,6 +4,9 @@ export interface IPasswordResetTokenContract {
   findById(id: number): Promise<PasswordResetTokenModel | null>;
   findByUUID(uuid: string): Promise<PasswordResetTokenModel | null>;
   findByTokenHash(tokenHash: string): Promise<PasswordResetTokenModel | null>;
-  persist(token: PasswordResetTokenModel): Promise<PasswordResetTokenModel>;
+  persist(
+    token: PasswordResetTokenModel,
+    transactionContext?: unknown,
+  ): Promise<PasswordResetTokenModel>;
   archive(uuid: string): Promise<void>;
 }
