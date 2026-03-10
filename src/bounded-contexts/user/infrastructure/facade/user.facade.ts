@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
 import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
 import { LinkProviderToUserCommand } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
@@ -20,7 +20,7 @@ export class UserFacade {
     private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
-  async createUser(email: string, username: string, passwordHash: string): Promise<UserModel> {
+  async createUser(email: string, username: string, passwordHash: string): Promise<UserAggregate> {
     return this.commandBus.execute(new CreateUserCommand(email, username, passwordHash));
   }
 
@@ -29,25 +29,25 @@ export class UserFacade {
     username: string,
     provider: string,
     providerId: string,
-  ): Promise<UserModel> {
+  ): Promise<UserAggregate> {
     return this.commandBus.execute(
       new CreateUserFromSocialCommand(email, username, provider, providerId),
     );
   }
 
-  async findById(id: number): Promise<UserModel | null> {
+  async findById(id: number): Promise<UserAggregate | null> {
     return this.userContract.findById(id);
   }
 
-  async findByUUID(uuid: string): Promise<UserModel | null> {
+  async findByUUID(uuid: string): Promise<UserAggregate | null> {
     return this.userContract.findByUUID(uuid);
   }
 
-  async findByEmail(email: string): Promise<UserModel | null> {
+  async findByEmail(email: string): Promise<UserAggregate | null> {
     return this.userContract.findByEmail(email);
   }
 
-  async findByEmailOrUsername(identifier: string): Promise<UserModel | null> {
+  async findByEmailOrUsername(identifier: string): Promise<UserAggregate | null> {
     return this.userContract.findByEmailOrUsername(identifier);
   }
 
@@ -110,7 +110,7 @@ export class UserFacade {
   async findUserBySocialProvider(
     provider: string,
     providerId: string,
-  ): Promise<UserModel | null> {
+  ): Promise<UserAggregate | null> {
     const socialAccount = await this.socialAccountContract.findByProviderAndProviderId(
       provider,
       providerId,

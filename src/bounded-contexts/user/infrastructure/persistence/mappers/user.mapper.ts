@@ -1,9 +1,9 @@
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 
 export class UserMapper {
-  static toDomain(entity: UserEntity): UserModel {
-    return UserModel.reconstitute({
+  static toDomain(entity: UserEntity): UserAggregate {
+    return UserAggregate.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
       email: entity.email,
@@ -20,7 +20,7 @@ export class UserMapper {
     });
   }
 
-  static toEntity(model: UserModel): Partial<UserEntity> {
+  static toEntity(model: UserAggregate): Partial<UserEntity> {
     const entity: Partial<UserEntity> = {
       uuid: model.uuid,
       email: model.email,

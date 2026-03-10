@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -13,8 +13,8 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     private readonly eventPublisher: EventPublisher,
   ) {}
 
-  async execute(command: CreateUserCommand): Promise<UserModel> {
-    const user = UserModel.create({
+  async execute(command: CreateUserCommand): Promise<UserAggregate> {
+    const user = UserAggregate.create({
       email: command.email,
       username: command.username,
       passwordHash: command.passwordHash,

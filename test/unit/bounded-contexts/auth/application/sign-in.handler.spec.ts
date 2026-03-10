@@ -9,7 +9,7 @@ import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { InvalidCredentialsException } from '@auth/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@auth/domain/exceptions/account-deactivated.exception';
 import { SocialAccountRequiredException } from '@auth/domain/exceptions/social-account-required.exception';
-import { AccountType } from '@user/domain/models/user.model';
+import { AccountType } from '@user/domain/models/user.aggregate';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 import * as bcrypt from 'bcrypt';

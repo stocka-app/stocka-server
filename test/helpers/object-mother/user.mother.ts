@@ -1,4 +1,4 @@
-import { AccountType, UserModel } from '@user/domain/models/user.model';
+import { AccountType, UserAggregate } from '@user/domain/models/user.aggregate';
 
 export class UserMother {
   static create(
@@ -17,7 +17,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): UserModel {
+  ): UserAggregate {
     const defaults = {
       id: 1,
       uuid: '550e8400-e29b-41d4-a716-446655440000',
@@ -36,7 +36,7 @@ export class UserMother {
 
     const props = { ...defaults, ...overrides };
 
-    return UserModel.reconstitute({
+    return UserAggregate.reconstitute({
       id: props.id,
       uuid: props.uuid,
       email: props.email,
@@ -64,7 +64,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date;
     }> = {},
-  ): UserModel {
+  ): UserAggregate {
     return this.create({
       ...overrides,
       archivedAt: overrides.archivedAt ?? new Date('2024-06-01T00:00:00Z'),
@@ -82,7 +82,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): UserModel {
+  ): UserAggregate {
     const provider = overrides.provider ?? 'google';
     return this.create({
       ...overrides,
@@ -104,7 +104,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): UserModel {
+  ): UserAggregate {
     const provider = overrides.provider ?? 'google';
     return this.create({
       ...overrides,
@@ -113,11 +113,11 @@ export class UserMother {
     });
   }
 
-  static createWithEmail(email: string): UserModel {
+  static createWithEmail(email: string): UserAggregate {
     return this.create({ email });
   }
 
-  static createWithUsername(username: string): UserModel {
+  static createWithUsername(username: string): UserAggregate {
     return this.create({ username });
   }
 
@@ -133,7 +133,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): UserModel {
+  ): UserAggregate {
     return this.create({
       ...overrides,
       verificationBlockedUntil:
@@ -152,7 +152,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): UserModel {
+  ): UserAggregate {
     return this.create({
       ...overrides,
       status: 'active',
@@ -171,7 +171,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): UserModel {
+  ): UserAggregate {
     return this.create({
       ...overrides,
       status: 'pending_verification',

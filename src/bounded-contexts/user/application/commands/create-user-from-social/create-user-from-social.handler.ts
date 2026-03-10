@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -16,8 +16,8 @@ export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFr
     private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
-  async execute(command: CreateUserFromSocialCommand): Promise<UserModel> {
-    const user = UserModel.createFromSocial({
+  async execute(command: CreateUserFromSocialCommand): Promise<UserAggregate> {
+    const user = UserAggregate.createFromSocial({
       email: command.email,
       username: command.username,
       passwordHash: null,

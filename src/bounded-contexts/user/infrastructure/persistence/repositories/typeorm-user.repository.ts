@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IUserContract } from '@user/domain/contracts/user.contract';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 import { UserMapper } from '@user/infrastructure/persistence/mappers/user.mapper';
 
@@ -13,21 +13,21 @@ export class TypeOrmUserRepository implements IUserContract {
     private readonly repository: Repository<UserEntity>,
   ) {}
 
-  async findById(id: number): Promise<UserModel | null> {
+  async findById(id: number): Promise<UserAggregate | null> {
     const entity = await this.repository.findOne({
       where: { id, archivedAt: undefined },
     });
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
-  async findByUUID(uuid: string): Promise<UserModel | null> {
+  async findByUUID(uuid: string): Promise<UserAggregate | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: undefined },
     });
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
-  async findByEmail(email: string): Promise<UserModel | null> {
+  async findByEmail(email: string): Promise<UserAggregate | null> {
     const entity = await this.repository
       .createQueryBuilder('user')
       .where('LOWER(user.email) = LOWER(:email)', { email })
@@ -36,7 +36,7 @@ export class TypeOrmUserRepository implements IUserContract {
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
-  async findByUsername(username: string): Promise<UserModel | null> {
+  async findByUsername(username: string): Promise<UserAggregate | null> {
     const entity = await this.repository
       .createQueryBuilder('user')
       .where('LOWER(user.username) = LOWER(:username)', { username })
@@ -45,7 +45,7 @@ export class TypeOrmUserRepository implements IUserContract {
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
-  async findByEmailOrUsername(identifier: string): Promise<UserModel | null> {
+  async findByEmailOrUsername(identifier: string): Promise<UserAggregate | null> {
     const entity = await this.repository
       .createQueryBuilder('user')
       .where(
@@ -77,7 +77,7 @@ export class TypeOrmUserRepository implements IUserContract {
     return count > 0;
   }
 
-  async persist(user: UserModel): Promise<UserModel> {
+  async persist(user: UserAggregate): Promise<UserAggregate> {
     const entityData = UserMapper.toEntity(user);
     const savedEntity = await this.repository.save(entityData);
     return UserMapper.toDomain(savedEntity as UserEntity);

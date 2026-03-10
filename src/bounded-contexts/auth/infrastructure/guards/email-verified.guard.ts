@@ -1,7 +1,7 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 export const SKIP_EMAIL_VERIFICATION_KEY = 'skipEmailVerification';
 
@@ -31,7 +31,7 @@ export class EmailVerifiedGuard implements CanActivate {
     }
 
     // Get full user from database to check status
-    const fullUser = (await this.mediator.findUserByUUID(user.sub)) as UserModel | null;
+    const fullUser = (await this.mediator.findUserByUUID(user.sub)) as UserAggregate | null;
 
     if (!fullUser) {
       throw new ForbiddenException('User not found');

@@ -7,7 +7,7 @@ import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-toke
 import { IPasswordResetTokenContract } from '@auth/domain/contracts/password-reset-token.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 @CommandHandler(ForgotPasswordCommand)
 export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordCommand> {
@@ -23,7 +23,7 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
   async execute(command: ForgotPasswordCommand): Promise<ForgotPasswordResult> {
     const genericMessage = 'If an account exists, a reset link has been sent';
 
-    const user = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
+    const user = (await this.mediator.findUserByEmail(command.email)) as UserAggregate | null;
 
     if (!user) {
       return { message: genericMessage };

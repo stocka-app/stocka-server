@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
-import { AccountType } from '@user/domain/models/user.model';
+import { AccountType } from '@user/domain/models/user.aggregate';
 import { LinkProviderToUserCommand } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 

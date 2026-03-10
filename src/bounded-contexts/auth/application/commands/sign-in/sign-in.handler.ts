@@ -15,7 +15,7 @@ import { SocialAccountRequiredException } from '@auth/domain/exceptions/social-a
 import { UserSignedInEvent } from '@auth/domain/events/user-signed-in.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(SignInCommand)
@@ -33,7 +33,7 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
   async execute(command: SignInCommand): Promise<SignInCommandResult> {
     const user = (await this.mediator.findUserByEmailOrUsername(
       command.emailOrUsername,
-    )) as UserModel | null;
+    )) as UserAggregate | null;
 
     if (!user) {
       return err(new InvalidCredentialsException());
@@ -82,7 +82,7 @@ export class SignInHandler implements ICommandHandler<SignInCommand> {
   }
 
   private async generateTokens(
-    user: UserModel,
+    user: UserAggregate,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.uuid, email: user.email };
 

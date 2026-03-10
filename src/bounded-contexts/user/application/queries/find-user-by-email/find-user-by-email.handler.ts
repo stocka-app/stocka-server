@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { FindUserByEmailQuery } from '@user/application/queries/find-user-by-email/find-user-by-email.query';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -12,7 +12,7 @@ export class FindUserByEmailHandler implements IQueryHandler<FindUserByEmailQuer
     private readonly userContract: IUserContract,
   ) {}
 
-  async execute(query: FindUserByEmailQuery): Promise<UserModel | null> {
+  async execute(query: FindUserByEmailQuery): Promise<UserAggregate | null> {
     return this.userContract.findByEmail(query.email);
   }
 }
