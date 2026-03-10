@@ -103,6 +103,15 @@ describe('New account registration — transactional email delivery', () => {
           provide: INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
           useValue: emailProvider,
         },
+        {
+          provide: INJECTION_TOKENS.UNIT_OF_WORK,
+          useValue: {
+            begin: jest.fn(),
+            commit: jest.fn(),
+            rollback: jest.fn(),
+            getManager: jest.fn().mockReturnValue({}),
+          },
+        },
       ],
     }).compile();
 

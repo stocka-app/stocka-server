@@ -4,10 +4,7 @@ import { IUserFacade } from '@shared/domain/contracts/user-facade.contract';
 import { IUserView } from '@shared/domain/contracts/user-view.contract';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
-<<<<<<< HEAD
-=======
 import { UserAggregate } from '@user/domain/models/user.aggregate';
->>>>>>> e4b5c88 (feat(shared): add Unit of Work pattern with TypeORM implementation)
 import {
   CreateUserCommand,
   CreateUserCommandResult,
@@ -36,24 +33,20 @@ export class UserFacade implements IUserFacade {
     private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
-<<<<<<< HEAD
   // === Commands ===
 
-  async createUser(email: string, username: string, passwordHash: string): Promise<IUserView> {
-=======
   async createUser(
     email: string,
     username: string,
     passwordHash: string,
     transactionContext?: unknown,
-  ): Promise<UserAggregate> {
+  ): Promise<IUserView> {
     if (transactionContext) {
       // Direct path for cross-BC transactional writes — bypasses CommandBus
       const user = UserAggregate.create({ email, username, passwordHash });
       return this.userContract.persist(user, transactionContext);
     }
 
->>>>>>> e4b5c88 (feat(shared): add Unit of Work pattern with TypeORM implementation)
     const result = await this.commandBus.execute<CreateUserCommand, CreateUserCommandResult>(
       new CreateUserCommand(email, username, passwordHash),
     );
@@ -70,11 +63,7 @@ export class UserFacade implements IUserFacade {
     username: string,
     provider: string,
     providerId: string,
-<<<<<<< HEAD
   ): Promise<IUserView> {
-=======
-  ): Promise<UserAggregate> {
->>>>>>> e4b5c88 (feat(shared): add Unit of Work pattern with TypeORM implementation)
     const result = await this.commandBus.execute<
       CreateUserFromSocialCommand,
       CreateUserFromSocialCommandResult
@@ -139,24 +128,16 @@ export class UserFacade implements IUserFacade {
     return this.userContract.existsByUsername(username);
   }
 
-<<<<<<< HEAD
   async findUserBySocialProvider(provider: string, providerId: string): Promise<IUserView | null> {
-=======
-  async updatePasswordHash(uuid: string, newHash: string): Promise<void> {
-    const user = await this.userContract.findByUUID(uuid);
-    if (user) {
-      user.updatePasswordHash(newHash);
-      await this.userContract.persist(user);
-    }
+    const socialAccount = await this.socialAccountContract.findByProviderAndProviderId(
+      provider,
+      providerId,
+    );
+    if (!socialAccount) return null;
+    return this.userContract.findById(socialAccount.userId);
   }
 
-  async updatePasswordByUserId(userId: number, newHash: string): Promise<void> {
-    const user = await this.userContract.findById(userId);
-    if (user) {
-      user.updatePasswordHash(newHash);
-      await this.userContract.persist(user);
-    }
-  }
+  // === Cross-BC mutations (used inside UoW transactions) ===
 
   async verifyUserEmail(uuid: string, transactionContext?: unknown): Promise<void> {
     const user = await this.userContract.findByUUID(uuid);
@@ -164,52 +145,5 @@ export class UserFacade implements IUserFacade {
       user.verifyEmail();
       await this.userContract.persist(user, transactionContext);
     }
-  }
-
-  async blockUserVerification(uuid: string, blockedUntil: Date): Promise<void> {
-    const user = await this.userContract.findByUUID(uuid);
-    if (user) {
-      user.blockVerification(blockedUntil);
-      await this.userContract.persist(user);
-    }
-  }
-
-  async linkProviderToUser(userId: number, provider: string, providerId: string): Promise<void> {
-    const result = await this.commandBus.execute<
-      LinkProviderToUserCommand,
-      LinkProviderToUserCommandResult
-    >(new LinkProviderToUserCommand(userId, provider, providerId));
-    result.match(
-      () => {},
-      (error) => {
-        throw error;
-      },
-    );
-  }
-
-  async setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void> {
-    const result = await this.commandBus.execute<
-      SetPasswordForSocialUserCommand,
-      SetPasswordForSocialUserCommandResult
-    >(new SetPasswordForSocialUserCommand(userId, passwordHash));
-    result.match(
-      () => {},
-      (error) => {
-        throw error;
-      },
-    );
-  }
-
-  async findUserBySocialProvider(
-    provider: string,
-    providerId: string,
-  ): Promise<UserAggregate | null> {
->>>>>>> e4b5c88 (feat(shared): add Unit of Work pattern with TypeORM implementation)
-    const socialAccount = await this.socialAccountContract.findByProviderAndProviderId(
-      provider,
-      providerId,
-    );
-    if (!socialAccount) return null;
-    return this.userContract.findById(socialAccount.userId);
   }
 }
