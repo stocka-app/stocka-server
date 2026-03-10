@@ -4,7 +4,7 @@ import { EmailVerificationCompletedEvent } from '@auth/domain/events/email-verif
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 @EventsHandler(EmailVerificationCompletedEvent)
 export class EmailVerificationCompletedEventHandler implements IEventHandler<EmailVerificationCompletedEvent> {
@@ -21,7 +21,7 @@ export class EmailVerificationCompletedEventHandler implements IEventHandler<Ema
 
     try {
       // Get user to fetch username for welcome email
-      const user = (await this.mediator.findUserByUUID(event.userUUID)) as UserModel | null;
+      const user = (await this.mediator.findUserByUUID(event.userUUID)) as UserAggregate | null;
       if (user) {
         const result = await this.emailProvider.sendWelcomeEmail(event.email, user.username, event.lang);
         if (result.success) {

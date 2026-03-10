@@ -9,7 +9,7 @@ import { VerificationCodeExpiredException } from '@auth/domain/exceptions/verifi
 import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-already-verified.exception';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(VerifyEmailCommand)
@@ -25,7 +25,7 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
 
   async execute(command: VerifyEmailCommand): Promise<VerifyEmailCommandResult> {
     // Find user by email
-    const user = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
+    const user = (await this.mediator.findUserByEmail(command.email)) as UserAggregate | null;
     if (!user) {
       return err(new InvalidVerificationCodeException());
     }

@@ -1,6 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result } from '@shared/domain/result';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 export interface AuthTokens {
   accessToken: string;
@@ -8,7 +8,7 @@ export interface AuthTokens {
 }
 
 export interface AuthResult extends AuthTokens {
-  user: UserModel;
+  user: UserAggregate;
 }
 
 export interface SignInResult extends AuthResult {

@@ -2,11 +2,11 @@ import { Injectable, Inject } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
-import { UserModel } from '@user/domain/models/user.model';
-import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
-import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
-import { LinkProviderToUserCommand } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
-import { SetPasswordForSocialUserCommand } from '@user/application/commands/set-password-for-social-user/set-password-for-social-user.command';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { CreateUserCommand, CreateUserCommandResult } from '@user/application/commands/create-user/create-user.command';
+import { CreateUserFromSocialCommand, CreateUserFromSocialCommandResult } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
+import { LinkProviderToUserCommand, LinkProviderToUserCommandResult } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
+import { SetPasswordForSocialUserCommand, SetPasswordForSocialUserCommandResult } from '@user/application/commands/set-password-for-social-user/set-password-for-social-user.command';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
@@ -20,8 +20,14 @@ export class UserFacade {
     private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
-  async createUser(email: string, username: string, passwordHash: string): Promise<UserModel> {
-    return this.commandBus.execute(new CreateUserCommand(email, username, passwordHash));
+  async createUser(email: string, username: string, passwordHash: string): Promise<UserAggregate> {
+    const result = await this.commandBus.execute<CreateUserCommand, CreateUserCommandResult>(
+      new CreateUserCommand(email, username, passwordHash),
+    );
+    return result.match(
+      (user) => user,
+      (error) => { throw error; },
+    );
   }
 
   async createUserFromSocial(
@@ -29,25 +35,29 @@ export class UserFacade {
     username: string,
     provider: string,
     providerId: string,
-  ): Promise<UserModel> {
-    return this.commandBus.execute(
+  ): Promise<UserAggregate> {
+    const result = await this.commandBus.execute<CreateUserFromSocialCommand, CreateUserFromSocialCommandResult>(
       new CreateUserFromSocialCommand(email, username, provider, providerId),
+    );
+    return result.match(
+      (user) => user,
+      (error) => { throw error; },
     );
   }
 
-  async findById(id: number): Promise<UserModel | null> {
+  async findById(id: number): Promise<UserAggregate | null> {
     return this.userContract.findById(id);
   }
 
-  async findByUUID(uuid: string): Promise<UserModel | null> {
+  async findByUUID(uuid: string): Promise<UserAggregate | null> {
     return this.userContract.findByUUID(uuid);
   }
 
-  async findByEmail(email: string): Promise<UserModel | null> {
+  async findByEmail(email: string): Promise<UserAggregate | null> {
     return this.userContract.findByEmail(email);
   }
 
-  async findByEmailOrUsername(identifier: string): Promise<UserModel | null> {
+  async findByEmailOrUsername(identifier: string): Promise<UserAggregate | null> {
     return this.userContract.findByEmailOrUsername(identifier);
   }
 
@@ -96,21 +106,29 @@ export class UserFacade {
     provider: string,
     providerId: string,
   ): Promise<void> {
-    return this.commandBus.execute(
+    const result = await this.commandBus.execute<LinkProviderToUserCommand, LinkProviderToUserCommandResult>(
       new LinkProviderToUserCommand(userId, provider, providerId),
+    );
+    result.match(
+      () => {},
+      (error) => { throw error; },
     );
   }
 
   async setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void> {
-    return this.commandBus.execute(
+    const result = await this.commandBus.execute<SetPasswordForSocialUserCommand, SetPasswordForSocialUserCommandResult>(
       new SetPasswordForSocialUserCommand(userId, passwordHash),
+    );
+    result.match(
+      () => {},
+      (error) => { throw error; },
     );
   }
 
   async findUserBySocialProvider(
     provider: string,
     providerId: string,
-  ): Promise<UserModel | null> {
+  ): Promise<UserAggregate | null> {
     const socialAccount = await this.socialAccountContract.findByProviderAndProviderId(
       provider,
       providerId,

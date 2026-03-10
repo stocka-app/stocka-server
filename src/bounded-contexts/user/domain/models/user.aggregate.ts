@@ -26,7 +26,7 @@ export interface UserProps extends AggregateRootProps {
   accountType?: string;
 }
 
-export class UserModel extends AggregateRoot {
+export class UserAggregate extends AggregateRoot {
   private _email: EmailVO;
   private _username: UsernameVO;
   private _passwordHash: string | null;
@@ -54,8 +54,8 @@ export class UserModel extends AggregateRoot {
     this._accountType = props.accountType ?? AccountType.MANUAL;
   }
 
-  static create(props: Omit<UserProps, 'id'>): UserModel {
-    const user = new UserModel({
+  static create(props: Omit<UserProps, 'id'>): UserAggregate {
+    const user = new UserAggregate({
       ...props,
       status: UserStatusEnum.PENDING_VERIFICATION,
       createdWith: 'email',
@@ -65,8 +65,8 @@ export class UserModel extends AggregateRoot {
     return user;
   }
 
-  static createFromSocial(props: Omit<UserProps, 'id'> & { provider: string }): UserModel {
-    const user = new UserModel({
+  static createFromSocial(props: Omit<UserProps, 'id'> & { provider: string }): UserAggregate {
+    const user = new UserAggregate({
       ...props,
       status: UserStatusEnum.EMAIL_VERIFIED_BY_PROVIDER,
       emailVerifiedAt: new Date(),
@@ -77,8 +77,8 @@ export class UserModel extends AggregateRoot {
     return user;
   }
 
-  static reconstitute(props: UserProps & { id: number; uuid: string }): UserModel {
-    return new UserModel(props);
+  static reconstitute(props: UserProps & { id: number; uuid: string }): UserAggregate {
+    return new UserAggregate(props);
   }
 
   get email(): string {

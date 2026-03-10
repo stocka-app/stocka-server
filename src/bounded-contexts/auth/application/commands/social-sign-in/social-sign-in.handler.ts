@@ -11,7 +11,7 @@ import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { UserSignedInEvent } from '@auth/domain/events/user-signed-in.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 @CommandHandler(SocialSignInCommand)
 export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand> {
@@ -26,19 +26,19 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
   ) {}
 
   async execute(command: SocialSignInCommand): Promise<SocialSignInResult> {
-    let user: UserModel | null;
+    let user: UserAggregate | null;
 
     // Step 1: Find by (provider, providerId) — already linked, fast path
     user = (await this.mediator.findUserBySocialProvider(
       command.provider,
       command.providerId,
-    )) as UserModel | null;
+    )) as UserAggregate | null;
 
     if (!user) {
       // Step 2: Find by email — existing account with a different auth method
       const existingUser = (await this.mediator.findUserByEmail(
         command.email,
-      )) as UserModel | null;
+      )) as UserAggregate | null;
 
       if (existingUser) {
         // Step 3: Link this OAuth provider to the existing account (EC-002)
@@ -48,7 +48,7 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
           command.providerId,
         );
         // Reload so we have the updated accountType on the model
-        user = (await this.mediator.findUserById(existingUser.id!)) as UserModel;
+        user = (await this.mediator.findUserById(existingUser.id!)) as UserAggregate;
       } else {
         // Step 4: No account at all — create a new social user
         const username = await this.generateUniqueUsername(command.displayName);
@@ -57,7 +57,7 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
           username,
           command.provider,
           command.providerId,
-        )) as UserModel;
+        )) as UserAggregate;
       }
     }
 
@@ -102,7 +102,7 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
   }
 
   private async generateTokens(
-    user: UserModel,
+    user: UserAggregate,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.uuid, email: user.email };
 

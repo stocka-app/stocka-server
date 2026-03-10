@@ -15,7 +15,7 @@ import { VerificationAttemptModel } from '@auth/domain/models/verification-attem
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 interface HttpErrorResponse {
   error?: string;
@@ -68,10 +68,10 @@ export class RateLimitInterceptor implements NestInterceptor {
     const identifier: string | undefined = request.__rateLimitIdentifier;
 
     // Try to find user for tracking
-    let user: UserModel | null = null;
+    let user: UserAggregate | null = null;
     if (identifier) {
       try {
-        user = (await this.mediator.findUserByEmailOrUsername(identifier)) as UserModel | null;
+        user = (await this.mediator.findUserByEmailOrUsername(identifier)) as UserAggregate | null;
       } catch {
         // User not found — track by IP only
       }
@@ -144,7 +144,7 @@ export class RateLimitInterceptor implements NestInterceptor {
   }
 
   private async evaluateBlock(
-    user: UserModel,
+    user: UserAggregate,
     failedAttempts: number,
     config: RateLimitConfig,
   ): Promise<void> {

@@ -19,7 +19,7 @@ import { EmailDeliveryFailedException } from '@auth/domain/exceptions/email-deli
 import { UserSignedUpEvent } from '@auth/domain/events/user-signed-up.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { ok, err } from '@shared/domain/result';
 
@@ -51,7 +51,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     }
 
     // 2. Check if email/username already exist
-    const existingUser = (await this.mediator.findUserByEmail(command.email)) as UserModel | null;
+    const existingUser = (await this.mediator.findUserByEmail(command.email)) as UserAggregate | null;
     if (existingUser) {
       return err(new EmailAlreadyExistsException());
     }
@@ -83,7 +83,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
       command.email,
       command.username,
       passwordHash,
-    )) as UserModel;
+    )) as UserAggregate;
 
     const { accessToken, refreshToken } = await this.generateTokens(user);
 
@@ -107,7 +107,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
   }
 
   private async generateTokens(
-    user: UserModel,
+    user: UserAggregate,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.uuid, email: user.email };
 
@@ -148,7 +148,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
   }
 
   private async createVerificationToken(
-    user: UserModel,
+    user: UserAggregate,
     code: string,
   ): Promise<EmailVerificationTokenModel> {
     const codeHash = this.codeGenerator.hashCode(code);

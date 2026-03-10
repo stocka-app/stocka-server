@@ -12,7 +12,7 @@ import { TokenExpiredException } from '@auth/domain/exceptions/token-expired.exc
 import { SessionRefreshedEvent } from '@auth/domain/events/session-refreshed.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserModel } from '@user/domain/models/user.model';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { ok, err } from '@shared/domain/result';
 
 interface JwtPayload {
@@ -65,7 +65,7 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
     if (!isValidJwtPayload(decoded)) {
       return err(new TokenExpiredException());
     }
-    const user = (await this.mediator.findUserByUUID(decoded.sub)) as UserModel | null;
+    const user = (await this.mediator.findUserByUUID(decoded.sub)) as UserAggregate | null;
 
     if (!user) {
       return err(new TokenExpiredException());
@@ -90,7 +90,7 @@ export class RefreshSessionHandler implements ICommandHandler<RefreshSessionComm
   }
 
   private async generateTokens(
-    user: UserModel,
+    user: UserAggregate,
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload = { sub: user.uuid, email: user.email };
 

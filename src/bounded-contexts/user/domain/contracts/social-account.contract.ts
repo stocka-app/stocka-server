@@ -1,14 +1,14 @@
-import { SocialAccountEntity } from '@user/infrastructure/persistence/entities/social-account.entity';
+import { SocialAccountModel } from '@user/domain/models/social-account.model';
 
 export interface ISocialAccountContract {
   persist(data: {
     userId: number;
     provider: string;
     providerId: string;
-  }): Promise<SocialAccountEntity>;
+  }): Promise<SocialAccountModel>;
 
   findByProviderAndProviderId(
     provider: string,
     providerId: string,
-  ): Promise<SocialAccountEntity | null>;
+  ): Promise<SocialAccountModel | null>;
 }
