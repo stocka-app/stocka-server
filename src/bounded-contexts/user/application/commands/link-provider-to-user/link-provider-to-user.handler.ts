@@ -3,8 +3,13 @@ import { Inject } from '@nestjs/common';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import { AccountType } from '@user/domain/models/user.aggregate';
-import { LinkProviderToUserCommand } from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
+import {
+  LinkProviderToUserCommand,
+  LinkProviderToUserCommandResult,
+} from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
+import { UserNotFoundException } from '@user/domain/exceptions/user-not-found.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(LinkProviderToUserCommand)
 export class LinkProviderToUserHandler
@@ -18,9 +23,9 @@ export class LinkProviderToUserHandler
     private readonly eventPublisher: EventPublisher,
   ) {}
 
-  async execute(command: LinkProviderToUserCommand): Promise<void> {
+  async execute(command: LinkProviderToUserCommand): Promise<LinkProviderToUserCommandResult> {
     const user = await this.userContract.findById(command.userId);
-    if (!user) return;
+    if (!user) return err(new UserNotFoundException(String(command.userId)));
 
     await this.socialAccountContract.persist({
       userId: command.userId,
@@ -36,5 +41,7 @@ export class LinkProviderToUserHandler
       await this.userContract.persist(user);
       user.commit();
     }
+
+    return ok(undefined);
   }
 }

@@ -1,3 +1,7 @@
+import { Result } from '@shared/domain/result';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+
 export class CreateUserFromSocialCommand {
   constructor(
     public readonly email: string,
@@ -6,3 +10,5 @@ export class CreateUserFromSocialCommand {
     public readonly providerId: string,
   ) {}
 }
+
+export type CreateUserFromSocialCommandResult = Result<UserAggregate, DomainException>;

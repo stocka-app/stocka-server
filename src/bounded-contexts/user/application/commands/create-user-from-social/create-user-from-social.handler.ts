@@ -1,10 +1,15 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
-import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
+import {
+  CreateUserFromSocialCommand,
+  CreateUserFromSocialCommandResult,
+} from '@user/application/commands/create-user-from-social/create-user-from-social.command';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(CreateUserFromSocialCommand)
 export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFromSocialCommand> {
@@ -16,13 +21,19 @@ export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFr
     private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
-  async execute(command: CreateUserFromSocialCommand): Promise<UserAggregate> {
-    const user = UserAggregate.createFromSocial({
-      email: command.email,
-      username: command.username,
-      passwordHash: null,
-      provider: command.provider,
-    });
+  async execute(command: CreateUserFromSocialCommand): Promise<CreateUserFromSocialCommandResult> {
+    let user: UserAggregate;
+    try {
+      user = UserAggregate.createFromSocial({
+        email: command.email,
+        username: command.username,
+        passwordHash: null,
+        provider: command.provider,
+      });
+    } catch (e) {
+      if (e instanceof DomainException) return err(e);
+      throw e;
+    }
 
     const persistedUser = await this.userContract.persist(user);
 
@@ -35,6 +46,6 @@ export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFr
     this.eventPublisher.mergeObjectContext(user);
     user.commit();
 
-    return persistedUser;
+    return ok(persistedUser);
   }
 }

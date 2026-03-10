@@ -1,9 +1,14 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
+import {
+  CreateUserCommand,
+  CreateUserCommandResult,
+} from '@user/application/commands/create-user/create-user.command';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(CreateUserCommand)
 export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
@@ -13,18 +18,24 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
     private readonly eventPublisher: EventPublisher,
   ) {}
 
-  async execute(command: CreateUserCommand): Promise<UserAggregate> {
-    const user = UserAggregate.create({
-      email: command.email,
-      username: command.username,
-      passwordHash: command.passwordHash,
-    });
+  async execute(command: CreateUserCommand): Promise<CreateUserCommandResult> {
+    let user: UserAggregate;
+    try {
+      user = UserAggregate.create({
+        email: command.email,
+        username: command.username,
+        passwordHash: command.passwordHash,
+      });
+    } catch (e) {
+      if (e instanceof DomainException) return err(e);
+      throw e;
+    }
 
     const persistedUser = await this.userContract.persist(user);
 
     this.eventPublisher.mergeObjectContext(user);
     user.commit();
 
-    return persistedUser;
+    return ok(persistedUser);
   }
 }
