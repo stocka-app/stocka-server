@@ -7,9 +7,9 @@ import { IUserView } from '@shared/domain/contracts/user-view.contract';
  * Now in shared/domain so both Auth BC and MediatorService can reference it
  * without importing User BC internals.
  *
- * IMPORTANT: This interface only exposes queries and commands.
- * Cross-BC mutations (verifyUserEmail, blockUserVerification, updatePasswordHash)
- * are handled via domain events — see shared/domain/events/integration/.
+ * Commands that accept `transactionContext` enable atomic cross-BC writes
+ * via the Unit of Work pattern (see IUnitOfWork). When omitted, the command
+ * is dispatched through the User BC command bus as usual.
  */
 export interface IUserFacade {
   // === Queries ===
@@ -22,7 +22,12 @@ export interface IUserFacade {
   findUserBySocialProvider(provider: string, providerId: string): Promise<IUserView | null>;
 
   // === Commands (dispatched through User BC command bus) ===
-  createUser(email: string, username: string, passwordHash: string): Promise<IUserView>;
+  createUser(
+    email: string,
+    username: string,
+    passwordHash: string,
+    transactionContext?: unknown,
+  ): Promise<IUserView>;
   createUserFromSocial(
     email: string,
     username: string,
@@ -31,4 +36,7 @@ export interface IUserFacade {
   ): Promise<IUserView>;
   linkProviderToUser(userId: number, provider: string, providerId: string): Promise<void>;
   setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void>;
+
+  // === Cross-BC mutations (used inside UoW transactions) ===
+  verifyUserEmail(uuid: string, transactionContext?: unknown): Promise<void>;
 }
