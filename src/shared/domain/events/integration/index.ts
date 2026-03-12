@@ -8,6 +8,6 @@
  * User BC imports it directly since domain events are the sanctioned
  * cross-BC communication mechanism in DDD.
  */
-export { EmailVerificationCompletedEvent } from '@auth/domain/events/email-verification-completed.event';
-export { UserPasswordResetByAuthEvent } from '@shared/domain/events/integration/user-password-reset-by-auth.event';
-export { UserVerificationBlockedByAuthEvent } from '@shared/domain/events/integration/user-verification-blocked-by-auth.event';
+export { EmailVerificationCompletedEvent } from '@authentication/domain/events/email-verification-completed.event';
+export { UserPasswordResetByAuthenticationEvent } from '@shared/domain/events/integration/user-password-reset-by-authentication.event';
+export { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/events/integration/user-verification-blocked-by-authentication.event';
