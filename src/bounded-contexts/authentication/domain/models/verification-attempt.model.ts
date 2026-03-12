@@ -1,0 +1,115 @@
+import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { VerificationCodeVO } from '@shared/domain/value-objects/compound/verification-code.vo';
+import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
+import { IpAddressVO } from '@authentication/domain/value-objects/ip-address.vo';
+import { UserAgentVO } from '@authentication/domain/value-objects/user-agent.vo';
+import { VerificationTypeVO } from '@authentication/domain/value-objects/verification-type.vo';
+import { VerificationResultVO } from '@authentication/domain/value-objects/verification-result.vo';
+import { AttemptedAtVO } from '@authentication/domain/value-objects/attempted-at.vo';
+import { EmailVerificationFailedEvent } from '@authentication/domain/events/email-verification-failed.event';
+
+export interface VerificationAttemptProps extends AggregateRootProps {
+  userUUID: string | null;
+  email: string | null;
+  ipAddress: string;
+  userAgent?: string | null;
+  codeEntered: string | null;
+  success?: boolean;
+  verificationType?: string;
+  attemptedAt?: Date;
+}
+
+export class VerificationAttemptModel extends AggregateRoot {
+  private readonly _userUUID: UUIDVO | null;
+  private readonly _email: EmailVO | null;
+  private readonly _ipAddress: IpAddressVO;
+  private readonly _userAgent: UserAgentVO | null;
+  private readonly _codeEntered: VerificationCodeVO | null;
+  private _result: VerificationResultVO;
+  private readonly _verificationType: VerificationTypeVO;
+  private readonly _attemptedAt: AttemptedAtVO;
+
+  private constructor(props: VerificationAttemptProps) {
+    super({
+      id: props.id,
+      uuid: props.uuid,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+      archivedAt: props.archivedAt,
+    });
+    this._userUUID = props.userUUID ? new UUIDVO(props.userUUID) : null;
+    this._email = props.email ? new EmailVO(props.email) : null;
+    this._ipAddress = IpAddressVO.create(props.ipAddress);
+    this._userAgent = props.userAgent ? new UserAgentVO(props.userAgent) : null;
+    this._codeEntered = props.codeEntered ? new VerificationCodeVO(props.codeEntered) : null;
+    this._result = VerificationResultVO.fromBoolean(props.success ?? false);
+    this._verificationType = new VerificationTypeVO(props.verificationType ?? 'email_verification');
+    this._attemptedAt = props.attemptedAt
+      ? new AttemptedAtVO(props.attemptedAt)
+      : AttemptedAtVO.now();
+  }
+
+  static create(props: Omit<VerificationAttemptProps, 'id'>): VerificationAttemptModel {
+    return new VerificationAttemptModel(props);
+  }
+
+  static createFailed(
+    props: Omit<VerificationAttemptProps, 'id' | 'success'> & { userUUID: string; email: string },
+    failedAttempts: number,
+  ): VerificationAttemptModel {
+    const attempt = new VerificationAttemptModel({ ...props, success: false });
+    attempt.apply(
+      new EmailVerificationFailedEvent(
+        props.userUUID,
+        props.email,
+        props.ipAddress,
+        failedAttempts,
+      ),
+    );
+    return attempt;
+  }
+
+  static reconstitute(
+    props: VerificationAttemptProps & { id: number; uuid: string },
+  ): VerificationAttemptModel {
+    return new VerificationAttemptModel(props);
+  }
+
+  get userUUID(): UUIDVO | null {
+    return this._userUUID;
+  }
+
+  get email(): EmailVO | null {
+    return this._email;
+  }
+
+  get ipAddress(): IpAddressVO {
+    return this._ipAddress;
+  }
+
+  get userAgent(): UserAgentVO | null {
+    return this._userAgent;
+  }
+
+  get codeEntered(): VerificationCodeVO | null {
+    return this._codeEntered;
+  }
+
+  get result(): VerificationResultVO {
+    return this._result;
+  }
+
+  get verificationType(): VerificationTypeVO {
+    return this._verificationType;
+  }
+
+  get attemptedAt(): AttemptedAtVO {
+    return this._attemptedAt;
+  }
+
+  markAsSuccessful(): void {
+    this._result = VerificationResultVO.success();
+    this.touch();
+  }
+}
