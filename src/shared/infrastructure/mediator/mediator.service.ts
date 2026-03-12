@@ -7,7 +7,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
  * MediatorService — typed cross-BC communication layer.
  *
  * Uses ModuleRef.get({ strict: false }) to resolve the IUserFacade token
- * at runtime, breaking the circular module dependency (Auth → Mediator → User → Auth).
+ * at runtime, breaking the circular module dependency (Auth -> Mediator -> User -> Auth).
  * MediatorModule no longer needs to import UserModule.
  *
  * Access namespaced operations via `mediator.user.*`.

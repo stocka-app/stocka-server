@@ -5,7 +5,7 @@ import { IEvent } from '@nestjs/cqrs';
  * Published by Auth BC after a password reset is completed.
  * User BC reacts by updating the user's password hash.
  */
-export class UserPasswordResetByAuthEvent implements IEvent {
+export class UserPasswordResetByAuthenticationEvent implements IEvent {
   constructor(
     public readonly userId: number,
     public readonly newPasswordHash: string,

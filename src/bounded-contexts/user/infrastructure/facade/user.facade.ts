@@ -4,6 +4,7 @@ import { IUserFacade } from '@shared/domain/contracts/user-facade.contract';
 import { IUserView } from '@shared/domain/contracts/user-view.contract';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 import {
   CreateUserCommand,
   CreateUserCommandResult,
@@ -34,7 +35,18 @@ export class UserFacade implements IUserFacade {
 
   // === Commands ===
 
-  async createUser(email: string, username: string, passwordHash: string): Promise<IUserView> {
+  async createUser(
+    email: string,
+    username: string,
+    passwordHash: string,
+    transactionContext?: unknown,
+  ): Promise<IUserView> {
+    if (transactionContext) {
+      // Direct path for cross-BC transactional writes — bypasses CommandBus
+      const user = UserAggregate.create({ email, username, passwordHash });
+      return this.userContract.persist(user, transactionContext);
+    }
+
     const result = await this.commandBus.execute<CreateUserCommand, CreateUserCommandResult>(
       new CreateUserCommand(email, username, passwordHash),
     );
@@ -123,5 +135,15 @@ export class UserFacade implements IUserFacade {
     );
     if (!socialAccount) return null;
     return this.userContract.findById(socialAccount.userId);
+  }
+
+  // === Cross-BC mutations (used inside UoW transactions) ===
+
+  async verifyUserEmail(uuid: string, transactionContext?: unknown): Promise<void> {
+    const user = await this.userContract.findByUUID(uuid);
+    if (user) {
+      user.verifyEmail();
+      await this.userContract.persist(user, transactionContext);
+    }
   }
 }

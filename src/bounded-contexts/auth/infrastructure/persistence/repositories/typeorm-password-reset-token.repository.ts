@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository, IsNull, EntityManager } from 'typeorm';
 import { IPasswordResetTokenContract } from '@auth/domain/contracts/password-reset-token.contract';
 import { PasswordResetTokenModel } from '@auth/domain/models/password-reset-token.model';
 import { PasswordResetTokenEntity } from '@auth/infrastructure/persistence/entities/password-reset-token.entity';
@@ -34,9 +34,15 @@ export class TypeOrmPasswordResetTokenRepository implements IPasswordResetTokenC
     return entity ? PasswordResetTokenMapper.toDomain(entity) : null;
   }
 
-  async persist(token: PasswordResetTokenModel): Promise<PasswordResetTokenModel> {
+  async persist(
+    token: PasswordResetTokenModel,
+    transactionContext?: unknown,
+  ): Promise<PasswordResetTokenModel> {
     const entityData = PasswordResetTokenMapper.toEntity(token);
-    const savedEntity = await this.repository.save(entityData);
+    const repo = transactionContext
+      ? (transactionContext as EntityManager).getRepository(PasswordResetTokenEntity)
+      : this.repository;
+    const savedEntity = await repo.save(entityData);
     return PasswordResetTokenMapper.toDomain(savedEntity as PasswordResetTokenEntity);
   }
 

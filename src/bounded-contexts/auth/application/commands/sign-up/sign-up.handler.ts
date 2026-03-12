@@ -1,5 +1,5 @@
-import { CommandHandler, ICommandHandler, EventPublisher, EventBus } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import { Inject, Logger } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
@@ -12,11 +12,11 @@ import { EmailVerificationTokenModel } from '@auth/domain/models/email-verificat
 import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { EmailAlreadyExistsException } from '@auth/domain/exceptions/email-already-exists.exception';
 import { UsernameAlreadyExistsException } from '@auth/domain/exceptions/username-already-exists.exception';
-import { EmailDeliveryFailedException } from '@auth/domain/exceptions/email-delivery-failed.exception';
 import { UserSignedUpEvent } from '@auth/domain/events/user-signed-up.event';
+import { EmailVerificationRequestedEvent } from '@auth/domain/events/email-verification-requested.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { IUserView } from '@shared/domain/contracts/user-view.contract';
@@ -25,11 +25,12 @@ import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(SignUpCommand)
 export class SignUpHandler implements ICommandHandler<SignUpCommand> {
+  private readonly logger = new Logger(SignUpHandler.name);
+
   constructor(
     private readonly mediator: MediatorService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-    private readonly eventPublisher: EventPublisher,
     private readonly eventBus: EventBus,
     @Inject(INJECTION_TOKENS.SESSION_CONTRACT)
     private readonly sessionContract: ISessionContract,
@@ -37,8 +38,8 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     private readonly verificationTokenContract: IEmailVerificationTokenContract,
     @Inject(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT)
     private readonly codeGenerator: ICodeGeneratorContract,
-    @Inject(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
-    private readonly emailProvider: IEmailProviderContract,
+    @Inject(INJECTION_TOKENS.UNIT_OF_WORK)
+    private readonly uow: IUnitOfWork,
   ) {}
 
   async execute(command: SignUpCommand): Promise<SignUpCommandResult> {
@@ -61,38 +62,53 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
       return err(new UsernameAlreadyExistsException());
     }
 
-    // 3. Generate verification code BEFORE any persistence
+    // 3. Prepare data before transaction
+    const passwordHash = await AuthDomainService.hashPassword(command.password);
     const verificationCode = this.codeGenerator.generateVerificationCode();
 
-    // 4. Send verification email FIRST - if this fails, nothing is persisted
-    const emailResult = await this.emailProvider.sendVerificationEmail(
-      command.email,
-      verificationCode,
-      command.username,
-      command.lang,
-    );
+    // 4. Persist everything atomically in a single transaction
+    let user: IUserView;
+    let session: SessionModel;
+    let accessToken: string;
+    let refreshToken: string;
 
-    if (!emailResult.success) {
-      return err(new EmailDeliveryFailedException(emailResult.error));
+    await this.uow.begin();
+    try {
+      const manager = this.uow.getManager();
+
+      user = await this.mediator.user.createUser(
+        command.email,
+        command.username,
+        passwordHash,
+        manager,
+      );
+
+      ({ accessToken, refreshToken } = await this.generateTokens(user));
+
+      session = this.buildSession(user.id!, refreshToken);
+      await this.sessionContract.persist(session, manager);
+
+      const token = this.buildVerificationToken(user, verificationCode);
+      await this.verificationTokenContract.persist(token, manager);
+
+      await this.uow.commit();
+    } catch (error) {
+      await this.uow.rollback();
+      this.logger.error(`Sign-up transaction failed: ${error}`);
+      throw error;
     }
 
-    // 5. Email sent successfully - now persist everything
-    const passwordHash = await AuthDomainService.hashPassword(command.password);
-
-    const user = await this.mediator.user.createUser(command.email, command.username, passwordHash);
-
-    const { accessToken, refreshToken } = await this.generateTokens(user);
-
-    const session = await this.createSession(user.id!, refreshToken);
-
-    // Create email verification token (email already sent, just persist the hash)
-    await this.createVerificationToken(user, verificationCode);
-
-    this.eventPublisher.mergeObjectContext(session);
-    session.commit();
-
-    // Don't emit EmailVerificationRequestedEvent since email was already sent
+    // 5. Publish events AFTER commit — email sent reactively by EventHandler
     this.eventBus.publish(new UserSignedUpEvent(user.uuid, user.email));
+    this.eventBus.publish(
+      new EmailVerificationRequestedEvent(
+        user.id!,
+        user.email,
+        verificationCode,
+        user.username,
+        command.lang,
+      ),
+    );
 
     return ok({
       user,
@@ -128,25 +144,22 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     return { accessToken, refreshToken };
   }
 
-  private async createSession(userId: number, refreshToken: string): Promise<SessionModel> {
+  private buildSession(userId: number, refreshToken: string): SessionModel {
     const tokenHash = AuthDomainService.hashToken(refreshToken);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const session = SessionModel.create({
+    return SessionModel.create({
       userId,
       tokenHash,
       expiresAt,
     });
-
-    await this.sessionContract.persist(session);
-    return session;
   }
 
-  private async createVerificationToken(
+  private buildVerificationToken(
     user: IUserView,
     code: string,
-  ): Promise<EmailVerificationTokenModel> {
+  ): EmailVerificationTokenModel {
     const codeHash = this.codeGenerator.hashCode(code);
     const expirationMinutes = this.configService.get<number>(
       'VERIFICATION_CODE_EXPIRATION_MINUTES',
@@ -154,15 +167,12 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
     );
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
-    const token = EmailVerificationTokenModel.create({
+    return EmailVerificationTokenModel.create({
       userId: user.id!,
       codeHash,
       expiresAt,
       email: user.email,
       code,
     });
-
-    await this.verificationTokenContract.persist(token);
-    return token;
   }
 }

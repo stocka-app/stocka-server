@@ -5,7 +5,10 @@ export interface IEmailVerificationTokenContract {
   findByUUID(uuid: string): Promise<EmailVerificationTokenModel | null>;
   findActiveByUserId(userId: number): Promise<EmailVerificationTokenModel | null>;
   findByCodeHash(codeHash: string): Promise<EmailVerificationTokenModel | null>;
-  persist(token: EmailVerificationTokenModel): Promise<EmailVerificationTokenModel>;
+  persist(
+    token: EmailVerificationTokenModel,
+    transactionContext?: unknown,
+  ): Promise<EmailVerificationTokenModel>;
   archive(uuid: string): Promise<void>;
   archiveAllByUserId(userId: number): Promise<void>;
   countResentInLastHour(userId: number): Promise<number>;

@@ -6,6 +6,7 @@ import { SessionEntity } from '@auth/infrastructure/persistence/entities/session
 import { PasswordResetTokenEntity } from '@auth/infrastructure/persistence/entities/password-reset-token.entity';
 import { EmailVerificationTokenEntity } from '@auth/infrastructure/persistence/entities/email-verification-token.entity';
 import { VerificationAttemptEntity } from '@auth/infrastructure/persistence/entities/verification-attempt.entity';
+import { ProcessStateEntity } from '@shared/infrastructure/persistence/entities/process-state.entity';
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
   useFactory: (configService: ConfigService) => ({
@@ -22,6 +23,7 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       PasswordResetTokenEntity,
       EmailVerificationTokenEntity,
       VerificationAttemptEntity,
+      ProcessStateEntity,
     ],
     // Migrations are run manually via CLI, not auto-loaded in app
     migrationsRun: false,

@@ -14,10 +14,11 @@ import { EmailVerificationTokenModel } from '@auth/domain/models/email-verificat
 
 describe('VerifyEmailHandler', () => {
   let handler: VerifyEmailHandler;
-  let mediatorService: { user: { findByEmail: jest.Mock } };
+  let mediatorService: { user: { findByEmail: jest.Mock; verifyUserEmail: jest.Mock } };
   let tokenContract: jest.Mocked<IEmailVerificationTokenContract>;
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
   let eventPublisher: jest.Mocked<EventPublisher>;
+  let uow: { begin: jest.Mock; commit: jest.Mock; rollback: jest.Mock; getManager: jest.Mock };
 
   const createMockToken = (
     overrides: Partial<{
@@ -60,6 +61,7 @@ describe('VerifyEmailHandler', () => {
     const mockMediatorService = {
       user: {
         findByEmail: jest.fn(),
+        verifyUserEmail: jest.fn(),
       },
     };
 
@@ -81,6 +83,13 @@ describe('VerifyEmailHandler', () => {
       }),
     };
 
+    const mockUow = {
+      begin: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      getManager: jest.fn().mockReturnValue({}),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         VerifyEmailHandler,
@@ -91,6 +100,7 @@ describe('VerifyEmailHandler', () => {
           useValue: mockTokenContract,
         },
         { provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT, useValue: mockCodeGenerator },
+        { provide: INJECTION_TOKENS.UNIT_OF_WORK, useValue: mockUow },
       ],
     }).compile();
 
@@ -99,6 +109,7 @@ describe('VerifyEmailHandler', () => {
     tokenContract = module.get(INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT);
     codeGenerator = module.get(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT);
     eventPublisher = module.get(EventPublisher);
+    uow = module.get(INJECTION_TOKENS.UNIT_OF_WORK);
   });
 
   describe('execute', () => {

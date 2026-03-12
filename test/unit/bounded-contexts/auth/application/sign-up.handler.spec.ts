@@ -1,14 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { EventPublisher, EventBus } from '@nestjs/cqrs';
+import { EventBus } from '@nestjs/cqrs';
 import { SignUpHandler } from '@auth/application/commands/sign-up/sign-up.handler';
 import { SignUpCommand } from '@auth/application/commands/sign-up/sign-up.command';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { ISessionContract } from '@auth/domain/contracts/session.contract';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
-import { emailProviderMock, IEmailProviderContract } from '@test-mockup/resend.mock';
 import { EmailAlreadyExistsException } from '@auth/domain/exceptions/email-already-exists.exception';
 import { UsernameAlreadyExistsException } from '@auth/domain/exceptions/username-already-exists.exception';
 import { InvalidPasswordException } from '@auth/domain/exceptions/invalid-password.exception';
@@ -24,7 +23,8 @@ describe('SignUpHandler', () => {
   let sessionContract: jest.Mocked<ISessionContract>;
   let verificationTokenContract: jest.Mocked<IEmailVerificationTokenContract>;
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
-  let emailProvider: jest.Mocked<IEmailProviderContract>; // This line remains unchanged
+  let eventBus: { publish: jest.Mock };
+  let uow: { begin: jest.Mock; commit: jest.Mock; rollback: jest.Mock; getManager: jest.Mock };
 
   const configValues: Record<string, string | number> = {
     JWT_ACCESS_SECRET: 'test-access-secret',
@@ -71,12 +71,15 @@ describe('SignUpHandler', () => {
       hashCode: jest.fn().mockReturnValue('hashed-code'),
     };
 
-    const mockEventPublisher = {
-      mergeObjectContext: jest.fn().mockImplementation((obj) => obj),
-    };
-
     const mockEventBus = {
       publish: jest.fn(),
+    };
+
+    const mockUow = {
+      begin: jest.fn(),
+      commit: jest.fn(),
+      rollback: jest.fn(),
+      getManager: jest.fn().mockReturnValue({}),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -85,7 +88,6 @@ describe('SignUpHandler', () => {
         { provide: MediatorService, useValue: mockMediatorService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
-        { provide: EventPublisher, useValue: mockEventPublisher },
         { provide: EventBus, useValue: mockEventBus },
         { provide: INJECTION_TOKENS.SESSION_CONTRACT, useValue: mockSessionContract },
         {
@@ -93,7 +95,7 @@ describe('SignUpHandler', () => {
           useValue: mockVerificationTokenContract,
         },
         { provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT, useValue: mockCodeGenerator },
-        { provide: INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT, useValue: emailProviderMock }, // Updated to use emailProviderMock
+        { provide: INJECTION_TOKENS.UNIT_OF_WORK, useValue: mockUow },
       ],
     }).compile();
 
@@ -103,7 +105,8 @@ describe('SignUpHandler', () => {
     sessionContract = module.get(INJECTION_TOKENS.SESSION_CONTRACT);
     verificationTokenContract = module.get(INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT);
     codeGenerator = module.get(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT);
-    emailProvider = module.get(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT);
+    eventBus = module.get(EventBus);
+    uow = module.get(INJECTION_TOKENS.UNIT_OF_WORK);
 
     // Default JWT signs
     jwtService.signAsync.mockResolvedValue('mock-token');
@@ -136,16 +139,14 @@ describe('SignUpHandler', () => {
       'test@example.com',
       'testuser',
       expect.any(String), // hashed password
+      expect.anything(), // transactionContext (manager)
     );
+    expect(uow.begin).toHaveBeenCalled();
+    expect(uow.commit).toHaveBeenCalled();
     expect(sessionContract.persist).toHaveBeenCalled();
     expect(verificationTokenContract.persist).toHaveBeenCalled();
     expect(codeGenerator.generateVerificationCode).toHaveBeenCalled();
-    expect(emailProvider.sendVerificationEmail).toHaveBeenCalledWith(
-      'test@example.com',
-      'ABC123',
-      'testuser',
-      'es',
-    );
+    expect(eventBus.publish).toHaveBeenCalled();
   });
 
   it('should return EmailAlreadyExistsException error when email is taken', async () => {

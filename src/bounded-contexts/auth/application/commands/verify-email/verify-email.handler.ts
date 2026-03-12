@@ -1,9 +1,10 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 import { VerifyEmailCommand } from '@auth/application/commands/verify-email/verify-email.command';
 import { VerifyEmailCommandResult } from '@auth/application/types/auth-result.types';
 import { IEmailVerificationTokenContract } from '@auth/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
+import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { InvalidVerificationCodeException } from '@auth/domain/exceptions/invalid-verification-code.exception';
 import { VerificationCodeExpiredException } from '@auth/domain/exceptions/verification-code-expired.exception';
 import { UserAlreadyVerifiedException } from '@auth/domain/exceptions/user-already-verified.exception';
@@ -13,6 +14,8 @@ import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(VerifyEmailCommand)
 export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
+  private readonly logger = new Logger(VerifyEmailHandler.name);
+
   constructor(
     private readonly mediator: MediatorService,
     private readonly eventPublisher: EventPublisher,
@@ -20,6 +23,8 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
     private readonly tokenContract: IEmailVerificationTokenContract,
     @Inject(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT)
     private readonly codeGenerator: ICodeGeneratorContract,
+    @Inject(INJECTION_TOKENS.UNIT_OF_WORK)
+    private readonly uow: IUnitOfWork,
   ) {}
 
   async execute(command: VerifyEmailCommand): Promise<VerifyEmailCommandResult> {
@@ -54,14 +59,24 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
       return err(new InvalidVerificationCodeException());
     }
 
-    // Mark token as used (lang is passed so EmailVerificationCompletedEvent carries locale for welcome email)
+    // Mark token as used and update user status atomically
     const tokenWithContext = this.eventPublisher.mergeObjectContext(token);
     tokenWithContext.markAsUsed(user.uuid, command.email, command.lang);
-    await this.tokenContract.persist(tokenWithContext);
-    tokenWithContext.commit();
 
-    // User status update is handled reactively by User BC's
-    // VerifyUserEmailOnVerificationCompletedHandler listening to EmailVerificationCompletedEvent
+    await this.uow.begin();
+    try {
+      const manager = this.uow.getManager();
+      await this.tokenContract.persist(tokenWithContext, manager);
+      await this.mediator.user.verifyUserEmail(user.uuid, manager);
+      await this.uow.commit();
+    } catch (error) {
+      await this.uow.rollback();
+      this.logger.error(`Verify-email transaction failed: ${error}`);
+      throw error;
+    }
+
+    // Publish events AFTER commit
+    tokenWithContext.commit();
 
     return ok({
       success: true,
