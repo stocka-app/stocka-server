@@ -1,6 +1,7 @@
 export enum ProcessStatus {
   STARTED = 'started',
   PROCESSING = 'processing',
+  POST_PROCESSING = 'post_processing',
   COMPLETED = 'completed',
   FAILED = 'failed',
   COMPENSATING = 'compensating',

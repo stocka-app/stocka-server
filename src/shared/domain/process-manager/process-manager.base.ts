@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ProcessState, ProcessStatus } from '@shared/domain/process-manager/process-state';
 import { IProcessStateContract } from '@shared/domain/process-manager/process-state.contract';
-import { v4 as uuidv4 } from 'uuid';
+import { v7 as uuidv7 } from 'uuid';
 
 /**
  * Abstract ProcessManager base — orchestrates multi-step, cross-BC workflows.
@@ -23,7 +23,7 @@ export abstract class ProcessManager<TData = Record<string, unknown>> {
     data: TData,
   ): Promise<ProcessState<TData>> {
     const state: ProcessState<TData> = {
-      id: uuidv4(),
+      id: uuidv7(),
       processName: this.processName,
       correlationId,
       status: ProcessStatus.STARTED,
