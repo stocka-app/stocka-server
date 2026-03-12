@@ -1,4 +1,4 @@
-import { IUserView } from '@shared/domain/contracts/user-view.contract';
+import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
 
 /**
  * IUserFacade — typed contract for cross-BC communication with User BC.
@@ -7,36 +7,29 @@ import { IUserView } from '@shared/domain/contracts/user-view.contract';
  * Now in shared/domain so both Auth BC and MediatorService can reference it
  * without importing User BC internals.
  *
- * Commands that accept `transactionContext` enable atomic cross-BC writes
- * via the Unit of Work pattern (see IUnitOfWork). When omitted, the command
- * is dispatched through the User BC command bus as usual.
+ * When called within an active UoW transaction, cross-BC writes automatically
+ * join the transaction via the shared AsyncLocalStorage-backed UoW singleton.
+ * No transaction context parameter needed — repos detect it internally.
  */
 export interface IUserFacade {
   // === Queries ===
-  findById(id: number): Promise<IUserView | null>;
-  findByUUID(uuid: string): Promise<IUserView | null>;
-  findByEmail(email: string): Promise<IUserView | null>;
-  findByEmailOrUsername(identifier: string): Promise<IUserView | null>;
-  existsByEmail(email: string): Promise<boolean>;
+  findById(id: number): Promise<IPersistedUserView | null>;
+  findByUUID(uuid: string): Promise<IPersistedUserView | null>;
+  findByEmail(email: string): Promise<IPersistedUserView | null>;
+  findByEmailOrUsername(identifier: string): Promise<IPersistedUserView | null>;
   existsByUsername(username: string): Promise<boolean>;
-  findUserBySocialProvider(provider: string, providerId: string): Promise<IUserView | null>;
+  findUserBySocialProvider(
+    provider: string,
+    providerId: string,
+  ): Promise<IPersistedUserView | null>;
 
-  // === Commands (dispatched through User BC command bus) ===
-  createUser(
-    email: string,
-    username: string,
-    passwordHash: string,
-    transactionContext?: unknown,
-  ): Promise<IUserView>;
+  // === Commands ===
+  createUser(email: string, username: string, passwordHash: string): Promise<IPersistedUserView>;
   createUserFromSocial(
     email: string,
     username: string,
     provider: string,
     providerId: string,
-  ): Promise<IUserView>;
+  ): Promise<IPersistedUserView>;
   linkProviderToUser(userId: number, provider: string, providerId: string): Promise<void>;
-  setPasswordForSocialUser(userId: number, passwordHash: string): Promise<void>;
-
-  // === Cross-BC mutations (used inside UoW transactions) ===
-  verifyUserEmail(uuid: string, transactionContext?: unknown): Promise<void>;
 }

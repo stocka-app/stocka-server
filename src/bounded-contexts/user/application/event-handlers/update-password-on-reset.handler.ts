@@ -1,16 +1,16 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
-import { UserPasswordResetByAuthEvent } from '@shared/domain/events/integration/user-password-reset-by-auth.event';
+import { UserPasswordResetByAuthenticationEvent } from '@shared/domain/events/integration/user-password-reset-by-authentication.event';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 /**
- * User BC handler for UserPasswordResetByAuthEvent (cross-BC).
+ * User BC handler for UserPasswordResetByAuthenticationEvent (cross-BC).
  * When Auth BC completes a password reset, this handler updates
  * the user's password hash in the User aggregate.
  */
-@EventsHandler(UserPasswordResetByAuthEvent)
-export class UpdatePasswordOnResetHandler implements IEventHandler<UserPasswordResetByAuthEvent> {
+@EventsHandler(UserPasswordResetByAuthenticationEvent)
+export class UpdatePasswordOnResetHandler implements IEventHandler<UserPasswordResetByAuthenticationEvent> {
   private readonly logger = new Logger(UpdatePasswordOnResetHandler.name);
 
   constructor(
@@ -18,7 +18,7 @@ export class UpdatePasswordOnResetHandler implements IEventHandler<UserPasswordR
     private readonly userContract: IUserContract,
   ) {}
 
-  async handle(event: UserPasswordResetByAuthEvent): Promise<void> {
+  async handle(event: UserPasswordResetByAuthenticationEvent): Promise<void> {
     const user = await this.userContract.findById(event.userId);
     if (!user) {
       this.logger.warn(`User not found for password reset: userId=${event.userId}`);

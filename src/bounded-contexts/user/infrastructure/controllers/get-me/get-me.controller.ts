@@ -1,7 +1,7 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@auth/infrastructure/guards/jwt-auth.guard';
+import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import {
   FindUserByUUIDQuery,
@@ -10,14 +10,14 @@ import {
 import { GetMeOutDto } from '@user/infrastructure/controllers/get-me/get-me-out.dto';
 import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
-@ApiTags('Auth')
-@Controller('auth')
+@ApiTags('Authentication')
+@Controller('authentication')
 export class GetMeController {
   constructor(private readonly queryBus: QueryBus) {}
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('JWT-auth')
+  @UseGuards(JwtAuthenticationGuard)
+  @ApiBearerAuth('JWT-authentication')
   @ApiOperation({ summary: 'Get current authenticated user' })
   @ApiResponse({
     status: 200,

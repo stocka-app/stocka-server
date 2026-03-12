@@ -37,8 +37,12 @@ export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFr
 
     const persistedUser = await this.userContract.persist(user);
 
+    if (persistedUser.id === undefined) {
+      throw new Error('Invariant violation: persisted user must have an id');
+    }
+
     await this.socialAccountContract.persist({
-      userId: persistedUser.id!,
+      userId: persistedUser.id,
       provider: command.provider,
       providerId: command.providerId,
     });

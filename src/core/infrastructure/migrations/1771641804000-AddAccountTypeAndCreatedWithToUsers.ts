@@ -9,7 +9,7 @@ export class AddAccountTypeAndCreatedWithToUsers1771641804000 implements Migrati
       `ALTER TABLE "users" ADD COLUMN "created_with" character varying(20) NOT NULL DEFAULT 'email'`,
     );
 
-    // Add account_type column (mutable, reflects current auth methods)
+    // Add account_type column (mutable, reflects current authentication methods)
     await queryRunner.query(
       `ALTER TABLE "users" ADD COLUMN "account_type" character varying(10) NOT NULL DEFAULT 'manual'`,
     );

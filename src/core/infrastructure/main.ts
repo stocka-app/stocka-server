@@ -58,9 +58,7 @@ async function bootstrap(): Promise<void> {
   await app.listen(port);
 
   console.log(`Application is running on: http://localhost:${port}/${APP_CONSTANTS.API_PREFIX}`);
-  console.log(
-    `Swagger docs available at: http://localhost:${port}/${APP_CONSTANTS.API_PREFIX}/docs`,
-  );
+  console.log(`Swagger docs available at: http://localhost:${port}/docs`);
 }
 
 bootstrap().catch((err) => {

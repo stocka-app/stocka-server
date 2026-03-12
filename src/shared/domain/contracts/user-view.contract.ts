@@ -25,3 +25,14 @@ export interface IUserView {
   isPendingVerification(): boolean;
   requiresEmailVerification(): boolean;
 }
+
+/**
+ * IPersistedUserView — a user that has been persisted to the database.
+ *
+ * Guarantees `id` is always a number (assigned by DB on insert).
+ * All IUserFacade methods return this instead of IUserView because
+ * every read and write goes through the DB.
+ */
+export interface IPersistedUserView extends IUserView {
+  readonly id: number;
+}

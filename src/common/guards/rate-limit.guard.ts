@@ -10,7 +10,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { RATE_LIMIT_KEY, RateLimitConfig } from '@common/decorators/rate-limit.decorator';
-import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
+import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 

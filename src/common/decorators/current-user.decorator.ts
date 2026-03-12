@@ -12,7 +12,7 @@ export const CurrentUser = createParamDecorator(
     const user = request.user as JwtPayload | undefined;
 
     if (!user) {
-      throw new Error('User not found in request. Ensure JwtAuthGuard is applied.');
+      throw new Error('User not found in request. Ensure JwtAuthenticationGuard is applied.');
     }
 
     if (data) {

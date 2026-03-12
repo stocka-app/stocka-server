@@ -1,5 +1,10 @@
 import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import {
+  USERNAME_MIN_LENGTH,
+  USERNAME_MAX_LENGTH,
+  USERNAME_PATTERN,
+} from '@common/constants/validation.constants';
 
 class InvalidUsernameException extends DomainException {
   constructor(message: string) {
@@ -8,29 +13,25 @@ class InvalidUsernameException extends DomainException {
 }
 
 export class UsernameVO extends StringVO {
-  private static readonly MIN_LENGTH = 3;
-  private static readonly MAX_LENGTH = 30;
-  private static readonly PATTERN = /^[a-zA-Z0-9_]+$/;
-
   constructor(value: string) {
     super(value.trim());
     this.ensureValid();
   }
 
   protected ensureValid(): void {
-    if (this.value.length < UsernameVO.MIN_LENGTH) {
+    if (this.value.length < USERNAME_MIN_LENGTH) {
       throw new InvalidUsernameException(
-        `Username must be at least ${UsernameVO.MIN_LENGTH} characters long`,
+        `Username must be at least ${USERNAME_MIN_LENGTH} characters long`,
       );
     }
 
-    if (this.value.length > UsernameVO.MAX_LENGTH) {
+    if (this.value.length > USERNAME_MAX_LENGTH) {
       throw new InvalidUsernameException(
-        `Username must not exceed ${UsernameVO.MAX_LENGTH} characters`,
+        `Username must not exceed ${USERNAME_MAX_LENGTH} characters`,
       );
     }
 
-    if (!UsernameVO.PATTERN.test(this.value)) {
+    if (!USERNAME_PATTERN.test(this.value)) {
       throw new InvalidUsernameException(
         'Username can only contain letters, numbers, and underscores',
       );

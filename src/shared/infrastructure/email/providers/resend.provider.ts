@@ -8,6 +8,7 @@ import {
   SendEmailOptions,
   SendEmailResult,
 } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { EmailDeliveryException } from '@shared/infrastructure/email/exceptions/email-delivery.exception';
 import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 import { VerificationCodeEmail } from '@shared/infrastructure/email/templates/verification-code.email';
 import { WelcomeEmail } from '@shared/infrastructure/email/templates/welcome.email';
@@ -27,6 +28,8 @@ export class ResendEmailProvider implements IEmailProviderContract {
   }
 
   async sendEmail(options: SendEmailOptions): Promise<SendEmailResult> {
+    const recipient = Array.isArray(options.to) ? options.to.join(', ') : options.to;
+
     try {
       const { data, error } = await this.resend.emails.send({
         from: options.from || this.defaultFrom,
@@ -39,12 +42,11 @@ export class ResendEmailProvider implements IEmailProviderContract {
       });
 
       if (error) {
-        this.logger.error(`Failed to send email: ${error.message}`, error);
-        return {
-          id: '',
-          success: false,
-          error: error.message,
-        };
+        throw new EmailDeliveryException(
+          `Email delivery failed for ${recipient}: ${error.message}`,
+          recipient,
+          error.message,
+        );
       }
 
       this.logger.log(`Email sent successfully. ID: ${data?.id}`);
@@ -53,13 +55,14 @@ export class ResendEmailProvider implements IEmailProviderContract {
         success: true,
       };
     } catch (error) {
+      if (error instanceof EmailDeliveryException) throw error;
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to send email: ${errorMessage}`, error);
-      return {
-        id: '',
-        success: false,
-        error: errorMessage,
-      };
+      throw new EmailDeliveryException(
+        `Email delivery failed for ${recipient}: ${errorMessage}`,
+        recipient,
+        errorMessage,
+      );
     }
   }
 

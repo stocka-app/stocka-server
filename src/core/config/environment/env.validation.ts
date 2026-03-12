@@ -56,22 +56,22 @@ class EnvironmentVariables {
   @IsString()
   CORS_ORIGIN!: string;
 
-  // Feature Flags - Social Auth Providers
+  // Feature Flags - Social Authentication Providers
   @IsString()
   @IsOptional()
-  GOOGLE_AUTH_ENABLED?: string;
+  GOOGLE_AUTHENTICATION_ENABLED?: string;
 
   @IsString()
   @IsOptional()
-  FACEBOOK_AUTH_ENABLED?: string;
+  FACEBOOK_AUTHENTICATION_ENABLED?: string;
 
   @IsString()
   @IsOptional()
-  MICROSOFT_AUTH_ENABLED?: string;
+  MICROSOFT_AUTHENTICATION_ENABLED?: string;
 
   @IsString()
   @IsOptional()
-  APPLE_AUTH_ENABLED?: string;
+  APPLE_AUTHENTICATION_ENABLED?: string;
 
   // Google OAuth (optional in dev)
   @IsString()

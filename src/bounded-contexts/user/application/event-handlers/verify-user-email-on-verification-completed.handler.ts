@@ -1,6 +1,6 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
-import { EmailVerificationCompletedEvent } from '@auth/domain/events/email-verification-completed.event';
+import { EmailVerificationCompletedEvent } from '@authentication/domain/events/email-verification-completed.event';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 

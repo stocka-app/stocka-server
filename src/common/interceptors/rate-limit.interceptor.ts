@@ -11,11 +11,12 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Request } from 'express';
 import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
-import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
-import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
+import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
+import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
-import { UserVerificationBlockedByAuthEvent } from '@shared/domain/events/integration';
+import { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/events/integration';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { EMAIL_PATTERN } from '@common/constants/validation.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { IUserView } from '@shared/domain/contracts/user-view.contract';
 
@@ -142,8 +143,7 @@ export class RateLimitInterceptor implements NestInterceptor {
   }
 
   private isValidEmail(value: string): boolean {
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailPattern.test(value);
+    return EMAIL_PATTERN.test(value);
   }
 
   private evaluateBlock(user: IUserView, failedAttempts: number, config: RateLimitConfig): void {
@@ -158,7 +158,9 @@ export class RateLimitInterceptor implements NestInterceptor {
       if (failedAttempts >= threshold.attempts) {
         const blockedUntil = new Date(Date.now() + threshold.blockMinutes * 60 * 1000);
 
-        this.eventBus.publish(new UserVerificationBlockedByAuthEvent(user.uuid, blockedUntil));
+        this.eventBus.publish(
+          new UserVerificationBlockedByAuthenticationEvent(user.uuid, blockedUntil),
+        );
 
         this.logger.warn(
           `Account blocked | userUUID=${user.uuid} | ` +
