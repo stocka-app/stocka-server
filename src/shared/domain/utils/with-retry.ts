@@ -41,7 +41,7 @@ export async function withRetry<T>(
   logger: Logger,
   logContext: RetryLogContext,
 ): Promise<T> {
-  let lastError: Error | undefined;
+  let lastError = new Error('withRetry: no attempts executed');
 
   for (let attempt = 1; attempt <= options.maxAttempts; attempt++) {
     try {
@@ -54,14 +54,15 @@ export async function withRetry<T>(
         logger.warn(
           `[${logContext.handler}] Attempt ${attempt}/${options.maxAttempts} failed for ${logContext.event}: ${lastError.message}. Retrying in ${waitMs}ms...`,
         );
+
         await delay(waitMs);
       }
     }
   }
 
   logger.error(
-    `[${logContext.handler}] All ${options.maxAttempts} attempts exhausted for ${logContext.event}: ${lastError!.message}`,
+    `[${logContext.handler}] All ${options.maxAttempts} attempts exhausted for ${logContext.event}: ${lastError.message}`,
   );
 
-  throw new RetryExhaustedException(options.maxAttempts, lastError!, logContext);
+  throw new RetryExhaustedException(options.maxAttempts, lastError, logContext);
 }
