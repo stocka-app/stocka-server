@@ -8,12 +8,15 @@
  * Usage in handlers:
  *   await uow.begin();
  *   try {
- *     // ... multiple repository operations using uow.getManager() internally ...
+ *     // ... repository operations automatically join the active transaction ...
  *     await uow.commit();
  *   } catch (error) {
  *     await uow.rollback();
  *     throw error;
  *   }
+ *
+ * Repositories call isActive() and getManager() internally — handlers
+ * only know begin(), commit(), and rollback().
  */
 export interface IUnitOfWork {
   /**
@@ -35,8 +38,15 @@ export interface IUnitOfWork {
   rollback(): Promise<void>;
 
   /**
+   * Returns true if a transaction is currently active in this async context.
+   * Repositories use this to decide whether to join the transaction or use
+   * their default connection.
+   */
+  isActive(): boolean;
+
+  /**
    * Returns the underlying transaction-scoped manager.
-   * Repositories call this internally — the manager type is opaque at the domain level.
+   * Only repositories in the infrastructure layer should call this.
    * The return type is `unknown` to avoid leaking infrastructure types into the domain.
    */
   getManager(): unknown;
