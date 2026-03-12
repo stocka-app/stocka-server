@@ -1,0 +1,18 @@
+import { Injectable } from '@nestjs/common';
+import { EventBus } from '@nestjs/cqrs';
+import { ISagaStepHandler } from '@shared/domain/saga';
+import { UserSignedUpEvent } from '@authentication/domain/events/user-signed-up.event';
+import { SignUpSagaContext } from '@authentication/application/sagas/sign-up/sign-up.saga-context';
+
+@Injectable()
+export class PublishSignUpEventsStep implements ISagaStepHandler<SignUpSagaContext> {
+  constructor(private readonly eventBus: EventBus) {}
+
+  execute(ctx: SignUpSagaContext): Promise<void> {
+    const user = ctx.user;
+    if (!user) throw new Error('PublishSignUpEventsStep: ctx.user not set by prior step');
+
+    this.eventBus.publish(new UserSignedUpEvent(user.uuid, user.email));
+    return Promise.resolve();
+  }
+}
