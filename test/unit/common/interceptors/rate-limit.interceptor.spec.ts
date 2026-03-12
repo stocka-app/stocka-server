@@ -4,14 +4,14 @@ import { of, throwError, lastValueFrom } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { RateLimitInterceptor } from '@common/interceptors/rate-limit.interceptor';
 import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
-import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
+import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { VerificationAttemptModel } from '@auth/domain/models/verification-attempt.model';
+import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 import { EventBus } from '@nestjs/cqrs';
-import { UserVerificationBlockedByAuthEvent } from '@shared/domain/events/integration';
+import { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/events/integration';
 
 class InvalidCredentialsException extends DomainException {
   constructor() {
@@ -270,7 +270,7 @@ describe('RateLimitInterceptor', () => {
       await interceptAndCatchError(context, callHandler);
 
       const publishCall = (eventBus.publish as jest.Mock).mock
-        .calls[0][0] as UserVerificationBlockedByAuthEvent;
+        .calls[0][0] as UserVerificationBlockedByAuthenticationEvent;
       const minutesBlocked = Math.round((publishCall.blockedUntil.getTime() - Date.now()) / 60000);
       expect(minutesBlocked).toBe(15);
     });

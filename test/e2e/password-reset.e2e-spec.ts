@@ -3,7 +3,7 @@ import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuthModule } from '@auth/infrastructure/auth.module';
+import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import databaseConfig from '@core/config/database/database.config';
@@ -34,7 +34,7 @@ describe('Password Reset (e2e)', () => {
         }),
         EmailModule,
         UserModule,
-        AuthModule,
+        AuthenticationModule,
       ],
     }).compile();
 
@@ -72,7 +72,7 @@ describe('Password Reset (e2e)', () => {
     // Simulate user creation (or ensure user exists)
     // ...
     const res = await request(app.getHttpServer())
-      .post('/auth/forgot-password')
+      .post('/authentication/forgot-password')
       .send({ email })
       .expect(HttpStatus.OK);
     expect(res.body.message).toContain('reset link has been sent');
@@ -82,7 +82,7 @@ describe('Password Reset (e2e)', () => {
   it('should not reveal if email does not exist', async () => {
     const email = 'nonexistent@example.com';
     const res = await request(app.getHttpServer())
-      .post('/auth/forgot-password')
+      .post('/authentication/forgot-password')
       .send({ email })
       .expect(HttpStatus.OK);
     expect(res.body.message).toContain('reset link has been sent');

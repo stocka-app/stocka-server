@@ -22,7 +22,7 @@ describe('UserAggregate', () => {
       expect(user.isArchived()).toBe(false);
     });
 
-    it('should create a user without password (social auth)', () => {
+    it('should create a user without password (social authentication)', () => {
       const user = UserAggregate.create({
         email: 'social@example.com',
         username: 'socialuser',

@@ -22,7 +22,7 @@
     "resolveJsonModule": true,
     "jsx": "react-jsx",
     "paths": {
-      "@auth/*": ["src/bounded-contexts/auth/*"],
+      "@authentication/*": ["src/bounded-contexts/authentication/*"],
       "@user/*": ["src/bounded-contexts/user/*"],
       "@shared/*": ["src/shared/*"],
       "@common/*": ["src/common/*"],

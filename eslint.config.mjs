@@ -28,6 +28,7 @@ export default tseslint.config(
     rules: {
       // TypeScript strict rules
       '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
       '@typescript-eslint/no-unsafe-assignment': 'warn',
@@ -77,6 +78,25 @@ export default tseslint.config(
         'error',
         {
           patterns: ['../*', './*'],
+        },
+      ],
+    },
+  },
+  // Prohibit definite assignment assertion (!:) except in DTOs, entities, and env validation
+  {
+    files: ['src/**/*.ts'],
+    ignores: [
+      'src/**/*.dto.ts',
+      'src/**/*.entity.ts',
+      'src/**/env.validation.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'PropertyDefinition[definite=true]',
+          message:
+            'Definite assignment assertion (!:) is only allowed in DTOs, entities, and env validation. Initialize the property in the constructor or use `| undefined` with a runtime guard.',
         },
       ],
     },

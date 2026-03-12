@@ -13,7 +13,7 @@ module.exports = {
   coverageDirectory: './coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
-    '^@auth/(.*)$': '<rootDir>/src/bounded-contexts/auth/$1',
+    '^@authentication/(.*)$': '<rootDir>/src/bounded-contexts/authentication/$1',
     '^@user/(.*)$': '<rootDir>/src/bounded-contexts/user/$1',
     '^@test-mockup/(.*)$': '<rootDir>/test/__mocks__/$1',
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',

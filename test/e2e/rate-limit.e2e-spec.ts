@@ -8,7 +8,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 
-import { AuthModule } from '@auth/infrastructure/auth.module';
+import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
@@ -56,7 +56,7 @@ describe('Rate Limiting (e2e)', () => {
         ]),
         EmailModule,
         UserModule,
-        AuthModule,
+        AuthenticationModule,
         MediatorModule,
       ],
       providers: [
@@ -110,9 +110,9 @@ describe('Rate Limiting (e2e)', () => {
     }
   });
 
-  describe('POST /api/auth/sign-in', () => {
+  describe('POST /api/authentication/sign-in', () => {
     it('should return 401 for invalid credentials', async () => {
-      const response = await request(app.getHttpServer()).post('/api/auth/sign-in').send({
+      const response = await request(app.getHttpServer()).post('/api/authentication/sign-in').send({
         emailOrUsername: 'nonexistent@example.com',
         password: 'WrongPassword1',
       });
@@ -127,7 +127,7 @@ describe('Rate Limiting (e2e)', () => {
       for (let i = 0; i < 5; i++) {
         requests.push(
           request(app.getHttpServer())
-            .post('/api/auth/sign-in')
+            .post('/api/authentication/sign-in')
             .send({
               emailOrUsername: `throttle-test-${i}@example.com`,
               password: 'Password1',
@@ -145,9 +145,9 @@ describe('Rate Limiting (e2e)', () => {
     });
   });
 
-  describe('POST /api/auth/verify-email', () => {
+  describe('POST /api/authentication/verify-email', () => {
     it('should return 400 for invalid verification code', async () => {
-      const response = await request(app.getHttpServer()).post('/api/auth/verify-email').send({
+      const response = await request(app.getHttpServer()).post('/api/authentication/verify-email').send({
         email: 'test@example.com',
         code: 'INVALID',
       });
@@ -162,7 +162,7 @@ describe('Rate Limiting (e2e)', () => {
       for (let i = 0; i < 5; i++) {
         requests.push(
           request(app.getHttpServer())
-            .post('/api/auth/verify-email')
+            .post('/api/authentication/verify-email')
             .send({
               email: `throttle-${i}@example.com`,
               code: 'ABC123',
@@ -179,9 +179,9 @@ describe('Rate Limiting (e2e)', () => {
     });
   });
 
-  describe('POST /api/auth/forgot-password', () => {
+  describe('POST /api/authentication/forgot-password', () => {
     it('should return 200 even for non-existent email (security)', async () => {
-      const response = await request(app.getHttpServer()).post('/api/auth/forgot-password').send({
+      const response = await request(app.getHttpServer()).post('/api/authentication/forgot-password').send({
         email: 'nonexistent@example.com',
       });
 
@@ -195,7 +195,7 @@ describe('Rate Limiting (e2e)', () => {
       for (let i = 0; i < 5; i++) {
         requests.push(
           request(app.getHttpServer())
-            .post('/api/auth/forgot-password')
+            .post('/api/authentication/forgot-password')
             .send({
               email: `throttle-fp-${i}@example.com`,
             }),
@@ -213,7 +213,7 @@ describe('Rate Limiting (e2e)', () => {
 
   describe('Rate Limit Headers', () => {
     it('should include rate limit headers in response', async () => {
-      const response = await request(app.getHttpServer()).post('/api/auth/sign-in').send({
+      const response = await request(app.getHttpServer()).post('/api/authentication/sign-in').send({
         emailOrUsername: 'test@example.com',
         password: 'Password1',
       });
@@ -227,7 +227,7 @@ describe('Rate Limiting (e2e)', () => {
   describe('IP-based Rate Limiting', () => {
     it('should track requests by IP address via X-Forwarded-For header', async () => {
       const response = await request(app.getHttpServer())
-        .post('/api/auth/sign-in')
+        .post('/api/authentication/sign-in')
         .set('X-Forwarded-For', '203.0.113.50')
         .send({
           emailOrUsername: 'test@example.com',

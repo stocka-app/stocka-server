@@ -3,7 +3,7 @@ import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RateLimitGuard } from '@common/guards/rate-limit.guard';
 import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
-import { IVerificationAttemptContract } from '@auth/domain/contracts/verification-attempt.contract';
+import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';

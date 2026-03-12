@@ -2,7 +2,7 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "paths": {
-      "@auth/*": ["src/bounded-contexts/auth/*"],
+      "@authentication/*": ["src/bounded-contexts/authentication/*"],
       "@user/*": ["src/bounded-contexts/user/*"],
       "@shared/*": ["src/shared/*"],
       "@common/*": ["src/common/*"],
