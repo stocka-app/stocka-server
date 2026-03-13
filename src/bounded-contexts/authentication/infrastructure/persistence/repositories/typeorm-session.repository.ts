@@ -59,7 +59,16 @@ export class TypeOrmSessionRepository implements ISessionContract {
   }
 
   async archive(uuid: string): Promise<void> {
-    await this.repository.update({ uuid }, { archivedAt: new Date() });
+    const archivedAt = new Date();
+    if (this.uow.isActive()) {
+      await (this.uow.getManager() as EntityManager).update(
+        SessionEntity,
+        { uuid },
+        { archivedAt },
+      );
+    } else {
+      await this.repository.update({ uuid }, { archivedAt });
+    }
   }
 
   async archiveAllByUserId(userId: number): Promise<void> {
