@@ -74,6 +74,13 @@ import {
   PublishSignUpEventsStep,
   SendVerificationEmailStep,
 } from '@authentication/application/sagas/sign-up/steps';
+import { SocialSignInSaga } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga';
+import {
+  ResolveSocialUserStep,
+  GenerateSocialTokensStep,
+  CreateSocialSessionStep,
+  PublishSocialSignInEventsStep,
+} from '@authentication/application/sagas/social-sign-in/steps';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 import { VerifyEmailController } from '@authentication/infrastructure/controllers/verify-email/verify-email.controller';
@@ -202,6 +209,11 @@ const Controllers = [
     CreateVerificationTokenStep,
     PublishSignUpEventsStep,
     SendVerificationEmailStep,
+    SocialSignInSaga,
+    ResolveSocialUserStep,
+    GenerateSocialTokensStep,
+    CreateSocialSessionStep,
+    PublishSocialSignInEventsStep,
   ],
   exports: [
     JwtAuthenticationGuard,
