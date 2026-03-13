@@ -24,6 +24,7 @@ describe('SignUpHandler', () => {
     user: mockUser,
     accessToken: 'mock-access-token',
     refreshToken: 'mock-refresh-token',
+    emailSent: true,
   };
 
   beforeEach(async () => {
