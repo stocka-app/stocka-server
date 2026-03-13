@@ -72,13 +72,24 @@ export class TypeOrmSessionRepository implements ISessionContract {
   }
 
   async archiveAllByUserId(userId: number): Promise<void> {
-    await this.repository
-      .createQueryBuilder()
-      .update(SessionEntity)
-      .set({ archivedAt: new Date() })
-      .where('userId = :userId', { userId })
-      .andWhere('archivedAt IS NULL')
-      .execute();
+    const archivedAt = new Date();
+    if (this.uow.isActive()) {
+      await (this.uow.getManager() as EntityManager)
+        .createQueryBuilder()
+        .update(SessionEntity)
+        .set({ archivedAt })
+        .where('userId = :userId', { userId })
+        .andWhere('archivedAt IS NULL')
+        .execute();
+    } else {
+      await this.repository
+        .createQueryBuilder()
+        .update(SessionEntity)
+        .set({ archivedAt })
+        .where('userId = :userId', { userId })
+        .andWhere('archivedAt IS NULL')
+        .execute();
+    }
   }
 
   async destroy(uuid: string): Promise<void> {
