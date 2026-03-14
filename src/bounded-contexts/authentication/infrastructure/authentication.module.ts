@@ -97,6 +97,13 @@ import {
   ArchiveUserSessionsStep,
   PublishResetPasswordEventsStep,
 } from '@authentication/application/sagas/reset-password/steps';
+import { SignInSaga } from '@authentication/application/sagas/sign-in/sign-in.saga';
+import {
+  ValidateCredentialsStep,
+  GenerateSignInTokensStep,
+  CreateSignInSessionStep,
+  PublishSignInEventsStep,
+} from '@authentication/application/sagas/sign-in/steps';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 import { VerifyEmailController } from '@authentication/infrastructure/controllers/verify-email/verify-email.controller';
@@ -242,6 +249,11 @@ const Controllers = [
     MarkTokenUsedStep,
     ArchiveUserSessionsStep,
     PublishResetPasswordEventsStep,
+    SignInSaga,
+    ValidateCredentialsStep,
+    GenerateSignInTokensStep,
+    CreateSignInSessionStep,
+    PublishSignInEventsStep,
   ],
   exports: [
     JwtAuthenticationGuard,

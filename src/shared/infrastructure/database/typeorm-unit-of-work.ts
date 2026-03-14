@@ -53,7 +53,17 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   async commit(): Promise<void> {
     const qr = this.getActiveRunner();
     try {
+      if (qr.isReleased) {
+        this.logger.warn('commit() called with a released QueryRunner — ignoring');
+        return;
+      }
       await qr.commitTransaction();
+    } catch (error) {
+      if (qr.isReleased) {
+        this.logger.warn('commit() failed because QueryRunner is already released — ignoring');
+        return;
+      }
+      throw error;
     } finally {
       await this.releaseQueryRunner(qr);
     }
@@ -66,14 +76,25 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
       return;
     }
     try {
+      if (qr.isReleased) {
+        this.logger.warn('rollback() called with a released QueryRunner — ignoring');
+        return;
+      }
       await qr.rollbackTransaction();
+    } catch (error) {
+      if (qr.isReleased) {
+        this.logger.warn('rollback() failed because QueryRunner is already released — ignoring');
+        return;
+      }
+      throw error;
     } finally {
       await this.releaseQueryRunner(qr);
     }
   }
 
   isActive(): boolean {
-    return !!this.als.getStore();
+    const qr = this.als.getStore();
+    return !!qr && !qr.isReleased;
   }
 
   getManager(): EntityManager {
