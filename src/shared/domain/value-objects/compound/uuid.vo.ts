@@ -1,4 +1,4 @@
-import { v4 as uuidV4, validate } from 'uuid';
+import { v7 as uuidV7, validate } from 'uuid';
 import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
@@ -15,7 +15,7 @@ export class UUIDVO extends CompoundVO {
 
   constructor(value?: string) {
     super();
-    this.value = value ?? uuidV4();
+    this.value = value ?? uuidV7();
     this.ensureValid();
   }
 

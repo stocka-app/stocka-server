@@ -3,6 +3,7 @@ import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { VerificationCodeVO } from '@shared/domain/value-objects/compound/verification-code.vo';
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
 import { ExpiresAtVO } from '@shared/domain/value-objects/compound/expires-at.vo';
+import { version as uuidVersion } from 'uuid';
 
 // ─── UserStatusVO ─────────────────────────────────────────────────────────────
 describe('UserStatusVO', () => {
@@ -86,17 +87,19 @@ describe('UserStatusVO', () => {
 // ─── UUIDVO ───────────────────────────────────────────────────────────────────
 describe('UUIDVO', () => {
   describe('Given no value', () => {
-    it('Then it auto-generates a valid UUID', () => {
+    it('Then it auto-generates a valid UUID v7', () => {
       const vo = new UUIDVO();
-      expect(vo.toString()).toMatch(
+      const generated = vo.toString();
+      expect(generated).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
       );
+      expect(uuidVersion(generated)).toBe(7);
     });
   });
 
-  describe('Given a valid UUID v4', () => {
+  describe('Given a valid UUID v7', () => {
     it('Then it stores and returns the UUID', () => {
-      const uuid = '550e8400-e29b-41d4-a716-446655440000';
+      const uuid = '550e8400-e29b-71d4-a716-446655440000';
       const vo = new UUIDVO(uuid);
       expect(vo.toString()).toBe(uuid);
     });
@@ -110,7 +113,7 @@ describe('UUIDVO', () => {
 
   describe('Given two UUIDs with the same value', () => {
     it('Then equals returns true', () => {
-      const uuid = '550e8400-e29b-41d4-a716-446655440000';
+      const uuid = '550e8400-e29b-71d4-a716-446655440000';
       const a = new UUIDVO(uuid);
       const b = new UUIDVO(uuid);
       expect(a.equals(b)).toBe(true);
@@ -119,15 +122,15 @@ describe('UUIDVO', () => {
 
   describe('Given two UUIDs with different values', () => {
     it('Then equals returns false', () => {
-      const a = new UUIDVO('550e8400-e29b-41d4-a716-446655440000');
-      const b = new UUIDVO('660e8400-e29b-41d4-a716-446655440001');
+      const a = new UUIDVO('550e8400-e29b-71d4-a716-446655440000');
+      const b = new UUIDVO('660e8400-e29b-71d4-a716-446655440001');
       expect(a.equals(b)).toBe(false);
     });
   });
 
   describe('Given a non-UUIDVO value', () => {
     it('Then equals returns false', () => {
-      const a = new UUIDVO('550e8400-e29b-41d4-a716-446655440000');
+      const a = new UUIDVO('550e8400-e29b-71d4-a716-446655440000');
       expect(a.equals('a-plain-string' as unknown as UUIDVO)).toBe(false);
     });
   });
