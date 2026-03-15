@@ -1,16 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
 import { VerificationAttemptMapper } from '@authentication/infrastructure/persistence/mappers/verification-attempt.mapper';
+import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
 export class TypeOrmVerificationAttemptRepository implements IVerificationAttemptContract {
   constructor(
     @InjectRepository(VerificationAttemptEntity)
     private readonly repository: Repository<VerificationAttemptEntity>,
+    @Inject(INJECTION_TOKENS.UNIT_OF_WORK)
+    private readonly uow: IUnitOfWork,
   ) {}
 
   async findById(id: number): Promise<VerificationAttemptModel | null> {
@@ -25,7 +29,11 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
 
   async persist(attempt: VerificationAttemptModel): Promise<VerificationAttemptModel> {
     const entityData = VerificationAttemptMapper.toEntity(attempt);
-    const savedEntity = await this.repository.save(entityData);
+    const repo = this.uow.isActive()
+      ? (this.uow.getManager() as EntityManager).getRepository(VerificationAttemptEntity)
+      : this.repository;
+
+    const savedEntity = await repo.save(entityData);
     return VerificationAttemptMapper.toDomain(savedEntity as VerificationAttemptEntity);
   }
 

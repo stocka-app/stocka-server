@@ -12,6 +12,7 @@ import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module'
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
+import { CreateSignInSessionStep } from '@authentication/application/sagas/sign-in/steps';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
@@ -22,6 +23,19 @@ describe('Sign In (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
   let emailProvider: jest.Mocked<IEmailProviderContract>;
+  let createSignInSessionStep: CreateSignInSessionStep;
+
+  // Helper for rollback tests — uses HTTP so it runs through UoW/saga.
+  // Safe since UnitOfWorkIsolationMiddleware isolates ALS per request.
+  async function signUp(email: string, username: string, password = 'SecurePass1'): Promise<void> {
+    await request(app.getHttpServer())
+      .post('/api/authentication/sign-up')
+      .send({ email, username, password });
+    await dataSource.query(
+      `UPDATE users SET status = 'active', email_verified_at = NOW() WHERE email = $1`,
+      [email],
+    );
+  }
 
   beforeAll(async () => {
     emailProvider = {
@@ -71,10 +85,11 @@ describe('Sign In (e2e)', () => {
 
     await app.init();
     dataSource = moduleFixture.get(DataSource);
+    createSignInSessionStep = moduleFixture.get(CreateSignInSessionStep);
 
-    // Seed one verified user by inserting directly via TypeORM repository — no HTTP/saga/UoW involved.
-    // This avoids the AsyncLocalStorage leak that happens when sagas run via HTTP before sign-in tests.
-    // Sign-in requires: a known password hash, status='active', and emailVerifiedAt set (business rules).
+    // Seed base verified user directly via TypeORM — no HTTP/saga/UoW involved.
+    // Avoids ALS context leak from sagas running before sign-in tests.
+    // Sign-in requires: status='active', emailVerifiedAt set, and known passwordHash.
     const passwordHash = await bcrypt.hash('SecurePass1', 10);
     await dataSource.getRepository(UserEntity).save({
       email: 'signin@example.com',
@@ -149,6 +164,27 @@ describe('Sign In (e2e)', () => {
         expect(refreshCookie).toBeDefined();
         expect(refreshCookie!.toLowerCase()).toContain('httponly');
       });
+
+      it('Then a new session is persisted in the database', async () => {
+        const [user] = await dataSource.query(`SELECT id FROM users WHERE email = $1`, [
+          'signin@example.com',
+        ]);
+        const before = await dataSource.query(
+          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
+          [user.id],
+        );
+
+        await request(app.getHttpServer())
+          .post('/api/authentication/sign-in')
+          .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1' });
+
+        const after = await dataSource.query(
+          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
+          [user.id],
+        );
+
+        expect(parseInt(after[0].count)).toBeGreaterThan(parseInt(before[0].count));
+      });
     });
 
     describe('When they sign in using their username instead of email', () => {
@@ -212,6 +248,43 @@ describe('Sign In (e2e)', () => {
           .send({ emailOrUsername: 'signin@example.com' });
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Rollback — session creation fails → no partial session in DB
+  // ---------------------------------------------------------------------------
+
+  describe('Given a DB failure during session creation', () => {
+    describe('When the session insert fails mid-transaction', () => {
+      it('Then the sign-in fails and no orphaned session is left in the database', async () => {
+        const email = 'rollback.signin@example.com';
+        await signUp(email, 'rollbacksignin');
+
+        const [user] = await dataSource.query(`SELECT id FROM users WHERE email = $1`, [email]);
+        const before = await dataSource.query(
+          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1`,
+          [user.id],
+        );
+
+        const spy = jest
+          .spyOn(createSignInSessionStep, 'execute')
+          .mockRejectedValueOnce(new Error('Session insert failed mid-transaction'));
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/sign-in')
+          .send({ emailOrUsername: email, password: 'SecurePass1' });
+
+        expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        const after = await dataSource.query(
+          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1`,
+          [user.id],
+        );
+
+        expect(parseInt(after[0].count)).toBe(parseInt(before[0].count));
+        spy.mockRestore();
       });
     });
   });
