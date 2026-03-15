@@ -48,6 +48,7 @@ describe('Saga Base', () => {
       rollback: jest.fn(),
       isActive: jest.fn().mockReturnValue(false),
       getManager: jest.fn(),
+      runIsolated: jest.fn(),
     } as jest.Mocked<IUnitOfWork>;
 
     saga = new TestSaga(uow);
@@ -379,6 +380,70 @@ describe('Saga Base', () => {
 
       await expect(saga.run({ input: 'test' })).rejects.toThrow();
       expect(uow.rollback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('cleanupProcess (finally block safety net)', () => {
+    it('should attempt rollback in cleanupProcess when initial uow.rollback() throws', async () => {
+      // Force the step to fail AND make the first rollback throw.
+      // hasOpenTransaction stays true → cleanupProcess(true, ...) is called → tries rollback again.
+      saga.setSteps([
+        {
+          name: 'step-fails',
+          handler: handler(() => {
+            throw new Error('step error');
+          }),
+        },
+      ]);
+
+      // First rollback (inside catch block) always rejects.
+      // Second rollback (inside cleanupProcess) also rejects → logged and swallowed.
+      uow.rollback.mockRejectedValue(new Error('rollback failed'));
+
+      await expect(saga.run({ input: 'test' })).rejects.toThrow();
+      // rollback was attempted at least once (in cleanupProcess)
+      expect(uow.rollback).toHaveBeenCalled();
+    });
+  });
+
+  describe('compensationRetry', () => {
+    it('should use withRetry when compensationRetry is configured on a completed step', async () => {
+      let compensateCalls = 0;
+      saga.setSteps([
+        {
+          name: 'step-with-comp-retry',
+          handler: handler(
+            (ctx) => {
+              ctx.step1Done = true;
+            },
+            () => {
+              compensateCalls++;
+            },
+          ),
+          compensationRetry: { maxAttempts: 2, backoffMs: 1 },
+        },
+        {
+          name: 'fails',
+          handler: handler(() => {
+            throw new Error('Trigger compensation');
+          }),
+        },
+      ]);
+
+      await expect(saga.run({ input: 'test' })).rejects.toThrow('Trigger compensation');
+      expect(compensateCalls).toBe(1);
+    });
+  });
+
+  describe('run() with empty steps array', () => {
+    it('should complete without opening a transaction when no steps are defined', async () => {
+      saga.setSteps([]);
+
+      const ctx = await saga.run({ input: 'test' });
+
+      expect(uow.begin).not.toHaveBeenCalled();
+      expect(uow.commit).not.toHaveBeenCalled();
+      expect(ctx.input).toBe('test');
     });
   });
 

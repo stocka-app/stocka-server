@@ -9,7 +9,7 @@ export class PublishSocialSignInEventsStep implements ISagaStepHandler<SocialSig
   constructor(private readonly eventBus: EventBus) {}
 
   execute(ctx: SocialSignInSagaContext): Promise<void> {
-    if (!ctx.user) throw new Error('PublishSocialSignInEventsStep: ctx.user not set by prior step');
+    if (!ctx.user) return Promise.reject(new Error('PublishSocialSignInEventsStep: ctx.user not set by prior step'));
 
     this.eventBus.publish(new UserSignedInEvent(ctx.user.uuid));
     return Promise.resolve();

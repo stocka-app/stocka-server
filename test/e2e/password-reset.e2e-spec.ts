@@ -6,6 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
+import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
+import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import databaseConfig from '@core/config/database/database.config';
 import { validate } from '@core/config/environment/env.validation';
 
@@ -33,8 +35,10 @@ describe('Password Reset (e2e)', () => {
           dropSchema: true,
         }),
         EmailModule,
+        UnitOfWorkModule,
         UserModule,
         AuthenticationModule,
+        MediatorModule,
       ],
     }).compile();
 

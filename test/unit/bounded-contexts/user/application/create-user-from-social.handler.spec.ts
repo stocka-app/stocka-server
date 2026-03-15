@@ -142,4 +142,38 @@ describe('CreateUserFromSocialHandler', () => {
       });
     });
   });
+
+  describe('Given UserAggregate.createFromSocial throws a non-DomainException error', () => {
+    describe('When the handler executes', () => {
+      it('Then it re-throws the error without wrapping in Result', async () => {
+        const spy = jest.spyOn(UserAggregate, 'createFromSocial').mockImplementationOnce(() => {
+          throw new Error('unexpected infrastructure error');
+        });
+
+        await expect(
+          handler.execute(
+            new CreateUserFromSocialCommand(VALID_EMAIL, VALID_USERNAME, PROVIDER, PROVIDER_ID),
+          ),
+        ).rejects.toThrow('unexpected infrastructure error');
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  describe('Given userContract.persist returns a user without an id', () => {
+    describe('When the handler executes', () => {
+      it('Then it throws an invariant violation error', async () => {
+        userContract.persist.mockResolvedValueOnce(
+          { id: undefined, uuid: 'some-uuid', email: VALID_EMAIL, username: VALID_USERNAME } as unknown as ReturnType<typeof userContract.persist> extends Promise<infer T> ? T : never,
+        );
+
+        await expect(
+          handler.execute(
+            new CreateUserFromSocialCommand(VALID_EMAIL, VALID_USERNAME, PROVIDER, PROVIDER_ID),
+          ),
+        ).rejects.toThrow('Invariant violation: persisted user must have an id');
+      });
+    });
+  });
 });

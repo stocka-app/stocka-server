@@ -69,5 +69,10 @@ describe('OAuthProviderVO', () => {
 
       expect(vo1.equals(vo2)).toBe(false);
     });
+
+    it('should return false when compared to a non-OAuthProviderVO', () => {
+      const vo = OAuthProviderVO.google();
+      expect(vo.equals(null as unknown as OAuthProviderVO)).toBe(false);
+    });
   });
 });

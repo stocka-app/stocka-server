@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -38,6 +38,7 @@ export class SignInController {
     failureErrorCodes: ['INVALID_CREDENTIALS'],
   })
   @Post('sign-in')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in with email/username and password' })
   @ApiResponse({
     status: 200,

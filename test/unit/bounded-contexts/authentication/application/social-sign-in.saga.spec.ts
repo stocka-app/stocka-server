@@ -10,6 +10,7 @@ import {
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { TokenExpiredException } from '@authentication/domain/exceptions/token-expired.exception';
 
 describe('SocialSignInSaga', () => {
   let saga: SocialSignInSaga;
@@ -257,6 +258,29 @@ describe('SocialSignInSaga', () => {
         createSession.execute.mockRejectedValue(new Error('Hard DB failure'));
 
         await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow('Hard DB failure');
+      });
+    });
+
+    describe('Given all steps complete but generate-tokens step did not populate tokens', () => {
+      it('Then it re-throws the invariant violation error', async () => {
+        generateTokens.execute.mockImplementation(() => {
+          // intentionally does not set ctx.accessToken or ctx.refreshToken
+        });
+
+        await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow(
+          'SocialSignInSaga completed without required output fields',
+        );
+      });
+    });
+
+    describe('Given a step throws a DomainException', () => {
+      it('Then it returns err with the domain exception', async () => {
+        resolveUser.execute.mockRejectedValue(new TokenExpiredException());
+
+        const result = await saga.execute({ ...baseSagaContext });
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(TokenExpiredException);
       });
     });
   });

@@ -285,5 +285,156 @@ describe('RateLimitGuard', () => {
       expect(result).toBe(true);
       expect(attemptContract.countFailedByIdentifierInLastHourByType).not.toHaveBeenCalled();
     });
+
+    it('should skip identifier check when body value is null (identifier resolves to null)', async () => {
+      const config: RateLimitConfig = {
+        ...signInRateLimitConfig,
+        progressiveBlock: undefined,
+      };
+
+      reflector.getAllAndOverride.mockReturnValue(config);
+      attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
+
+      // Body has no emailOrUsername — extractIdentifier returns null
+      const context = createMockExecutionContext({});
+
+      const result = await guard.canActivate(context);
+
+      expect(result).toBe(true);
+      expect(attemptContract.countFailedByIdentifierInLastHourByType).not.toHaveBeenCalled();
+    });
+
+    it('should skip progressiveBlock check when config has no progressiveBlock', async () => {
+      const configNoBlock: RateLimitConfig = {
+        type: 'sign_in',
+        maxAttemptsByIp: 30,
+        maxAttemptsByIdentifier: 15,
+        identifierSource: 'body.emailOrUsername',
+        trackFailedAttempts: true,
+        failureErrorCodes: ['INVALID_CREDENTIALS'],
+      };
+
+      reflector.getAllAndOverride.mockReturnValue(configNoBlock);
+      attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
+      attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(5);
+
+      const context = createMockExecutionContext({ emailOrUsername: 'test@example.com' });
+
+      const result = await guard.canActivate(context);
+
+      expect(result).toBe(true);
+      expect(mediator.user.findByEmailOrUsername).not.toHaveBeenCalled();
+    });
+
+    it('should swallow non-HttpException errors from findByEmailOrUsername', async () => {
+      reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
+      attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
+      attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(5);
+      mediator.user.findByEmailOrUsername.mockRejectedValue(new Error('DB timeout'));
+
+      const context = createMockExecutionContext({ emailOrUsername: 'test@example.com' });
+
+      // Should not throw — non-HttpException errors are swallowed in checkAccountBlock
+      const result = await guard.canActivate(context);
+
+      expect(result).toBe(true);
+    });
+
+    it('should extract IP from x-forwarded-for when it is an array', async () => {
+      reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
+      attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
+      attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+
+      const context = createMockExecutionContext(
+        { emailOrUsername: 'test@example.com' },
+        '127.0.0.1',
+        { 'x-forwarded-for': ['203.0.113.50', '70.41.3.18'] },
+      );
+
+      await guard.canActivate(context);
+
+      expect(attemptContract.countFailedByIpAddressInLastHourByType).toHaveBeenCalledWith(
+        '203.0.113.50',
+        'sign_in',
+      );
+    });
+
+    it('should return null from extractIdentifier when body value is not a string', async () => {
+      const config: RateLimitConfig = {
+        ...signInRateLimitConfig,
+        progressiveBlock: undefined,
+      };
+
+      reflector.getAllAndOverride.mockReturnValue(config);
+      attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
+
+      // emailOrUsername is a number, not a string — extractIdentifier returns null
+      const context = createMockExecutionContext({ emailOrUsername: 12345 });
+
+      const result = await guard.canActivate(context);
+
+      expect(result).toBe(true);
+      expect(attemptContract.countFailedByIdentifierInLastHourByType).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to socket.remoteAddress when request.ip is empty', async () => {
+      reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
+      attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
+      attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+
+      // Custom context: no x-forwarded-for, request.ip is empty, socket.remoteAddress is set
+      const mockRequest = {
+        body: { emailOrUsername: 'test@example.com' },
+        ip: '',
+        headers: {},
+        socket: { remoteAddress: '10.0.0.2' },
+        __rateLimitConfig: undefined,
+        __clientIp: undefined,
+        __rateLimitIdentifier: undefined,
+      };
+      const context = {
+        switchToHttp: () => ({ getRequest: () => mockRequest }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as import('@nestjs/common').ExecutionContext;
+
+      await guard.canActivate(context);
+
+      expect(attemptContract.countFailedByIpAddressInLastHourByType).toHaveBeenCalledWith(
+        '10.0.0.2',
+        'sign_in',
+      );
+    });
+
+    it('should fall back to 0.0.0.0 when both request.ip and socket.remoteAddress are empty', async () => {
+      reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
+      attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
+      attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+
+      const mockRequest = {
+        body: { emailOrUsername: 'test@example.com' },
+        ip: '',
+        headers: {},
+        socket: { remoteAddress: '' },
+        __rateLimitConfig: undefined,
+        __clientIp: undefined,
+        __rateLimitIdentifier: undefined,
+      };
+      const context = {
+        switchToHttp: () => ({ getRequest: () => mockRequest }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as import('@nestjs/common').ExecutionContext;
+
+      await guard.canActivate(context);
+
+      expect(attemptContract.countFailedByIpAddressInLastHourByType).toHaveBeenCalledWith(
+        '0.0.0.0',
+        'sign_in',
+      );
+    });
   });
 });

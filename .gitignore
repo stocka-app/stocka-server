@@ -10,4 +10,7 @@ npm-debug.log*
 *.swo
 .env
 /coverage
+/coverage-e2e
+/coverage-report
+/.nyc_output
 .eslint-cache

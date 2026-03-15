@@ -355,5 +355,241 @@ describe('RateLimitInterceptor', () => {
       expect(caughtError).toBe(originalError);
       expect(caughtError).toBeInstanceOf(InvalidCredentialsException);
     });
+
+    it('should re-throw the original exception even when handleError itself fails', async () => {
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
+      const originalError = new InvalidCredentialsException();
+      const callHandler = createMockCallHandler(undefined, originalError);
+
+      mediator.user.findByEmailOrUsername.mockResolvedValue({ uuid: 'u', email: 'test@example.com' });
+      attemptContract.persist.mockRejectedValue(new Error('DB connection lost'));
+      attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(0);
+
+      const caughtError = await interceptAndCatchError(context, callHandler);
+      // Even though handleError rejected, original error must be re-thrown
+      expect(caughtError).toBe(originalError);
+    });
+
+    it('should extract errorCode from HTTP response error objects', async () => {
+      const context = createMockExecutionContext(
+        { ...signInRateLimitConfig, failureErrorCodes: ['VALIDATION_ERROR'] },
+        '192.168.1.1',
+        'test@example.com',
+      );
+      // Simulate an HttpException-like error with a response.error string
+      const httpError = { response: { error: 'VALIDATION_ERROR', statusCode: 400 } };
+      const callHandler = createMockCallHandler(undefined, httpError as unknown as Error);
+
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+
+      const caughtError = await interceptAndCatchError(context, callHandler);
+
+      expect(caughtError).toBe(httpError);
+      expect(attemptContract.persist).toHaveBeenCalled();
+    });
+
+    it('should return null from extractErrorCode for plain Error objects', async () => {
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
+      // Plain Error has no response.error — extractErrorCode returns null → no tracking
+      const plainError = new Error('generic error');
+      const callHandler = createMockCallHandler(undefined, plainError);
+
+      const caughtError = await interceptAndCatchError(context, callHandler);
+
+      expect(caughtError).toBe(plainError);
+      expect(attemptContract.persist).not.toHaveBeenCalled();
+    });
+
+    it('should use 0.0.0.0 when clientIp is not set on request', async () => {
+      // Create context without __clientIp (undefined)
+      const mockRequest = {
+        body: { emailOrUsername: 'test@example.com' },
+        headers: { 'user-agent': 'Jest Test Agent' },
+        __rateLimitConfig: signInRateLimitConfig,
+        __clientIp: undefined,
+        __rateLimitIdentifier: 'test@example.com',
+      };
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => mockRequest,
+          getResponse: () => ({}),
+          getNext: () => jest.fn(),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as import('@nestjs/common').ExecutionContext;
+
+      const error = new InvalidCredentialsException();
+      const callHandler = createMockCallHandler(undefined, error);
+
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
+
+      await interceptAndCatchError(context, callHandler);
+
+      const persistCall = attemptContract.persist.mock.calls[0][0];
+      expect(persistCall.ipAddress.toString()).toBe('0.0.0.0');
+    });
+
+    it('should track by IP only when identifier is not set on request', async () => {
+      const mockRequest = {
+        body: {},
+        headers: { 'user-agent': 'Jest Test Agent' },
+        __rateLimitConfig: signInRateLimitConfig,
+        __clientIp: '10.0.0.1',
+        __rateLimitIdentifier: undefined,
+      };
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => mockRequest,
+          getResponse: () => ({}),
+          getNext: () => jest.fn(),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as import('@nestjs/common').ExecutionContext;
+
+      const error = new InvalidCredentialsException();
+      const callHandler = createMockCallHandler(undefined, error);
+
+      attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
+
+      await interceptAndCatchError(context, callHandler);
+
+      expect(mediator.user.findByEmailOrUsername).not.toHaveBeenCalled();
+      const persistCall = attemptContract.persist.mock.calls[0][0];
+      expect(persistCall.userUUID).toBeNull();
+      expect(persistCall.email).toBeNull();
+    });
+
+    it('should set userAgent to null when no user-agent header is present (user found path)', async () => {
+      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockRequest = {
+        body: { emailOrUsername: 'test@example.com' },
+        headers: {},
+        __rateLimitConfig: { ...signInRateLimitConfig, progressiveBlock: undefined },
+        __clientIp: '192.168.1.1',
+        __rateLimitIdentifier: 'test@example.com',
+      };
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => mockRequest,
+          getResponse: () => ({}),
+          getNext: () => jest.fn(),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as import('@nestjs/common').ExecutionContext;
+
+      const error = new InvalidCredentialsException();
+      const callHandler = createMockCallHandler(undefined, error);
+
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
+
+      await interceptAndCatchError(context, callHandler);
+
+      const persistCall = attemptContract.persist.mock.calls[0][0];
+      expect(persistCall.userAgent).toBeNull();
+    });
+
+    it('should set userAgent to null when no user-agent header is present (no user path)', async () => {
+      const mockRequest = {
+        body: {},
+        headers: {},
+        __rateLimitConfig: signInRateLimitConfig,
+        __clientIp: '192.168.1.1',
+        __rateLimitIdentifier: 'nonexistent@example.com',
+      };
+      const context = {
+        switchToHttp: () => ({
+          getRequest: () => mockRequest,
+          getResponse: () => ({}),
+          getNext: () => jest.fn(),
+        }),
+        getHandler: () => jest.fn(),
+        getClass: () => jest.fn(),
+      } as unknown as import('@nestjs/common').ExecutionContext;
+
+      const error = new InvalidCredentialsException();
+      const callHandler = createMockCallHandler(undefined, error);
+
+      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
+
+      await interceptAndCatchError(context, callHandler);
+
+      const persistCall = attemptContract.persist.mock.calls[0][0];
+      expect(persistCall.userAgent).toBeNull();
+    });
+
+    it('should not call evaluateBlock when config has no progressiveBlock (user found path)', async () => {
+      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const context = createMockExecutionContext(
+        { ...signInRateLimitConfig, progressiveBlock: undefined },
+        '192.168.1.1',
+        'test@example.com',
+      );
+      const error = new InvalidCredentialsException();
+      const callHandler = createMockCallHandler(undefined, error);
+
+      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
+
+      await interceptAndCatchError(context, callHandler);
+
+      expect(attemptContract.countFailedByUserUUIDInLastHourByType).not.toHaveBeenCalled();
+      expect(eventBus.publish).not.toHaveBeenCalled();
+    });
+
+    it('should return null from extractErrorCode when response.error is not a string', async () => {
+      const context = createMockExecutionContext(
+        signInRateLimitConfig,
+        '192.168.1.1',
+        'test@example.com',
+      );
+      // error.response.error is an object, not a string → extractErrorCode returns null
+      const weirdError = { response: { error: { code: 'INVALID_CREDENTIALS' }, statusCode: 400 } };
+      const callHandler = createMockCallHandler(undefined, weirdError as unknown as Error);
+
+      const caughtError = await interceptAndCatchError(context, callHandler);
+
+      expect(caughtError).toBe(weirdError);
+      expect(attemptContract.persist).not.toHaveBeenCalled();
+    });
+
+    it('should return immediately from evaluateBlock when config has no progressiveBlock (defensive guard)', () => {
+      // Call private evaluateBlock directly to cover the defensive early-return branch at line 150.
+      // The public API never reaches this branch (caller checks progressiveBlock first),
+      // so we access the private method via casting.
+      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const configWithoutBlock = {
+        type: 'sign_in' as const,
+        maxAttemptsByIp: 30,
+        trackFailedAttempts: true,
+        failureErrorCodes: ['INVALID_CREDENTIALS'],
+        // progressiveBlock intentionally absent
+      };
+
+      // Should not throw and should not call eventBus.publish
+      expect(() => {
+        (interceptor as unknown as { evaluateBlock: (u: unknown, f: number, c: unknown) => void }).evaluateBlock(
+          mockUser,
+          10,
+          configWithoutBlock,
+        );
+      }).not.toThrow();
+
+      expect(eventBus.publish).not.toHaveBeenCalled();
+    });
   });
 });
