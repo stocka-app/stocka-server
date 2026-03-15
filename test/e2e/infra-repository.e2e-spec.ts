@@ -890,5 +890,55 @@ describe('Infrastructure Repositories (e2e)', () => {
         await expect(uow.rollback()).resolves.toBeUndefined();
       });
     });
+
+    describe('Given commit() is called with an already-released QueryRunner', () => {
+      it('Then commit() warns and returns without throwing (lines 57-58)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          // Force isReleased to true so commit() sees it before commitTransaction
+          Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
+          return qr;
+        });
+        await uow.begin();
+        spy.mockRestore();
+        await expect(uow.commit()).resolves.toBeUndefined();
+      });
+    });
+
+    describe('Given commitTransaction() throws because the QueryRunner released mid-commit', () => {
+      it('Then commit() swallows the error and returns without throwing (lines 62-64)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr, 'commitTransaction').mockImplementationOnce(async () => {
+            // Simulate the QR becoming released mid-commit
+            Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
+            throw new Error('QueryRunner is already released');
+          });
+          return qr;
+        });
+        await uow.begin();
+        spy.mockRestore();
+        await expect(uow.commit()).resolves.toBeUndefined();
+      });
+    });
+
+    describe('Given rollbackTransaction() throws because the QueryRunner released mid-rollback', () => {
+      it('Then rollback() swallows the error and returns without throwing (lines 85-87)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr, 'rollbackTransaction').mockImplementationOnce(async () => {
+            Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
+            throw new Error('QueryRunner is already released');
+          });
+          return qr;
+        });
+        await uow.begin();
+        spy.mockRestore();
+        await expect(uow.rollback()).resolves.toBeUndefined();
+      });
+    });
   });
 });
