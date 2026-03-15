@@ -50,4 +50,12 @@ export interface IUnitOfWork {
    * The return type is `unknown` to avoid leaking infrastructure types into the domain.
    */
   getManager(): unknown;
+
+  /**
+   * Runs the given callback inside an isolated async context.
+   * Any transaction started within the callback (via begin/commit/rollback)
+   * is scoped exclusively to that context and cannot leak to parent or
+   * sibling async continuations (e.g. other HTTP requests on the same socket).
+   */
+  runIsolated(fn: () => void): void;
 }

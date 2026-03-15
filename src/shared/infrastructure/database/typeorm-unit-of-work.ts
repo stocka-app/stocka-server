@@ -80,6 +80,10 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
     return this.getActiveRunner().manager;
   }
 
+  runIsolated(fn: () => void): void {
+    this.als.run(undefined, fn);
+  }
+
   private getActiveRunner(): QueryRunner {
     const qr = this.als.getStore();
     if (!qr) {
