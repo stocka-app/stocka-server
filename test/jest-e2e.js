@@ -70,5 +70,5 @@ module.exports = {
     '!src/shared/infrastructure/persistence/repositories/typeorm-process-state.repository.ts',
   ],
   coverageDirectory: './coverage-e2e',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['json', 'text', 'lcov', 'html'],
 };

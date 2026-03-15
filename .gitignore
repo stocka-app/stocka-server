@@ -11,4 +11,6 @@ npm-debug.log*
 .env
 /coverage
 /coverage-e2e
+/coverage-report
+/.nyc_output
 .eslint-cache
