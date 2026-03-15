@@ -4,7 +4,7 @@ import { INestApplication } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, version as uuidVersion } from 'uuid';
 
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
@@ -797,6 +797,24 @@ describe('Infrastructure Repositories (e2e)', () => {
       it('Then findByProviderAndProviderId returns null', async () => {
         const found = await socialAccountRepo.findByProviderAndProviderId('google', 'nonexistent');
         expect(found).toBeNull();
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BaseEntity — UUID v7 generation
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('BaseEntity — UUID v7 generation on insert', () => {
+    describe('Given a user is created via domain factory without a pre-assigned UUID', () => {
+      it('Then the UUID persisted in the database is version 7', async () => {
+        const user = UserAggregate.create({
+          email: `uuidv7-test-${Date.now()}@example.com`,
+          username: `uuidv7usr${Date.now()}`,
+          passwordHash: null,
+        });
+        const saved = await userRepo.persist(user);
+        expect(uuidVersion(saved.uuid)).toBe(7);
       });
     });
   });

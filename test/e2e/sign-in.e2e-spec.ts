@@ -3,6 +3,7 @@ import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import cookieParser from 'cookie-parser';
 import * as bcrypt from 'bcrypt';
+import { v7 as uuidv7 } from 'uuid';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
@@ -92,6 +93,7 @@ describe('Sign In (e2e)', () => {
     // Sign-in requires: status='active', emailVerifiedAt set, and known passwordHash.
     const passwordHash = await bcrypt.hash('SecurePass1', 10);
     await dataSource.getRepository(UserEntity).save({
+      uuid: uuidv7(),
       email: 'signin@example.com',
       username: 'signinuser',
       passwordHash,
