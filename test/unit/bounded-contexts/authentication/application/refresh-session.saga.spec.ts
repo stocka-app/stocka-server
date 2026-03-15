@@ -256,5 +256,17 @@ describe('RefreshSessionSaga', () => {
         await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow('Hard DB failure');
       });
     });
+
+    describe('Given all steps complete but the generate-tokens step did not populate the context', () => {
+      it('Then it re-throws the invariant violation error', async () => {
+        generateTokens.execute.mockImplementation(() => {
+          // intentionally does not set ctx.accessToken or ctx.newRefreshToken
+        });
+
+        await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow(
+          'RefreshSessionSaga completed without required output fields',
+        );
+      });
+    });
   });
 });

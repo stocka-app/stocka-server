@@ -22,6 +22,8 @@ describe('PasswordResetTokenModel', () => {
       expect(token.uuid).toBeDefined();
       expect(token.isValid()).toBe(true);
       expect(token.isUsed()).toBe(false);
+      // Covers line 79 null branch: usedAt getter when _usedAt is null → returns null
+      expect(token.usedAt).toBeNull();
     });
   });
 

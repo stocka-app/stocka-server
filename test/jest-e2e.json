@@ -17,5 +17,13 @@
     "^@common/(.*)$": "<rootDir>/src/common/$1",
     "^@core/(.*)$": "<rootDir>/src/core/$1",
     "^@test/(.*)$": "<rootDir>/test/$1"
-  }
+  },
+  "collectCoverageFrom": [
+    "src/**/infrastructure/persistence/repositories/*.ts",
+    "src/shared/infrastructure/database/typeorm-unit-of-work.ts",
+    "src/shared/infrastructure/persistence/repositories/*.ts",
+    "!src/shared/infrastructure/persistence/repositories/typeorm-process-state.repository.ts"
+  ],
+  "coverageDirectory": "./coverage-e2e",
+  "coverageReporters": ["text", "lcov", "html"]
 }

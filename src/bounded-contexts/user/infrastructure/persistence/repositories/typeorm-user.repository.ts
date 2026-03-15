@@ -106,8 +106,8 @@ export class TypeOrmUserRepository implements IUserContract {
       .where('status = :status', { status: 'pending_verification' })
       .andWhere('account_type != :flexible', { flexible: 'flexible' })
       .andWhere('archived_at IS NULL')
-      .andWhere('created_at < NOW() - INTERVAL :interval', {
-        interval: `${olderThanDays} days`,
+      .andWhere(`created_at < NOW() - (INTERVAL '1 day' * :days)`, {
+        days: olderThanDays,
       })
       .execute();
 

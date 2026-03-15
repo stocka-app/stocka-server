@@ -36,5 +36,10 @@ describe('CodeHashVO', () => {
 
       expect(vo1.equals(vo2)).toBe(false);
     });
+
+    it('should return false when compared to a non-PrimitiveVO value', () => {
+      const vo = new CodeHashVO('hash123');
+      expect(vo.equals(null as unknown as CodeHashVO)).toBe(false);
+    });
   });
 });

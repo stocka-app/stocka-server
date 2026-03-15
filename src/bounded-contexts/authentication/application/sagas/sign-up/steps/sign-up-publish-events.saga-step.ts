@@ -10,7 +10,7 @@ export class PublishSignUpEventsStep implements ISagaStepHandler<SignUpSagaConte
 
   execute(ctx: SignUpSagaContext): Promise<void> {
     const user = ctx.user;
-    if (!user) throw new Error('PublishSignUpEventsStep: ctx.user not set by prior step');
+    if (!user) return Promise.reject(new Error('PublishSignUpEventsStep: ctx.user not set by prior step'));
 
     this.eventBus.publish(new UserSignedUpEvent(user.uuid, user.email));
     return Promise.resolve();

@@ -1,4 +1,5 @@
 import { AccountType, UserAggregate } from '@user/domain/models/user.aggregate';
+import { SocialAccountModel } from '@user/domain/models/social-account.model';
 import { UserCreatedEvent } from '@user/domain/events/user-created.event';
 import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
 import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
@@ -58,6 +59,16 @@ describe('UserAggregate', () => {
         UserAggregate.create({
           email: 'test@example.com',
           username: 'test@user!',
+          passwordHash: 'hashedpassword',
+        }),
+      ).toThrow();
+    });
+
+    it('should throw an error for invalid username (too long, exceeds 30 chars)', () => {
+      expect(() =>
+        UserAggregate.create({
+          email: 'test@example.com',
+          username: 'a'.repeat(31),
           passwordHash: 'hashedpassword',
         }),
       ).toThrow();
@@ -364,6 +375,41 @@ describe('UserAggregate', () => {
     });
   });
 
+  describe('emailVerifiedAt and verification blocking', () => {
+    it('should return the emailVerifiedAt date when set on reconstitute', () => {
+      const verifiedDate = new Date('2024-06-01T12:00:00Z');
+      const user = UserAggregate.reconstitute({
+        id: 1,
+        uuid: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        username: 'testuser',
+        passwordHash: 'hash',
+        emailVerifiedAt: verifiedDate,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        archivedAt: null,
+      });
+      expect(user.emailVerifiedAt).toEqual(verifiedDate);
+    });
+
+    it('should clear verificationBlockedUntil after unblockVerification()', () => {
+      const user = UserAggregate.reconstitute({
+        id: 1,
+        uuid: '550e8400-e29b-41d4-a716-446655440000',
+        email: 'test@example.com',
+        username: 'testuser',
+        passwordHash: 'hash',
+        verificationBlockedUntil: new Date(Date.now() + 60000),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        archivedAt: null,
+      });
+      expect(user.verificationBlockedUntil).not.toBeNull();
+      user.unblockVerification();
+      expect(user.verificationBlockedUntil).toBeNull();
+    });
+  });
+
   describe('setPasswordAndBecomeFlexible', () => {
     it('should set password hash, change accountType to flexible, and emit AccountBecameFlexibleEvent with trigger password_set', () => {
       const user = UserAggregate.reconstitute({
@@ -391,6 +437,23 @@ describe('UserAggregate', () => {
       const flexible = events[0] as AccountBecameFlexibleEvent;
       expect(flexible.trigger).toBe('password_set');
       expect(flexible.userUUID).toBe(user.uuid);
+    });
+  });
+});
+
+describe('SocialAccountModel', () => {
+  describe('Given props without createdAt or updatedAt', () => {
+    it('Then it defaults createdAt and updatedAt to current time', () => {
+      const before = Date.now();
+      const account = SocialAccountModel.create({
+        userId: 1,
+        provider: 'google',
+        providerId: 'google-id-123',
+      });
+      const after = Date.now();
+      expect(account.createdAt.getTime()).toBeGreaterThanOrEqual(before);
+      expect(account.createdAt.getTime()).toBeLessThanOrEqual(after);
+      expect(account.updatedAt.getTime()).toBeGreaterThanOrEqual(before);
     });
   });
 });

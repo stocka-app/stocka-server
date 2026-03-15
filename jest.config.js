@@ -6,9 +6,54 @@ module.exports = {
     '^.+\\.(t|j)s$': 'ts-jest',
   },
   collectCoverageFrom: [
+    // ── Include all src ──────────────────────────────────────────────────
     'src/**/*.(t|j)s',
-    '!src/core/infrastructure/main.ts',
+
+    // ── BC legacy (pre-refactor, removed) ─────────────────────────────────
+    '!src/bounded-contexts/auth/**',
+
+    // ── NestJS boilerplate (no business logic) ────────────────────────────
     '!src/**/*.module.ts',
+    '!src/**/*.constants.ts',
+    '!src/**/*.types.ts',
+    '!src/**/index.ts',
+
+    // ── Bootstrap and trivial config ─────────────────────────────────────
+    '!src/core/infrastructure/main.ts',
+    '!src/core/infrastructure/app.controller.ts',
+    '!src/core/config/database/**',
+    '!src/core/config/swagger/**',
+
+    // ── SQL Migrations ────────────────────────────────────────────────────
+    '!src/core/infrastructure/migrations/**',
+
+    // ── TypeORM Entities (metadata decorators, no logic) ─────────────────
+    '!src/**/infrastructure/persistence/entities/**',
+    '!src/shared/infrastructure/persistence/entities/**',
+    '!src/shared/infrastructure/base/**',
+
+    // ── Infrastructure requiring real services (e2e scope) ────────────────
+    '!src/**/infrastructure/persistence/repositories/**',
+    '!src/shared/infrastructure/database/**',
+    '!src/shared/infrastructure/email/providers/**',
+
+    // ── Email HTML templates (not application logic) ──────────────────────
+    '!src/shared/infrastructure/email/templates/**',
+
+    // ── TypeScript interfaces/contracts (no runtime code) ─────────────────
+    '!src/shared/infrastructure/email/contracts/**',
+
+    // ── DTOs (class-validator decorators only, no logic) ─────────────────
+    '!src/**/*.dto.ts',
+
+    // ── Passport OAuth strategies (integration scope — require Passport internals) ──
+    '!src/**/infrastructure/strategies/**',
+
+    // ── OAuth redirect-only controllers (no business logic, guard-driven) ─
+    '!src/**/infrastructure/controllers/google-authentication/**',
+    '!src/**/infrastructure/controllers/facebook-authentication/**',
+    '!src/**/infrastructure/controllers/microsoft-authentication/**',
+    '!src/**/infrastructure/controllers/apple-authentication/**',
   ],
   coverageDirectory: './coverage',
   testEnvironment: 'node',

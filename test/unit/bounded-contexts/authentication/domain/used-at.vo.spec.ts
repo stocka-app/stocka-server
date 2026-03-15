@@ -53,5 +53,10 @@ describe('UsedAtVO', () => {
 
       expect(vo1.equals(vo2)).toBe(false);
     });
+
+    it('should return false when compared to a non-UsedAtVO', () => {
+      const vo = new UsedAtVO(new Date('2025-01-15T10:00:00Z'));
+      expect(vo.equals(null as unknown as UsedAtVO)).toBe(false);
+    });
   });
 });

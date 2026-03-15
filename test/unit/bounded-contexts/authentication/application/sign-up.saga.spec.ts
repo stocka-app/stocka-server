@@ -334,5 +334,17 @@ describe('SignUpSaga', () => {
         await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow('DB down');
       });
     });
+
+    describe('Given all steps complete but the generate-tokens step did not populate tokens in context', () => {
+      it('Then it re-throws the invariant violation error', async () => {
+        generateTokens.execute.mockImplementation(() => {
+          // intentionally does not set ctx.accessToken or ctx.refreshToken
+        });
+
+        await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow(
+          'Saga completed without required output fields',
+        );
+      });
+    });
   });
 });

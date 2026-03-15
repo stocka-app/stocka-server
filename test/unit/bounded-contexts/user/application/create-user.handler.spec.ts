@@ -126,4 +126,20 @@ describe('CreateUserHandler', () => {
       });
     });
   });
+
+  describe('Given UserAggregate.create throws a non-DomainException error', () => {
+    describe('When the handler executes', () => {
+      it('Then it re-throws the error without wrapping in Result', async () => {
+        const spy = jest.spyOn(UserAggregate, 'create').mockImplementationOnce(() => {
+          throw new Error('unexpected infrastructure error');
+        });
+
+        await expect(
+          handler.execute(new CreateUserCommand(VALID_EMAIL, VALID_USERNAME, VALID_HASH)),
+        ).rejects.toThrow('unexpected infrastructure error');
+
+        spy.mockRestore();
+      });
+    });
+  });
 });

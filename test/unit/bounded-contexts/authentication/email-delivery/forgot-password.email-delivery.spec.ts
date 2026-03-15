@@ -132,6 +132,26 @@ describe('Password recovery — transactional email delivery', () => {
     });
   });
 
+  describe('Given a customer who submits the form without a locale (default language)', () => {
+    describe('When no lang is provided in the command', () => {
+      it('Then the command defaults to Spanish and the email is sent', async () => {
+        mediatorService.user.findByEmail.mockResolvedValue(registeredCustomer);
+
+        await handler.execute(new ForgotPasswordCommand('maria.garcia@mitienda.mx'));
+        await flushPromises();
+
+        expect(emailProvider.sendPasswordResetEmail).toHaveBeenCalledWith(
+          'maria.garcia@mitienda.mx',
+          expect.stringContaining('reset-password'),
+          'maria.garcia@mitienda.mx',
+          'es',
+          false,
+          null,
+        );
+      });
+    });
+  });
+
   describe('Given a customer who signed up with Google and has never set a password', () => {
     describe('When they enter their email on the "Forgot your password?" screen', () => {
       it('Then the system sends an email with isSocialAccount=true and the provider name', async () => {

@@ -8,6 +8,7 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 import { ISessionContract } from '@authentication/domain/contracts/session.contract';
 import { InvalidCredentialsException } from '@authentication/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@authentication/domain/exceptions/account-deactivated.exception';
+import { EmailNotVerifiedException } from '@authentication/domain/exceptions/email-not-verified.exception';
 import { SocialAccountRequiredException } from '@authentication/domain/exceptions/social-account-required.exception';
 import { AccountType } from '@user/domain/models/user.aggregate';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -197,6 +198,26 @@ describe('SignInHandler', () => {
     expect(sessionContract.persist).not.toHaveBeenCalled();
   });
 
+  it('should return EmailNotVerifiedException error when user is a pending manual account', async () => {
+    const command = new SignInCommand('pending@example.com', 'Password1');
+    const pendingUser = UserMother.create({
+      id: 11,
+      email: 'pending@example.com',
+      username: 'pending_user',
+      passwordHash: validPasswordHash,
+      status: 'pending_verification',
+      accountType: AccountType.MANUAL,
+    });
+
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(pendingUser);
+
+    const result = await handler.execute(command);
+
+    expect(result.isErr()).toBe(true);
+    expect(result._unsafeUnwrapErr()).toBeInstanceOf(EmailNotVerifiedException);
+    expect(sessionContract.persist).not.toHaveBeenCalled();
+  });
+
   it('should return SocialAccountRequiredException error when user is Flexible Pendiente (linked OAuth but email unverified)', async () => {
     // A manual user who linked Google before verifying their email — EC-002 "Flexible Pendiente" state
     const command = new SignInCommand('flex@example.com', 'Password1');
@@ -216,5 +237,62 @@ describe('SignInHandler', () => {
     expect(result.isErr()).toBe(true);
     expect(result._unsafeUnwrapErr()).toBeInstanceOf(SocialAccountRequiredException);
     expect(sessionContract.persist).not.toHaveBeenCalled();
+  });
+
+  it('should use default expiration values when configService.get returns undefined', async () => {
+    // Covers lines 87-89: JWT_ACCESS_EXPIRATION || '15m' and JWT_REFRESH_EXPIRATION || '7d'
+    const command = new SignInCommand('test@example.com', 'Password1');
+    const mockUser = UserMother.create({
+      id: 1,
+      email: 'test@example.com',
+      username: 'testuser',
+      passwordHash: validPasswordHash,
+    });
+
+    // configService that returns undefined for expiration keys → triggers || fallbacks
+    const mockConfigUndefined = {
+      get: jest.fn((key: string) => {
+        if (key === 'JWT_ACCESS_EXPIRATION' || key === 'JWT_REFRESH_EXPIRATION') return undefined;
+        const config: Record<string, string> = {
+          JWT_ACCESS_SECRET: 'test-access-secret',
+          JWT_REFRESH_SECRET: 'test-refresh-secret',
+        };
+        return config[key];
+      }),
+      getOrThrow: jest.fn((key: string) => {
+        const config: Record<string, string> = {
+          JWT_ACCESS_SECRET: 'test-access-secret',
+          JWT_REFRESH_SECRET: 'test-refresh-secret',
+        };
+        const value = config[key];
+        if (value === undefined) throw new Error(`Key "${key}" not found`);
+        return value;
+      }),
+    };
+
+    const newModule = await Test.createTestingModule({
+      providers: [
+        SignInHandler,
+        { provide: MediatorService, useValue: mediatorService },
+        { provide: JwtService, useValue: jwtService },
+        { provide: ConfigService, useValue: mockConfigUndefined },
+        { provide: EventPublisher, useValue: { mergeObjectContext: jest.fn().mockImplementation((o) => o) } },
+        { provide: EventBus, useValue: { publish: jest.fn() } },
+        { provide: INJECTION_TOKENS.SESSION_CONTRACT, useValue: sessionContract },
+      ],
+    }).compile();
+
+    const handlerWithDefaults = newModule.get<SignInHandler>(SignInHandler);
+    jwtService.signAsync.mockResolvedValue('mock-token');
+    mediatorService.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+    sessionContract.persist.mockResolvedValue(expect.anything());
+
+    const result = await handlerWithDefaults.execute(command);
+
+    expect(result.isOk()).toBe(true);
+    expect(jwtService.signAsync).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ expiresIn: '15m' }),
+    );
   });
 });
