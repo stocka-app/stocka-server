@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Req, Headers } from '@nestjs/common';
+import { Controller, Post, Body, Req, Headers, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
@@ -15,6 +15,7 @@ export class ResendVerificationCodeController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('resend-verification-code')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resend email verification code' })
   @ApiResponse({
     status: 200,
