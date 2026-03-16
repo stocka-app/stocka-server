@@ -22,7 +22,10 @@ export class CreateNewSessionStep implements ISagaStepHandler<RefreshSessionSaga
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    const session = SessionModel.create({ userId: ctx.user.id, tokenHash, expiresAt });
+    if (ctx.accountId === undefined)
+      throw new Error('CreateNewSessionStep: ctx.accountId not set by prior step');
+
+    const session = SessionModel.create({ accountId: ctx.accountId, tokenHash, expiresAt });
     const persisted = await this.sessionContract.persist(session);
     ctx.newSessionUUID = persisted.uuid;
   }

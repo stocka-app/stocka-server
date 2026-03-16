@@ -1,4 +1,5 @@
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 export type SocialSignInPath = 'existing-provider' | 'linked-provider' | 'new-user';
 
@@ -10,14 +11,17 @@ export interface SocialSignInSagaContext {
   readonly providerId: string;
 
   // Computed by steps during execution
-  user?: IPersistedUserView;
+  user?: UserAggregate;
+  credential?: CredentialAccountModel;
+  accountId?: number;
   path?: SocialSignInPath;
   accessToken?: string;
   refreshToken?: string;
 }
 
 export interface SocialSignInSagaOutput {
-  readonly user: IPersistedUserView;
+  readonly user: UserAggregate;
+  readonly credential: CredentialAccountModel;
   readonly accessToken: string;
   readonly refreshToken: string;
 }

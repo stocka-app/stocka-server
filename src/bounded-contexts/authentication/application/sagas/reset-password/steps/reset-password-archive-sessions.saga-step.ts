@@ -15,6 +15,6 @@ export class ArchiveUserSessionsStep implements ISagaStepHandler<ResetPasswordSa
     if (!ctx.resetToken)
       throw new Error('ArchiveUserSessionsStep: ctx.resetToken not set by prior step');
 
-    await this.sessionContract.archiveAllByUserId(ctx.resetToken.userId);
+    await this.sessionContract.archiveAllByAccountId(ctx.resetToken.credentialAccountId);
   }
 }

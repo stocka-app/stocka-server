@@ -22,13 +22,14 @@ export class SignOutHandler implements ICommandHandler<SignOutCommand> {
     const session = await this.sessionContract.findByTokenHash(tokenHash);
 
     if (session) {
-      const user = await this.mediator.user.findById(session.userId);
+      await this.sessionContract.archiveAllByAccountId(session.accountId);
 
-      await this.sessionContract.archiveAllByUserId(session.userId);
+      // Retrieve user for event publishing via the facade (findByAccountId exposed as userUUID in JWT)
+      const userView = await this.mediator.user.findByAccountId(session.accountId);
 
-      if (user) {
+      if (userView) {
         this.eventBus.publish(new SessionArchivedEvent(session.uuid));
-        this.eventBus.publish(new UserSignedOutEvent(user.uuid));
+        this.eventBus.publish(new UserSignedOutEvent(userView.uuid));
       }
     }
   }

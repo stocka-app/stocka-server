@@ -1,11 +1,11 @@
 import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
-import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
+import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
 
 @Entity('password_reset_tokens')
 export class PasswordResetTokenEntity extends BaseEntity {
-  @Column({ name: 'user_id', type: 'int' })
-  userId!: number;
+  @Column({ name: 'credential_account_id', type: 'int' })
+  credentialAccountId!: number;
 
   @Column({ name: 'token_hash', type: 'varchar', length: 128 })
   @Index()
@@ -17,7 +17,7 @@ export class PasswordResetTokenEntity extends BaseEntity {
   @Column({ name: 'used_at', type: 'timestamptz', nullable: true })
   usedAt!: Date | null;
 
-  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user!: UserEntity;
+  @ManyToOne(() => CredentialAccountEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'credential_account_id' })
+  credentialAccount!: CredentialAccountEntity;
 }

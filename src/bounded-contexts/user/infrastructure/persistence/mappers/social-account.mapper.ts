@@ -1,16 +1,19 @@
-import { SocialAccountModel } from '@user/domain/models/social-account.model';
-import { SocialAccountEntity } from '@user/infrastructure/persistence/entities/social-account.entity';
+import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
+import { SocialAccountEntity } from '@user/account/infrastructure/entities/social-account.entity';
 
 export class SocialAccountMapper {
   static toDomain(entity: SocialAccountEntity): SocialAccountModel {
-    return SocialAccountModel.create({
+    return SocialAccountModel.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
-      userId: entity.userId,
+      accountId: entity.accountId,
       provider: entity.provider,
       providerId: entity.providerId,
+      providerEmail: entity.providerEmail,
+      linkedAt: entity.linkedAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+      archivedAt: entity.archivedAt,
     });
   }
 }

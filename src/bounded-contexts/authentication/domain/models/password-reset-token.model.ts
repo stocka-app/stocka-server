@@ -7,7 +7,7 @@ import { PasswordResetCompletedEvent } from '@authentication/domain/events/passw
 import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 
 export interface PasswordResetTokenProps extends AggregateRootProps {
-  userId: number;
+  credentialAccountId: number;
   tokenHash: string;
   expiresAt: Date;
   usedAt?: Date | null;
@@ -15,7 +15,7 @@ export interface PasswordResetTokenProps extends AggregateRootProps {
 }
 
 export class PasswordResetTokenModel extends AggregateRoot {
-  private _userId: number;
+  private _credentialAccountId: number;
   private _tokenHash: TokenHashVO;
   private _expiresAt: ExpiresAtVO;
   private _usedAt: UsedAtVO | null;
@@ -28,7 +28,7 @@ export class PasswordResetTokenModel extends AggregateRoot {
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
     });
-    this._userId = props.userId;
+    this._credentialAccountId = props.credentialAccountId;
     this._tokenHash = new TokenHashVO(props.tokenHash);
     this._expiresAt = new ExpiresAtVO(props.expiresAt);
     this._usedAt = props.usedAt ? new UsedAtVO(props.usedAt) : null;
@@ -46,7 +46,7 @@ export class PasswordResetTokenModel extends AggregateRoot {
     const token = new PasswordResetTokenModel(props);
     token.apply(
       new PasswordResetRequestedEvent(
-        token.userId,
+        token.credentialAccountId,
         props.email,
         props.plainToken,
         props.lang ?? 'es',
@@ -63,8 +63,8 @@ export class PasswordResetTokenModel extends AggregateRoot {
     return new PasswordResetTokenModel(props);
   }
 
-  get userId(): number {
-    return this._userId;
+  get credentialAccountId(): number {
+    return this._credentialAccountId;
   }
 
   get tokenHash(): string {
@@ -94,6 +94,6 @@ export class PasswordResetTokenModel extends AggregateRoot {
   markAsUsed(): void {
     this._usedAt = UsedAtVO.now();
     this.touch();
-    this.apply(new PasswordResetCompletedEvent(this.userId));
+    this.apply(new PasswordResetCompletedEvent(this.credentialAccountId));
   }
 }

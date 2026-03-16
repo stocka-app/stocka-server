@@ -15,8 +15,8 @@ export class ValidateSignUpStep implements ISagaStepHandler<SignUpSagaContext> {
     new PasswordVO(ctx.password);
 
     // Check email uniqueness
-    const existingUser = await this.mediator.user.findByEmail(ctx.email);
-    if (existingUser) {
+    const emailExists = await this.mediator.user.existsByEmail(ctx.email);
+    if (emailExists) {
       throw new EmailAlreadyExistsException();
     }
 

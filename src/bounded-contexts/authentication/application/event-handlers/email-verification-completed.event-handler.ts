@@ -19,12 +19,12 @@ export class EmailVerificationCompletedEventHandler implements IEventHandler<Ema
     this.logger.log(`Email verification completed: userUUID=${event.userUUID}`);
 
     try {
-      // Get user to fetch username for welcome email
-      const user = await this.mediator.user.findByUUID(event.userUUID);
-      if (user) {
+      // Get username for welcome email via profile lookup
+      const username = await this.mediator.user.findUsernameByUUID(event.userUUID);
+      if (username) {
         const result = await this.emailProvider.sendWelcomeEmail(
           event.email,
-          user.username,
+          username,
           event.lang,
         );
         this.logger.log(`Welcome email sent successfully: emailId=${result.id}`);

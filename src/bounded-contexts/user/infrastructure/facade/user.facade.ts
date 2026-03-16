@@ -1,136 +1,255 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { IUserFacade } from '@shared/domain/contracts/user-facade.contract';
-import { IUserView, IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
 import { IUserContract } from '@user/domain/contracts/user.contract';
-import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
-import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
+import { IAccountContract, ICredentialAccountContract, ISocialAccountContract } from '@user/account/domain/contracts/account.contract';
+import { IProfileContract } from '@user/profile/domain/contracts/profile.contract';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
-import {
-  CreateUserCommand,
-  CreateUserCommandResult,
-} from '@user/application/commands/create-user/create-user.command';
-import {
-  CreateUserFromSocialCommand,
-  CreateUserFromSocialCommandResult,
-} from '@user/application/commands/create-user-from-social/create-user-from-social.command';
-import {
-  LinkProviderToUserCommand,
-  LinkProviderToUserCommandResult,
-} from '@user/application/commands/link-provider-to-user/link-provider-to-user.command';
+import { AccountAggregate } from '@user/account/domain/account.aggregate';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
+import { ProfileAggregate } from '@user/profile/domain/profile.aggregate';
+import { PersonalProfileModel } from '@user/profile/domain/models/personal-profile.model';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
 export class UserFacade implements IUserFacade {
   constructor(
-    private readonly commandBus: CommandBus,
     @Inject(INJECTION_TOKENS.USER_CONTRACT)
     private readonly userContract: IUserContract,
+    @Inject(INJECTION_TOKENS.ACCOUNT_CONTRACT)
+    private readonly accountContract: IAccountContract,
+    @Inject(INJECTION_TOKENS.CREDENTIAL_ACCOUNT_CONTRACT)
+    private readonly credentialAccountContract: ICredentialAccountContract,
     @Inject(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT)
     private readonly socialAccountContract: ISocialAccountContract,
-    @Inject(INJECTION_TOKENS.UNIT_OF_WORK)
-    private readonly uow: IUnitOfWork,
+    @Inject(INJECTION_TOKENS.PROFILE_CONTRACT)
+    private readonly profileContract: IProfileContract,
   ) {}
-
-  private ensurePersisted(user: IUserView): IPersistedUserView {
-    if (user.id === undefined) {
-      throw new Error('Invariant violation: persisted user must have an id');
-    }
-    return user as IPersistedUserView;
-  }
-
-  // === Commands ===
-
-  async createUser(
-    email: string,
-    username: string,
-    passwordHash: string,
-  ): Promise<IPersistedUserView> {
-    if (this.uow.isActive()) {
-      // Direct path: join the caller's transaction — bypasses CommandBus
-      const user = UserAggregate.create({ email, username, passwordHash });
-      const persisted = await this.userContract.persist(user);
-      return this.ensurePersisted(persisted);
-    }
-
-    const result = await this.commandBus.execute<CreateUserCommand, CreateUserCommandResult>(
-      new CreateUserCommand(email, username, passwordHash),
-    );
-    return result.match(
-      (user) => this.ensurePersisted(user),
-      (error) => {
-        throw error;
-      },
-    );
-  }
-
-  async createUserFromSocial(
-    email: string,
-    username: string,
-    provider: string,
-    providerId: string,
-  ): Promise<IPersistedUserView> {
-    const result = await this.commandBus.execute<
-      CreateUserFromSocialCommand,
-      CreateUserFromSocialCommandResult
-    >(new CreateUserFromSocialCommand(email, username, provider, providerId));
-    return result.match(
-      (user) => this.ensurePersisted(user),
-      (error) => {
-        throw error;
-      },
-    );
-  }
-
-  async linkProviderToUser(userId: number, provider: string, providerId: string): Promise<void> {
-    const result = await this.commandBus.execute<
-      LinkProviderToUserCommand,
-      LinkProviderToUserCommandResult
-    >(new LinkProviderToUserCommand(userId, provider, providerId));
-    result.match(
-      () => {},
-      (error) => {
-        throw error;
-      },
-    );
-  }
 
   // === Queries ===
 
-  async findById(id: number): Promise<IPersistedUserView | null> {
-    const user = await this.userContract.findById(id);
-    return user ? this.ensurePersisted(user) : null;
+  async findByUUID(uuid: string): Promise<UserAggregate | null> {
+    return this.userContract.findByUUID(uuid);
   }
 
-  async findByUUID(uuid: string): Promise<IPersistedUserView | null> {
+  async findByAccountId(accountId: number): Promise<UserAggregate | null> {
+    const account = await this.accountContract.findById(accountId);
+    if (!account) return null;
+    return this.userContract.findById(account.userId);
+  }
+
+  async findUsernameByUUID(uuid: string): Promise<string | null> {
     const user = await this.userContract.findByUUID(uuid);
-    return user ? this.ensurePersisted(user) : null;
+    if (!user || user.id === undefined) return null;
+    const profile = await this.profileContract.findPersonalProfileByUserId(user.id);
+    return profile?.username ?? null;
   }
 
-  async findByEmail(email: string): Promise<IPersistedUserView | null> {
-    const user = await this.userContract.findByEmail(email);
-    return user ? this.ensurePersisted(user) : null;
+  async findUserByUUIDWithCredential(
+    uuid: string,
+  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null> {
+    const user = await this.userContract.findByUUID(uuid);
+    if (!user || user.id === undefined) return null;
+
+    const account = await this.accountContract.findByUserId(user.id);
+    if (!account || account.id === undefined) return null;
+
+    const credential = await this.credentialAccountContract.findByAccountId(account.id);
+    if (!credential) return null;
+
+    return { user, credential };
   }
 
-  async findByEmailOrUsername(identifier: string): Promise<IPersistedUserView | null> {
-    const user = await this.userContract.findByEmailOrUsername(identifier);
-    return user ? this.ensurePersisted(user) : null;
+  async findUserByEmail(
+    email: string,
+  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null> {
+    const credential = await this.credentialAccountContract.findByEmail(email);
+    if (!credential) return null;
+
+    const account = await this.accountContract.findById(credential.accountId);
+    if (!account) return null;
+
+    const user = await this.userContract.findById(account.userId);
+    if (!user) return null;
+
+    return { user, credential };
   }
 
-  async existsByUsername(username: string): Promise<boolean> {
-    return this.userContract.existsByUsername(username);
+  async findUserByEmailOrUsername(
+    identifier: string,
+  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null> {
+    const credential = await this.credentialAccountContract.findByEmailOrUsername(identifier);
+    if (!credential) return null;
+
+    const account = await this.accountContract.findById(credential.accountId);
+    if (!account) return null;
+
+    const user = await this.userContract.findById(account.userId);
+    if (!user) return null;
+
+    return { user, credential };
   }
 
   async findUserBySocialProvider(
     provider: string,
     providerId: string,
-  ): Promise<IPersistedUserView | null> {
-    const socialAccount = await this.socialAccountContract.findByProviderAndProviderId(
-      provider,
-      providerId,
-    );
-    if (!socialAccount) return null;
-    const user = await this.userContract.findById(socialAccount.userId);
-    return user ? this.ensurePersisted(user) : null;
+  ): Promise<{ user: UserAggregate; social: SocialAccountModel } | null> {
+    const social = await this.socialAccountContract.findByProviderAndProviderId(provider, providerId);
+    if (!social) return null;
+
+    const account = await this.accountContract.findById(social.accountId);
+    if (!account) return null;
+
+    const user = await this.userContract.findById(account.userId);
+    if (!user) return null;
+
+    return { user, social };
+  }
+
+  async existsByUsername(username: string): Promise<boolean> {
+    const profile = await this.profileContract.findPersonalProfileByUsername(username);
+    return profile !== null;
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    const credential = await this.credentialAccountContract.findByEmail(email);
+    return credential !== null;
+  }
+
+  // === Commands ===
+
+  async createUserWithCredentials(props: {
+    email: string;
+    username: string;
+    passwordHash: string | null;
+    locale?: string;
+  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel }> {
+    // 1. Create user anchor
+    const user = UserAggregate.create();
+    const persistedUser = await this.userContract.persist(user);
+    const userId = persistedUser.id!;
+
+    // 2. Create account anchor
+    const account = AccountAggregate.create({ userId });
+    const persistedAccount = await this.accountContract.persist(account);
+    const accountId = persistedAccount.id!;
+
+    // 3. Create credential account
+    const credential = CredentialAccountModel.create({
+      accountId,
+      email: props.email,
+      passwordHash: props.passwordHash,
+      createdWith: 'email',
+    });
+    const persistedCredential = await this.credentialAccountContract.persist(credential);
+
+    // 4. Create profile anchor
+    const profile = ProfileAggregate.create({ userId });
+    const persistedProfile = await this.profileContract.persistProfile(profile);
+    const profileId = persistedProfile.id!;
+
+    // 5. Create personal profile
+    const personalProfile = PersonalProfileModel.create({
+      profileId,
+      username: props.username,
+      locale: props.locale,
+    });
+    await this.profileContract.persistPersonalProfile(personalProfile);
+
+    return { user: persistedUser, credential: persistedCredential };
+  }
+
+  async createUserFromOAuth(props: {
+    email: string;
+    username: string;
+    provider: string;
+    providerId: string;
+    providerEmail?: string;
+  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel; social: SocialAccountModel }> {
+    // 1. Create user anchor
+    const user = UserAggregate.create();
+    const persistedUser = await this.userContract.persist(user);
+    const userId = persistedUser.id!;
+
+    // 2. Create account anchor
+    const account = AccountAggregate.create({ userId });
+    const persistedAccount = await this.accountContract.persist(account);
+    const accountId = persistedAccount.id!;
+
+    // 3. Create credential account (OAuth — email verified by provider, no password)
+    const credential = CredentialAccountModel.createFromSocial({
+      accountId,
+      email: props.email,
+      provider: props.provider,
+    });
+    const persistedCredential = await this.credentialAccountContract.persist(credential);
+
+    // 4. Create social account
+    const socialModel = SocialAccountModel.create({
+      accountId,
+      provider: props.provider,
+      providerId: props.providerId,
+      providerEmail: props.providerEmail,
+    });
+    const persistedSocial = await this.socialAccountContract.persist(socialModel);
+
+    // 5. Create profile anchor
+    const profile = ProfileAggregate.create({ userId });
+    const persistedProfile = await this.profileContract.persistProfile(profile);
+    const profileId = persistedProfile.id!;
+
+    // 6. Create personal profile
+    const personalProfile = PersonalProfileModel.create({
+      profileId,
+      username: props.username,
+    });
+    await this.profileContract.persistPersonalProfile(personalProfile);
+
+    return { user: persistedUser, credential: persistedCredential, social: persistedSocial };
+  }
+
+  async linkSocialAccount(
+    userId: number,
+    props: { provider: string; providerId: string; providerEmail?: string },
+  ): Promise<SocialAccountModel> {
+    const account = await this.accountContract.findByUserId(userId);
+    if (!account) {
+      throw new Error(`UserFacade.linkSocialAccount: no account found for userId=${userId}`);
+    }
+
+    const socialModel = SocialAccountModel.create({
+      accountId: account.id!,
+      provider: props.provider,
+      providerId: props.providerId,
+      providerEmail: props.providerEmail,
+    });
+    return this.socialAccountContract.persist(socialModel);
+  }
+
+  // === CredentialAccount operations ===
+
+  async verifyEmail(credentialAccountId: number): Promise<void> {
+    const credential = await this.credentialAccountContract.findById(credentialAccountId);
+    if (!credential) {
+      throw new Error(`UserFacade.verifyEmail: credentialAccount not found id=${credentialAccountId}`);
+    }
+    credential.verifyEmail();
+    await this.credentialAccountContract.persist(credential);
+  }
+
+  async blockVerification(credentialAccountId: number, until: Date): Promise<void> {
+    const credential = await this.credentialAccountContract.findById(credentialAccountId);
+    if (!credential) return;
+    credential.blockVerification(until);
+    await this.credentialAccountContract.persist(credential);
+  }
+
+  async updatePasswordHash(credentialAccountId: number, hash: string): Promise<void> {
+    const credential = await this.credentialAccountContract.findById(credentialAccountId);
+    if (!credential) {
+      throw new Error(`UserFacade.updatePasswordHash: credentialAccount not found id=${credentialAccountId}`);
+    }
+    credential.updatePasswordHash(hash);
+    await this.credentialAccountContract.persist(credential);
   }
 }

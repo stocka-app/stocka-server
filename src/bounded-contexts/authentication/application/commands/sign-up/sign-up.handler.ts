@@ -17,6 +17,7 @@ export class SignUpHandler implements ICommandHandler<SignUpCommand> {
 
     return result.map((output) => ({
       user: output.user,
+      credential: output.credential,
       accessToken: output.accessToken,
       refreshToken: output.refreshToken,
       emailVerificationRequired: true,

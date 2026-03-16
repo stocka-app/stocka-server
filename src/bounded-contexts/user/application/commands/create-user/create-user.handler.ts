@@ -19,13 +19,11 @@ export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
   ) {}
 
   async execute(command: CreateUserCommand): Promise<CreateUserCommandResult> {
+    // Note: user creation with credentials is now handled by UserFacade.createUserWithCredentials().
+    // This handler remains for backward compatibility with any in-flight commands.
     let user: UserAggregate;
     try {
-      user = UserAggregate.create({
-        email: command.email,
-        username: command.username,
-        passwordHash: command.passwordHash,
-      });
+      user = UserAggregate.create();
     } catch (e) {
       if (e instanceof DomainException) return err(e);
       throw e;

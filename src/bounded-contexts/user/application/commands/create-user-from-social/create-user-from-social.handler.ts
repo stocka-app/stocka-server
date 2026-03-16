@@ -1,6 +1,5 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import {
   CreateUserFromSocialCommand,
   CreateUserFromSocialCommandResult,
@@ -11,41 +10,29 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { ok, err } from '@shared/domain/result';
 
+/**
+ * @deprecated Use UserFacade.createUserFromOAuth() instead.
+ * This handler remains for CQRS compatibility but social account creation
+ * is now handled transactionally by the UserFacade.
+ */
 @CommandHandler(CreateUserFromSocialCommand)
 export class CreateUserFromSocialHandler implements ICommandHandler<CreateUserFromSocialCommand> {
   constructor(
     @Inject(INJECTION_TOKENS.USER_CONTRACT)
     private readonly userContract: IUserContract,
     private readonly eventPublisher: EventPublisher,
-    @Inject(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT)
-    private readonly socialAccountContract: ISocialAccountContract,
   ) {}
 
   async execute(command: CreateUserFromSocialCommand): Promise<CreateUserFromSocialCommandResult> {
     let user: UserAggregate;
     try {
-      user = UserAggregate.createFromSocial({
-        email: command.email,
-        username: command.username,
-        passwordHash: null,
-        provider: command.provider,
-      });
+      user = UserAggregate.create();
     } catch (e) {
       if (e instanceof DomainException) return err(e);
       throw e;
     }
 
     const persistedUser = await this.userContract.persist(user);
-
-    if (persistedUser.id === undefined) {
-      throw new Error('Invariant violation: persisted user must have an id');
-    }
-
-    await this.socialAccountContract.persist({
-      userId: persistedUser.id,
-      provider: command.provider,
-      providerId: command.providerId,
-    });
 
     this.eventPublisher.mergeObjectContext(user);
     user.commit();

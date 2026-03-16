@@ -16,17 +16,18 @@ export class SendVerificationEmailStep implements ISagaStepHandler<SignUpSagaCon
   async execute(ctx: SignUpSagaContext): Promise<void> {
     const user = ctx.user;
     if (!user) throw new Error('SendVerificationEmailStep: ctx.user not set by prior step');
+    if (!ctx.credential) throw new Error('SendVerificationEmailStep: ctx.credential not set by prior step');
     if (!ctx.verificationCode)
       throw new Error('SendVerificationEmailStep: ctx.verificationCode not set by prior step');
 
     const result = await this.emailProvider.sendVerificationEmail(
-      user.email,
+      ctx.credential.email,
       ctx.verificationCode,
-      user.username,
+      ctx.username, // from ctx input — set before saga starts
       ctx.lang,
     );
 
     ctx.emailSent = true;
-    this.logger.log(`Verification email sent: emailId=${result.id}, to=${user.email}`);
+    this.logger.log(`Verification email sent: emailId=${result.id}, to=${ctx.credential.email}`);
   }
 }

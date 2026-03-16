@@ -6,7 +6,7 @@ export class PasswordResetTokenMapper {
     return PasswordResetTokenModel.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
-      userId: entity.userId,
+      credentialAccountId: entity.credentialAccountId,
       tokenHash: entity.tokenHash,
       expiresAt: entity.expiresAt,
       usedAt: entity.usedAt,
@@ -19,7 +19,7 @@ export class PasswordResetTokenMapper {
   static toEntity(model: PasswordResetTokenModel): Partial<PasswordResetTokenEntity> {
     const entity: Partial<PasswordResetTokenEntity> = {
       uuid: model.uuid,
-      userId: model.userId,
+      credentialAccountId: model.credentialAccountId,
       tokenHash: model.tokenHash,
       expiresAt: model.expiresAt,
       usedAt: model.usedAt,

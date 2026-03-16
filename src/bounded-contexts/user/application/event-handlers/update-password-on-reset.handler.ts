@@ -1,33 +1,27 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { Logger, Inject } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { UserPasswordResetByAuthenticationEvent } from '@shared/domain/events/integration/user-password-reset-by-authentication.event';
-import { IUserContract } from '@user/domain/contracts/user.contract';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 
 /**
  * User BC handler for UserPasswordResetByAuthenticationEvent (cross-BC).
  * When Auth BC completes a password reset, this handler updates
- * the user's password hash in the User aggregate.
+ * the credential's password hash via the user facade.
  */
 @EventsHandler(UserPasswordResetByAuthenticationEvent)
 export class UpdatePasswordOnResetHandler implements IEventHandler<UserPasswordResetByAuthenticationEvent> {
   private readonly logger = new Logger(UpdatePasswordOnResetHandler.name);
 
-  constructor(
-    @Inject(INJECTION_TOKENS.USER_CONTRACT)
-    private readonly userContract: IUserContract,
-  ) {}
+  constructor(private readonly mediator: MediatorService) {}
 
   async handle(event: UserPasswordResetByAuthenticationEvent): Promise<void> {
-    const user = await this.userContract.findById(event.userId);
-    if (!user) {
-      this.logger.warn(`User not found for password reset: userId=${event.userId}`);
-      return;
+    try {
+      await this.mediator.user.updatePasswordHash(event.credentialAccountId, event.newPasswordHash);
+      this.logger.log(`Password updated via reset event: credentialAccountId=${event.credentialAccountId}`);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to update password via reset event: credentialAccountId=${event.credentialAccountId}: ${error instanceof Error ? error.message : error}`,
+      );
     }
-
-    user.updatePasswordHash(event.newPasswordHash);
-    await this.userContract.persist(user);
-
-    this.logger.log(`User password updated via reset event: userId=${event.userId}`);
   }
 }

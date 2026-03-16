@@ -15,7 +15,9 @@ export class GenerateSignInTokensStep implements ISagaStepHandler<SignInSagaCont
   async execute(ctx: SignInSagaContext): Promise<void> {
     if (!ctx.user) throw new Error('GenerateSignInTokensStep: ctx.user not set by prior step');
 
-    const payload = { sub: ctx.user.uuid, email: ctx.user.email };
+    if (!ctx.credential)
+      throw new Error('GenerateSignInTokensStep: ctx.credential not set by prior step');
+    const payload = { sub: ctx.user.uuid, email: ctx.credential.email };
 
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
       '15m') as StringValue;

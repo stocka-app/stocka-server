@@ -31,10 +31,10 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     return entity ? EmailVerificationTokenMapper.toDomain(entity) : null;
   }
 
-  async findActiveByUserId(userId: number): Promise<EmailVerificationTokenModel | null> {
+  async findActiveByCredentialAccountId(credentialAccountId: number): Promise<EmailVerificationTokenModel | null> {
     const entity = await this.repository.findOne({
       where: {
-        userId,
+        credentialAccountId,
         archivedAt: IsNull(),
         usedAt: IsNull(),
         expiresAt: MoreThan(new Date()),
@@ -68,22 +68,22 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     await this.repository.update({ uuid }, { archivedAt: new Date() });
   }
 
-  async archiveAllByUserId(userId: number): Promise<void> {
+  async archiveAllByCredentialAccountId(credentialAccountId: number): Promise<void> {
     await this.repository
       .createQueryBuilder()
       .update(EmailVerificationTokenEntity)
       .set({ archivedAt: new Date() })
-      .where('userId = :userId', { userId })
+      .where('credentialAccountId = :credentialAccountId', { credentialAccountId })
       .andWhere('archivedAt IS NULL')
       .execute();
   }
 
-  async countResentInLastHour(userId: number): Promise<number> {
+  async countResentInLastHour(credentialAccountId: number): Promise<number> {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const result = await this.repository
       .createQueryBuilder('token')
-      .where('token.userId = :userId', { userId })
+      .where('token.credentialAccountId = :credentialAccountId', { credentialAccountId })
       .andWhere('token.lastResentAt > :oneHourAgo', { oneHourAgo })
       .getCount();
 

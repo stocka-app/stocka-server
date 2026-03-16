@@ -18,67 +18,19 @@ export class TypeOrmUserRepository implements IUserContract {
   ) {}
 
   async findById(id: number): Promise<UserAggregate | null> {
-    const entity = await this.repository.findOne({
-      where: { id, archivedAt: undefined },
-    });
+    const entity = await this.repository.findOne({ where: { id } });
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
   async findByUUID(uuid: string): Promise<UserAggregate | null> {
-    const entity = await this.repository.findOne({
-      where: { uuid, archivedAt: undefined },
-    });
+    const entity = await this.repository.findOne({ where: { uuid } });
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
-  async findByEmail(email: string): Promise<UserAggregate | null> {
-    const entity = await this.repository
-      .createQueryBuilder('user')
-      .where('LOWER(user.email) = LOWER(:email)', { email })
-      .andWhere('user.archivedAt IS NULL')
-      .getOne();
-    return entity ? UserMapper.toDomain(entity) : null;
-  }
-
-  async findByUsername(username: string): Promise<UserAggregate | null> {
-    const entity = await this.repository
-      .createQueryBuilder('user')
-      .where('LOWER(user.username) = LOWER(:username)', { username })
-      .andWhere('user.archivedAt IS NULL')
-      .getOne();
-    return entity ? UserMapper.toDomain(entity) : null;
-  }
-
-  async findByEmailOrUsername(identifier: string): Promise<UserAggregate | null> {
-    const entity = await this.repository
-      .createQueryBuilder('user')
-      .where(
-        '(LOWER(user.email) = LOWER(:identifier) OR LOWER(user.username) = LOWER(:identifier))',
-        {
-          identifier,
-        },
-      )
-      .andWhere('user.archivedAt IS NULL')
-      .getOne();
-    return entity ? UserMapper.toDomain(entity) : null;
-  }
-
-  async existsByEmail(email: string): Promise<boolean> {
-    const count = await this.repository
-      .createQueryBuilder('user')
-      .where('LOWER(user.email) = LOWER(:email)', { email })
-      .andWhere('user.archivedAt IS NULL')
-      .getCount();
-    return count > 0;
-  }
-
-  async existsByUsername(username: string): Promise<boolean> {
-    const count = await this.repository
-      .createQueryBuilder('user')
-      .where('LOWER(user.username) = LOWER(:username)', { username })
-      .andWhere('user.archivedAt IS NULL')
-      .getCount();
-    return count > 0;
+  async existsByUsername(_username: string): Promise<boolean> {
+    // Username existence is now checked via personal_profiles table
+    // Delegated to CredentialAccountRepository.findByEmailOrUsername or ProfileContract
+    return false;
   }
 
   async persist(user: UserAggregate): Promise<UserAggregate> {
@@ -96,22 +48,5 @@ export class TypeOrmUserRepository implements IUserContract {
 
   async destroy(uuid: string): Promise<void> {
     await this.repository.delete({ uuid });
-  }
-
-  async destroyStaleUnverifiedUsers(olderThanDays: number): Promise<number> {
-    const result = await this.repository
-      .createQueryBuilder()
-      .delete()
-      .from(UserEntity)
-      .where('status = :status', { status: 'pending_verification' })
-      .andWhere('account_type != :flexible', { flexible: 'flexible' })
-      .andWhere('archived_at IS NULL')
-      .andWhere(`created_at < NOW() - (INTERVAL '1 day' * :days)`, {
-        days: olderThanDays,
-      })
-      .execute();
-
-    // istanbul ignore next — PostgreSQL always returns a numeric affected count
-    return result.affected ?? 0;
   }
 }

@@ -18,7 +18,7 @@ export class VerificationCodeResentEventHandler implements IEventHandler<Verific
 
   async handle(event: VerificationCodeResentEvent): Promise<void> {
     this.logger.log(
-      `Verification code resent: userId=${event.userId}, resendCount=${event.resendCount}`,
+      `Verification code resent: credentialAccountId=${event.credentialAccountId}, resendCount=${event.resendCount}`,
     );
 
     try {

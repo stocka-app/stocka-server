@@ -60,6 +60,8 @@ export class ValidateRefreshTokenStep implements ISagaStepHandler<RefreshSession
     }
 
     ctx.oldSessionUUID = session.uuid;
+    ctx.accountId = session.accountId;
     ctx.user = user;
+    ctx.email = decoded.email;
   }
 }

@@ -6,7 +6,7 @@ export class EmailVerificationTokenMapper {
     return EmailVerificationTokenModel.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
-      userId: entity.userId,
+      credentialAccountId: entity.credentialAccountId,
       codeHash: entity.codeHash,
       expiresAt: entity.expiresAt,
       usedAt: entity.usedAt,
@@ -21,7 +21,7 @@ export class EmailVerificationTokenMapper {
   static toEntity(model: EmailVerificationTokenModel): Partial<EmailVerificationTokenEntity> {
     const entity: Partial<EmailVerificationTokenEntity> = {
       uuid: model.uuid,
-      userId: model.userId,
+      credentialAccountId: model.credentialAccountId,
       codeHash: model.codeHash,
       expiresAt: model.expiresAt,
       usedAt: model.usedAt,
