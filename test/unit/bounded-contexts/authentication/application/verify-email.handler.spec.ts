@@ -9,22 +9,24 @@ import { InvalidVerificationCodeException } from '@authentication/domain/excepti
 import { VerificationCodeExpiredException } from '@authentication/domain/exceptions/verification-code-expired.exception';
 import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
 
 describe('VerifyEmailHandler', () => {
   let handler: VerifyEmailHandler;
-  let mediatorService: { user: { findByEmail: jest.Mock; verifyUserEmail: jest.Mock } };
+  let mediatorService: { user: { findUserByEmail: jest.Mock } };
   let tokenContract: jest.Mocked<IEmailVerificationTokenContract>;
   let codeGenerator: jest.Mocked<ICodeGeneratorContract>;
   let eventPublisher: jest.Mocked<EventPublisher>;
   let uow: { begin: jest.Mock; commit: jest.Mock; rollback: jest.Mock };
 
+  const MOCK_USER = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440002' });
+
   const createMockToken = (
     overrides: Partial<{
       id: number;
       uuid: string;
-      userId: number;
+      credentialAccountId: number;
       codeHash: string;
       expiresAt: Date;
       usedAt: Date | null;
@@ -33,9 +35,9 @@ describe('VerifyEmailHandler', () => {
     const defaults = {
       id: 1,
       uuid: '550e8400-e29b-41d4-a716-446655440099',
-      userId: 1,
+      credentialAccountId: 1,
       codeHash: 'hashed-code-123',
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       usedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -47,7 +49,7 @@ describe('VerifyEmailHandler', () => {
     return EmailVerificationTokenModel.reconstitute({
       id: props.id,
       uuid: props.uuid,
-      userId: props.userId,
+      credentialAccountId: props.credentialAccountId,
       codeHash: props.codeHash,
       expiresAt: props.expiresAt,
       usedAt: props.usedAt,
@@ -60,13 +62,12 @@ describe('VerifyEmailHandler', () => {
   beforeEach(async () => {
     const mockMediatorService = {
       user: {
-        findByEmail: jest.fn(),
-        verifyUserEmail: jest.fn(),
+        findUserByEmail: jest.fn(),
       },
     };
 
     const mockTokenContract = {
-      findActiveByUserId: jest.fn(),
+      findActiveByCredentialAccountId: jest.fn(),
       persist: jest.fn(),
     };
 
@@ -114,17 +115,11 @@ describe('VerifyEmailHandler', () => {
   describe('execute', () => {
     it('should successfully verify email with valid code', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'ABC123');
-      const mockUser = UserMother.createPendingVerification({
-        id: 1,
-        email: 'test@example.com',
-      });
-      const mockToken = createMockToken({
-        userId: 1,
-        codeHash: 'valid-hash',
-      });
+      const mockCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: 'test@example.com' });
+      const mockToken = createMockToken({ credentialAccountId: 1, codeHash: 'valid-hash' });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('valid-hash');
       tokenContract.persist.mockResolvedValue({} as EmailVerificationTokenModel);
 
@@ -140,40 +135,34 @@ describe('VerifyEmailHandler', () => {
     it('should return InvalidVerificationCodeException error when user not found', async () => {
       const command = new VerifyEmailCommand('nonexistent@example.com', 'ABC123');
 
-      mediatorService.user.findByEmail.mockResolvedValue(null);
+      mediatorService.user.findUserByEmail.mockResolvedValue(null);
 
       const result = await handler.execute(command);
 
       expect(result.isErr()).toBe(true);
       expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
-      expect(tokenContract.findActiveByUserId).not.toHaveBeenCalled();
+      expect(tokenContract.findActiveByCredentialAccountId).not.toHaveBeenCalled();
     });
 
     it('should return UserAlreadyVerifiedException error when user is already verified', async () => {
       const command = new VerifyEmailCommand('verified@example.com', 'ABC123');
-      const mockUser = UserMother.createVerified({
-        id: 1,
-        email: 'verified@example.com',
-      });
+      const mockCredential = CredentialAccountMother.createVerified({ id: 1, email: 'verified@example.com' });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
 
       const result = await handler.execute(command);
 
       expect(result.isErr()).toBe(true);
       expect(result._unsafeUnwrapErr()).toBeInstanceOf(UserAlreadyVerifiedException);
-      expect(tokenContract.findActiveByUserId).not.toHaveBeenCalled();
+      expect(tokenContract.findActiveByCredentialAccountId).not.toHaveBeenCalled();
     });
 
     it('should return InvalidVerificationCodeException error when no active token exists', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'ABC123');
-      const mockUser = UserMother.createPendingVerification({
-        id: 1,
-        email: 'test@example.com',
-      });
+      const mockCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: 'test@example.com' });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(null);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(null);
 
       const result = await handler.execute(command);
 
@@ -183,18 +172,15 @@ describe('VerifyEmailHandler', () => {
 
     it('should return VerificationCodeExpiredException error when token is expired', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'ABC123');
-      const mockUser = UserMother.createPendingVerification({
-        id: 1,
-        email: 'test@example.com',
-      });
+      const mockCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: 'test@example.com' });
       const expiredToken = createMockToken({
-        userId: 1,
+        credentialAccountId: 1,
         codeHash: 'valid-hash',
-        expiresAt: new Date(Date.now() - 1000), // Already expired
+        expiresAt: new Date(Date.now() - 1000),
       });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(expiredToken);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(expiredToken);
 
       const result = await handler.execute(command);
 
@@ -204,17 +190,11 @@ describe('VerifyEmailHandler', () => {
 
     it('should return InvalidVerificationCodeException error when code does not match', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'WRONG1');
-      const mockUser = UserMother.createPendingVerification({
-        id: 1,
-        email: 'test@example.com',
-      });
-      const mockToken = createMockToken({
-        userId: 1,
-        codeHash: 'correct-hash',
-      });
+      const mockCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: 'test@example.com' });
+      const mockToken = createMockToken({ credentialAccountId: 1, codeHash: 'correct-hash' });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('wrong-hash');
 
       const result = await handler.execute(command);
@@ -225,17 +205,11 @@ describe('VerifyEmailHandler', () => {
 
     it('should convert code to uppercase before hashing', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'abc123');
-      const mockUser = UserMother.createPendingVerification({
-        id: 1,
-        email: 'test@example.com',
-      });
-      const mockToken = createMockToken({
-        userId: 1,
-        codeHash: 'valid-hash',
-      });
+      const mockCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: 'test@example.com' });
+      const mockToken = createMockToken({ credentialAccountId: 1, codeHash: 'valid-hash' });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('valid-hash');
       tokenContract.persist.mockResolvedValue({} as EmailVerificationTokenModel);
 
@@ -246,18 +220,14 @@ describe('VerifyEmailHandler', () => {
 
     it('should mark token as used after successful verification', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'ABC123');
-      const mockUser = UserMother.createPendingVerification({
+      const mockCredential = CredentialAccountMother.createPendingVerification({
         id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440002',
         email: 'test@example.com',
       });
-      const mockToken = createMockToken({
-        userId: 1,
-        codeHash: 'valid-hash',
-      });
+      const mockToken = createMockToken({ credentialAccountId: 1, codeHash: 'valid-hash' });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('valid-hash');
       tokenContract.persist.mockResolvedValue({} as EmailVerificationTokenModel);
 
@@ -270,21 +240,16 @@ describe('VerifyEmailHandler', () => {
 
   describe('regression: handler does NOT contain rate limiting logic', () => {
     it('should NOT inject VERIFICATION_ATTEMPT_CONTRACT', () => {
-      // The handler should not have any verification attempt tracking
-      // This is a structural test to ensure rate limiting was removed
       const handlerKeys = Object.keys(handler);
       expect(handlerKeys).not.toContain('attemptContract');
       expect(handlerKeys).not.toContain('verificationAttemptContract');
     });
 
     it('should only use domain logic dependencies', () => {
-      // Verify handler only has the expected dependencies
-      // mediator, eventPublisher, tokenContract, codeGenerator
       const privateProps = Object.getOwnPropertyNames(handler).filter(
         (key) => key.startsWith('_') || !['constructor', 'execute'].includes(key),
       );
 
-      // Should not have any rate limiting related properties
       expect(privateProps.some((p) => p.toLowerCase().includes('attempt'))).toBe(false);
       expect(privateProps.some((p) => p.toLowerCase().includes('ratelimit'))).toBe(false);
       expect(privateProps.some((p) => p.toLowerCase().includes('block'))).toBe(false);
@@ -292,21 +257,13 @@ describe('VerifyEmailHandler', () => {
 
     it('should return domain exception errors without tracking attempts', async () => {
       const command = new VerifyEmailCommand('test@example.com', 'WRONG1');
-      const mockUser = UserMother.createPendingVerification({
-        id: 1,
-        email: 'test@example.com',
-      });
-      const mockToken = createMockToken({
-        userId: 1,
-        codeHash: 'correct-hash',
-      });
+      const mockCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: 'test@example.com' });
+      const mockToken = createMockToken({ credentialAccountId: 1, codeHash: 'correct-hash' });
 
-      mediatorService.user.findByEmail.mockResolvedValue(mockUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(mockToken);
+      mediatorService.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: mockCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(mockToken);
       codeGenerator.hashCode.mockReturnValue('wrong-hash');
 
-      // Should return err() cleanly without any side effects
-      // Rate limiting is now handled by RateLimitInterceptor
       const result = await handler.execute(command);
 
       expect(result.isErr()).toBe(true);

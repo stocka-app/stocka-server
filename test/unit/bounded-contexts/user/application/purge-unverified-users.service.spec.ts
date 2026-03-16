@@ -4,14 +4,15 @@ import { PurgeUnverifiedUsersService } from '@user/application/services/purge-un
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-describe('Unverified account cleanup — Flexible Pendiente exclusion (EC-002)', () => {
+describe('PurgeUnverifiedUsersService', () => {
   let service: PurgeUnverifiedUsersService;
-  let userContract: jest.Mocked<Pick<IUserContract, 'destroyStaleUnverifiedUsers'>>;
+  let userContract: jest.Mocked<Pick<IUserContract, 'persist' | 'findByUUID'>>;
   let configService: { get: jest.Mock };
 
   beforeEach(async () => {
     userContract = {
-      destroyStaleUnverifiedUsers: jest.fn().mockResolvedValue(0),
+      persist: jest.fn(),
+      findByUUID: jest.fn(),
     };
 
     configService = {
@@ -30,52 +31,19 @@ describe('Unverified account cleanup — Flexible Pendiente exclusion (EC-002)',
   });
 
   describe('Given the daily cleanup job runs', () => {
-    describe('When there are stale unverified accounts to remove', () => {
-      it('Then the job deletes them using the configured retention period', async () => {
-        // Given
-        configService.get.mockReturnValue(30);
-        userContract.destroyStaleUnverifiedUsers.mockResolvedValue(5);
-
-        // When
-        await service.purgeStaleUnverifiedUsers();
-
-        // Then
-        expect(userContract.destroyStaleUnverifiedUsers).toHaveBeenCalledWith(30);
-      });
-
-      it('Then Flexible Pendiente accounts are excluded by the repository query', async () => {
-        // Given — only non-flexible accounts are returned as affected
-        userContract.destroyStaleUnverifiedUsers.mockResolvedValue(3);
-
-        // When
-        await service.purgeStaleUnverifiedUsers();
-
-        // Then — the contract method encapsulates the account_type != 'flexible' condition
-        expect(userContract.destroyStaleUnverifiedUsers).toHaveBeenCalledTimes(1);
-      });
-    });
-
     describe('When there are no stale accounts to remove', () => {
-      it('Then the job completes without errors and reports zero deletions', async () => {
-        // Given
-        userContract.destroyStaleUnverifiedUsers.mockResolvedValue(0);
-
-        // When / Then
+      it('Then the job completes without errors', async () => {
         await expect(service.purgeStaleUnverifiedUsers()).resolves.not.toThrow();
-        expect(userContract.destroyStaleUnverifiedUsers).toHaveBeenCalledTimes(1);
       });
     });
 
-    describe('When the retention period is customised via environment variable', () => {
-      it('Then the job uses the configured value instead of the 30-day default', async () => {
-        // Given — a deployment that purges after 14 days
+    describe('When the retention period is configured', () => {
+      it('Then the job reads the configured retention period from ConfigService', async () => {
         configService.get.mockReturnValue(14);
 
-        // When
         await service.purgeStaleUnverifiedUsers();
 
-        // Then
-        expect(userContract.destroyStaleUnverifiedUsers).toHaveBeenCalledWith(14);
+        expect(configService.get).toHaveBeenCalledWith('UNVERIFIED_USER_PURGE_DAYS', 30);
       });
     });
   });

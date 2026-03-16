@@ -7,21 +7,18 @@ import { EmailAlreadyExistsException } from '@authentication/domain/exceptions/e
 import { InvalidPasswordException } from '@authentication/domain/exceptions/invalid-password.exception';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { ok, err, Result } from '@shared/domain/result';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 describe('SignUpHandler', () => {
   let handler: SignUpHandler;
   let signUpSaga: { execute: jest.Mock };
 
-  const mockUser = UserMother.create({
-    id: 1,
-    email: 'test@example.com',
-    username: 'testuser',
-  }) as unknown as IPersistedUserView;
+  const mockUser = UserMother.create({ id: 1 });
+  const mockCredential = CredentialAccountMother.create({ accountId: 1, email: 'test@example.com' });
 
   const successOutput: SignUpSagaOutput = {
     user: mockUser,
+    credential: mockCredential,
     accessToken: 'mock-access-token',
     refreshToken: 'mock-refresh-token',
     emailSent: true,
@@ -53,7 +50,7 @@ describe('SignUpHandler', () => {
         expect(result.isOk()).toBe(true);
         const data = result._unsafeUnwrap();
         expect(data.user).toBeDefined();
-        expect(data.user.email).toBe('test@example.com');
+        expect(data.credential.email).toBe('test@example.com');
         expect(data.accessToken).toBe('mock-access-token');
         expect(data.refreshToken).toBe('mock-refresh-token');
         expect(data.emailVerificationRequired).toBe(true);

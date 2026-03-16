@@ -22,13 +22,13 @@ const NEW_SESSION_UUID = 'b1b2c3d4-e5f6-7890-abcd-ef1234567891';
 function buildValidSession(uuid: string = VALID_SESSION_UUID): SessionModel {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
-  return SessionModel.reconstitute({ id: 1, uuid, userId: 1, tokenHash: 'hash', expiresAt });
+  return SessionModel.reconstitute({ id: 1, uuid, accountId: 1, tokenHash: 'hash', expiresAt });
 }
 
 function buildExpiredSession(uuid: string = VALID_SESSION_UUID): SessionModel {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() - 1);
-  return SessionModel.reconstitute({ id: 1, uuid, userId: 1, tokenHash: 'hash', expiresAt });
+  return SessionModel.reconstitute({ id: 1, uuid, accountId: 1, tokenHash: 'hash', expiresAt });
 }
 
 // ─── ArchiveOldSessionStep ───────────────────────────────────────────────────
@@ -99,6 +99,7 @@ describe('CreateNewSessionStep', () => {
           refreshToken: 'old-token',
           user: UserMother.create({ id: 1 }) as unknown as RefreshSessionSagaContext['user'],
           newRefreshToken: 'new-refresh-token',
+          accountId: 10,
         };
         await step.execute(ctx);
         expect(sessionContract.persist).toHaveBeenCalledTimes(1);
@@ -173,7 +174,8 @@ describe('GenerateRefreshTokensStep', () => {
       it('Then it generates access and refresh tokens and sets them on ctx', async () => {
         const ctx: RefreshSessionSagaContext = {
           refreshToken: 'old-token',
-          user: UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440002', email: 'u@t.com' }) as unknown as RefreshSessionSagaContext['user'],
+          user: UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440002' }),
+          email: 'u@t.com',
         };
         await step.execute(ctx);
         expect(ctx.accessToken).toBe('signed-token');
@@ -221,7 +223,8 @@ describe('GenerateRefreshTokensStep', () => {
         const stepWithDefaults = newModule.get<GenerateRefreshTokensStep>(GenerateRefreshTokensStep);
         const ctx: RefreshSessionSagaContext = {
           refreshToken: 'old-token',
-          user: UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440002', email: 'u@t.com' }) as unknown as RefreshSessionSagaContext['user'],
+          user: UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440002' }),
+          email: 'u@t.com',
         };
         await stepWithDefaults.execute(ctx);
 
@@ -302,7 +305,7 @@ describe('ValidateRefreshTokenStep', () => {
   let configService: { getOrThrow: jest.Mock };
   let mediator: { user: { findByUUID: jest.Mock } };
 
-  const VALID_USER = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440001', email: 'u@test.com' });
+  const VALID_USER = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440001' });
 
   beforeEach(async () => {
     sessionContract = { findByTokenHash: jest.fn() };

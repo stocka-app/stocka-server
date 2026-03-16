@@ -1,445 +1,301 @@
-import { AccountType, UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { SocialAccountModel } from '@user/domain/models/social-account.model';
 import { UserCreatedEvent } from '@user/domain/events/user-created.event';
-import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
-import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
-import { ProviderLinkedEvent } from '@user/domain/events/provider-linked.event';
-import { AccountBecameFlexibleEvent } from '@user/domain/events/account-became-flexible.event';
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function buildPersistedUser(overrides?: Partial<Parameters<typeof UserAggregate.reconstitute>[0]>): UserAggregate {
+  return UserAggregate.reconstitute({
+    id: 1,
+    uuid: '550e8400-e29b-41d4-a716-446655440000',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    archivedAt: null,
+    ...overrides,
+  });
+}
+
+// ── UserAggregate (pure anchor) ────────────────────────────────────────────────
 
 describe('UserAggregate', () => {
-  describe('create', () => {
-    it('should create a user with valid data', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hashedpassword',
+  describe('Given UserAggregate.create() is called', () => {
+    describe('When a new user is created', () => {
+      it('Then the user has a uuid and no id (not yet persisted)', () => {
+        const user = UserAggregate.create();
+
+        expect(user.uuid).toBeDefined();
+        expect(user.id).toBeUndefined();
       });
 
-      expect(user.email).toBe('test@example.com');
-      expect(user.username).toBe('testuser');
-      expect(user.passwordHash).toBe('hashedpassword');
-      expect(user.uuid).toBeDefined();
-      expect(user.id).toBeUndefined();
-      expect(user.isArchived()).toBe(false);
-    });
+      it('Then the user is not archived', () => {
+        const user = UserAggregate.create();
 
-    it('should create a user without password (social authentication)', () => {
-      const user = UserAggregate.create({
-        email: 'social@example.com',
-        username: 'socialuser',
-        passwordHash: null,
+        expect(user.isArchived()).toBe(false);
       });
 
-      expect(user.hasPassword()).toBe(false);
-      expect(user.passwordHash).toBeNull();
-    });
+      it('Then exactly one UserCreatedEvent is emitted', () => {
+        const user = UserAggregate.create();
+        const events = user.getUncommittedEvents();
 
-    it('should throw an error for invalid email', () => {
-      expect(() =>
-        UserAggregate.create({
-          email: 'invalid-email',
-          username: 'testuser',
-          passwordHash: 'hashedpassword',
-        }),
-      ).toThrow();
-    });
+        expect(events).toHaveLength(1);
+        expect(events[0]).toBeInstanceOf(UserCreatedEvent);
+      });
 
-    it('should throw an error for invalid username (too short)', () => {
-      expect(() =>
-        UserAggregate.create({
-          email: 'test@example.com',
-          username: 'ab',
-          passwordHash: 'hashedpassword',
-        }),
-      ).toThrow();
-    });
+      it('Then the UserCreatedEvent carries the user uuid', () => {
+        const user = UserAggregate.create();
+        const event = user.getUncommittedEvents()[0] as UserCreatedEvent;
 
-    it('should throw an error for invalid username (special chars)', () => {
-      expect(() =>
-        UserAggregate.create({
-          email: 'test@example.com',
-          username: 'test@user!',
-          passwordHash: 'hashedpassword',
-        }),
-      ).toThrow();
-    });
-
-    it('should throw an error for invalid username (too long, exceeds 30 chars)', () => {
-      expect(() =>
-        UserAggregate.create({
-          email: 'test@example.com',
-          username: 'a'.repeat(31),
-          passwordHash: 'hashedpassword',
-        }),
-      ).toThrow();
+        expect(event.userUUID).toBe(user.uuid);
+      });
     });
   });
 
-  describe('reconstitute', () => {
-    it('should reconstitute a user from persisted data', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hashedpassword',
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
-        archivedAt: null,
+  describe('Given UserAggregate.reconstitute() is called with persisted data', () => {
+    describe('When the aggregate is hydrated from storage', () => {
+      it('Then id and uuid are preserved', () => {
+        const user = buildPersistedUser();
+
+        expect(user.id).toBe(1);
+        expect(user.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
       });
 
-      expect(user.id).toBe(1);
-      expect(user.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
-      expect(user.email).toBe('test@example.com');
+      it('Then no domain events are emitted', () => {
+        const user = buildPersistedUser();
+
+        expect(user.getUncommittedEvents()).toHaveLength(0);
+      });
+
+      it('Then archivedAt is null for an active user', () => {
+        const user = buildPersistedUser({ archivedAt: null });
+
+        expect(user.isArchived()).toBe(false);
+        expect(user.archivedAt).toBeNull();
+      });
     });
   });
 
-  describe('hasPassword', () => {
-    it('should return true when user has password', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hashedpassword',
+  describe('Given an active user', () => {
+    describe('When archive() is called', () => {
+      it('Then the user becomes archived', () => {
+        const user = buildPersistedUser();
+
+        user.archive();
+
+        expect(user.isArchived()).toBe(true);
+        expect(user.archivedAt).not.toBeNull();
       });
-
-      expect(user.hasPassword()).toBe(true);
-    });
-
-    it('should return false when user has no password', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: null,
-      });
-
-      expect(user.hasPassword()).toBe(false);
     });
   });
 
-  describe('archive and restore', () => {
-    it('should archive a user', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hashedpassword',
+  describe('Given an archived user', () => {
+    describe('When restore() is called', () => {
+      it('Then the user becomes active again', () => {
+        const user = buildPersistedUser({ archivedAt: new Date('2024-06-01') });
+
+        expect(user.isArchived()).toBe(true);
+
+        user.restore();
+
+        expect(user.isArchived()).toBe(false);
+        expect(user.archivedAt).toBeNull();
       });
-
-      expect(user.isArchived()).toBe(false);
-
-      user.archive();
-
-      expect(user.isArchived()).toBe(true);
-      expect(user.archivedAt).not.toBeNull();
-    });
-
-    it('should restore an archived user', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hashedpassword',
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01'),
-        archivedAt: new Date('2024-06-01'),
-      });
-
-      expect(user.isArchived()).toBe(true);
-
-      user.restore();
-
-      expect(user.isArchived()).toBe(false);
-      expect(user.archivedAt).toBeNull();
     });
   });
 
-  describe('updatePasswordHash', () => {
-    it('should update the password hash', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'oldhash',
+  describe('Given events have been committed', () => {
+    describe('When commit() is called', () => {
+      it('Then all uncommitted events are cleared', () => {
+        const user = UserAggregate.create();
+
+        expect(user.getUncommittedEvents()).toHaveLength(1);
+
+        user.commit();
+
+        expect(user.getUncommittedEvents()).toHaveLength(0);
       });
-
-      // Wait a bit to ensure updatedAt changes
-      user.updatePasswordHash('newhash');
-
-      expect(user.passwordHash).toBe('newhash');
-    });
-  });
-
-  describe('Domain Events', () => {
-    it('should emit UserCreatedEvent when created via create()', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash123',
-      });
-
-      const events = user.getUncommittedEvents();
-
-      expect(events).toHaveLength(1);
-      expect(events[0]).toBeInstanceOf(UserCreatedEvent);
-      const event = events[0] as UserCreatedEvent;
-      expect(event.userUUID).toBe(user.uuid);
-      expect(event.email).toBe('test@example.com');
-      expect(event.username).toBe('testuser');
-    });
-
-    it('should emit UserCreatedFromSocialEvent when created via createFromSocial()', () => {
-      const user = UserAggregate.createFromSocial({
-        email: 'social@example.com',
-        username: 'socialuser',
-        passwordHash: null,
-        provider: 'google',
-      });
-
-      const events = user.getUncommittedEvents();
-
-      expect(events).toHaveLength(1);
-      expect(events[0]).toBeInstanceOf(UserCreatedFromSocialEvent);
-      const event = events[0] as UserCreatedFromSocialEvent;
-      expect(event.userUUID).toBe(user.uuid);
-      expect(event.email).toBe('social@example.com');
-      expect(event.provider).toBe('google');
-    });
-
-    it('should NOT emit events when reconstituted from database', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash123',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-
-      const events = user.getUncommittedEvents();
-
-      expect(events).toHaveLength(0);
-    });
-
-    it('should emit UserPasswordUpdatedEvent when password is updated', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'oldHash',
-      });
-      user.commit(); // Clear creation event
-
-      user.updatePasswordHash('newHash');
-
-      const events = user.getUncommittedEvents();
-
-      expect(events).toHaveLength(1);
-      expect(events[0]).toBeInstanceOf(UserPasswordUpdatedEvent);
-      const event = events[0] as UserPasswordUpdatedEvent;
-      expect(event.userUUID).toBe(user.uuid);
-    });
-
-    it('should clear events after commit()', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash123',
-      });
-
-      expect(user.getUncommittedEvents()).toHaveLength(1);
-
-      user.commit();
-
-      expect(user.getUncommittedEvents()).toHaveLength(0);
-    });
-  });
-
-  describe('accountType and createdWith', () => {
-    it('should default to manual accountType and email createdWith for create()', () => {
-      const user = UserAggregate.create({
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash',
-      });
-
-      expect(user.accountType).toBe(AccountType.MANUAL);
-      expect(user.createdWith).toBe('email');
-    });
-
-    it('should set social accountType and provider createdWith for createFromSocial()', () => {
-      const user = UserAggregate.createFromSocial({
-        email: 'social@example.com',
-        username: 'socialuser',
-        passwordHash: null,
-        provider: 'google',
-      });
-
-      expect(user.accountType).toBe(AccountType.SOCIAL);
-      expect(user.createdWith).toBe('google');
-    });
-
-    it('should restore accountType and createdWith on reconstitute()', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash',
-        createdWith: 'email',
-        accountType: AccountType.FLEXIBLE,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-
-      expect(user.accountType).toBe(AccountType.FLEXIBLE);
-      expect(user.createdWith).toBe('email');
-    });
-  });
-
-  describe('becomeFlexible', () => {
-    it('should set accountType to flexible and emit events for a manual account', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash',
-        accountType: AccountType.MANUAL,
-        createdWith: 'email',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-
-      user.becomeFlexible('google', false);
-
-      expect(user.accountType).toBe(AccountType.FLEXIBLE);
-
-      const events = user.getUncommittedEvents();
-      expect(events).toHaveLength(2);
-      expect(events[0]).toBeInstanceOf(ProviderLinkedEvent);
-      expect(events[1]).toBeInstanceOf(AccountBecameFlexibleEvent);
-
-      const linked = events[0] as ProviderLinkedEvent;
-      expect(linked.provider).toBe('google');
-      expect(linked.userUUID).toBe(user.uuid);
-      expect(linked.isFlexiblePending).toBe(false);
-
-      const flexible = events[1] as AccountBecameFlexibleEvent;
-      expect(flexible.trigger).toBe('oauth_link');
-      expect(flexible.userUUID).toBe(user.uuid);
-    });
-
-    it('should set isFlexiblePending to true when account is pending verification', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash',
-        accountType: AccountType.MANUAL,
-        status: 'pending_verification',
-        createdWith: 'email',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-
-      user.becomeFlexible('google', true);
-
-      const events = user.getUncommittedEvents();
-      const linked = events[0] as ProviderLinkedEvent;
-      expect(linked.isFlexiblePending).toBe(true);
-    });
-
-    it('should emit only ProviderLinkedEvent if already flexible', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash',
-        accountType: AccountType.FLEXIBLE,
-        createdWith: 'email',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-
-      user.becomeFlexible('facebook', false);
-
-      const events = user.getUncommittedEvents();
-      expect(events).toHaveLength(1);
-      expect(events[0]).toBeInstanceOf(ProviderLinkedEvent);
-    });
-  });
-
-  describe('emailVerifiedAt and verification blocking', () => {
-    it('should return the emailVerifiedAt date when set on reconstitute', () => {
-      const verifiedDate = new Date('2024-06-01T12:00:00Z');
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash',
-        emailVerifiedAt: verifiedDate,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-      expect(user.emailVerifiedAt).toEqual(verifiedDate);
-    });
-
-    it('should clear verificationBlockedUntil after unblockVerification()', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'test@example.com',
-        username: 'testuser',
-        passwordHash: 'hash',
-        verificationBlockedUntil: new Date(Date.now() + 60000),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-      expect(user.verificationBlockedUntil).not.toBeNull();
-      user.unblockVerification();
-      expect(user.verificationBlockedUntil).toBeNull();
-    });
-  });
-
-  describe('setPasswordAndBecomeFlexible', () => {
-    it('should set password hash, change accountType to flexible, and emit AccountBecameFlexibleEvent with trigger password_set', () => {
-      const user = UserAggregate.reconstitute({
-        id: 1,
-        uuid: '550e8400-e29b-41d4-a716-446655440000',
-        email: 'social@example.com',
-        username: 'socialuser',
-        passwordHash: null,
-        accountType: AccountType.SOCIAL,
-        createdWith: 'google',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        archivedAt: null,
-      });
-
-      user.setPasswordAndBecomeFlexible('newhashedpassword');
-
-      expect(user.accountType).toBe(AccountType.FLEXIBLE);
-      expect(user.passwordHash).toBe('newhashedpassword');
-
-      const events = user.getUncommittedEvents();
-      expect(events).toHaveLength(1);
-      expect(events[0]).toBeInstanceOf(AccountBecameFlexibleEvent);
-
-      const flexible = events[0] as AccountBecameFlexibleEvent;
-      expect(flexible.trigger).toBe('password_set');
-      expect(flexible.userUUID).toBe(user.uuid);
     });
   });
 });
+
+// ── CredentialAccountModel ─────────────────────────────────────────────────────
+
+describe('CredentialAccountModel', () => {
+  describe('Given CredentialAccountModel.create() is called with email and passwordHash', () => {
+    describe('When a new credential is created', () => {
+      it('Then email and passwordHash are stored', () => {
+        const credential = CredentialAccountModel.create({
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'hashedpassword',
+          createdWith: 'email',
+        });
+
+        expect(credential.email).toBe('test@example.com');
+        expect(credential.passwordHash).toBe('hashedpassword');
+      });
+
+      it('Then the credential is in pending_verification status', () => {
+        const credential = CredentialAccountModel.create({
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'hashedpassword',
+          createdWith: 'email',
+        });
+
+        expect(credential.isPendingVerification()).toBe(true);
+      });
+
+      it('Then hasPassword() returns true when passwordHash is provided', () => {
+        const credential = CredentialAccountModel.create({
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'hashedpassword',
+          createdWith: 'email',
+        });
+
+        expect(credential.hasPassword()).toBe(true);
+      });
+
+      it('Then hasPassword() returns false when passwordHash is null (social auth)', () => {
+        const credential = CredentialAccountModel.create({
+          accountId: 1,
+          email: 'social@example.com',
+          passwordHash: null,
+          createdWith: 'google',
+        });
+
+        expect(credential.hasPassword()).toBe(false);
+      });
+    });
+  });
+
+  describe('Given CredentialAccountModel.createFromSocial() is called', () => {
+    describe('When a social credential is created', () => {
+      it('Then email is stored and passwordHash is null', () => {
+        const credential = CredentialAccountModel.createFromSocial({
+          accountId: 1,
+          email: 'social@example.com',
+          provider: 'google',
+        });
+
+        expect(credential.email).toBe('social@example.com');
+        expect(credential.passwordHash).toBeNull();
+        expect(credential.createdWith).toBe('google');
+      });
+
+      it('Then the credential is email verified by provider', () => {
+        const credential = CredentialAccountModel.createFromSocial({
+          accountId: 1,
+          email: 'social@example.com',
+          provider: 'google',
+        });
+
+        expect(credential.isEmailVerified()).toBe(true);
+      });
+    });
+  });
+
+  describe('Given a reconstituted credential', () => {
+    describe('When updatePasswordHash() is called', () => {
+      it('Then the new password hash is set', () => {
+        const credential = CredentialAccountModel.reconstitute({
+          id: 1,
+          uuid: '660f9511-f30c-4ae5-b827-557766551111',
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'oldhash',
+          status: 'active',
+          emailVerifiedAt: new Date('2024-01-01'),
+          verificationBlockedUntil: null,
+          createdWith: 'email',
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          archivedAt: null,
+        });
+
+        credential.updatePasswordHash('newhash');
+
+        expect(credential.passwordHash).toBe('newhash');
+      });
+    });
+
+    describe('When verifyEmail() is called', () => {
+      it('Then the credential becomes active and email is marked verified', () => {
+        const credential = CredentialAccountModel.reconstitute({
+          id: 1,
+          uuid: '660f9511-f30c-4ae5-b827-557766551111',
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'hash',
+          status: 'pending_verification',
+          emailVerifiedAt: null,
+          verificationBlockedUntil: null,
+          createdWith: 'email',
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          archivedAt: null,
+        });
+
+        credential.verifyEmail();
+
+        expect(credential.isEmailVerified()).toBe(true);
+        expect(credential.isPendingVerification()).toBe(false);
+      });
+    });
+
+    describe('When blockVerification() is called then unblockVerification()', () => {
+      it('Then verificationBlockedUntil is set then cleared', () => {
+        const credential = CredentialAccountModel.reconstitute({
+          id: 1,
+          uuid: '660f9511-f30c-4ae5-b827-557766551111',
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'hash',
+          status: 'pending_verification',
+          emailVerifiedAt: null,
+          verificationBlockedUntil: null,
+          createdWith: 'email',
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          archivedAt: null,
+        });
+
+        const blockUntil = new Date(Date.now() + 60000);
+        credential.blockVerification(blockUntil);
+        expect(credential.verificationBlockedUntil).toEqual(blockUntil);
+
+        credential.unblockVerification();
+        expect(credential.verificationBlockedUntil).toBeNull();
+      });
+    });
+
+    describe('When emailVerifiedAt is set on reconstitute', () => {
+      it('Then isEmailVerified() returns true', () => {
+        const verifiedDate = new Date('2024-06-01T12:00:00Z');
+        const credential = CredentialAccountModel.reconstitute({
+          id: 1,
+          uuid: '660f9511-f30c-4ae5-b827-557766551111',
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'hash',
+          status: 'active',
+          emailVerifiedAt: verifiedDate,
+          verificationBlockedUntil: null,
+          createdWith: 'email',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          archivedAt: null,
+        });
+
+        expect(credential.isEmailVerified()).toBe(true);
+        expect(credential.emailVerifiedAt).toEqual(verifiedDate);
+      });
+    });
+  });
+});
+
+// ── SocialAccountModel ─────────────────────────────────────────────────────────
 
 describe('SocialAccountModel', () => {
   describe('Given props without createdAt or updatedAt', () => {
@@ -451,6 +307,7 @@ describe('SocialAccountModel', () => {
         providerId: 'google-id-123',
       });
       const after = Date.now();
+
       expect(account.createdAt.getTime()).toBeGreaterThanOrEqual(before);
       expect(account.createdAt.getTime()).toBeLessThanOrEqual(after);
       expect(account.updatedAt.getTime()).toBeGreaterThanOrEqual(before);

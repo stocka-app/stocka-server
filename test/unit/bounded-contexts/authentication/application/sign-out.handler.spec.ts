@@ -10,16 +10,16 @@ import { UserSignedOutEvent } from '@authentication/domain/events/user-signed-ou
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 
-function buildSession(uuid: string, userId: number): SessionModel {
+function buildSession(uuid: string, accountId: number): SessionModel {
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
-  return SessionModel.reconstitute({ id: 1, uuid, userId, tokenHash: 'hash', expiresAt });
+  return SessionModel.reconstitute({ id: 1, uuid, accountId, tokenHash: 'hash', expiresAt });
 }
 
 describe('SignOutHandler', () => {
   let handler: SignOutHandler;
-  let sessionContract: jest.Mocked<Pick<ISessionContract, 'findByTokenHash' | 'archiveAllByUserId'>>;
-  let mediator: { user: { findById: jest.Mock } };
+  let sessionContract: jest.Mocked<Pick<ISessionContract, 'findByTokenHash' | 'archiveAllByAccountId'>>;
+  let mediator: { user: { findByAccountId: jest.Mock } };
   let eventBus: { publish: jest.Mock };
 
   const SESSION_UUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
@@ -29,12 +29,12 @@ describe('SignOutHandler', () => {
   beforeEach(async () => {
     sessionContract = {
       findByTokenHash: jest.fn(),
-      archiveAllByUserId: jest.fn().mockResolvedValue(undefined),
+      archiveAllByAccountId: jest.fn().mockResolvedValue(undefined),
     };
 
     mediator = {
       user: {
-        findById: jest.fn(),
+        findByAccountId: jest.fn(),
       },
     };
 
@@ -57,15 +57,15 @@ describe('SignOutHandler', () => {
   describe('Given a valid refresh token linked to an active session', () => {
     beforeEach(() => {
       sessionContract.findByTokenHash.mockResolvedValue(buildSession(SESSION_UUID, 1));
-      mediator.user.findById.mockResolvedValue(
-        UserMother.create({ id: 1, uuid: USER_UUID, email: 'user@test.com', username: 'tester' }),
+      mediator.user.findByAccountId.mockResolvedValue(
+        UserMother.create({ id: 1, uuid: USER_UUID }),
       );
     });
 
     describe('When the handler executes', () => {
       it('Then it archives all sessions for the user', async () => {
         await handler.execute(new SignOutCommand(FAKE_REFRESH_TOKEN));
-        expect(sessionContract.archiveAllByUserId).toHaveBeenCalledWith(1);
+        expect(sessionContract.archiveAllByAccountId).toHaveBeenCalledWith(1);
       });
 
       it('Then it publishes SessionArchivedEvent and UserSignedOutEvent', async () => {
@@ -88,7 +88,7 @@ describe('SignOutHandler', () => {
     describe('When the handler executes', () => {
       it('Then it does not archive any sessions', async () => {
         await handler.execute(new SignOutCommand(FAKE_REFRESH_TOKEN));
-        expect(sessionContract.archiveAllByUserId).not.toHaveBeenCalled();
+        expect(sessionContract.archiveAllByAccountId).not.toHaveBeenCalled();
       });
 
       it('Then it does not publish any events', async () => {
@@ -101,13 +101,13 @@ describe('SignOutHandler', () => {
   describe('Given a valid session but user not found', () => {
     beforeEach(() => {
       sessionContract.findByTokenHash.mockResolvedValue(buildSession(SESSION_UUID, 99));
-      mediator.user.findById.mockResolvedValue(null);
+      mediator.user.findByAccountId.mockResolvedValue(null);
     });
 
     describe('When the handler executes', () => {
       it('Then it still archives sessions but does not publish events', async () => {
         await handler.execute(new SignOutCommand(FAKE_REFRESH_TOKEN));
-        expect(sessionContract.archiveAllByUserId).toHaveBeenCalledWith(99); // userId from session
+        expect(sessionContract.archiveAllByAccountId).toHaveBeenCalledWith(99);
         expect(eventBus.publish).not.toHaveBeenCalled();
       });
     });

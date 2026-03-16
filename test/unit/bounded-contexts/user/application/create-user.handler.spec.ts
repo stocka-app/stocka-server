@@ -43,15 +43,12 @@ describe('CreateUserHandler', () => {
           UserMother.create({
             id: 1,
             uuid: user.uuid,
-            email: user.email,
-            username: user.username,
-            passwordHash: user.passwordHash,
           }),
         ),
       );
     });
 
-    describe('When creating a new manual user', () => {
+    describe('When creating a new user', () => {
       it('Then the result is ok', async () => {
         const result = await handler.execute(
           new CreateUserCommand(VALID_EMAIL, VALID_USERNAME, VALID_HASH),
@@ -60,15 +57,14 @@ describe('CreateUserHandler', () => {
         expect(result.isOk()).toBe(true);
       });
 
-      it('Then the persisted user contains the correct data', async () => {
+      it('Then the persisted user has an id and uuid', async () => {
         const result = await handler.execute(
           new CreateUserCommand(VALID_EMAIL, VALID_USERNAME, VALID_HASH),
         );
         const user = result._unsafeUnwrap();
 
-        expect(user.email).toBe(VALID_EMAIL);
-        expect(user.username).toBe(VALID_USERNAME);
-        expect(user.passwordHash).toBe(VALID_HASH);
+        expect(user.id).toBe(1);
+        expect(user.uuid).toBeDefined();
       });
 
       it('Then the user contract persist is called once', async () => {
@@ -81,48 +77,6 @@ describe('CreateUserHandler', () => {
         await handler.execute(new CreateUserCommand(VALID_EMAIL, VALID_USERNAME, VALID_HASH));
 
         expect(eventPublisher.mergeObjectContext).toHaveBeenCalledTimes(1);
-      });
-    });
-  });
-
-  describe('Given an invalid email format', () => {
-    describe('When attempting to create the user', () => {
-      it('Then the result is err with errorCode INVALID_EMAIL', async () => {
-        const result = await handler.execute(
-          new CreateUserCommand('not-an-email', VALID_USERNAME, VALID_HASH),
-        );
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('INVALID_EMAIL');
-      });
-
-      it('Then no user is persisted', async () => {
-        await handler.execute(new CreateUserCommand('not-an-email', VALID_USERNAME, VALID_HASH));
-
-        expect(userContract.persist).not.toHaveBeenCalled();
-      });
-
-      it('Then no exception escapes — the error is returned as a Result', async () => {
-        await expect(
-          handler.execute(new CreateUserCommand('not-an-email', VALID_USERNAME, VALID_HASH)),
-        ).resolves.not.toThrow();
-      });
-    });
-  });
-
-  describe('Given an invalid username (too short)', () => {
-    describe('When attempting to create the user', () => {
-      it('Then the result is err with errorCode INVALID_USERNAME', async () => {
-        const result = await handler.execute(new CreateUserCommand(VALID_EMAIL, 'ab', VALID_HASH));
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('INVALID_USERNAME');
-      });
-
-      it('Then no user is persisted', async () => {
-        await handler.execute(new CreateUserCommand(VALID_EMAIL, 'ab', VALID_HASH));
-
-        expect(userContract.persist).not.toHaveBeenCalled();
       });
     });
   });

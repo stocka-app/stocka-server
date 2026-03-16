@@ -31,7 +31,7 @@ describe('FindUserByUUIDHandler', () => {
   describe('Given a registered user exists in the system', () => {
     beforeEach(() => {
       userContract.findByUUID.mockResolvedValue(
-        UserMother.create({ uuid: USER_UUID, email: 'alice@example.com', username: 'alice' }),
+        UserMother.create({ uuid: USER_UUID, id: 1 }),
       );
     });
 
@@ -42,13 +42,11 @@ describe('FindUserByUUIDHandler', () => {
         expect(result.isOk()).toBe(true);
       });
 
-      it('Then the result value contains the correct user data', async () => {
+      it('Then the result value contains the correct uuid', async () => {
         const result = await handler.execute(new FindUserByUUIDQuery(USER_UUID));
         const user = result._unsafeUnwrap();
 
         expect(user.uuid).toBe(USER_UUID);
-        expect(user.email).toBe('alice@example.com');
-        expect(user.username).toBe('alice');
       });
 
       it('Then the user contract is called with the exact UUID', async () => {

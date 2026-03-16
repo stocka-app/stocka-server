@@ -11,9 +11,10 @@ import { ISessionContract } from '@authentication/domain/contracts/session.contr
 import { UserSignedInEvent } from '@authentication/domain/events/user-signed-in.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
-const MOCK_USER = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440010', email: 'u@test.com', username: 'tester' });
+const MOCK_USER = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440010' });
+const MOCK_CREDENTIAL = CredentialAccountMother.createWithEmail('u@test.com');
 
 // ─── CreateSocialSessionStep ──────────────────────────────────────────────────
 describe('CreateSocialSessionStep', () => {
@@ -45,6 +46,7 @@ describe('CreateSocialSessionStep', () => {
           providerId: 'google-id-123',
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
           refreshToken: 'social-refresh-token',
+          accountId: 10,
         };
         await step.execute(ctx);
         expect(sessionContract.persist).toHaveBeenCalledTimes(1);
@@ -113,7 +115,7 @@ describe('GenerateSocialTokensStep', () => {
     step = module.get<GenerateSocialTokensStep>(GenerateSocialTokensStep);
   });
 
-  describe('Given a context with user set', () => {
+  describe('Given a context with user and credential set', () => {
     describe('When execute() is called', () => {
       it('Then it generates and sets accessToken and refreshToken on the context', async () => {
         const ctx: SocialSignInSagaContext = {
@@ -122,6 +124,7 @@ describe('GenerateSocialTokensStep', () => {
           provider: 'google',
           providerId: 'gid',
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
+          credential: MOCK_CREDENTIAL as unknown as SocialSignInSagaContext['credential'],
         };
         await step.execute(ctx);
         expect(ctx.accessToken).toBe('signed-token');
@@ -172,6 +175,7 @@ describe('GenerateSocialTokensStep', () => {
           provider: 'google',
           providerId: 'gid',
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
+          credential: MOCK_CREDENTIAL as unknown as SocialSignInSagaContext['credential'],
         };
         await stepWithDefaults.execute(ctx);
 
@@ -241,10 +245,9 @@ describe('ResolveSocialUserStep', () => {
   let mediator: {
     user: {
       findUserBySocialProvider: jest.Mock;
-      findByEmail: jest.Mock;
-      linkProviderToUser: jest.Mock;
-      findById: jest.Mock;
-      createUserFromSocial: jest.Mock;
+      findUserByEmail: jest.Mock;
+      linkSocialAccount: jest.Mock;
+      createUserFromOAuth: jest.Mock;
       existsByUsername: jest.Mock;
     };
   };
@@ -256,14 +259,23 @@ describe('ResolveSocialUserStep', () => {
     providerId: 'google-id-001',
   };
 
+  const MOCK_SOCIAL = { accountId: 20 };
+  const MOCK_CREDENTIAL = { email: 'user@test.com', id: 5 };
+  const MOCK_USER_WITH_SOCIAL = { user: MOCK_USER, social: MOCK_SOCIAL };
+  const MOCK_USER_WITH_CREDENTIAL = { user: MOCK_USER, credential: MOCK_CREDENTIAL };
+  const MOCK_OAUTH_RESULT = {
+    user: MOCK_USER,
+    credential: MOCK_CREDENTIAL,
+    social: MOCK_SOCIAL,
+  };
+
   beforeEach(async () => {
     mediator = {
       user: {
         findUserBySocialProvider: jest.fn(),
-        findByEmail: jest.fn(),
-        linkProviderToUser: jest.fn().mockResolvedValue(undefined),
-        findById: jest.fn(),
-        createUserFromSocial: jest.fn(),
+        findUserByEmail: jest.fn(),
+        linkSocialAccount: jest.fn().mockResolvedValue(MOCK_SOCIAL),
+        createUserFromOAuth: jest.fn().mockResolvedValue(MOCK_OAUTH_RESULT),
         existsByUsername: jest.fn().mockResolvedValue(false),
       },
     };
@@ -280,7 +292,8 @@ describe('ResolveSocialUserStep', () => {
 
   describe('Given an existing user linked to the provider (Path A)', () => {
     beforeEach(() => {
-      mediator.user.findUserBySocialProvider.mockResolvedValue(MOCK_USER);
+      mediator.user.findUserBySocialProvider.mockResolvedValue(MOCK_USER_WITH_SOCIAL);
+      mediator.user.findUserByEmail.mockResolvedValue(MOCK_USER_WITH_CREDENTIAL);
     });
 
     describe('When execute() is called', () => {
@@ -289,27 +302,25 @@ describe('ResolveSocialUserStep', () => {
         await step.execute(ctx);
         expect(ctx.user).toBeDefined();
         expect(ctx.path).toBe('existing-provider');
-        expect(mediator.user.findByEmail).not.toHaveBeenCalled();
+        expect(mediator.user.linkSocialAccount).not.toHaveBeenCalled();
       });
     });
   });
 
-  describe('Given an existing user found by email but with different auth method (Path B)', () => {
+  describe('Given an existing user found by email but with a different auth method (Path B)', () => {
     beforeEach(() => {
       mediator.user.findUserBySocialProvider.mockResolvedValue(null);
-      mediator.user.findByEmail.mockResolvedValue(MOCK_USER);
-      mediator.user.findById.mockResolvedValue(MOCK_USER);
+      mediator.user.findUserByEmail.mockResolvedValue(MOCK_USER_WITH_CREDENTIAL);
     });
 
     describe('When execute() is called', () => {
       it('Then it links the provider and sets ctx.path to linked-provider', async () => {
         const ctx = { ...BASE_CTX };
         await step.execute(ctx);
-        expect(mediator.user.linkProviderToUser).toHaveBeenCalledWith(
-          MOCK_USER.id,
-          'google',
-          'google-id-001',
-        );
+        expect(mediator.user.linkSocialAccount).toHaveBeenCalledWith(MOCK_USER.id, {
+          provider: 'google',
+          providerId: 'google-id-001',
+        });
         expect(ctx.path).toBe('linked-provider');
       });
     });
@@ -318,33 +329,15 @@ describe('ResolveSocialUserStep', () => {
   describe('Given a brand new user not in the system (Path C)', () => {
     beforeEach(() => {
       mediator.user.findUserBySocialProvider.mockResolvedValue(null);
-      mediator.user.findByEmail.mockResolvedValue(null);
-      mediator.user.createUserFromSocial.mockResolvedValue(MOCK_USER);
+      mediator.user.findUserByEmail.mockResolvedValue(null);
     });
 
     describe('When execute() is called', () => {
-      it('Then it creates a new user and sets ctx.path to new-user', async () => {
+      it('Then it creates a new user via OAuth and sets ctx.path to new-user', async () => {
         const ctx = { ...BASE_CTX };
         await step.execute(ctx);
-        expect(mediator.user.createUserFromSocial).toHaveBeenCalled();
+        expect(mediator.user.createUserFromOAuth).toHaveBeenCalled();
         expect(ctx.path).toBe('new-user');
-      });
-    });
-  });
-
-  describe('Given Path B but the user disappears after linking', () => {
-    beforeEach(() => {
-      mediator.user.findUserBySocialProvider.mockResolvedValue(null);
-      mediator.user.findByEmail.mockResolvedValue(MOCK_USER);
-      mediator.user.findById.mockResolvedValue(null); // user not found after linking
-    });
-
-    describe('When execute() is called', () => {
-      it('Then it throws an invariant violation error', async () => {
-        const ctx = { ...BASE_CTX };
-        await expect(step.execute(ctx)).rejects.toThrow(
-          'user disappeared after linking provider',
-        );
       });
     });
   });
@@ -353,17 +346,16 @@ describe('ResolveSocialUserStep', () => {
     describe('When existsByUsername returns true initially then false', () => {
       it('Then the while loop retries until a unique username is found', async () => {
         mediator.user.findUserBySocialProvider.mockResolvedValue(null);
-        mediator.user.findByEmail.mockResolvedValue(null);
+        mediator.user.findUserByEmail.mockResolvedValue(null);
         mediator.user.existsByUsername
           .mockResolvedValueOnce(true)  // first attempt: collision
           .mockResolvedValueOnce(false); // second attempt: unique
-        mediator.user.createUserFromSocial.mockResolvedValue(MOCK_USER);
 
         const ctx = { ...BASE_CTX };
         await step.execute(ctx);
 
         expect(mediator.user.existsByUsername).toHaveBeenCalledTimes(2);
-        expect(mediator.user.createUserFromSocial).toHaveBeenCalledTimes(1);
+        expect(mediator.user.createUserFromOAuth).toHaveBeenCalledTimes(1);
         expect(ctx.path).toBe('new-user');
       });
     });
@@ -373,9 +365,8 @@ describe('ResolveSocialUserStep', () => {
     describe('When the sanitized displayName becomes empty', () => {
       it('Then it falls back to the username "user"', async () => {
         mediator.user.findUserBySocialProvider.mockResolvedValue(null);
-        mediator.user.findByEmail.mockResolvedValue(null);
+        mediator.user.findUserByEmail.mockResolvedValue(null);
         mediator.user.existsByUsername.mockResolvedValue(false);
-        mediator.user.createUserFromSocial.mockResolvedValue(MOCK_USER);
 
         const ctx: SocialSignInSagaContext = {
           ...BASE_CTX,
@@ -383,11 +374,8 @@ describe('ResolveSocialUserStep', () => {
         };
         await step.execute(ctx);
 
-        expect(mediator.user.createUserFromSocial).toHaveBeenCalledWith(
-          BASE_CTX.email,
-          'user',
-          BASE_CTX.provider,
-          BASE_CTX.providerId,
+        expect(mediator.user.createUserFromOAuth).toHaveBeenCalledWith(
+          expect.objectContaining({ username: 'user' }),
         );
         expect(ctx.path).toBe('new-user');
       });

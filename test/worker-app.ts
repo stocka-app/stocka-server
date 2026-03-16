@@ -43,6 +43,8 @@ const TRUNCATE_TABLES = [
   'password_reset_tokens',
   'sessions',
   'social_accounts',
+  'credential_accounts',
+  'accounts',
   'users',
 ] as const;
 

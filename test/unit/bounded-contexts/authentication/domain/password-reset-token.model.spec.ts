@@ -9,14 +9,14 @@ describe('PasswordResetTokenModel', () => {
       expiresAt.setHours(expiresAt.getHours() + 1);
 
       const token = PasswordResetTokenModel.create({
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
         plainToken: 'plain-token',
       });
 
-      expect(token.userId).toBe(1);
+      expect(token.credentialAccountId).toBe(1);
       expect(token.tokenHash).toBe('hash123');
       expect(token.expiresAt).toEqual(expiresAt);
       expect(token.uuid).toBeDefined();
@@ -35,7 +35,7 @@ describe('PasswordResetTokenModel', () => {
       const token = PasswordResetTokenModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         usedAt: null,
@@ -46,7 +46,7 @@ describe('PasswordResetTokenModel', () => {
 
       expect(token.id).toBe(1);
       expect(token.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
-      expect(token.userId).toBe(1);
+      expect(token.credentialAccountId).toBe(1);
     });
   });
 
@@ -56,7 +56,7 @@ describe('PasswordResetTokenModel', () => {
       expiresAt.setHours(expiresAt.getHours() + 1);
 
       const token = PasswordResetTokenModel.create({
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
@@ -73,7 +73,7 @@ describe('PasswordResetTokenModel', () => {
       const token = PasswordResetTokenModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         usedAt: null,
@@ -93,7 +93,7 @@ describe('PasswordResetTokenModel', () => {
       const token = PasswordResetTokenModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         usedAt: new Date(),
@@ -113,7 +113,7 @@ describe('PasswordResetTokenModel', () => {
       const token = PasswordResetTokenModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         usedAt: null,
@@ -133,7 +133,7 @@ describe('PasswordResetTokenModel', () => {
       expiresAt.setHours(expiresAt.getHours() + 1);
 
       const token = PasswordResetTokenModel.create({
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
@@ -155,7 +155,7 @@ describe('PasswordResetTokenModel', () => {
       expiresAt.setHours(expiresAt.getHours() + 1);
 
       const token = PasswordResetTokenModel.create({
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
@@ -167,7 +167,7 @@ describe('PasswordResetTokenModel', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toBeInstanceOf(PasswordResetRequestedEvent);
       const event = events[0] as PasswordResetRequestedEvent;
-      expect(event.userId).toBe(1);
+      expect(event.credentialAccountId).toBe(1);
       expect(event.email).toBe('test@example.com');
     });
 
@@ -178,7 +178,7 @@ describe('PasswordResetTokenModel', () => {
       const token = PasswordResetTokenModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         usedAt: null,
@@ -197,7 +197,7 @@ describe('PasswordResetTokenModel', () => {
       expiresAt.setHours(expiresAt.getHours() + 1);
 
       const token = PasswordResetTokenModel.create({
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',
@@ -212,7 +212,7 @@ describe('PasswordResetTokenModel', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toBeInstanceOf(PasswordResetCompletedEvent);
       const event = events[0] as PasswordResetCompletedEvent;
-      expect(event.userId).toBe(1);
+      expect(event.credentialAccountId).toBe(1);
     });
 
     it('should clear events after commit()', () => {
@@ -220,7 +220,7 @@ describe('PasswordResetTokenModel', () => {
       expiresAt.setHours(expiresAt.getHours() + 1);
 
       const token = PasswordResetTokenModel.create({
-        userId: 1,
+        credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         email: 'test@example.com',

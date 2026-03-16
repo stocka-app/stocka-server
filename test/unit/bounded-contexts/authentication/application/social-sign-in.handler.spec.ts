@@ -2,8 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SocialSignInHandler } from '@authentication/application/commands/social-sign-in/social-sign-in.handler';
 import { SocialSignInCommand } from '@authentication/application/commands/social-sign-in/social-sign-in.command';
 import { SocialSignInSaga } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { ok, err } from '@shared/domain/result';
 import { InvalidPasswordException } from '@authentication/domain/exceptions/invalid-password.exception';
 
@@ -11,11 +10,8 @@ describe('Social sign-in handler — OAuth provider sign-in (EC-002)', () => {
   let handler: SocialSignInHandler;
   let saga: { execute: jest.Mock };
 
-  const mockUser = UserMother.createSocialOnly({
-    id: 42,
-    email: 'ana.torres@gmail.com',
-    provider: 'google',
-  }) as unknown as IPersistedUserView;
+  const mockUser = UserMother.create({ id: 42 });
+  const mockCredential = CredentialAccountMother.createWithEmail('ana.torres@gmail.com');
 
   const googleCommand = new SocialSignInCommand(
     'ana.torres@gmail.com',
@@ -26,6 +22,7 @@ describe('Social sign-in handler — OAuth provider sign-in (EC-002)', () => {
 
   const sagaOutput = {
     user: mockUser,
+    credential: mockCredential,
     accessToken: 'mock-access-token',
     refreshToken: 'mock-refresh-token',
   };
@@ -59,12 +56,12 @@ describe('Social sign-in handler — OAuth provider sign-in (EC-002)', () => {
         });
       });
 
-      it('Then the handler returns the tokens and user from the saga output', async () => {
+      it('Then the handler returns the tokens and credential from the saga output', async () => {
         const result = await handler.execute(googleCommand);
 
         expect(result.accessToken).toBe('mock-access-token');
         expect(result.refreshToken).toBe('mock-refresh-token');
-        expect(result.user.email).toBe('ana.torres@gmail.com');
+        expect(result.credential.email).toBe('ana.torres@gmail.com');
       });
     });
   });

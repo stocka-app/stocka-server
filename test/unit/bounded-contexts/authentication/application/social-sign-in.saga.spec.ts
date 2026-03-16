@@ -8,8 +8,7 @@ import {
   PublishSocialSignInEventsStep,
 } from '@authentication/application/sagas/social-sign-in/steps';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { TokenExpiredException } from '@authentication/domain/exceptions/token-expired.exception';
 
 describe('SocialSignInSaga', () => {
@@ -20,12 +19,12 @@ describe('SocialSignInSaga', () => {
   let publishEvents: { execute: jest.Mock };
   let uow: { begin: jest.Mock; commit: jest.Mock; rollback: jest.Mock; isActive: jest.Mock };
 
-  const mockUser = UserMother.createSocialOnly({
+  const mockUser = UserMother.create({
     id: 42,
     uuid: '550e8400-e29b-41d4-a716-446655440042',
-    email: 'ana.torres@gmail.com',
-    provider: 'google',
-  }) as unknown as IPersistedUserView;
+  });
+
+  const mockCredential = CredentialAccountMother.createWithEmail('ana.torres@gmail.com');
 
   const baseSagaContext: SocialSignInSagaContext = {
     email: 'ana.torres@gmail.com',
@@ -38,6 +37,7 @@ describe('SocialSignInSaga', () => {
     const mockResolveUser = {
       execute: jest.fn().mockImplementation((ctx: SocialSignInSagaContext) => {
         ctx.user = mockUser;
+        ctx.credential = mockCredential;
         ctx.path = 'existing-provider';
       }),
     };
@@ -104,6 +104,7 @@ describe('SocialSignInSaga', () => {
       it('Then the path is preserved in the context returned to the caller', async () => {
         resolveUser.execute.mockImplementation((ctx: SocialSignInSagaContext) => {
           ctx.user = mockUser;
+          ctx.credential = mockCredential;
           ctx.path = 'linked-provider';
         });
 
@@ -120,6 +121,7 @@ describe('SocialSignInSaga', () => {
       it('Then it creates the user and completes all steps with path set to new-user', async () => {
         resolveUser.execute.mockImplementation((ctx: SocialSignInSagaContext) => {
           ctx.user = mockUser;
+          ctx.credential = mockCredential;
           ctx.path = 'new-user';
         });
 
@@ -193,6 +195,7 @@ describe('SocialSignInSaga', () => {
       resolveUser.execute.mockImplementation((ctx: SocialSignInSagaContext) => {
         callOrder.push('resolve-social-user');
         ctx.user = mockUser;
+        ctx.credential = mockCredential;
         ctx.path = 'new-user';
       });
       generateTokens.execute.mockImplementation((ctx: SocialSignInSagaContext) => {
@@ -242,12 +245,12 @@ describe('SocialSignInSaga', () => {
 
   describe('execute() — Result wrapper', () => {
     describe('Given the saga succeeds', () => {
-      it('Then it returns ok with user, accessToken and refreshToken', async () => {
+      it('Then it returns ok with user, credential, accessToken and refreshToken', async () => {
         const result = await saga.execute({ ...baseSagaContext });
 
         expect(result.isOk()).toBe(true);
         const output = result._unsafeUnwrap();
-        expect(output.user.email).toBe('ana.torres@gmail.com');
+        expect(output.credential.email).toBe('ana.torres@gmail.com');
         expect(output.accessToken).toBe('mock-access-token');
         expect(output.refreshToken).toBe('mock-refresh-token');
       });

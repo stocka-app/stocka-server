@@ -7,11 +7,18 @@ import { ISessionContract } from '@authentication/domain/contracts/session.contr
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
-import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
+import {
+  IAccountContract,
+  ICredentialAccountContract,
+  ISocialAccountContract,
+} from '@user/account/domain/contracts/account.contract';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-import { UserAggregate, AccountType } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { AccountAggregate } from '@user/account/domain/account.aggregate';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
 import { SessionModel } from '@authentication/domain/models/session.model';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
@@ -33,30 +40,14 @@ function pastDate(offsetMs = 60 * 60 * 1000): Date {
   return new Date(Date.now() - offsetMs);
 }
 
-function buildUser(overrides: { email?: string; username?: string } = {}): UserAggregate {
-  return UserAggregate.reconstitute({
-    id: 0,
-    uuid: uuidv4(),
-    email: overrides.email ?? `test-${uuidv4()}@example.com`,
-    username: overrides.username ?? `user${uuidv4().replace(/-/g, '').slice(0, 10)}`,
-    passwordHash: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.z9OYHvJpzZ9y7u',
-    status: 'active',
-    emailVerifiedAt: null,
-    verificationBlockedUntil: null,
-    createdWith: 'email',
-    accountType: AccountType.MANUAL,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    archivedAt: null,
-  });
-}
-
 // ─── Test Suite ───────────────────────────────────────────────────────────────
 
 describe('Infrastructure Repositories (e2e)', () => {
   let dataSource: DataSource;
 
   let userRepo: IUserContract;
+  let accountRepo: IAccountContract;
+  let credentialAccountRepo: ICredentialAccountContract;
   let sessionRepo: ISessionContract;
   let evtRepo: IEmailVerificationTokenContract;
   let prtRepo: IPasswordResetTokenContract;
@@ -68,6 +59,10 @@ describe('Infrastructure Repositories (e2e)', () => {
     const { app, dataSource: ds } = await getWorkerApp();
     dataSource = ds;
     userRepo = app.get<IUserContract>(INJECTION_TOKENS.USER_CONTRACT);
+    accountRepo = app.get<IAccountContract>(INJECTION_TOKENS.ACCOUNT_CONTRACT);
+    credentialAccountRepo = app.get<ICredentialAccountContract>(
+      INJECTION_TOKENS.CREDENTIAL_ACCOUNT_CONTRACT,
+    );
     sessionRepo = app.get<ISessionContract>(INJECTION_TOKENS.SESSION_CONTRACT);
     evtRepo = app.get<IEmailVerificationTokenContract>(
       INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT,
@@ -92,6 +87,28 @@ describe('Infrastructure Repositories (e2e)', () => {
     // and the Jest process exits cleanly with --forceExit.
   });
 
+  // ─── Setup helpers ─────────────────────────────────────────────────────────
+
+  async function buildPersistedUser(): Promise<UserAggregate> {
+    return userRepo.persist(UserAggregate.create());
+  }
+
+  async function buildPersistedUserWithCredential(overrides: {
+    email?: string;
+  } = {}): Promise<{ user: UserAggregate; account: AccountAggregate; credential: CredentialAccountModel }> {
+    const user = await userRepo.persist(UserAggregate.create());
+    const account = await accountRepo.persist(AccountAggregate.create({ userId: user.id! }));
+    const credential = await credentialAccountRepo.persist(
+      CredentialAccountModel.create({
+        accountId: account.id!,
+        email: overrides.email ?? `test-${uuidv4()}@example.com`,
+        passwordHash: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.z9OYHvJpzZ9y7u',
+        createdWith: 'email',
+      }),
+    );
+    return { user, account, credential };
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // TypeOrmUserRepository
   // ═══════════════════════════════════════════════════════════════════════════
@@ -101,47 +118,38 @@ describe('Infrastructure Repositories (e2e)', () => {
       let savedUser: UserAggregate;
 
       beforeEach(async () => {
-        savedUser = await userRepo.persist(buildUser());
+        savedUser = await buildPersistedUser();
       });
 
-      describe('When findByUsername is called with an existing username', () => {
+      describe('When findByUUID is called with the user UUID', () => {
         it('Then it returns the matching user aggregate', async () => {
-          const found = await userRepo.findByUsername(savedUser.username);
+          const found = await userRepo.findByUUID(savedUser.uuid);
           expect(found).not.toBeNull();
           expect(found!.uuid).toBe(savedUser.uuid);
         });
       });
 
-      describe('When findByUsername is called with a non-existent username', () => {
-        it('Then it returns null', async () => {
-          const found = await userRepo.findByUsername('nonexistent-username');
-          expect(found).toBeNull();
+      describe('When findById is called with the user id', () => {
+        it('Then it returns the matching user aggregate', async () => {
+          const found = await userRepo.findById(savedUser.id!);
+          expect(found).not.toBeNull();
+          expect(found!.uuid).toBe(savedUser.uuid);
         });
       });
 
-      describe('When existsByUsername is called with an existing username', () => {
-        it('Then it returns true', async () => {
-          const exists = await userRepo.existsByUsername(savedUser.username);
-          expect(exists).toBe(true);
-        });
-      });
-
-      describe('When existsByUsername is called with a non-existent username', () => {
-        it('Then it returns false', async () => {
-          const exists = await userRepo.existsByUsername('ghost-username');
+      describe('When existsByUsername is called with any username', () => {
+        it('Then it returns false because username lookup is delegated to credential/profile layer', async () => {
+          const exists = await userRepo.existsByUsername('any-username');
           expect(exists).toBe(false);
         });
       });
 
       describe('When archive is called with the user UUID', () => {
-        it('Then the user has archivedAt set and is excluded from email/username lookups', async () => {
+        it('Then the user is soft-deleted and archivedAt is set', async () => {
           await userRepo.archive(savedUser.uuid);
           // findByUUID intentionally returns archived users (needed for token validation)
           const found = await userRepo.findByUUID(savedUser.uuid);
           expect(found).not.toBeNull();
-          // Archived users are excluded from email-based lookups
-          const byEmail = await userRepo.findByEmail(savedUser.email);
-          expect(byEmail).toBeNull();
         });
       });
 
@@ -160,23 +168,9 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
 
-      describe('When existsByEmail is called with an existing email', () => {
-        it('Then it returns true', async () => {
-          const exists = await userRepo.existsByEmail(savedUser.email);
-          expect(exists).toBe(true);
-        });
-      });
-
-      describe('When existsByEmail is called with a non-existent email', () => {
-        it('Then it returns false', async () => {
-          const exists = await userRepo.existsByEmail('ghost@example.com');
-          expect(exists).toBe(false);
-        });
-      });
-
       describe('When persist is called within an active UoW transaction', () => {
         it('Then it uses the transaction manager and saves the user', async () => {
-          const newUser = buildUser();
+          const newUser = UserAggregate.create();
           await uow.begin();
           try {
             const saved = await userRepo.persist(newUser);
@@ -189,40 +183,54 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
     });
+  });
 
-    describe('Given no stale users exist', () => {
-      it('Then destroyStaleUnverifiedUsers returns zero', async () => {
-        // Use a very small threshold so no users created NOW are considered stale
-        const removed = await userRepo.destroyStaleUnverifiedUsers(9999);
-        expect(removed).toBe(0);
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TypeOrmCredentialAccountRepository
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('TypeOrmCredentialAccountRepository', () => {
+    describe('Given a user with a credential account exists in the database', () => {
+      let savedUser: UserAggregate;
+      let savedAccount: AccountAggregate;
+      let savedCredential: CredentialAccountModel;
+      let testEmail: string;
+
+      beforeEach(async () => {
+        testEmail = `test-${uuidv4()}@example.com`;
+        ({ user: savedUser, account: savedAccount, credential: savedCredential } =
+          await buildPersistedUserWithCredential({ email: testEmail }));
       });
-    });
 
-    describe('Given stale unverified users older than the threshold exist', () => {
-      it('Then destroyStaleUnverifiedUsers removes them and returns the count', async () => {
-        const staleUser = UserAggregate.reconstitute({
-          id: 0,
-          uuid: uuidv4(),
-          email: `stale${uuidv4().replace(/-/g, '').slice(0, 8)}@example.com`,
-          username: `stale${uuidv4().replace(/-/g, '').slice(0, 8)}`,
-          passwordHash: null,
-          status: 'pending_verification',
-          emailVerifiedAt: null,
-          verificationBlockedUntil: null,
-          createdWith: 'email',
-          accountType: AccountType.MANUAL,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          archivedAt: null,
+      describe('When findByEmail is called with an existing email', () => {
+        it('Then it returns the matching credential account', async () => {
+          const found = await credentialAccountRepo.findByEmail(testEmail);
+          expect(found).not.toBeNull();
+          expect(found!.email).toBe(testEmail);
         });
-        const saved = await userRepo.persist(staleUser);
-        // @CreateDateColumn ignores the passed value — backdate via raw SQL to simulate stale user
-        await dataSource.query(
-          `UPDATE users SET created_at = '2020-01-01' WHERE uuid = $1`,
-          [saved.uuid],
-        );
-        const removed = await userRepo.destroyStaleUnverifiedUsers(1);
-        expect(removed).toBeGreaterThanOrEqual(1);
+      });
+
+      describe('When findByEmail is called with a non-existent email', () => {
+        it('Then it returns null', async () => {
+          const found = await credentialAccountRepo.findByEmail('ghost@example.com');
+          expect(found).toBeNull();
+        });
+      });
+
+      describe('When findByAccountId is called with the account id', () => {
+        it('Then it returns the matching credential account', async () => {
+          const found = await credentialAccountRepo.findByAccountId(savedAccount.id!);
+          expect(found).not.toBeNull();
+          expect(found!.email).toBe(testEmail);
+        });
+      });
+
+      describe('When findById is called with the credential id', () => {
+        it('Then it returns the matching credential account', async () => {
+          const found = await credentialAccountRepo.findById(savedCredential.id!);
+          expect(found).not.toBeNull();
+          expect(found!.email).toBe(testEmail);
+        });
       });
     });
   });
@@ -232,15 +240,16 @@ describe('Infrastructure Repositories (e2e)', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('TypeOrmSessionRepository', () => {
-    let savedUser: UserAggregate;
+    let savedAccount: AccountAggregate;
 
     beforeEach(async () => {
-      savedUser = await userRepo.persist(buildUser());
+      const { account } = await buildPersistedUserWithCredential();
+      savedAccount = account;
     });
 
     async function createSession(): Promise<SessionModel> {
       const session = SessionModel.create({
-        userId: savedUser.id!,
+        accountId: savedAccount.id!,
         tokenHash: sha256(`session-${uuidv4()}`),
         expiresAt: futureDate(),
       });
@@ -270,9 +279,9 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
 
-      describe('When findActiveByUserId is called for the user', () => {
+      describe('When findActiveByAccountId is called for the account', () => {
         it('Then it returns the active sessions list', async () => {
-          const sessions = await sessionRepo.findActiveByUserId(savedUser.id!);
+          const sessions = await sessionRepo.findActiveByAccountId(savedAccount.id!);
           expect(sessions.length).toBeGreaterThanOrEqual(1);
         });
       });
@@ -285,10 +294,10 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
 
-      describe('When archiveAllByUserId is called without an active UoW transaction', () => {
-        it('Then all user sessions are soft-deleted', async () => {
-          await sessionRepo.archiveAllByUserId(savedUser.id!);
-          const sessions = await sessionRepo.findActiveByUserId(savedUser.id!);
+      describe('When archiveAllByAccountId is called without an active UoW transaction', () => {
+        it('Then all account sessions are soft-deleted', async () => {
+          await sessionRepo.archiveAllByAccountId(savedAccount.id!);
+          const sessions = await sessionRepo.findActiveByAccountId(savedAccount.id!);
           expect(sessions).toHaveLength(0);
         });
       });
@@ -313,7 +322,7 @@ describe('Infrastructure Repositories (e2e)', () => {
           await uow.begin();
           try {
             const session = SessionModel.create({
-              userId: savedUser.id!,
+              accountId: savedAccount.id!,
               tokenHash: sha256(`uow-session-${uuidv4()}`),
               expiresAt: futureDate(),
             });
@@ -340,11 +349,11 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
 
-      describe('When archiveAllByUserId is called within an active UoW transaction', () => {
+      describe('When archiveAllByAccountId is called within an active UoW transaction', () => {
         it('Then it uses the transaction manager to soft-delete all sessions', async () => {
           await uow.begin();
           try {
-            await sessionRepo.archiveAllByUserId(savedUser.id!);
+            await sessionRepo.archiveAllByAccountId(savedAccount.id!);
             await uow.rollback();
           } catch (error) {
             await uow.rollback();
@@ -360,20 +369,20 @@ describe('Infrastructure Repositories (e2e)', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('TypeOrmEmailVerificationTokenRepository', () => {
-    let savedUser: UserAggregate;
+    let savedCredential: CredentialAccountModel;
 
     beforeEach(async () => {
-      savedUser = await userRepo.persist(buildUser());
+      ({ credential: savedCredential } = await buildPersistedUserWithCredential());
     });
 
     async function createToken(
       overrides: { expiresAt?: Date } = {},
     ): Promise<EmailVerificationTokenModel> {
       const token = EmailVerificationTokenModel.create({
-        userId: savedUser.id!,
+        credentialAccountId: savedCredential.id!,
         codeHash: sha256(`code-${uuidv4()}`),
         expiresAt: overrides.expiresAt ?? futureDate(),
-        email: savedUser.email,
+        email: savedCredential.email,
       });
       return evtRepo.persist(token);
     }
@@ -400,9 +409,9 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
 
-      describe('When findActiveByUserId is called for the user', () => {
+      describe('When findActiveByCredentialAccountId is called for the credential', () => {
         it('Then it returns the active token', async () => {
-          const found = await evtRepo.findActiveByUserId(savedUser.id!);
+          const found = await evtRepo.findActiveByCredentialAccountId(savedCredential.id!);
           expect(found).not.toBeNull();
           expect(found!.uuid).toBe(savedToken.uuid);
         });
@@ -424,10 +433,10 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
 
-      describe('When archiveAllByUserId is called for the user', () => {
-        it('Then all tokens for the user are soft-deleted', async () => {
-          await evtRepo.archiveAllByUserId(savedUser.id!);
-          const found = await evtRepo.findActiveByUserId(savedUser.id!);
+      describe('When archiveAllByCredentialAccountId is called for the credential', () => {
+        it('Then all tokens for the credential are soft-deleted', async () => {
+          await evtRepo.archiveAllByCredentialAccountId(savedCredential.id!);
+          const found = await evtRepo.findActiveByCredentialAccountId(savedCredential.id!);
           expect(found).toBeNull();
         });
       });
@@ -439,9 +448,9 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
 
-      describe('When countResentInLastHour is called for the user', () => {
+      describe('When countResentInLastHour is called for the credential', () => {
         it('Then it returns the count of recently resent tokens', async () => {
-          const count = await evtRepo.countResentInLastHour(savedUser.id!);
+          const count = await evtRepo.countResentInLastHour(savedCredential.id!);
           expect(count).toBeGreaterThanOrEqual(0);
         });
       });
@@ -466,10 +475,10 @@ describe('Infrastructure Repositories (e2e)', () => {
           await uow.begin();
           try {
             const token = EmailVerificationTokenModel.create({
-              userId: savedUser.id!,
+              credentialAccountId: savedCredential.id!,
               codeHash: sha256(`uow-code-${uuidv4()}`),
               expiresAt: futureDate(),
-              email: savedUser.email,
+              email: savedCredential.email,
             });
             const saved = await evtRepo.persist(token);
             expect(saved.uuid).toBeDefined();
@@ -488,18 +497,18 @@ describe('Infrastructure Repositories (e2e)', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('TypeOrmPasswordResetTokenRepository', () => {
-    let savedUser: UserAggregate;
+    let savedCredential: CredentialAccountModel;
 
     beforeEach(async () => {
-      savedUser = await userRepo.persist(buildUser());
+      ({ credential: savedCredential } = await buildPersistedUserWithCredential());
     });
 
     async function createPRT(): Promise<PasswordResetTokenModel> {
       const token = PasswordResetTokenModel.create({
-        userId: savedUser.id!,
+        credentialAccountId: savedCredential.id!,
         tokenHash: sha256(`reset-${uuidv4()}`),
         expiresAt: futureDate(),
-        email: savedUser.email,
+        email: savedCredential.email,
         plainToken: uuidv4(),
       });
       return prtRepo.persist(token);
@@ -547,10 +556,10 @@ describe('Infrastructure Repositories (e2e)', () => {
           await uow.begin();
           try {
             const token = PasswordResetTokenModel.create({
-              userId: savedUser.id!,
+              credentialAccountId: savedCredential.id!,
               tokenHash: sha256(`uow-reset-${uuidv4()}`),
               expiresAt: futureDate(),
-              email: savedUser.email,
+              email: savedCredential.email,
               plainToken: uuidv4(),
             });
             const saved = await prtRepo.persist(token);
@@ -721,20 +730,21 @@ describe('Infrastructure Repositories (e2e)', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('TypeOrmSocialAccountRepository', () => {
-    let savedUser: UserAggregate;
+    let savedAccount: AccountAggregate;
 
     beforeEach(async () => {
-      savedUser = await userRepo.persist(buildUser());
+      ({ account: savedAccount } = await buildPersistedUserWithCredential());
     });
 
     describe('Given a social account is persisted without an active UoW', () => {
       it('Then it is saved and findable by provider and providerId', async () => {
         const providerId = uuidv4();
-        const saved = await socialAccountRepo.persist({
-          userId: savedUser.id!,
+        const socialAccount = SocialAccountModel.create({
+          accountId: savedAccount.id!,
           provider: 'google',
           providerId,
         });
+        const saved = await socialAccountRepo.persist(socialAccount);
         expect(saved.provider).toBe('google');
         expect(saved.providerId).toBe(providerId);
 
@@ -748,11 +758,12 @@ describe('Infrastructure Repositories (e2e)', () => {
       it('Then it uses the transaction manager', async () => {
         await uow.begin();
         try {
-          const saved = await socialAccountRepo.persist({
-            userId: savedUser.id!,
+          const socialAccount = SocialAccountModel.create({
+            accountId: savedAccount.id!,
             provider: 'facebook',
             providerId: uuidv4(),
           });
+          const saved = await socialAccountRepo.persist(socialAccount);
           expect(saved.provider).toBe('facebook');
           await uow.rollback();
         } catch (error) {
@@ -777,11 +788,7 @@ describe('Infrastructure Repositories (e2e)', () => {
   describe('BaseEntity — UUID v7 generation on insert', () => {
     describe('Given a user is created via domain factory without a pre-assigned UUID', () => {
       it('Then the UUID persisted in the database is version 7', async () => {
-        const user = UserAggregate.create({
-          email: `uuidv7-test-${Date.now()}@example.com`,
-          username: `uuidv7usr${Date.now()}`,
-          passwordHash: null,
-        });
+        const user = UserAggregate.create();
         const saved = await userRepo.persist(user);
         expect(uuidVersion(saved.uuid)).toBe(7);
       });

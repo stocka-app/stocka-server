@@ -10,7 +10,7 @@ import { ResendCooldownActiveException } from '@authentication/domain/exceptions
 import { MaxResendsExceededException } from '@authentication/domain/exceptions/max-resends-exceeded.exception';
 import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
 
 const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
@@ -20,10 +20,12 @@ const FUTURE_DATE = (): Date => {
   return d;
 };
 
+const MOCK_USER = UserMother.create({ id: 1 });
+
 describe('ResendVerificationCodeHandler', () => {
   let handler: ResendVerificationCodeHandler;
-  let mediator: { user: { findByEmail: jest.Mock } };
-  let tokenContract: jest.Mocked<Pick<IEmailVerificationTokenContract, 'findActiveByUserId' | 'persist'>>;
+  let mediator: { user: { findUserByEmail: jest.Mock } };
+  let tokenContract: jest.Mocked<Pick<IEmailVerificationTokenContract, 'findActiveByCredentialAccountId' | 'persist'>>;
   let codeGenerator: jest.Mocked<Pick<ICodeGeneratorContract, 'generateVerificationCode' | 'hashCode'>>;
   let configService: { get: jest.Mock };
   let eventPublisher: { mergeObjectContext: jest.Mock };
@@ -34,12 +36,12 @@ describe('ResendVerificationCodeHandler', () => {
   beforeEach(async () => {
     mediator = {
       user: {
-        findByEmail: jest.fn(),
+        findUserByEmail: jest.fn(),
       },
     };
 
     tokenContract = {
-      findActiveByUserId: jest.fn(),
+      findActiveByCredentialAccountId: jest.fn(),
       persist: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -72,7 +74,7 @@ describe('ResendVerificationCodeHandler', () => {
 
   describe('Given the email does not match any user', () => {
     beforeEach(() => {
-      mediator.user.findByEmail.mockResolvedValue(null);
+      mediator.user.findUserByEmail.mockResolvedValue(null);
     });
 
     describe('When the handler executes', () => {
@@ -87,8 +89,8 @@ describe('ResendVerificationCodeHandler', () => {
 
   describe('Given the user is already verified', () => {
     beforeEach(() => {
-      const verifiedUser = UserMother.createVerified({ id: 1, email: EMAIL, username: 'tester' });
-      mediator.user.findByEmail.mockResolvedValue(verifiedUser);
+      const verifiedCredential = CredentialAccountMother.createVerified({ id: 1, email: EMAIL });
+      mediator.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: verifiedCredential });
     });
 
     describe('When the handler executes', () => {
@@ -102,19 +104,19 @@ describe('ResendVerificationCodeHandler', () => {
 
   describe('Given a pending user with an existing token that can be resent', () => {
     beforeEach(() => {
-      const pendingUser = UserMother.createPendingVerification({ id: 1, email: EMAIL, username: 'tester' });
-      mediator.user.findByEmail.mockResolvedValue(pendingUser);
+      const pendingCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: EMAIL });
+      mediator.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: pendingCredential });
 
       const existingToken = EmailVerificationTokenModel.reconstitute({
         id: 1,
         uuid: VALID_UUID,
-        userId: 1,
+        credentialAccountId: 1,
         codeHash: 'old-hash',
         expiresAt: FUTURE_DATE(),
         resendCount: 0,
         lastResentAt: null,
       });
-      tokenContract.findActiveByUserId.mockResolvedValue(existingToken);
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(existingToken);
     });
 
     describe('When the handler executes', () => {
@@ -135,20 +137,19 @@ describe('ResendVerificationCodeHandler', () => {
 
   describe('Given a pending user with a token that is in cooldown', () => {
     beforeEach(() => {
-      const pendingUser = UserMother.createPendingVerification({ id: 1, email: EMAIL, username: 'tester' });
-      mediator.user.findByEmail.mockResolvedValue(pendingUser);
+      const pendingCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: EMAIL });
+      mediator.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: pendingCredential });
 
-      // Reconstitute a token with 1 resend and a very recent lastResentAt (cooldown = 60s)
       const tokenInCooldown = EmailVerificationTokenModel.reconstitute({
         id: 1,
         uuid: VALID_UUID,
-        userId: 1,
+        credentialAccountId: 1,
         codeHash: 'hash',
         expiresAt: FUTURE_DATE(),
         resendCount: 1,
-        lastResentAt: new Date(), // just reissued, cooldown active
+        lastResentAt: new Date(),
       });
-      tokenContract.findActiveByUserId.mockResolvedValue(tokenInCooldown);
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(tokenInCooldown);
     });
 
     describe('When the handler executes', () => {
@@ -162,20 +163,19 @@ describe('ResendVerificationCodeHandler', () => {
 
   describe('Given a pending user with a token that has exceeded max resends', () => {
     beforeEach(() => {
-      const pendingUser = UserMother.createPendingVerification({ id: 1, email: EMAIL, username: 'tester' });
-      mediator.user.findByEmail.mockResolvedValue(pendingUser);
+      const pendingCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: EMAIL });
+      mediator.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: pendingCredential });
 
-      // resendCount = 5 = MAX — no cooldown period applies (index is clamped), but getRemainingResends = 0
       const maxResendsToken = EmailVerificationTokenModel.reconstitute({
         id: 1,
         uuid: VALID_UUID,
-        userId: 1,
+        credentialAccountId: 1,
         codeHash: 'hash',
         expiresAt: FUTURE_DATE(),
         resendCount: 5,
-        lastResentAt: new Date(Date.now() - 400 * 1000), // cooldown expired (> 5m)
+        lastResentAt: new Date(Date.now() - 400 * 1000),
       });
-      tokenContract.findActiveByUserId.mockResolvedValue(maxResendsToken);
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(maxResendsToken);
     });
 
     describe('When the handler executes', () => {
@@ -189,10 +189,9 @@ describe('ResendVerificationCodeHandler', () => {
 
   describe('Given a pending user with a token where cooldown just expired but max resends not yet reached', () => {
     beforeEach(() => {
-      const pendingUser = UserMother.createPendingVerification({ id: 1, email: EMAIL, username: 'tester' });
-      mediator.user.findByEmail.mockResolvedValue(pendingUser);
+      const pendingCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: EMAIL });
+      mediator.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: pendingCredential });
 
-      // Edge case: canResend() evaluated false (timing race) but secondsRemaining=0 and getRemainingResends()>0
       const edgeCaseToken = {
         canResend: jest.fn().mockReturnValue(false),
         getSecondsUntilCanResend: jest.fn().mockReturnValue(0),
@@ -201,7 +200,7 @@ describe('ResendVerificationCodeHandler', () => {
         updateCode: jest.fn(),
         commit: jest.fn(),
       } as unknown as EmailVerificationTokenModel;
-      tokenContract.findActiveByUserId.mockResolvedValue(edgeCaseToken);
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(edgeCaseToken);
     });
 
     describe('When the handler executes', () => {
@@ -216,9 +215,9 @@ describe('ResendVerificationCodeHandler', () => {
 
   describe('Given a pending user with no existing token', () => {
     beforeEach(() => {
-      const pendingUser = UserMother.createPendingVerification({ id: 1, email: EMAIL, username: 'tester' });
-      mediator.user.findByEmail.mockResolvedValue(pendingUser);
-      tokenContract.findActiveByUserId.mockResolvedValue(null);
+      const pendingCredential = CredentialAccountMother.createPendingVerification({ id: 1, email: EMAIL });
+      mediator.user.findUserByEmail.mockResolvedValue({ user: MOCK_USER, credential: pendingCredential });
+      tokenContract.findActiveByCredentialAccountId.mockResolvedValue(null);
     });
 
     describe('When the handler executes', () => {

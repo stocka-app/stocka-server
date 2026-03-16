@@ -2,8 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SignInHandler } from '@authentication/application/commands/sign-in/sign-in.handler';
 import { SignInCommand } from '@authentication/application/commands/sign-in/sign-in.command';
 import { SignInSaga } from '@authentication/application/sagas/sign-in/sign-in.saga';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { ok, err } from '@shared/domain/result';
 import { InvalidCredentialsException } from '@authentication/domain/exceptions/invalid-credentials.exception';
 
@@ -11,16 +10,14 @@ describe('SignInHandler — credentials-based sign-in (EC-001)', () => {
   let handler: SignInHandler;
   let saga: { execute: jest.Mock };
 
-  const mockUser = UserMother.create({
-    id: 1,
-    email: 'ana@example.com',
-    username: 'anatorres',
-  }) as unknown as IPersistedUserView;
+  const mockUser = UserMother.create({ id: 1 });
+  const mockCredential = CredentialAccountMother.create({ accountId: 1, email: 'ana@example.com' });
 
   const command = new SignInCommand('ana@example.com', 'SecurePass1');
 
   const sagaOutput = {
     user: mockUser,
+    credential: mockCredential,
     accessToken: 'mock-access-token',
     refreshToken: 'mock-refresh-token',
     emailVerificationRequired: false as const,
@@ -60,7 +57,7 @@ describe('SignInHandler — credentials-based sign-in (EC-001)', () => {
         const data = result._unsafeUnwrap();
         expect(data.accessToken).toBe('mock-access-token');
         expect(data.refreshToken).toBe('mock-refresh-token');
-        expect(data.user.email).toBe('ana@example.com');
+        expect(data.credential.email).toBe('ana@example.com');
         expect(data.emailVerificationRequired).toBe(false);
       });
     });

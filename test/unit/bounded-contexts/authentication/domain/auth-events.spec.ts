@@ -143,7 +143,7 @@ describe('Authentication domain events', () => {
     describe('When constructed with required fields only', () => {
       it('Then it defaults lang to es, isSocialAccount to false, and provider to null', () => {
         const event = new PasswordResetRequestedEvent(1, 'user@test.com', 'reset-token');
-        expect(event.userId).toBe(1);
+        expect(event.credentialAccountId).toBe(1);
         expect(event.email).toBe('user@test.com');
         expect(event.token).toBe('reset-token');
         expect(event.lang).toBe('es');
@@ -174,7 +174,7 @@ describe('Authentication domain events', () => {
     describe('When constructed without explicit lang', () => {
       it('Then it defaults to es', () => {
         const event = new VerificationCodeResentEvent(42, 'user@test.com', 'ABC123', 2);
-        expect(event.userId).toBe(42);
+        expect(event.credentialAccountId).toBe(42);
         expect(event.email).toBe('user@test.com');
         expect(event.code).toBe('ABC123');
         expect(event.resendCount).toBe(2);

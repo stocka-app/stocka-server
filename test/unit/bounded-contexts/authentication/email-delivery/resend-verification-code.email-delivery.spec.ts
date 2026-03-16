@@ -8,10 +8,10 @@ import { EmailVerificationTokenModel } from '@authentication/domain/models/email
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 /** Waits for all async event handlers to finish executing */
-const flushPromises = () => new Promise<void>((resolve) => setImmediate(resolve));
+const flushPromises = (): Promise<void> => new Promise<void>((resolve) => setImmediate(resolve));
 
 /**
  * Represents an active verification token in the system:
@@ -21,7 +21,7 @@ const buildActiveVerificationToken = (): EmailVerificationTokenModel =>
   EmailVerificationTokenModel.reconstitute({
     id: 1,
     uuid: '550e8400-e29b-41d4-a716-446655440099',
-    userId: 1,
+    credentialAccountId: 1,
     codeHash: 'hash-active-code',
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     usedAt: null,
@@ -35,23 +35,25 @@ const buildActiveVerificationToken = (): EmailVerificationTokenModel =>
 describe('Verification code resend — transactional email delivery', () => {
   let handler: ResendVerificationCodeHandler;
   let emailProvider: jest.Mocked<IEmailProviderContract>;
-  let mediatorService: { user: { findByEmail: jest.Mock } };
-  let tokenContract: { findActiveByUserId: jest.Mock; persist: jest.Mock };
+  let mediatorService: { user: { findUserByEmail: jest.Mock } };
+  let tokenContract: { findActiveByCredentialAccountId: jest.Mock; persist: jest.Mock };
 
   // Customer who completed registration but has not yet activated their account
-  const pendingVerificationCustomer = UserMother.createPendingVerification({
+  const pendingUser = UserMother.create({ id: 1 });
+  const pendingCredential = CredentialAccountMother.createPendingVerification({
     id: 1,
     email: 'carlos.mendoza@mialmacen.mx',
-    username: 'carlos_mendoza',
   });
 
   beforeEach(async () => {
     mediatorService = {
-      user: { findByEmail: jest.fn().mockResolvedValue(pendingVerificationCustomer) },
+      user: {
+        findUserByEmail: jest.fn().mockResolvedValue({ user: pendingUser, credential: pendingCredential }),
+      },
     };
 
     tokenContract = {
-      findActiveByUserId: jest.fn(),
+      findActiveByCredentialAccountId: jest.fn(),
       persist: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -105,10 +107,8 @@ describe('Verification code resend — transactional email delivery', () => {
   describe('Given the customer has an active verification code and requests it to be resent', () => {
     describe('When the customer indicates they did not receive the code or need a new one', () => {
       it('Then the system sends exactly one new email with the verification code', async () => {
-        // Given
-        tokenContract.findActiveByUserId.mockResolvedValue(buildActiveVerificationToken());
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(buildActiveVerificationToken());
 
-        // When
         await handler.execute(
           new ResendVerificationCodeCommand(
             'carlos.mendoza@mialmacen.mx',
@@ -119,15 +119,12 @@ describe('Verification code resend — transactional email delivery', () => {
         );
         await flushPromises();
 
-        // Then
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledTimes(1);
       });
 
       it('Then the email with the code arrives in the language the customer uses in the app', async () => {
-        // Given
-        tokenContract.findActiveByUserId.mockResolvedValue(buildActiveVerificationToken());
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(buildActiveVerificationToken());
 
-        // When
         await handler.execute(
           new ResendVerificationCodeCommand(
             'carlos.mendoza@mialmacen.mx',
@@ -138,7 +135,6 @@ describe('Verification code resend — transactional email delivery', () => {
         );
         await flushPromises();
 
-        // Then
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledWith(
           'carlos.mendoza@mialmacen.mx',
           'NUE123',
@@ -148,10 +144,8 @@ describe('Verification code resend — transactional email delivery', () => {
       });
 
       it('Then no other email type is sent (no password reset, no welcome) by mistake', async () => {
-        // Given
-        tokenContract.findActiveByUserId.mockResolvedValue(buildActiveVerificationToken());
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(buildActiveVerificationToken());
 
-        // When
         await handler.execute(
           new ResendVerificationCodeCommand(
             'carlos.mendoza@mialmacen.mx',
@@ -162,7 +156,6 @@ describe('Verification code resend — transactional email delivery', () => {
         );
         await flushPromises();
 
-        // Then
         expect(emailProvider.sendPasswordResetEmail).not.toHaveBeenCalled();
         expect(emailProvider.sendWelcomeEmail).not.toHaveBeenCalled();
         expect(emailProvider.sendEmail).not.toHaveBeenCalled();
@@ -173,10 +166,8 @@ describe('Verification code resend — transactional email delivery', () => {
   describe("Given the customer's verification code has expired or was never generated", () => {
     describe('When the customer requests to activate their account and needs a new code', () => {
       it('Then the system generates a new code and sends exactly one verification email', async () => {
-        // Given — no active token exists in the system
-        tokenContract.findActiveByUserId.mockResolvedValue(null);
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(null);
 
-        // When
         await handler.execute(
           new ResendVerificationCodeCommand(
             'carlos.mendoza@mialmacen.mx',
@@ -187,15 +178,12 @@ describe('Verification code resend — transactional email delivery', () => {
         );
         await flushPromises();
 
-        // Then
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledTimes(1);
       });
 
       it('Then that single email arrives in the language selected by the customer', async () => {
-        // Given
-        tokenContract.findActiveByUserId.mockResolvedValue(null);
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(null);
 
-        // When
         await handler.execute(
           new ResendVerificationCodeCommand(
             'carlos.mendoza@mialmacen.mx',
@@ -206,7 +194,6 @@ describe('Verification code resend — transactional email delivery', () => {
         );
         await flushPromises();
 
-        // Then
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledWith(
           'carlos.mendoza@mialmacen.mx',
           'NUE123',
@@ -216,16 +203,13 @@ describe('Verification code resend — transactional email delivery', () => {
       });
 
       it('Then no other email type is sent by mistake', async () => {
-        // Given
-        tokenContract.findActiveByUserId.mockResolvedValue(null);
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(null);
 
-        // When
         await handler.execute(
           new ResendVerificationCodeCommand('carlos.mendoza@mialmacen.mx', '127.0.0.1'),
         );
         await flushPromises();
 
-        // Then
         expect(emailProvider.sendPasswordResetEmail).not.toHaveBeenCalled();
         expect(emailProvider.sendWelcomeEmail).not.toHaveBeenCalled();
         expect(emailProvider.sendEmail).not.toHaveBeenCalled();

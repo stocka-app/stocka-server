@@ -21,7 +21,7 @@ import {
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 /** Waits for all async event handlers to finish executing */
 const flushPromises = () => new Promise<void>((resolve) => setImmediate(resolve));
@@ -31,26 +31,28 @@ describe('New account registration — transactional email delivery', () => {
   let emailProvider: jest.Mocked<IEmailProviderContract>;
   let mediatorService: {
     user: {
-      findByEmail: jest.Mock;
+      existsByEmail: jest.Mock;
       existsByUsername: jest.Mock;
-      createUser: jest.Mock;
+      createUserWithCredentials: jest.Mock;
     };
   };
 
   // The new customer who just discovered Stocka
-  const newCustomer = UserMother.createPendingVerification({
+  const newUser = UserMother.create({
     id: 1,
     uuid: '550e8400-e29b-41d4-a716-446655440003',
+  });
+  const newCredential = CredentialAccountMother.createPendingVerification({
+    id: 1,
     email: 'ana.torres@ferreteria.mx',
-    username: 'ana_torres',
   });
 
   beforeEach(async () => {
     mediatorService = {
       user: {
-        findByEmail: jest.fn().mockResolvedValue(null),
+        existsByEmail: jest.fn().mockResolvedValue(false),
         existsByUsername: jest.fn().mockResolvedValue(false),
-        createUser: jest.fn().mockResolvedValue(newCustomer),
+        createUserWithCredentials: jest.fn().mockResolvedValue({ user: newUser, credential: newCredential }),
       },
     };
 
