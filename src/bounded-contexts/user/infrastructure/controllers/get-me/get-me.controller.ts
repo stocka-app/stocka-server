@@ -34,8 +34,8 @@ export class GetMeController {
     return result.match(
       (user) => ({
         id: user.uuid,
-        email: user.email,
-        username: user.username,
+        email: '', // TODO: fetch from CredentialAccount — FindUserByUUIDQuery needs enriched result
+        username: '', // TODO: fetch from PersonalProfile — FindUserByUUIDQuery needs enriched result
         createdAt: user.createdAt.toISOString(),
       }),
       (error) => {
