@@ -5,6 +5,12 @@ module.exports = {
   testRegex: '.e2e-spec.ts$',
   globalSetup: '<rootDir>/test/global-setup.js',
   testTimeout: 120000,
+  // Load .env.test before any module is evaluated in each worker process.
+  // Required for module-level reads like APP_CONSTANTS.BCRYPT_SALT_ROUNDS.
+  setupFiles: ['<rootDir>/test/setup-env.js'],
+  // Number of parallel workers. Mirrors E2E_WORKERS env var; defaults to 4.
+  // With --runInBand (test:e2e:seq / test:e2e:cov) this has no effect.
+  maxWorkers: parseInt(process.env.E2E_WORKERS || '4', 10),
   transform: {
     '^.+\\.(t|j)sx?$': 'ts-jest',
   },

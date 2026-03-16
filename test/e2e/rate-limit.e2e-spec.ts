@@ -19,12 +19,27 @@ import { RateLimitInterceptor } from '@common/interceptors/rate-limit.intercepto
 import { validate } from '@core/config/environment/env.validation';
 import databaseConfig from '@core/config/database/database.config';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { truncateWorkerTables, getWorkerSchemaName } from '@test/worker-app';
 
 describe('Rate Limiting (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
   beforeAll(async () => {
+    // This spec requires ThrottlerModule + ThrottlerGuard wired at the module level,
+    // which differs from the shared worker app configuration. It bootstraps its own
+    // NestJS app, but reuses the worker's schema for DB isolation.
+    const schemaName = getWorkerSchemaName();
+
+    const emailProvider: jest.Mocked<IEmailProviderContract> = {
+      sendEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
+      sendVerificationEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
+      sendPasswordResetEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
+    };
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -35,13 +50,17 @@ describe('Rate Limiting (e2e)', () => {
         }),
         TypeOrmModule.forRoot({
           type: 'postgres',
-          host: process.env.DB_HOST || 'localhost',
-          port: Number.parseInt(process.env.DB_PORT || '5434', 10),
-          username: process.env.DB_USERNAME || 'stocka',
-          password: process.env.DB_PASSWORD || 'stocka_dev',
-          database: process.env.DB_DATABASE || 'stocka_test',
+          host: process.env.DB_HOST ?? 'localhost',
+          port: parseInt(process.env.DB_PORT ?? '5434', 10),
+          username: process.env.DB_USERNAME ?? 'stocka',
+          password: process.env.DB_PASSWORD ?? 'stocka_dev_password',
+          database: process.env.DB_DATABASE ?? 'stocka_db',
+          schema: schemaName,
           autoLoadEntities: true,
           synchronize: false,
+          extra: {
+            options: `-c search_path=${schemaName}`,
+          },
         }),
         CqrsModule,
         ThrottlerModule.forRoot([
@@ -76,7 +95,10 @@ describe('Rate Limiting (e2e)', () => {
           useClass: RateLimitInterceptor,
         },
       ],
-    }).compile();
+    })
+      .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
+      .useValue(emailProvider)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     app.useGlobalPipes(
@@ -94,12 +116,7 @@ describe('Rate Limiting (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) {
-      const tables = ['users', 'sessions', 'email_verification_tokens', 'verification_attempts'];
-      for (const table of tables) {
-        await dataSource.query(`TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE`);
-      }
-    }
+    await truncateWorkerTables(dataSource);
     await app.close();
   });
 

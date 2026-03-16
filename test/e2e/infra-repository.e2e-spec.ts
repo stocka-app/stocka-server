@@ -1,20 +1,6 @@
 import * as crypto from 'crypto';
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4, version as uuidVersion } from 'uuid';
-
-import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
-import { UserModule } from '@user/infrastructure/user.module';
-import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
-import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
-import { EmailModule } from '@shared/infrastructure/email/email.module';
-import databaseConfig from '@core/config/database/database.config';
-import { validate } from '@core/config/environment/env.validation';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISessionContract } from '@authentication/domain/contracts/session.contract';
@@ -23,12 +9,15 @@ import { IPasswordResetTokenContract } from '@authentication/domain/contracts/pa
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 import { UserAggregate, AccountType } from '@user/domain/models/user.aggregate';
 import { SessionModel } from '@authentication/domain/models/session.model';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+
+import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,9 +54,7 @@ function buildUser(overrides: { email?: string; username?: string } = {}): UserA
 // ─── Test Suite ───────────────────────────────────────────────────────────────
 
 describe('Infrastructure Repositories (e2e)', () => {
-  let app: INestApplication;
   let dataSource: DataSource;
-  let module: TestingModule;
 
   let userRepo: IUserContract;
   let sessionRepo: ISessionContract;
@@ -77,73 +64,32 @@ describe('Infrastructure Repositories (e2e)', () => {
   let socialAccountRepo: ISocialAccountContract;
   let uow: IUnitOfWork;
 
-  const emailProvider: jest.Mocked<IEmailProviderContract> = {
-    sendEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-    sendVerificationEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-    sendWelcomeEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-    sendPasswordResetEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-  };
-
   beforeAll(async () => {
-    module = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [databaseConfig],
-          validate,
-          envFilePath: '.env.test',
-        }),
-        TypeOrmModule.forRoot({
-          type: 'postgres',
-          host: process.env.DB_HOST || 'localhost',
-          port: parseInt(process.env.DB_PORT || '5434', 10),
-          username: process.env.DB_USERNAME || 'stocka',
-          password: process.env.DB_PASSWORD || 'stocka_dev',
-          database: process.env.DB_DATABASE || 'stocka_test',
-          autoLoadEntities: true,
-          synchronize: false,
-        }),
-        EmailModule,
-        UnitOfWorkModule,
-        UserModule,
-        AuthenticationModule,
-        MediatorModule,
-      ],
-    })
-      .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
-      .useValue(emailProvider)
-      .compile();
-
-    app = module.createNestApplication();
-    await app.init();
-
-    dataSource = module.get(DataSource);
-    userRepo = module.get<IUserContract>(INJECTION_TOKENS.USER_CONTRACT);
-    sessionRepo = module.get<ISessionContract>(INJECTION_TOKENS.SESSION_CONTRACT);
-    evtRepo = module.get<IEmailVerificationTokenContract>(
+    const { app, dataSource: ds } = await getWorkerApp();
+    dataSource = ds;
+    userRepo = app.get<IUserContract>(INJECTION_TOKENS.USER_CONTRACT);
+    sessionRepo = app.get<ISessionContract>(INJECTION_TOKENS.SESSION_CONTRACT);
+    evtRepo = app.get<IEmailVerificationTokenContract>(
       INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT,
     );
-    prtRepo = module.get<IPasswordResetTokenContract>(
+    prtRepo = app.get<IPasswordResetTokenContract>(
       INJECTION_TOKENS.PASSWORD_RESET_TOKEN_CONTRACT,
     );
-    attemptRepo = module.get<IVerificationAttemptContract>(
+    attemptRepo = app.get<IVerificationAttemptContract>(
       INJECTION_TOKENS.VERIFICATION_ATTEMPT_CONTRACT,
     );
-    socialAccountRepo = module.get<ISocialAccountContract>(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT);
-    uow = module.get<IUnitOfWork>(INJECTION_TOKENS.UNIT_OF_WORK);
+    socialAccountRepo = app.get<ISocialAccountContract>(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT);
+    uow = app.get<IUnitOfWork>(INJECTION_TOKENS.UNIT_OF_WORK);
   });
 
+  // Strategy 4: single TRUNCATE replaces 6 sequential DELETE FROM queries.
   afterEach(async () => {
-    await dataSource.query('DELETE FROM verification_attempts');
-    await dataSource.query('DELETE FROM email_verification_tokens');
-    await dataSource.query('DELETE FROM password_reset_tokens');
-    await dataSource.query('DELETE FROM sessions');
-    await dataSource.query('DELETE FROM social_accounts');
-    await dataSource.query('DELETE FROM users');
+    await truncateWorkerTables(dataSource);
   });
 
   afterAll(async () => {
-    await app.close();
+    // The worker app singleton is not closed here — it is shared across all specs
+    // and the Jest process exits cleanly with --forceExit.
   });
 
   // ═══════════════════════════════════════════════════════════════════════════

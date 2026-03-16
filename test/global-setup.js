@@ -7,6 +7,10 @@
 // (@authentication/*, @user/*, @shared/*, etc.) resolve correctly at runtime.
 const path = require('path');
 
+// Load .env.test early so process.env is populated before ts-node evaluates any module
+// (e.g. APP_CONSTANTS which reads BCRYPT_ROUNDS at module-load time).
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env.test') });
+
 require('ts-node').register({
   project: path.resolve(__dirname, '..', 'tsconfig.json'),
   transpileOnly: true,
