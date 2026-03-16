@@ -11,7 +11,14 @@ export class RegisterUserStep implements ISagaStepHandler<SignUpSagaContext> {
     if (!ctx.passwordHash)
       throw new Error('RegisterUserStep: ctx.passwordHash not set by prior step');
 
-    ctx.user = await this.mediator.user.createUser(ctx.email, ctx.username, ctx.passwordHash);
+    const result = await this.mediator.user.createUserWithCredentials({
+      email: ctx.email,
+      username: ctx.username,
+      passwordHash: ctx.passwordHash,
+    });
+
+    ctx.user = result.user;
+    ctx.credential = result.credential;
   }
 
   compensate(_ctx: SignUpSagaContext): Promise<void> {

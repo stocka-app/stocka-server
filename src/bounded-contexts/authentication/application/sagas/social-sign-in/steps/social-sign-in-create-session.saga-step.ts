@@ -17,13 +17,15 @@ export class CreateSocialSessionStep implements ISagaStepHandler<SocialSignInSag
     if (!ctx.user) throw new Error('CreateSocialSessionStep: ctx.user not set by prior step');
     if (!ctx.refreshToken)
       throw new Error('CreateSocialSessionStep: ctx.refreshToken not set by prior step');
+    if (ctx.accountId === undefined)
+      throw new Error('CreateSocialSessionStep: ctx.accountId not set by prior step');
 
     const tokenHash = AuthenticationDomainService.hashToken(ctx.refreshToken);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     const session = SessionModel.create({
-      userId: ctx.user.id,
+      accountId: ctx.accountId,
       tokenHash,
       expiresAt,
     });

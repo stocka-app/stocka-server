@@ -108,11 +108,12 @@ export class RateLimitGuard implements CanActivate {
 
   private async checkAccountBlock(identifier: string): Promise<void> {
     try {
-      const user = await this.mediator.user.findByEmailOrUsername(identifier);
+      const result = await this.mediator.user.findUserByEmailOrUsername(identifier);
+      const credential = result?.credential;
 
-      if (user?.verificationBlockedUntil && user.verificationBlockedUntil > new Date()) {
+      if (credential?.verificationBlockedUntil && credential.verificationBlockedUntil > new Date()) {
         const minutesRemaining = Math.ceil(
-          (user.verificationBlockedUntil.getTime() - Date.now()) / 60000,
+          (credential.verificationBlockedUntil.getTime() - Date.now()) / 60000,
         );
 
         throw new HttpException(
@@ -120,7 +121,7 @@ export class RateLimitGuard implements CanActivate {
             statusCode: HttpStatus.TOO_MANY_REQUESTS,
             message: `Account temporarily locked. Try again in ${minutesRemaining} minute(s).`,
             error: 'ACCOUNT_TEMPORARILY_LOCKED',
-            blockedUntil: user.verificationBlockedUntil.toISOString(),
+            blockedUntil: credential.verificationBlockedUntil.toISOString(),
             minutesRemaining,
           },
           HttpStatus.TOO_MANY_REQUESTS,

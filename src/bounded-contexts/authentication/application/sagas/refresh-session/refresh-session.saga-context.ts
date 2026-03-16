@@ -1,4 +1,4 @@
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
 
 export interface RefreshSessionSagaContext {
   // Input — the old refresh token from the httpOnly cookie
@@ -6,7 +6,9 @@ export interface RefreshSessionSagaContext {
 
   // Computed by steps during execution
   oldSessionUUID?: string;
-  user?: IPersistedUserView;
+  user?: UserAggregate;
+  email?: string;
+  accountId?: number;
   accessToken?: string;
   newRefreshToken?: string;
   newSessionUUID?: string;

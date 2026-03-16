@@ -14,8 +14,9 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
 
   async execute(ctx: RefreshSessionSagaContext): Promise<void> {
     if (!ctx.user) throw new Error('GenerateRefreshTokensStep: ctx.user not set by prior step');
+    if (!ctx.email) throw new Error('GenerateRefreshTokensStep: ctx.email not set by prior step');
 
-    const payload = { sub: ctx.user.uuid, email: ctx.user.email };
+    const payload = { sub: ctx.user.uuid, email: ctx.email };
 
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
       '15m') as StringValue;

@@ -1,6 +1,7 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result } from '@shared/domain/result';
-import { IUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 export interface AuthTokens {
   accessToken: string;
@@ -8,7 +9,8 @@ export interface AuthTokens {
 }
 
 export interface AuthenticationResult extends AuthTokens {
-  user: IUserView;
+  user: UserAggregate;
+  credential: CredentialAccountModel;
 }
 
 export interface SignInResult extends AuthenticationResult {

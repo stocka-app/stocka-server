@@ -1,4 +1,6 @@
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
 
 /**
  * IUserFacade — typed contract for cross-BC communication with User BC.
@@ -13,23 +15,40 @@ import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract'
  */
 export interface IUserFacade {
   // === Queries ===
-  findById(id: number): Promise<IPersistedUserView | null>;
-  findByUUID(uuid: string): Promise<IPersistedUserView | null>;
-  findByEmail(email: string): Promise<IPersistedUserView | null>;
-  findByEmailOrUsername(identifier: string): Promise<IPersistedUserView | null>;
+  findByUUID(uuid: string): Promise<UserAggregate | null>;
+  findByAccountId(accountId: number): Promise<UserAggregate | null>;
+  findUsernameByUUID(uuid: string): Promise<string | null>;
+  findUserByUUIDWithCredential(uuid: string): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  findUserByEmail(email: string): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  findUserByEmailOrUsername(identifier: string): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  findUserBySocialProvider(provider: string, providerId: string): Promise<{ user: UserAggregate; social: SocialAccountModel } | null>;
   existsByUsername(username: string): Promise<boolean>;
-  findUserBySocialProvider(
-    provider: string,
-    providerId: string,
-  ): Promise<IPersistedUserView | null>;
+  existsByEmail(email: string): Promise<boolean>;
 
   // === Commands ===
-  createUser(email: string, username: string, passwordHash: string): Promise<IPersistedUserView>;
-  createUserFromSocial(
-    email: string,
-    username: string,
-    provider: string,
-    providerId: string,
-  ): Promise<IPersistedUserView>;
-  linkProviderToUser(userId: number, provider: string, providerId: string): Promise<void>;
+  createUserWithCredentials(props: {
+    email: string;
+    username: string;
+    passwordHash: string | null;
+    locale?: string;
+  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel }>;
+
+  createUserFromOAuth(props: {
+    email: string;
+    username: string;
+    provider: string;
+    providerId: string;
+    providerEmail?: string;
+  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel; social: SocialAccountModel }>;
+
+  linkSocialAccount(userId: number, props: {
+    provider: string;
+    providerId: string;
+    providerEmail?: string;
+  }): Promise<SocialAccountModel>;
+
+  // === CredentialAccount operations ===
+  verifyEmail(credentialAccountId: number): Promise<void>;
+  blockVerification(credentialAccountId: number, until: Date): Promise<void>;
+  updatePasswordHash(credentialAccountId: number, hash: string): Promise<void>;
 }

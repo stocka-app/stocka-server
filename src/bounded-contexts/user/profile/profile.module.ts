@@ -1,0 +1,20 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { ProfileEntity } from '@user/profile/infrastructure/entities/profile.entity';
+import { PersonalProfileEntity } from '@user/profile/infrastructure/entities/personal-profile.entity';
+import { CommercialProfileEntity } from '@user/profile/infrastructure/entities/commercial-profile.entity';
+import { TypeOrmProfileRepository } from '@user/profile/infrastructure/repositories/typeorm-profile.repository';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([ProfileEntity, PersonalProfileEntity, CommercialProfileEntity]),
+  ],
+  providers: [
+    { provide: INJECTION_TOKENS.PROFILE_CONTRACT, useClass: TypeOrmProfileRepository },
+    TypeOrmProfileRepository,
+  ],
+  exports: [INJECTION_TOKENS.PROFILE_CONTRACT, TypeOrmProfileRepository],
+})
+export class ProfileModule {}

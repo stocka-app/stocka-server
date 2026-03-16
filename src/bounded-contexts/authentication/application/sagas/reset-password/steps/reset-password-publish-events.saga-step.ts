@@ -23,7 +23,7 @@ export class PublishResetPasswordEventsStep implements ISagaStepHandler<ResetPas
 
     // Publish cross-BC integration event for User BC to update the password hash
     this.eventBus.publish(
-      new UserPasswordResetByAuthenticationEvent(ctx.resetToken.userId, ctx.newPasswordHash),
+      new UserPasswordResetByAuthenticationEvent(ctx.resetToken.credentialAccountId, ctx.newPasswordHash),
     );
 
     return Promise.resolve();

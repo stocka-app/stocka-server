@@ -29,8 +29,8 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     command: ResendVerificationCodeCommand,
   ): Promise<ResendVerificationCodeCommandResult> {
     // Find user by email
-    const user = await this.mediator.user.findByEmail(command.email);
-    if (!user) {
+    const result = await this.mediator.user.findUserByEmail(command.email);
+    if (!result) {
       // Return success to prevent email enumeration
       return ok({
         success: true,
@@ -38,13 +38,15 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
       });
     }
 
+    const { credential } = result;
+
     // Check if user is already verified
-    if (!user.requiresEmailVerification()) {
+    if (!credential.requiresEmailVerification()) {
       return err(new UserAlreadyVerifiedException());
     }
 
     // Get existing token
-    const existingToken = await this.tokenContract.findActiveByUserId(user.id);
+    const existingToken = await this.tokenContract.findActiveByCredentialAccountId(credential.id!);
 
     if (existingToken) {
       // Check cooldown
@@ -96,7 +98,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
     const token = EmailVerificationTokenModel.createForResend({
-      userId: user.id,
+      credentialAccountId: credential.id!,
       codeHash,
       expiresAt,
       email: command.email,

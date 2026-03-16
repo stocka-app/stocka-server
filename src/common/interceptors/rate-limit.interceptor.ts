@@ -18,7 +18,8 @@ import { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/eve
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { EMAIL_PATTERN } from '@common/constants/validation.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { IUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 interface HttpErrorResponse {
   error?: string;
@@ -72,20 +73,21 @@ export class RateLimitInterceptor implements NestInterceptor {
     const identifier: string | undefined = request.__rateLimitIdentifier;
 
     // Try to find user for tracking
-    let user: IUserView | null = null;
+    let userResult: { user: UserAggregate; credential: CredentialAccountModel } | null = null;
     if (identifier) {
       try {
-        user = await this.mediator.user.findByEmailOrUsername(identifier);
+        userResult = await this.mediator.user.findUserByEmailOrUsername(identifier);
       } catch {
         // User not found — track by IP only
       }
     }
 
     // Persist failed attempt
-    if (user) {
+    if (userResult) {
+      const { user, credential } = userResult;
       const attempt = VerificationAttemptModel.create({
         userUUID: user.uuid,
-        email: user.email,
+        email: credential.email,
         ipAddress: ip,
         userAgent: request.headers['user-agent'] || null,
         codeEntered: null,
@@ -123,7 +125,7 @@ export class RateLimitInterceptor implements NestInterceptor {
 
     this.logger.warn(
       `Failed attempt tracked | type=${config.type} | ip=${ip} | ` +
-        `identifier=${identifier || 'unknown'} | userExists=${!!user}`,
+        `identifier=${identifier || 'unknown'} | userExists=${!!userResult}`,
     );
   }
 
@@ -146,7 +148,7 @@ export class RateLimitInterceptor implements NestInterceptor {
     return EMAIL_PATTERN.test(value);
   }
 
-  private evaluateBlock(user: IUserView, failedAttempts: number, config: RateLimitConfig): void {
+  private evaluateBlock(user: UserAggregate, failedAttempts: number, config: RateLimitConfig): void {
     if (!config.progressiveBlock) return;
 
     // Find the highest matching threshold

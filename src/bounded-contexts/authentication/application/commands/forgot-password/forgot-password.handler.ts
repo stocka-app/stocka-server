@@ -22,11 +22,13 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
   async execute(command: ForgotPasswordCommand): Promise<ForgotPasswordResult> {
     const genericMessage = 'If an account exists, a reset link has been sent';
 
-    const user = await this.mediator.user.findByEmail(command.email);
+    const result = await this.mediator.user.findUserByEmail(command.email);
 
-    if (!user) {
+    if (!result) {
       return { message: genericMessage };
     }
+
+    const { user, credential } = result;
 
     const plainToken = AuthenticationDomainService.generateRandomToken();
     const tokenHash = AuthenticationDomainService.hashToken(plainToken);
@@ -34,17 +36,17 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);
 
-    const isSocialAccount = !user.hasPassword();
+    const isSocialAccount = !credential.hasPassword();
 
     const resetToken = PasswordResetTokenModel.create({
-      userId: user.id,
+      credentialAccountId: credential.id!,
       tokenHash,
       expiresAt,
       email: command.email,
       plainToken,
       lang: command.lang,
       isSocialAccount,
-      provider: isSocialAccount ? user.createdWith : null,
+      provider: isSocialAccount ? credential.createdWith : null,
     });
 
     await this.passwordResetTokenContract.persist(resetToken);

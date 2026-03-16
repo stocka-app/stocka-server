@@ -5,7 +5,6 @@ import { AuthenticationDomainService } from '@authentication/domain/services/aut
 import { InvalidCredentialsException } from '@authentication/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@authentication/domain/exceptions/account-deactivated.exception';
 import { EmailNotVerifiedException } from '@authentication/domain/exceptions/email-not-verified.exception';
-import { SocialAccountRequiredException } from '@authentication/domain/exceptions/social-account-required.exception';
 import { SignInSagaContext } from '@authentication/application/sagas/sign-in/sign-in.saga-context';
 
 @Injectable()
@@ -13,15 +12,17 @@ export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaConte
   constructor(private readonly mediator: MediatorService) {}
 
   async execute(ctx: SignInSagaContext): Promise<void> {
-    const user = await this.mediator.user.findByEmailOrUsername(ctx.emailOrUsername);
+    const result = await this.mediator.user.findUserByEmailOrUsername(ctx.emailOrUsername);
 
-    if (!user || !user.passwordHash) {
+    if (!result || !result.credential.hasPassword()) {
       throw new InvalidCredentialsException();
     }
 
+    const { user, credential } = result;
+
     const isPasswordValid = await AuthenticationDomainService.comparePasswords(
       ctx.password,
-      user.passwordHash,
+      credential.passwordHash!,
     );
 
     if (!isPasswordValid) {
@@ -32,14 +33,11 @@ export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaConte
       throw new AccountDeactivatedException();
     }
 
-    if (user.isFlexiblePending()) {
-      throw new SocialAccountRequiredException();
-    }
-
-    if (user.isPendingVerification()) {
+    if (credential.isPendingVerification()) {
       throw new EmailNotVerifiedException();
     }
 
     ctx.user = user;
+    ctx.credential = credential;
   }
 }

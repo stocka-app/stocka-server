@@ -1,12 +1,12 @@
 import { SessionModel } from '@authentication/domain/models/session.model';
-import { SessionEntity } from '@authentication/infrastructure/persistence/entities/session.entity';
+import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
 
 export class SessionMapper {
   static toDomain(entity: SessionEntity): SessionModel {
     return SessionModel.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
-      userId: entity.userId,
+      accountId: entity.accountId,
       tokenHash: entity.tokenHash,
       expiresAt: entity.expiresAt,
       createdAt: entity.createdAt,
@@ -18,7 +18,7 @@ export class SessionMapper {
   static toEntity(model: SessionModel): Partial<SessionEntity> {
     const entity: Partial<SessionEntity> = {
       uuid: model.uuid,
-      userId: model.userId,
+      accountId: model.accountId,
       tokenHash: model.tokenHash,
       expiresAt: model.expiresAt,
       archivedAt: model.archivedAt,

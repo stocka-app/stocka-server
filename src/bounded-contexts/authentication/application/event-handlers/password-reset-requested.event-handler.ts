@@ -19,7 +19,7 @@ export class PasswordResetRequestedEventHandler implements IEventHandler<Passwor
   ) {}
 
   async handle(event: PasswordResetRequestedEvent): Promise<void> {
-    this.logger.log(`Password reset requested: userId=${event.userId}`);
+    this.logger.log(`Password reset requested: credentialAccountId=${event.credentialAccountId}`);
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     const resetLink = `${frontendUrl}/auth/reset-password?token=${event.token}`;

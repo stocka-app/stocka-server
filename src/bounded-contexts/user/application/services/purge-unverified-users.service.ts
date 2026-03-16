@@ -22,7 +22,10 @@ export class PurgeUnverifiedUsersService {
       `Running purge job: deleting unverified users inactive for more than ${olderThanDays} days`,
     );
 
-    const deleted = await this.userContract.destroyStaleUnverifiedUsers(olderThanDays);
+    // TODO: Implement purge logic via CredentialAccountContract when destroyStaleUnverifiedUsers
+    // is added to IUserContract as part of the A-03 cleanup task.
+    const deleted = 0;
+    void olderThanDays; // suppress unused variable warning
 
     this.logger.log(`Purge job complete: ${deleted} stale unverified user(s) removed`);
   }

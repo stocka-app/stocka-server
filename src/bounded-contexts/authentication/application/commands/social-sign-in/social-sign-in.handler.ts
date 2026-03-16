@@ -17,6 +17,7 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
 
     if (result.isErr()) throw result.error;
 
-    return result.value;
+    const { user, credential, accessToken, refreshToken } = result.value;
+    return { user, credential, accessToken, refreshToken };
   }
 }

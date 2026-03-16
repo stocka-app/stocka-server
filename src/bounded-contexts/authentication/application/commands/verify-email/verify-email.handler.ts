@@ -24,18 +24,20 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
 
   async execute(command: VerifyEmailCommand): Promise<VerifyEmailCommandResult> {
     // Find user by email
-    const user = await this.mediator.user.findByEmail(command.email);
-    if (!user) {
+    const result = await this.mediator.user.findUserByEmail(command.email);
+    if (!result) {
       return err(new InvalidVerificationCodeException());
     }
 
+    const { user, credential } = result;
+
     // Check if user is already verified
-    if (!user.requiresEmailVerification()) {
+    if (!credential.requiresEmailVerification()) {
       return err(new UserAlreadyVerifiedException());
     }
 
     // Get active verification token
-    const token = await this.tokenContract.findActiveByUserId(user.id);
+    const token = await this.tokenContract.findActiveByCredentialAccountId(credential.id!);
     if (!token) {
       return err(new InvalidVerificationCodeException());
     }

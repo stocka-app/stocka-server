@@ -1,12 +1,12 @@
 import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
-import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
+import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
 
 @Entity('email_verification_tokens')
 export class EmailVerificationTokenEntity extends BaseEntity {
-  @Column({ name: 'user_id', type: 'int' })
+  @Column({ name: 'credential_account_id', type: 'int' })
   @Index()
-  userId!: number;
+  credentialAccountId!: number;
 
   @Column({ name: 'code_hash', type: 'varchar', length: 128 })
   codeHash!: string;
@@ -23,7 +23,7 @@ export class EmailVerificationTokenEntity extends BaseEntity {
   @Column({ name: 'last_resent_at', type: 'timestamptz', nullable: true })
   lastResentAt!: Date | null;
 
-  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user!: UserEntity;
+  @ManyToOne(() => CredentialAccountEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'credential_account_id' })
+  credentialAccount!: CredentialAccountEntity;
 }

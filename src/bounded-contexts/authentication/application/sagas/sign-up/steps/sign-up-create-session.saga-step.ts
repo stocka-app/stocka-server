@@ -14,8 +14,8 @@ export class CreateSessionStep implements ISagaStepHandler<SignUpSagaContext> {
   ) {}
 
   async execute(ctx: SignUpSagaContext): Promise<void> {
-    const user = ctx.user;
-    if (!user) throw new Error('CreateSessionStep: ctx.user not set by prior step');
+    if (!ctx.user) throw new Error('CreateSessionStep: ctx.user not set by prior step');
+    if (!ctx.credential) throw new Error('CreateSessionStep: ctx.credential not set by prior step');
     if (!ctx.refreshToken)
       throw new Error('CreateSessionStep: ctx.refreshToken not set by prior step');
 
@@ -24,7 +24,7 @@ export class CreateSessionStep implements ISagaStepHandler<SignUpSagaContext> {
     expiresAt.setDate(expiresAt.getDate() + 7);
 
     const session = SessionModel.create({
-      userId: user.id,
+      accountId: ctx.credential.accountId,
       tokenHash,
       expiresAt,
     });

@@ -1,6 +1,6 @@
 export class MicrosoftStrategyMock {
   constructor() {}
-  validate(accessToken, refreshToken, profile, done) {
+  validate(accessToken: string, refreshToken: string, profile: unknown, done: (err: unknown, user: unknown) => void) {
     done(null, {
       email: 'mock@microsoft.com',
       displayName: 'Mock Microsoft User',

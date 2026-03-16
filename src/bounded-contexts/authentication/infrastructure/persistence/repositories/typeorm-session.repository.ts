@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, EntityManager } from 'typeorm';
 import { ISessionContract } from '@authentication/domain/contracts/session.contract';
 import { SessionModel } from '@authentication/domain/models/session.model';
-import { SessionEntity } from '@authentication/infrastructure/persistence/entities/session.entity';
+import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
 import { SessionMapper } from '@authentication/infrastructure/persistence/mappers/session.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -38,10 +38,10 @@ export class TypeOrmSessionRepository implements ISessionContract {
     return entity ? SessionMapper.toDomain(entity) : null;
   }
 
-  async findActiveByUserId(userId: number): Promise<SessionModel[]> {
+  async findActiveByAccountId(accountId: number): Promise<SessionModel[]> {
     const entities = await this.repository
       .createQueryBuilder('session')
-      .where('session.userId = :userId', { userId })
+      .where('session.accountId = :accountId', { accountId })
       .andWhere('session.archivedAt IS NULL')
       .andWhere('session.expiresAt > :now', { now: new Date() })
       .getMany();
@@ -71,14 +71,14 @@ export class TypeOrmSessionRepository implements ISessionContract {
     }
   }
 
-  async archiveAllByUserId(userId: number): Promise<void> {
+  async archiveAllByAccountId(accountId: number): Promise<void> {
     const archivedAt = new Date();
     if (this.uow.isActive()) {
       await (this.uow.getManager() as EntityManager)
         .createQueryBuilder()
         .update(SessionEntity)
         .set({ archivedAt })
-        .where('userId = :userId', { userId })
+        .where('accountId = :accountId', { accountId })
         .andWhere('archivedAt IS NULL')
         .execute();
     } else {
@@ -86,7 +86,7 @@ export class TypeOrmSessionRepository implements ISessionContract {
         .createQueryBuilder()
         .update(SessionEntity)
         .set({ archivedAt })
-        .where('userId = :userId', { userId })
+        .where('accountId = :accountId', { accountId })
         .andWhere('archivedAt IS NULL')
         .execute();
     }

@@ -29,15 +29,15 @@ export class EmailVerifiedGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
-    // Get full user from database to check status
-    const fullUser = await this.mediator.user.findByUUID(user.sub);
+    // Get credential by user UUID to check email verification status
+    const result = await this.mediator.user.findUserByUUIDWithCredential(user.sub);
 
-    if (!fullUser) {
+    if (!result) {
       throw new ForbiddenException('User not found');
     }
 
-    // Check if user's email is verified
-    if (fullUser.requiresEmailVerification()) {
+    // Check if user's email is verified via credential
+    if (result.credential.requiresEmailVerification()) {
       throw new ForbiddenException({
         statusCode: 403,
         error: 'Email Not Verified',

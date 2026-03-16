@@ -11,32 +11,40 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     // Path A — already linked: fast path, no write needed
     const linked = await this.mediator.user.findUserBySocialProvider(ctx.provider, ctx.providerId);
     if (linked) {
-      ctx.user = linked;
+      ctx.user = linked.user;
+      ctx.accountId = linked.social.accountId;
+      // Fetch credential for token generation
+      const credResult = await this.mediator.user.findUserByEmail(ctx.email);
+      if (credResult) ctx.credential = credResult.credential;
       ctx.path = 'existing-provider';
       return;
     }
 
-    const existingByEmail = await this.mediator.user.findByEmail(ctx.email);
+    const existingByEmail = await this.mediator.user.findUserByEmail(ctx.email);
     if (existingByEmail) {
       // Path B — existing account with different auth method: link the new provider
-      await this.mediator.user.linkProviderToUser(existingByEmail.id, ctx.provider, ctx.providerId);
-      const reloaded = await this.mediator.user.findById(existingByEmail.id);
-      if (!reloaded) {
-        throw new Error('ResolveSocialUserStep: user disappeared after linking provider');
-      }
-      ctx.user = reloaded;
+      const newSocial = await this.mediator.user.linkSocialAccount(existingByEmail.user.id!, {
+        provider: ctx.provider,
+        providerId: ctx.providerId,
+      });
+      ctx.user = existingByEmail.user;
+      ctx.credential = existingByEmail.credential;
+      ctx.accountId = newSocial.accountId;
       ctx.path = 'linked-provider';
       return;
     }
 
     // Path C — brand new user
     const username = await this.generateUniqueUsername(ctx.displayName);
-    ctx.user = await this.mediator.user.createUserFromSocial(
-      ctx.email,
+    const result = await this.mediator.user.createUserFromOAuth({
+      email: ctx.email,
       username,
-      ctx.provider,
-      ctx.providerId,
-    );
+      provider: ctx.provider,
+      providerId: ctx.providerId,
+    });
+    ctx.user = result.user;
+    ctx.credential = result.credential;
+    ctx.accountId = result.social.accountId;
     ctx.path = 'new-user';
   }
 

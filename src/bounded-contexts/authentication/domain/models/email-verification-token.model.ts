@@ -9,7 +9,7 @@ import { VerificationCodeResentEvent } from '@authentication/domain/events/verif
 import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 
 export interface EmailVerificationTokenProps extends AggregateRootProps {
-  userId: number;
+  credentialAccountId: number;
   codeHash: string;
   expiresAt: Date;
   usedAt?: Date | null;
@@ -19,7 +19,7 @@ export interface EmailVerificationTokenProps extends AggregateRootProps {
 }
 
 export class EmailVerificationTokenModel extends AggregateRoot {
-  private readonly _userId: number;
+  private readonly _credentialAccountId: number;
   private _codeHash: CodeHashVO;
   private _expiresAt: ExpiresAtVO;
   private _usedAt: UsedAtVO | null;
@@ -38,7 +38,7 @@ export class EmailVerificationTokenModel extends AggregateRoot {
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
     });
-    this._userId = props.userId;
+    this._credentialAccountId = props.credentialAccountId;
     this._codeHash = new CodeHashVO(props.codeHash);
     this._expiresAt = new ExpiresAtVO(props.expiresAt);
     this._usedAt = props.usedAt ? new UsedAtVO(props.usedAt) : null;
@@ -52,7 +52,7 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     const token = new EmailVerificationTokenModel(props);
 
     if (props.code) {
-      token.apply(new EmailVerificationRequestedEvent(token.userId, props.email, props.code));
+      token.apply(new EmailVerificationRequestedEvent(token.credentialAccountId, props.email, props.code));
     }
 
     return token;
@@ -73,7 +73,7 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     });
 
     token.apply(
-      new VerificationCodeResentEvent(token.userId, props.email, props.code, 1, props.lang ?? 'es'),
+      new VerificationCodeResentEvent(token.credentialAccountId, props.email, props.code, 1, props.lang ?? 'es'),
     );
 
     return token;
@@ -85,8 +85,8 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     return new EmailVerificationTokenModel(props);
   }
 
-  get userId(): number {
-    return this._userId;
+  get credentialAccountId(): number {
+    return this._credentialAccountId;
   }
 
   get codeHash(): string {
@@ -175,7 +175,7 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     this._lastResentAt = new Date();
     this.touch();
     this.apply(
-      new VerificationCodeResentEvent(this.userId, email, code, this._resendCount.getValue(), lang),
+      new VerificationCodeResentEvent(this.credentialAccountId, email, code, this._resendCount.getValue(), lang),
     );
   }
 

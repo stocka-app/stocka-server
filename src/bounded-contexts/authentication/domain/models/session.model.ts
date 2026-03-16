@@ -4,13 +4,13 @@ import { ExpiresAtVO } from '@shared/domain/value-objects/compound/expires-at.vo
 import { SessionCreatedEvent } from '@authentication/domain/events/session-created.event';
 
 export interface SessionProps extends AggregateRootProps {
-  userId: number;
+  accountId: number;
   tokenHash: string;
   expiresAt: Date;
 }
 
 export class SessionModel extends AggregateRoot {
-  private _userId: number;
+  private _accountId: number;
   private _tokenHash: TokenHashVO;
   private _expiresAt: ExpiresAtVO;
 
@@ -22,14 +22,14 @@ export class SessionModel extends AggregateRoot {
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
     });
-    this._userId = props.userId;
+    this._accountId = props.accountId;
     this._tokenHash = new TokenHashVO(props.tokenHash);
     this._expiresAt = new ExpiresAtVO(props.expiresAt);
   }
 
   static create(props: Omit<SessionProps, 'id'>): SessionModel {
     const session = new SessionModel(props);
-    session.apply(new SessionCreatedEvent(session.uuid, session.userId));
+    session.apply(new SessionCreatedEvent(session.uuid, session.accountId));
     return session;
   }
 
@@ -37,8 +37,8 @@ export class SessionModel extends AggregateRoot {
     return new SessionModel(props);
   }
 
-  get userId(): number {
-    return this._userId;
+  get accountId(): number {
+    return this._accountId;
   }
 
   get tokenHash(): string {
