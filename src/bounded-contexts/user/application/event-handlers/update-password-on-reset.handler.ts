@@ -17,7 +17,9 @@ export class UpdatePasswordOnResetHandler implements IEventHandler<UserPasswordR
   async handle(event: UserPasswordResetByAuthenticationEvent): Promise<void> {
     try {
       await this.mediator.user.updatePasswordHash(event.credentialAccountId, event.newPasswordHash);
-      this.logger.log(`Password updated via reset event: credentialAccountId=${event.credentialAccountId}`);
+      this.logger.log(
+        `Password updated via reset event: credentialAccountId=${event.credentialAccountId}`,
+      );
     } catch (error) {
       this.logger.warn(
         `Failed to update password via reset event: credentialAccountId=${event.credentialAccountId}: ${error instanceof Error ? error.message : error}`,

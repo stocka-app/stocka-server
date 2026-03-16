@@ -144,16 +144,13 @@ function buildOAuthGuardTests(
     let configService: jest.Mocked<ConfigService>;
 
     const buildCtx = (): ExecutionContext =>
-      ({ getHandler: jest.fn(), getClass: jest.fn() } as unknown as ExecutionContext);
+      ({ getHandler: jest.fn(), getClass: jest.fn() }) as unknown as ExecutionContext;
 
     beforeEach(async () => {
       configService = { get: jest.fn() } as unknown as jest.Mocked<ConfigService>;
 
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          GuardClass,
-          { provide: ConfigService, useValue: configService },
-        ],
+        providers: [GuardClass, { provide: ConfigService, useValue: configService }],
       }).compile();
 
       guard = module.get(GuardClass);

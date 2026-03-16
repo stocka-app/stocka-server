@@ -19,6 +19,9 @@ export interface ICredentialAccountContract {
 
 export interface ISocialAccountContract {
   findByAccountId(accountId: number): Promise<SocialAccountModel[]>;
-  findByProviderAndProviderId(provider: string, providerId: string): Promise<SocialAccountModel | null>;
+  findByProviderAndProviderId(
+    provider: string,
+    providerId: string,
+  ): Promise<SocialAccountModel | null>;
   persist(model: SocialAccountModel): Promise<SocialAccountModel>;
 }

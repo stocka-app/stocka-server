@@ -12,10 +12,8 @@ export class PublishSignInEventsStep implements ISagaStepHandler<SignInSagaConte
   ) {}
 
   execute(ctx: SignInSagaContext): Promise<void> {
-    if (!ctx.user)
-      throw new Error('PublishSignInEventsStep: ctx.user not set by prior step');
-    if (!ctx.session)
-      throw new Error('PublishSignInEventsStep: ctx.session not set by prior step');
+    if (!ctx.user) throw new Error('PublishSignInEventsStep: ctx.user not set by prior step');
+    if (!ctx.session) throw new Error('PublishSignInEventsStep: ctx.session not set by prior step');
 
     // Publish domain events collected on the session aggregate (SessionCreatedEvent)
     this.eventPublisher.mergeObjectContext(ctx.session);

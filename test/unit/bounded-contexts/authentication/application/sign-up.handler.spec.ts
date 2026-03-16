@@ -14,11 +14,15 @@ describe('SignUpHandler', () => {
   let signUpSaga: { execute: jest.Mock };
 
   const mockUser = UserMother.create({ id: 1 });
-  const mockCredential = CredentialAccountMother.create({ accountId: 1, email: 'test@example.com' });
+  const mockCredential = CredentialAccountMother.create({
+    accountId: 1,
+    email: 'test@example.com',
+  });
 
   const successOutput: SignUpSagaOutput = {
     user: mockUser,
     credential: mockCredential,
+    username: 'testuser',
     accessToken: 'mock-access-token',
     refreshToken: 'mock-refresh-token',
     emailSent: true,
@@ -30,10 +34,7 @@ describe('SignUpHandler', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SignUpHandler,
-        { provide: SignUpSaga, useValue: mockSignUpSaga },
-      ],
+      providers: [SignUpHandler, { provide: SignUpSaga, useValue: mockSignUpSaga }],
     }).compile();
 
     handler = module.get<SignUpHandler>(SignUpHandler);
@@ -74,9 +75,7 @@ describe('SignUpHandler', () => {
   describe('Given the saga returns a domain error', () => {
     describe('When the email already exists', () => {
       it('Then it returns the error as a Result.err', async () => {
-        signUpSaga.execute.mockResolvedValue(
-          err(new EmailAlreadyExistsException()),
-        );
+        signUpSaga.execute.mockResolvedValue(err(new EmailAlreadyExistsException()));
 
         const command = new SignUpCommand('existing@example.com', 'testuser', 'Password1');
         const result = await handler.execute(command);
@@ -88,9 +87,7 @@ describe('SignUpHandler', () => {
 
     describe('When the password is invalid', () => {
       it('Then it returns the error as a Result.err', async () => {
-        signUpSaga.execute.mockResolvedValue(
-          err(new InvalidPasswordException()),
-        );
+        signUpSaga.execute.mockResolvedValue(err(new InvalidPasswordException()));
 
         const command = new SignUpCommand('test@example.com', 'testuser', 'weak');
         const result = await handler.execute(command);

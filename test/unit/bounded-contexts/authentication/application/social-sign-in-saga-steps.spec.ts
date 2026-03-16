@@ -197,10 +197,7 @@ describe('PublishSocialSignInEventsStep', () => {
     eventBus = { publish: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PublishSocialSignInEventsStep,
-        { provide: EventBus, useValue: eventBus },
-      ],
+      providers: [PublishSocialSignInEventsStep, { provide: EventBus, useValue: eventBus }],
     }).compile();
 
     step = module.get<PublishSocialSignInEventsStep>(PublishSocialSignInEventsStep);
@@ -281,10 +278,7 @@ describe('ResolveSocialUserStep', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ResolveSocialUserStep,
-        { provide: MediatorService, useValue: mediator },
-      ],
+      providers: [ResolveSocialUserStep, { provide: MediatorService, useValue: mediator }],
     }).compile();
 
     step = module.get<ResolveSocialUserStep>(ResolveSocialUserStep);
@@ -348,7 +342,7 @@ describe('ResolveSocialUserStep', () => {
         mediator.user.findUserBySocialProvider.mockResolvedValue(null);
         mediator.user.findUserByEmail.mockResolvedValue(null);
         mediator.user.existsByUsername
-          .mockResolvedValueOnce(true)  // first attempt: collision
+          .mockResolvedValueOnce(true) // first attempt: collision
           .mockResolvedValueOnce(false); // second attempt: unique
 
         const ctx = { ...BASE_CTX };

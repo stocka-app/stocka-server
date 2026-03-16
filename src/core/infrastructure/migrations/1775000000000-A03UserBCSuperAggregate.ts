@@ -22,9 +22,15 @@ export class A03UserBCSuperAggregate1775000000000 implements MigrationInterface 
         CONSTRAINT "PK_process_state" PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_process_state_process_name"     ON "process_state" ("process_name")`);
-    await queryRunner.query(`CREATE UNIQUE INDEX "IDX_process_state_correlation_id" ON "process_state" ("correlation_id")`);
-    await queryRunner.query(`CREATE INDEX "IDX_process_state_status"           ON "process_state" ("status")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_process_state_process_name"     ON "process_state" ("process_name")`,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_process_state_correlation_id" ON "process_state" ("correlation_id")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_process_state_status"           ON "process_state" ("status")`,
+    );
 
     // -------------------------------------------------------------------------
     // users — anchor only (no domain fields)
@@ -165,8 +171,12 @@ export class A03UserBCSuperAggregate1775000000000 implements MigrationInterface 
         CONSTRAINT "PK_credential_accounts"            PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_credential_accounts_status"       ON "credential_accounts" ("status")`);
-    await queryRunner.query(`CREATE INDEX "IDX_credential_accounts_created_with" ON "credential_accounts" ("created_with")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_credential_accounts_status"       ON "credential_accounts" ("status")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_credential_accounts_created_with" ON "credential_accounts" ("created_with")`,
+    );
 
     // -------------------------------------------------------------------------
     // social_accounts — OAuth auth channel (N:1 with accounts)
@@ -270,10 +280,18 @@ export class A03UserBCSuperAggregate1775000000000 implements MigrationInterface 
         CONSTRAINT "PK_verification_attempts"      PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_verification_attempts_user_uuid"    ON "verification_attempts" ("user_uuid")`);
-    await queryRunner.query(`CREATE INDEX "IDX_verification_attempts_email"        ON "verification_attempts" ("email")`);
-    await queryRunner.query(`CREATE INDEX "IDX_verification_attempts_ip_address"   ON "verification_attempts" ("ip_address")`);
-    await queryRunner.query(`CREATE INDEX "IDX_verification_attempts_attempted_at" ON "verification_attempts" ("attempted_at")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_verification_attempts_user_uuid"    ON "verification_attempts" ("user_uuid")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_verification_attempts_email"        ON "verification_attempts" ("email")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_verification_attempts_ip_address"   ON "verification_attempts" ("ip_address")`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_verification_attempts_attempted_at" ON "verification_attempts" ("attempted_at")`,
+    );
 
     // -------------------------------------------------------------------------
     // email_verification_tokens — FK to credential_accounts (not users)
@@ -295,7 +313,9 @@ export class A03UserBCSuperAggregate1775000000000 implements MigrationInterface 
         CONSTRAINT "PK_email_verification_tokens"      PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_email_verification_tokens_credential_account_id" ON "email_verification_tokens" ("credential_account_id")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_email_verification_tokens_credential_account_id" ON "email_verification_tokens" ("credential_account_id")`,
+    );
 
     // -------------------------------------------------------------------------
     // password_reset_tokens — FK to credential_accounts (not users)
@@ -315,7 +335,9 @@ export class A03UserBCSuperAggregate1775000000000 implements MigrationInterface 
         CONSTRAINT "PK_password_reset_tokens"      PRIMARY KEY ("id")
       )
     `);
-    await queryRunner.query(`CREATE INDEX "IDX_password_reset_tokens_token_hash" ON "password_reset_tokens" ("token_hash")`);
+    await queryRunner.query(
+      `CREATE INDEX "IDX_password_reset_tokens_token_hash" ON "password_reset_tokens" ("token_hash")`,
+    );
 
     // =========================================================================
     // Foreign Key Constraints
@@ -419,24 +441,54 @@ export class A03UserBCSuperAggregate1775000000000 implements MigrationInterface 
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop FK constraints first (reverse order of creation)
-    await queryRunner.query(`ALTER TABLE "password_reset_tokens"      DROP CONSTRAINT "FK_password_reset_tokens_credential_account_id"`);
-    await queryRunner.query(`ALTER TABLE "email_verification_tokens"  DROP CONSTRAINT "FK_email_verification_tokens_credential_account_id"`);
-    await queryRunner.query(`ALTER TABLE "social_sessions"            DROP CONSTRAINT "FK_social_sessions_social_account_id"`);
-    await queryRunner.query(`ALTER TABLE "social_sessions"            DROP CONSTRAINT "FK_social_sessions_session_id"`);
-    await queryRunner.query(`ALTER TABLE "credential_sessions"        DROP CONSTRAINT "FK_credential_sessions_credential_account_id"`);
-    await queryRunner.query(`ALTER TABLE "credential_sessions"        DROP CONSTRAINT "FK_credential_sessions_session_id"`);
-    await queryRunner.query(`ALTER TABLE "sessions"                   DROP CONSTRAINT "FK_sessions_account_id"`);
-    await queryRunner.query(`ALTER TABLE "social_accounts"            DROP CONSTRAINT "FK_social_accounts_account_id"`);
-    await queryRunner.query(`ALTER TABLE "credential_accounts"        DROP CONSTRAINT "FK_credential_accounts_account_id"`);
-    await queryRunner.query(`ALTER TABLE "accounts"                   DROP CONSTRAINT "FK_accounts_user_id"`);
-    await queryRunner.query(`ALTER TABLE "social_profiles"            DROP CONSTRAINT "FK_social_profiles_profile_id"`);
-    await queryRunner.query(`ALTER TABLE "commercial_profiles"        DROP CONSTRAINT "FK_commercial_profiles_profile_id"`);
-    await queryRunner.query(`ALTER TABLE "personal_profiles"          DROP CONSTRAINT "FK_personal_profiles_profile_id"`);
-    await queryRunner.query(`ALTER TABLE "profiles"                   DROP CONSTRAINT "FK_profiles_user_id"`);
+    await queryRunner.query(
+      `ALTER TABLE "password_reset_tokens"      DROP CONSTRAINT "FK_password_reset_tokens_credential_account_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "email_verification_tokens"  DROP CONSTRAINT "FK_email_verification_tokens_credential_account_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "social_sessions"            DROP CONSTRAINT "FK_social_sessions_social_account_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "social_sessions"            DROP CONSTRAINT "FK_social_sessions_session_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "credential_sessions"        DROP CONSTRAINT "FK_credential_sessions_credential_account_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "credential_sessions"        DROP CONSTRAINT "FK_credential_sessions_session_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"                   DROP CONSTRAINT "FK_sessions_account_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "social_accounts"            DROP CONSTRAINT "FK_social_accounts_account_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "credential_accounts"        DROP CONSTRAINT "FK_credential_accounts_account_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "accounts"                   DROP CONSTRAINT "FK_accounts_user_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "social_profiles"            DROP CONSTRAINT "FK_social_profiles_profile_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "commercial_profiles"        DROP CONSTRAINT "FK_commercial_profiles_profile_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "personal_profiles"          DROP CONSTRAINT "FK_personal_profiles_profile_id"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "profiles"                   DROP CONSTRAINT "FK_profiles_user_id"`,
+    );
 
     // Drop indexes
     await queryRunner.query(`DROP INDEX "public"."IDX_password_reset_tokens_token_hash"`);
-    await queryRunner.query(`DROP INDEX "public"."IDX_email_verification_tokens_credential_account_id"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_email_verification_tokens_credential_account_id"`,
+    );
     await queryRunner.query(`DROP INDEX "public"."IDX_verification_attempts_attempted_at"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_verification_attempts_ip_address"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_verification_attempts_email"`);

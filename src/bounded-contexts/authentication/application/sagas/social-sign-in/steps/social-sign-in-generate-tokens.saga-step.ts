@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
+import { v4 as uuidv4 } from 'uuid';
 import { ISagaStepHandler } from '@shared/domain/saga';
 import { SocialSignInSagaContext } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga-context';
 
@@ -14,7 +15,8 @@ export class GenerateSocialTokensStep implements ISagaStepHandler<SocialSignInSa
 
   async execute(ctx: SocialSignInSagaContext): Promise<void> {
     if (!ctx.user) throw new Error('GenerateSocialTokensStep: ctx.user not set by prior step');
-    if (!ctx.credential) throw new Error('GenerateSocialTokensStep: ctx.credential not set by prior step');
+    if (!ctx.credential)
+      throw new Error('GenerateSocialTokensStep: ctx.credential not set by prior step');
 
     const payload = { sub: ctx.user.uuid, email: ctx.credential.email };
 
@@ -30,6 +32,7 @@ export class GenerateSocialTokensStep implements ISagaStepHandler<SocialSignInSa
     const refreshOptions: JwtSignOptions = {
       secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       expiresIn: refreshExpiration,
+      jwtid: uuidv4(),
     };
 
     ctx.accessToken = await this.jwtService.signAsync(payload, accessOptions);

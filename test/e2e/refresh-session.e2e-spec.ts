@@ -73,12 +73,12 @@ describe('Refresh Session (e2e)', () => {
         const { cookie } = await signUpAndGetCookie('refresh3@example.com', 'refreshuser3');
 
         // Get the original session before refresh
-        const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'refresh3@example.com'`,
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'refresh3@example.com'`,
         );
         const [originalSession] = await dataSource.query(
-          `SELECT uuid FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT uuid FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
 
         await request(app.getHttpServer())
@@ -96,13 +96,13 @@ describe('Refresh Session (e2e)', () => {
       it('Then a new active session is created in the database', async () => {
         const { cookie } = await signUpAndGetCookie('refresh4@example.com', 'refreshuser4');
 
-        const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'refresh4@example.com'`,
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'refresh4@example.com'`,
         );
 
         const sessionsBefore = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1`,
+          [account.id],
         );
 
         await request(app.getHttpServer())
@@ -110,8 +110,8 @@ describe('Refresh Session (e2e)', () => {
           .set('Cookie', cookie);
 
         const sessionsAfter = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1`,
+          [account.id],
         );
 
         expect(parseInt(sessionsAfter[0].count)).toBe(parseInt(sessionsBefore[0].count) + 1);
@@ -126,9 +126,7 @@ describe('Refresh Session (e2e)', () => {
   describe('Given a customer with no refresh token cookie', () => {
     describe('When they call the refresh-session endpoint without a cookie', () => {
       it('Then they receive a 401 Unauthorized', async () => {
-        const res = await request(app.getHttpServer()).post(
-          '/api/authentication/refresh-session',
-        );
+        const res = await request(app.getHttpServer()).post('/api/authentication/refresh-session');
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
       });
@@ -156,12 +154,12 @@ describe('Refresh Session (e2e)', () => {
       it('Then the transaction is rolled back and the original session remains active', async () => {
         const { cookie } = await signUpAndGetCookie('rollback.refresh@example.com', 'rollbackref');
 
-        const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'rollback.refresh@example.com'`,
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'rollback.refresh@example.com'`,
         );
         const [originalSession] = await dataSource.query(
-          `SELECT uuid FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT uuid FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
 
         const spy = jest

@@ -7,6 +7,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 
 import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
+import { CredentialSessionEntity } from '@user/account/session/infrastructure/entities/credential-session.entity';
+import { SocialSessionEntity } from '@user/account/session/infrastructure/entities/social-session.entity';
 import { PasswordResetTokenEntity } from '@authentication/infrastructure/persistence/entities/password-reset-token.entity';
 import { EmailVerificationTokenEntity } from '@authentication/infrastructure/persistence/entities/email-verification-token.entity';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
@@ -179,6 +181,8 @@ const Controllers = [
   imports: [
     TypeOrmModule.forFeature([
       SessionEntity,
+      CredentialSessionEntity,
+      SocialSessionEntity,
       PasswordResetTokenEntity,
       EmailVerificationTokenEntity,
       VerificationAttemptEntity,

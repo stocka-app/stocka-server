@@ -1,4 +1,7 @@
-import { setRefreshCookie, clearRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
+import {
+  setRefreshCookie,
+  clearRefreshCookie,
+} from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 import { Response } from 'express';
 
 // ── Helper ────────────────────────────────────────────────────────────────────

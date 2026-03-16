@@ -85,6 +85,7 @@ export class SignUpSaga extends Saga<SignUpSagaContext> {
       return ok({
         user: ctx.user,
         credential: ctx.credential,
+        username: ctx.username,
         accessToken: ctx.accessToken,
         refreshToken: ctx.refreshToken,
         emailSent: ctx.emailSent ?? false,

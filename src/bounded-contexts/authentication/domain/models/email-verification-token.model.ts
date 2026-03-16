@@ -52,7 +52,9 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     const token = new EmailVerificationTokenModel(props);
 
     if (props.code) {
-      token.apply(new EmailVerificationRequestedEvent(token.credentialAccountId, props.email, props.code));
+      token.apply(
+        new EmailVerificationRequestedEvent(token.credentialAccountId, props.email, props.code),
+      );
     }
 
     return token;
@@ -73,7 +75,13 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     });
 
     token.apply(
-      new VerificationCodeResentEvent(token.credentialAccountId, props.email, props.code, 1, props.lang ?? 'es'),
+      new VerificationCodeResentEvent(
+        token.credentialAccountId,
+        props.email,
+        props.code,
+        1,
+        props.lang ?? 'es',
+      ),
     );
 
     return token;
@@ -175,7 +183,13 @@ export class EmailVerificationTokenModel extends AggregateRoot {
     this._lastResentAt = new Date();
     this.touch();
     this.apply(
-      new VerificationCodeResentEvent(this.credentialAccountId, email, code, this._resendCount.getValue(), lang),
+      new VerificationCodeResentEvent(
+        this.credentialAccountId,
+        email,
+        code,
+        this._resendCount.getValue(),
+        lang,
+      ),
     );
   }
 

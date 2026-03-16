@@ -44,13 +44,15 @@ export class AuthenticationProvidersController {
       {
         id: 'facebook',
         name: 'Facebook',
-        enabled: this.configService.get<string>('FACEBOOK_AUTHENTICATION_ENABLED', 'true') === 'true',
+        enabled:
+          this.configService.get<string>('FACEBOOK_AUTHENTICATION_ENABLED', 'true') === 'true',
         authUrl: `${baseUrl}/authentication/facebook`,
       },
       {
         id: 'microsoft',
         name: 'Microsoft',
-        enabled: this.configService.get<string>('MICROSOFT_AUTHENTICATION_ENABLED', 'true') === 'true',
+        enabled:
+          this.configService.get<string>('MICROSOFT_AUTHENTICATION_ENABLED', 'true') === 'true',
         authUrl: `${baseUrl}/authentication/microsoft`,
       },
       {

@@ -19,10 +19,7 @@ describe('FindUserByEmailHandler', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FindUserByEmailHandler,
-        { provide: MediatorService, useValue: mediator },
-      ],
+      providers: [FindUserByEmailHandler, { provide: MediatorService, useValue: mediator }],
     }).compile();
 
     handler = module.get<FindUserByEmailHandler>(FindUserByEmailHandler);

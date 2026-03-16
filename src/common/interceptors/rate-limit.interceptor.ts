@@ -148,7 +148,11 @@ export class RateLimitInterceptor implements NestInterceptor {
     return EMAIL_PATTERN.test(value);
   }
 
-  private evaluateBlock(user: UserAggregate, failedAttempts: number, config: RateLimitConfig): void {
+  private evaluateBlock(
+    user: UserAggregate,
+    failedAttempts: number,
+    config: RateLimitConfig,
+  ): void {
     if (!config.progressiveBlock) return;
 
     // Find the highest matching threshold

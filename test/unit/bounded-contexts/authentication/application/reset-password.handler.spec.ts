@@ -19,10 +19,7 @@ describe('ResetPasswordHandler — password reset via token (EC-007)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ResetPasswordHandler,
-        { provide: ResetPasswordSaga, useValue: mockSaga },
-      ],
+      providers: [ResetPasswordHandler, { provide: ResetPasswordSaga, useValue: mockSaga }],
     }).compile();
 
     handler = module.get<ResetPasswordHandler>(ResetPasswordHandler);

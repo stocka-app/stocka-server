@@ -18,7 +18,9 @@ function buildSession(uuid: string, accountId: number): SessionModel {
 
 describe('SignOutHandler', () => {
   let handler: SignOutHandler;
-  let sessionContract: jest.Mocked<Pick<ISessionContract, 'findByTokenHash' | 'archiveAllByAccountId'>>;
+  let sessionContract: jest.Mocked<
+    Pick<ISessionContract, 'findByTokenHash' | 'archiveAllByAccountId'>
+  >;
   let mediator: { user: { findByAccountId: jest.Mock } };
   let eventBus: { publish: jest.Mock };
 
@@ -71,7 +73,7 @@ describe('SignOutHandler', () => {
       it('Then it publishes SessionArchivedEvent and UserSignedOutEvent', async () => {
         await handler.execute(new SignOutCommand(FAKE_REFRESH_TOKEN));
         expect(eventBus.publish).toHaveBeenCalledTimes(2);
-        const publishedTypes = (eventBus.publish as jest.Mock).mock.calls.map(
+        const publishedTypes = eventBus.publish.mock.calls.map(
           (args: unknown[]) => (args[0] as object).constructor,
         );
         expect(publishedTypes).toContain(SessionArchivedEvent);

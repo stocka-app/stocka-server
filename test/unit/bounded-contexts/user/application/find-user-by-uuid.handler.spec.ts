@@ -30,9 +30,7 @@ describe('FindUserByUUIDHandler', () => {
 
   describe('Given a registered user exists in the system', () => {
     beforeEach(() => {
-      userContract.findByUUID.mockResolvedValue(
-        UserMother.create({ uuid: USER_UUID, id: 1 }),
-      );
+      userContract.findByUUID.mockResolvedValue(UserMother.create({ uuid: USER_UUID, id: 1 }));
     });
 
     describe('When fetching their profile by UUID', () => {

@@ -111,7 +111,10 @@ export class RateLimitGuard implements CanActivate {
       const result = await this.mediator.user.findUserByEmailOrUsername(identifier);
       const credential = result?.credential;
 
-      if (credential?.verificationBlockedUntil && credential.verificationBlockedUntil > new Date()) {
+      if (
+        credential?.verificationBlockedUntil &&
+        credential.verificationBlockedUntil > new Date()
+      ) {
         const minutesRemaining = Math.ceil(
           (credential.verificationBlockedUntil.getTime() - Date.now()) / 60000,
         );

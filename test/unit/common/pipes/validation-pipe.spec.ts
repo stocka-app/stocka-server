@@ -46,16 +46,20 @@ describe('globalValidationPipe', () => {
   describe('Given input missing required fields (empty object)', () => {
     describe('When the pipe transforms and no constraints produce errors', () => {
       it('Then it throws with a message from the first detail or Validation failed default', async () => {
-        await expect(
-          globalValidationPipe.transform({}, metadata),
-        ).rejects.toThrow(BadRequestException);
+        await expect(globalValidationPipe.transform({}, metadata)).rejects.toThrow(
+          BadRequestException,
+        );
       });
     });
   });
 
   describe('Given the exceptionFactory is called directly', () => {
     // Access the protected factory to test edge-case branches
-    const factory = (globalValidationPipe as unknown as { exceptionFactory: (e: ValidationError[]) => BadRequestException }).exceptionFactory;
+    const factory = (
+      globalValidationPipe as unknown as {
+        exceptionFactory: (e: ValidationError[]) => BadRequestException;
+      }
+    ).exceptionFactory;
 
     describe('When a ValidationError has no constraints (nested children only)', () => {
       it('Then constraints falls back to {} and details is empty, so message defaults to "Validation failed"', () => {

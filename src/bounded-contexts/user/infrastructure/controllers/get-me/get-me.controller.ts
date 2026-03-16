@@ -1,19 +1,14 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { Controller, Get, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
-import {
-  FindUserByUUIDQuery,
-  FindUserByUUIDQueryResult,
-} from '@user/application/queries/find-user-by-uuid/find-user-by-uuid.query';
+import { UserFacade } from '@user/infrastructure/facade/user.facade';
 import { GetMeOutDto } from '@user/infrastructure/controllers/get-me/get-me-out.dto';
-import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
 @ApiTags('Authentication')
 @Controller('authentication')
 export class GetMeController {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(private readonly userFacade: UserFacade) {}
 
   @Get('me')
   @UseGuards(JwtAuthenticationGuard)
@@ -27,20 +22,20 @@ export class GetMeController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async handle(@CurrentUser('uuid') uuid: string): Promise<GetMeOutDto> {
-    const result = await this.queryBus.execute<FindUserByUUIDQuery, FindUserByUUIDQueryResult>(
-      new FindUserByUUIDQuery(uuid),
-    );
+    const result = await this.userFacade.findUserByUUIDWithCredential(uuid);
 
-    return result.match(
-      (user) => ({
-        id: user.uuid,
-        email: '', // TODO: fetch from CredentialAccount — FindUserByUUIDQuery needs enriched result
-        username: '', // TODO: fetch from PersonalProfile — FindUserByUUIDQuery needs enriched result
-        createdAt: user.createdAt.toISOString(),
-      }),
-      (error) => {
-        throw mapDomainErrorToHttp(error);
-      },
-    );
+    if (!result) {
+      throw new NotFoundException('User not found');
+    }
+
+    const { user, credential } = result;
+    const username = (await this.userFacade.findUsernameByUUID(uuid)) ?? credential.email;
+
+    return {
+      id: user.uuid,
+      email: credential.email,
+      username,
+      createdAt: user.createdAt.toISOString(),
+    };
   }
 }

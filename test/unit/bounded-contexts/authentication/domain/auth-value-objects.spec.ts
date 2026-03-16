@@ -10,7 +10,10 @@ import { IPv6AddressVO } from '@authentication/domain/value-objects/ipv6-address
 import { PasswordVO } from '@authentication/domain/value-objects/password.vo';
 import { UserAgentVO } from '@authentication/domain/value-objects/user-agent.vo';
 import { VerificationResultVO } from '@authentication/domain/value-objects/verification-result.vo';
-import { VerificationTypeVO, VerificationTypeEnum } from '@authentication/domain/value-objects/verification-type.vo';
+import {
+  VerificationTypeVO,
+  VerificationTypeEnum,
+} from '@authentication/domain/value-objects/verification-type.vo';
 import { InvalidAttemptedAtException } from '@authentication/domain/exceptions/invalid-attempted-at.exception';
 import { InvalidIpAddressException } from '@authentication/domain/exceptions/invalid-ip-address.exception';
 import { InvalidPasswordException } from '@authentication/domain/exceptions/invalid-password.exception';

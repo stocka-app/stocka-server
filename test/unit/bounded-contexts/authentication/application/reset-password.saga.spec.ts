@@ -28,7 +28,11 @@ describe('ResetPasswordSaga', () => {
   beforeEach(async () => {
     const mockValidateToken = {
       execute: jest.fn().mockImplementation((ctx: ResetPasswordSagaContext) => {
-        ctx.resetToken = { userId: 99, markAsUsed: jest.fn(), commit: jest.fn() } as unknown as ResetPasswordSagaContext['resetToken'];
+        ctx.resetToken = {
+          userId: 99,
+          markAsUsed: jest.fn(),
+          commit: jest.fn(),
+        } as unknown as ResetPasswordSagaContext['resetToken'];
       }),
     };
     const mockHashPassword = {
@@ -92,7 +96,9 @@ describe('ResetPasswordSaga', () => {
       it('Then the transaction is rolled back and no writes happen', async () => {
         validateToken.execute.mockRejectedValue(new TokenExpiredException());
 
-        await expect(saga.run({ ...baseSagaContext })).rejects.toBeInstanceOf(TokenExpiredException);
+        await expect(saga.run({ ...baseSagaContext })).rejects.toBeInstanceOf(
+          TokenExpiredException,
+        );
 
         expect(uow.begin).toHaveBeenCalledTimes(1);
         expect(uow.rollback).toHaveBeenCalledTimes(1);

@@ -18,7 +18,9 @@ describe('MediatorService', () => {
       const moduleRef = buildMockModuleRef();
       const service = new MediatorService(moduleRef);
 
-      expect(() => service.user).toThrow('MediatorService not initialized — onModuleInit has not run');
+      expect(() => service.user).toThrow(
+        'MediatorService not initialized — onModuleInit has not run',
+      );
     });
   });
 
@@ -45,7 +47,7 @@ describe('MediatorService', () => {
       });
 
       it('Then calling a facade method works through the mediator', () => {
-        (mockFacade.findByUUID as jest.Mock).mockResolvedValue({ id: 1 });
+        mockFacade.findByUUID.mockResolvedValue({ id: 1 });
         service.user.findByUUID('some-uuid');
         expect(mockFacade.findByUUID).toHaveBeenCalledWith('some-uuid');
       });

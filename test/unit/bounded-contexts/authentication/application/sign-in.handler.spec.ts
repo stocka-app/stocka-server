@@ -29,10 +29,7 @@ describe('SignInHandler — credentials-based sign-in (EC-001)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SignInHandler,
-        { provide: SignInSaga, useValue: mockSaga },
-      ],
+      providers: [SignInHandler, { provide: SignInSaga, useValue: mockSaga }],
     }).compile();
 
     handler = module.get<SignInHandler>(SignInHandler);

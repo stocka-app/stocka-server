@@ -18,10 +18,19 @@ export interface IUserFacade {
   findByUUID(uuid: string): Promise<UserAggregate | null>;
   findByAccountId(accountId: number): Promise<UserAggregate | null>;
   findUsernameByUUID(uuid: string): Promise<string | null>;
-  findUserByUUIDWithCredential(uuid: string): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
-  findUserByEmail(email: string): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
-  findUserByEmailOrUsername(identifier: string): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
-  findUserBySocialProvider(provider: string, providerId: string): Promise<{ user: UserAggregate; social: SocialAccountModel } | null>;
+  findUserByUUIDWithCredential(
+    uuid: string,
+  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  findUserByEmail(
+    email: string,
+  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  findUserByEmailOrUsername(
+    identifier: string,
+  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  findUserBySocialProvider(
+    provider: string,
+    providerId: string,
+  ): Promise<{ user: UserAggregate; social: SocialAccountModel } | null>;
   existsByUsername(username: string): Promise<boolean>;
   existsByEmail(email: string): Promise<boolean>;
 
@@ -39,13 +48,20 @@ export interface IUserFacade {
     provider: string;
     providerId: string;
     providerEmail?: string;
-  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel; social: SocialAccountModel }>;
+  }): Promise<{
+    user: UserAggregate;
+    credential: CredentialAccountModel;
+    social: SocialAccountModel;
+  }>;
 
-  linkSocialAccount(userId: number, props: {
-    provider: string;
-    providerId: string;
-    providerEmail?: string;
-  }): Promise<SocialAccountModel>;
+  linkSocialAccount(
+    userId: number,
+    props: {
+      provider: string;
+      providerId: string;
+      providerEmail?: string;
+    },
+  ): Promise<SocialAccountModel>;
 
   // === CredentialAccount operations ===
   verifyEmail(credentialAccountId: number): Promise<void>;

@@ -27,10 +27,10 @@ export class TypeOrmUserRepository implements IUserContract {
     return entity ? UserMapper.toDomain(entity) : null;
   }
 
-  async existsByUsername(_username: string): Promise<boolean> {
+  existsByUsername(_username: string): Promise<boolean> {
     // Username existence is now checked via personal_profiles table
     // Delegated to CredentialAccountRepository.findByEmailOrUsername or ProfileContract
-    return false;
+    return Promise.resolve(false);
   }
 
   async persist(user: UserAggregate): Promise<UserAggregate> {

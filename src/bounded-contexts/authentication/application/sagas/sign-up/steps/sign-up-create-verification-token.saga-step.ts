@@ -18,8 +18,10 @@ export class CreateVerificationTokenStep implements ISagaStepHandler<SignUpSagaC
   ) {}
 
   async execute(ctx: SignUpSagaContext): Promise<void> {
-    if (!ctx.credential) throw new Error('CreateVerificationTokenStep: ctx.credential not set by prior step');
-    if (!ctx.verificationCode) throw new Error('CreateVerificationTokenStep: ctx.verificationCode not set by prior step');
+    if (!ctx.credential)
+      throw new Error('CreateVerificationTokenStep: ctx.credential not set by prior step');
+    if (!ctx.verificationCode)
+      throw new Error('CreateVerificationTokenStep: ctx.verificationCode not set by prior step');
 
     const codeHash = this.codeGenerator.hashCode(ctx.verificationCode);
     const expirationMinutes = this.configService.get<number>(
@@ -28,8 +30,12 @@ export class CreateVerificationTokenStep implements ISagaStepHandler<SignUpSagaC
     );
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
+    const credentialId = ctx.credential.id;
+    if (credentialId === undefined)
+      throw new Error('CreateVerificationTokenStep: ctx.credential has no id');
+
     const token = EmailVerificationTokenModel.create({
-      credentialAccountId: ctx.credential.id!,
+      credentialAccountId: credentialId,
       codeHash,
       expiresAt,
       email: ctx.credential.email,

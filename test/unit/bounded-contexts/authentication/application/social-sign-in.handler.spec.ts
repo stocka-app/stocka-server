@@ -33,10 +33,7 @@ describe('Social sign-in handler — OAuth provider sign-in (EC-002)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        SocialSignInHandler,
-        { provide: SocialSignInSaga, useValue: mockSaga },
-      ],
+      providers: [SocialSignInHandler, { provide: SocialSignInSaga, useValue: mockSaga }],
     }).compile();
 
     handler = module.get<SocialSignInHandler>(SocialSignInHandler);
@@ -72,7 +69,9 @@ describe('Social sign-in handler — OAuth provider sign-in (EC-002)', () => {
         const domainError = new InvalidPasswordException();
         saga.execute.mockResolvedValue(err(domainError));
 
-        await expect(handler.execute(googleCommand)).rejects.toBeInstanceOf(InvalidPasswordException);
+        await expect(handler.execute(googleCommand)).rejects.toBeInstanceOf(
+          InvalidPasswordException,
+        );
       });
     });
   });
