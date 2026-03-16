@@ -14,10 +14,12 @@ export interface AuthenticationResult extends AuthTokens {
 }
 
 export interface SignInResult extends AuthenticationResult {
+  username: string;
   emailVerificationRequired: boolean;
 }
 
 export interface SignUpResult extends AuthenticationResult {
+  username: string;
   emailVerificationRequired: boolean;
   emailSent: boolean;
 }

@@ -54,7 +54,11 @@ export class TypeOrmSessionAggregateRepository implements ISessionAggregateContr
   async archive(uuid: string): Promise<void> {
     const archivedAt = new Date();
     if (this.uow.isActive()) {
-      await (this.uow.getManager() as EntityManager).update(SessionEntity, { uuid }, { archivedAt });
+      await (this.uow.getManager() as EntityManager).update(
+        SessionEntity,
+        { uuid },
+        { archivedAt },
+      );
     } else {
       await this.repository.update({ uuid }, { archivedAt });
     }

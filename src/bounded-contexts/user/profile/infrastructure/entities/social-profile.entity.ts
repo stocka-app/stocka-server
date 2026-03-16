@@ -9,7 +9,7 @@ export class SocialProfileEntity extends BaseEntity {
   profileId!: number;
 
   @Column({ name: 'social_account_uuid', type: 'uuid' })
-  socialAccountUuid!: string;
+  socialAccountUUID!: string;
 
   @Column({ type: 'varchar', length: 20 })
   provider!: string;

@@ -11,6 +11,7 @@ export interface SignInSagaContext {
   user?: UserAggregate;
   credential?: CredentialAccountModel;
   accountId?: number;
+  username?: string;
   accessToken?: string;
   refreshToken?: string;
   session?: SessionModel; // stored for EventPublisher.commit() in publish-events step
@@ -19,6 +20,7 @@ export interface SignInSagaContext {
 export interface SignInSagaOutput {
   readonly user: UserAggregate;
   readonly credential: CredentialAccountModel;
+  readonly username: string;
   readonly accessToken: string;
   readonly refreshToken: string;
   readonly emailVerificationRequired: false;

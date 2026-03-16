@@ -2,7 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UserFacade } from '@user/infrastructure/facade/user.facade';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { IUserContract } from '@user/domain/contracts/user.contract';
-import { IAccountContract, ICredentialAccountContract, ISocialAccountContract } from '@user/account/domain/contracts/account.contract';
+import {
+  IAccountContract,
+  ICredentialAccountContract,
+  ISocialAccountContract,
+} from '@user/account/domain/contracts/account.contract';
 import { IProfileContract } from '@user/profile/domain/contracts/profile.contract';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { AccountAggregate } from '@user/account/domain/account.aggregate';
@@ -86,7 +90,10 @@ describe('UserFacade', () => {
         UserFacade,
         { provide: INJECTION_TOKENS.USER_CONTRACT, useValue: userContract },
         { provide: INJECTION_TOKENS.ACCOUNT_CONTRACT, useValue: accountContract },
-        { provide: INJECTION_TOKENS.CREDENTIAL_ACCOUNT_CONTRACT, useValue: credentialAccountContract },
+        {
+          provide: INJECTION_TOKENS.CREDENTIAL_ACCOUNT_CONTRACT,
+          useValue: credentialAccountContract,
+        },
         { provide: INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT, useValue: socialAccountContract },
         { provide: INJECTION_TOKENS.PROFILE_CONTRACT, useValue: profileContract },
       ],
@@ -155,7 +162,9 @@ describe('UserFacade', () => {
         const targetUUID = '550e8400-e29b-41d4-a716-446655440002';
         const user = UserMother.create({ id: 1, uuid: targetUUID });
         userContract.findByUUID.mockResolvedValue(user);
-        (profileContract.findPersonalProfileByUserId as jest.Mock).mockResolvedValue({ username: 'tester' });
+        (profileContract.findPersonalProfileByUserId as jest.Mock).mockResolvedValue({
+          username: 'tester',
+        });
 
         const result = await facade.findUsernameByUUID(targetUUID);
 
@@ -179,7 +188,10 @@ describe('UserFacade', () => {
   describe('Given findUserByEmail is called', () => {
     describe('When the email maps to an existing user', () => {
       it('Then it returns the user and credential pair', async () => {
-        const mockCredential = CredentialAccountMother.createVerified({ email: 'user@example.com', accountId: 10 });
+        const mockCredential = CredentialAccountMother.createVerified({
+          email: 'user@example.com',
+          accountId: 10,
+        });
         const mockAccount = buildPersistedAccount(1);
         const mockUser = UserMother.create({ id: 1 });
 
@@ -211,7 +223,10 @@ describe('UserFacade', () => {
   describe('Given findUserByEmailOrUsername is called', () => {
     describe('When the identifier matches an existing user', () => {
       it('Then it returns the user and credential pair', async () => {
-        const mockCredential = CredentialAccountMother.createVerified({ email: 'user@example.com', accountId: 10 });
+        const mockCredential = CredentialAccountMother.createVerified({
+          email: 'user@example.com',
+          accountId: 10,
+        });
         const mockAccount = buildPersistedAccount(1);
         const mockUser = UserMother.create({ id: 1 });
 
@@ -242,7 +257,9 @@ describe('UserFacade', () => {
   describe('Given existsByUsername is called', () => {
     describe('When the username exists', () => {
       it('Then it returns true', async () => {
-        (profileContract.findPersonalProfileByUsername as jest.Mock).mockResolvedValue({ username: 'taken' });
+        (profileContract.findPersonalProfileByUsername as jest.Mock).mockResolvedValue({
+          username: 'taken',
+        });
 
         const result = await facade.existsByUsername('taken');
 
@@ -324,7 +341,10 @@ describe('UserFacade', () => {
   describe('Given createUserWithCredentials is called', () => {
     describe('When all downstream contracts succeed', () => {
       it('Then it returns the persisted user and credential', async () => {
-        const persistedUser = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440003' });
+        const persistedUser = UserMother.create({
+          id: 1,
+          uuid: '550e8400-e29b-41d4-a716-446655440003',
+        });
         const persistedAccount = buildPersistedAccount(1);
         const persistedCredential = CredentialAccountMother.createPendingVerification({
           id: 5,

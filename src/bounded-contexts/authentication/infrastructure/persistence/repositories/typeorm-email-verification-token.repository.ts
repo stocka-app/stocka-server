@@ -31,7 +31,9 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     return entity ? EmailVerificationTokenMapper.toDomain(entity) : null;
   }
 
-  async findActiveByCredentialAccountId(credentialAccountId: number): Promise<EmailVerificationTokenModel | null> {
+  async findActiveByCredentialAccountId(
+    credentialAccountId: number,
+  ): Promise<EmailVerificationTokenModel | null> {
     const entity = await this.repository.findOne({
       where: {
         credentialAccountId,

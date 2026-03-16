@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
+import { v4 as uuidv4 } from 'uuid';
 import { ISagaStepHandler } from '@shared/domain/saga';
 import { RefreshSessionSagaContext } from '@authentication/application/sagas/refresh-session/refresh-session.saga-context';
 
@@ -30,6 +31,7 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
     const refreshOptions: JwtSignOptions = {
       secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       expiresIn: refreshExpiration,
+      jwtid: uuidv4(),
     };
 
     ctx.accessToken = await this.jwtService.signAsync(payload, accessOptions);

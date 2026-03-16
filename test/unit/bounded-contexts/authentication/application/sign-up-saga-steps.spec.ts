@@ -48,10 +48,7 @@ describe('ValidateSignUpStep', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ValidateSignUpStep,
-        { provide: MediatorService, useValue: mediator },
-      ],
+      providers: [ValidateSignUpStep, { provide: MediatorService, useValue: mediator }],
     }).compile();
 
     step = module.get<ValidateSignUpStep>(ValidateSignUpStep);
@@ -167,7 +164,7 @@ describe('PrepareCredentialsStep', () => {
           password: 'StrongPass1',
           lang: 'es',
         };
-        await expect(step.compensate!(ctx)).resolves.not.toThrow();
+        await expect(step.compensate(ctx)).resolves.not.toThrow();
       });
     });
   });
@@ -181,15 +178,14 @@ describe('RegisterUserStep', () => {
   beforeEach(async () => {
     mediator = {
       user: {
-        createUserWithCredentials: jest.fn().mockResolvedValue({ user: MOCK_USER, credential: MOCK_CREDENTIAL }),
+        createUserWithCredentials: jest
+          .fn()
+          .mockResolvedValue({ user: MOCK_USER, credential: MOCK_CREDENTIAL }),
       },
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        RegisterUserStep,
-        { provide: MediatorService, useValue: mediator },
-      ],
+      providers: [RegisterUserStep, { provide: MediatorService, useValue: mediator }],
     }).compile();
 
     step = module.get<RegisterUserStep>(RegisterUserStep);
@@ -238,7 +234,7 @@ describe('RegisterUserStep', () => {
         password: 'StrongPass1',
         lang: 'es',
       };
-      await expect(step.compensate!(ctx)).resolves.not.toThrow();
+      await expect(step.compensate(ctx)).resolves.not.toThrow();
     });
   });
 });
@@ -431,7 +427,10 @@ describe('CreateVerificationTokenStep', () => {
       providers: [
         CreateVerificationTokenStep,
         { provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT, useValue: codeGenerator },
-        { provide: INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT, useValue: verificationTokenContract },
+        {
+          provide: INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT,
+          useValue: verificationTokenContract,
+        },
         { provide: ConfigService, useValue: configService },
       ],
     }).compile();
@@ -498,10 +497,7 @@ describe('PublishSignUpEventsStep', () => {
     eventBus = { publish: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PublishSignUpEventsStep,
-        { provide: EventBus, useValue: eventBus },
-      ],
+      providers: [PublishSignUpEventsStep, { provide: EventBus, useValue: eventBus }],
     }).compile();
 
     step = module.get<PublishSignUpEventsStep>(PublishSignUpEventsStep);

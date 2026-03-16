@@ -102,9 +102,8 @@ describe('SignInController', () => {
   describe('Given invalid credentials', () => {
     describe('When handle is called', () => {
       it('Then it throws an HttpException', async () => {
-        const { InvalidCredentialsException } = await import(
-          '@authentication/domain/exceptions/invalid-credentials.exception'
-        );
+        const { InvalidCredentialsException } =
+          await import('@authentication/domain/exceptions/invalid-credentials.exception');
         const mockResult = err(new InvalidCredentialsException());
         commandBus.execute.mockResolvedValue(mockResult);
         const res = buildMockRes();
@@ -168,9 +167,8 @@ describe('SignUpController', () => {
   describe('Given a domain error during sign-up', () => {
     describe('When handle is called', () => {
       it('Then it throws an HttpException', async () => {
-        const { EmailAlreadyExistsException } = await import(
-          '@authentication/domain/exceptions/email-already-exists.exception'
-        );
+        const { EmailAlreadyExistsException } =
+          await import('@authentication/domain/exceptions/email-already-exists.exception');
         const mockResult = err(new EmailAlreadyExistsException());
         commandBus.execute.mockResolvedValue(mockResult);
         const res = buildMockRes();
@@ -287,9 +285,8 @@ describe('RefreshSessionController', () => {
   describe('Given a domain error during refresh', () => {
     describe('When handle is called', () => {
       it('Then it throws an HttpException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         const mockResult = err(new TokenExpiredException());
         commandBus.execute.mockResolvedValue(mockResult);
         const res = buildMockRes();
@@ -364,9 +361,8 @@ describe('ResetPasswordController', () => {
   describe('Given an expired or invalid token', () => {
     describe('When handle is called', () => {
       it('Then it throws an HttpException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         const mockResult = err(new TokenExpiredException());
         commandBus.execute.mockResolvedValue(mockResult);
 
@@ -411,9 +407,8 @@ describe('VerifyEmailController', () => {
   describe('Given an invalid verification code', () => {
     describe('When handle is called', () => {
       it('Then it throws an HttpException', async () => {
-        const { InvalidVerificationCodeException } = await import(
-          '@authentication/domain/exceptions/invalid-verification-code.exception'
-        );
+        const { InvalidVerificationCodeException } =
+          await import('@authentication/domain/exceptions/invalid-verification-code.exception');
         const mockResult = err(new InvalidVerificationCodeException());
         commandBus.execute.mockResolvedValue(mockResult);
         const req = buildMockReq();
@@ -451,7 +446,9 @@ describe('ResendVerificationCodeController', () => {
           remainingResends: 4,
         });
         commandBus.execute.mockResolvedValue(mockResult);
-        const req = buildMockReq({ headers: { 'x-forwarded-for': '10.0.0.1', 'accept-language': 'en' } });
+        const req = buildMockReq({
+          headers: { 'x-forwarded-for': '10.0.0.1', 'accept-language': 'en' },
+        });
 
         const result = await controller.handle({ email: 'user@example.com' }, req, 'Mozilla/5.0');
 
@@ -547,16 +544,13 @@ describe('ResendVerificationCodeController', () => {
   describe('Given a domain error (e.g. max resends exceeded)', () => {
     describe('When handle is called', () => {
       it('Then it throws an HttpException', async () => {
-        const { MaxResendsExceededException } = await import(
-          '@authentication/domain/exceptions/max-resends-exceeded.exception'
-        );
+        const { MaxResendsExceededException } =
+          await import('@authentication/domain/exceptions/max-resends-exceeded.exception');
         const mockResult = err(new MaxResendsExceededException());
         commandBus.execute.mockResolvedValue(mockResult);
         const req = buildMockReq();
 
-        await expect(
-          controller.handle({ email: 'user@example.com' }, req),
-        ).rejects.toThrow();
+        await expect(controller.handle({ email: 'user@example.com' }, req)).rejects.toThrow();
       });
     });
   });
@@ -655,9 +649,10 @@ function buildOAuthCallbackTests(
 
     beforeEach(async () => {
       commandBus = buildMockCommandBus();
-      configService = { get: jest.fn().mockReturnValue('http://localhost:5173') } as unknown as jest.Mocked<ConfigService>;
+      configService = {
+        get: jest.fn().mockReturnValue('http://localhost:5173'),
+      } as unknown as jest.Mocked<ConfigService>;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const module: TestingModule = await Test.createTestingModule({
         controllers: [ControllerClass],
         providers: [

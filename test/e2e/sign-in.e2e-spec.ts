@@ -1,9 +1,6 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
-import * as bcrypt from 'bcrypt';
-import { v7 as uuidv7 } from 'uuid';
 import { DataSource } from 'typeorm';
-import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 import { CreateSignInSessionStep } from '@authentication/application/sagas/sign-in/steps';
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
@@ -19,7 +16,7 @@ describe('Sign In (e2e)', () => {
       .post('/api/authentication/sign-up')
       .send({ email, username, password });
     await dataSource.query(
-      `UPDATE users SET status = 'active', email_verified_at = NOW() WHERE email = $1`,
+      `UPDATE credential_accounts SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = LOWER($1)`,
       [email],
     );
   }
@@ -30,20 +27,14 @@ describe('Sign In (e2e)', () => {
     dataSource = workerApp.dataSource;
     createSignInSessionStep = app.get(CreateSignInSessionStep);
 
-    // Seed base verified user directly via TypeORM — no HTTP/saga/UoW involved.
-    // Avoids ALS context leak from sagas running before sign-in tests.
-    // Sign-in requires: status='active', emailVerifiedAt set, and known passwordHash.
-    const passwordHash = await bcrypt.hash('SecurePass1', 4);
-    await dataSource.getRepository(UserEntity).save({
-      uuid: uuidv7(),
-      email: 'signin@example.com',
-      username: 'signinuser',
-      passwordHash,
-      status: 'active',
-      emailVerifiedAt: new Date(),
-      createdWith: 'email',
-      accountType: 'manual',
-    });
+    // Seed base verified user via HTTP sign-up, then activate via SQL.
+    // Sign-in requires: status='active', email_verified_at set, and known password.
+    await request(app.getHttpServer())
+      .post('/api/authentication/sign-up')
+      .send({ email: 'signin@example.com', username: 'signinuser', password: 'SecurePass1' });
+    await dataSource.query(
+      `UPDATE credential_accounts SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = 'signin@example.com'`,
+    );
   });
 
   afterAll(async () => {
@@ -94,12 +85,12 @@ describe('Sign In (e2e)', () => {
       });
 
       it('Then a new session is persisted in the database', async () => {
-        const [user] = await dataSource.query(`SELECT id FROM users WHERE email = $1`, [
-          'signin@example.com',
-        ]);
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'signin@example.com'`,
+        );
         const before = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
 
         await request(app.getHttpServer())
@@ -107,8 +98,8 @@ describe('Sign In (e2e)', () => {
           .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1' });
 
         const after = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
 
         expect(parseInt(after[0].count)).toBeGreaterThan(parseInt(before[0].count));
@@ -190,10 +181,13 @@ describe('Sign In (e2e)', () => {
         const email = 'rollback.signin@example.com';
         await signUp(email, 'rollbacksignin');
 
-        const [user] = await dataSource.query(`SELECT id FROM users WHERE email = $1`, [email]);
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = LOWER($1)`,
+          [email],
+        );
         const before = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1`,
+          [account.id],
         );
 
         const spy = jest
@@ -207,8 +201,8 @@ describe('Sign In (e2e)', () => {
         expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
         const after = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1`,
+          [account.id],
         );
 
         expect(parseInt(after[0].count)).toBe(parseInt(before[0].count));

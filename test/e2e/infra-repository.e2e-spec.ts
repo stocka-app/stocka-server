@@ -93,9 +93,15 @@ describe('Infrastructure Repositories (e2e)', () => {
     return userRepo.persist(UserAggregate.create());
   }
 
-  async function buildPersistedUserWithCredential(overrides: {
-    email?: string;
-  } = {}): Promise<{ user: UserAggregate; account: AccountAggregate; credential: CredentialAccountModel }> {
+  async function buildPersistedUserWithCredential(
+    overrides: {
+      email?: string;
+    } = {},
+  ): Promise<{
+    user: UserAggregate;
+    account: AccountAggregate;
+    credential: CredentialAccountModel;
+  }> {
     const user = await userRepo.persist(UserAggregate.create());
     const account = await accountRepo.persist(AccountAggregate.create({ userId: user.id! }));
     const credential = await credentialAccountRepo.persist(
@@ -198,8 +204,11 @@ describe('Infrastructure Repositories (e2e)', () => {
 
       beforeEach(async () => {
         testEmail = `test-${uuidv4()}@example.com`;
-        ({ user: savedUser, account: savedAccount, credential: savedCredential } =
-          await buildPersistedUserWithCredential({ email: testEmail }));
+        ({
+          user: savedUser,
+          account: savedAccount,
+          credential: savedCredential,
+        } = await buildPersistedUserWithCredential({ email: testEmail }));
       });
 
       describe('When findByEmail is called with an existing email', () => {
@@ -583,13 +592,15 @@ describe('Infrastructure Repositories (e2e)', () => {
     const testIP = '192.168.0.1';
     const testEmail = `attempt-${uuidv4()}@example.com`;
 
-    async function createAttempt(overrides: {
-      userUUID?: string;
-      success?: boolean;
-      email?: string;
-      ipAddress?: string;
-      type?: string;
-    } = {}): Promise<VerificationAttemptModel> {
+    async function createAttempt(
+      overrides: {
+        userUUID?: string;
+        success?: boolean;
+        email?: string;
+        ipAddress?: string;
+        type?: string;
+      } = {},
+    ): Promise<VerificationAttemptModel> {
       const attempt = VerificationAttemptModel.create({
         userUUID: overrides.userUUID ?? testUUID,
         email: overrides.email ?? testEmail,
@@ -858,7 +869,11 @@ describe('Infrastructure Repositories (e2e)', () => {
         await expect(uow.begin()).rejects.toThrow('Connection refused');
         spy.mockRestore();
         // Best-effort cleanup — ALS may retain the stale QR in the singleton test context
-        try { await uow.rollback(); } catch { /* ignore */ }
+        try {
+          await uow.rollback();
+        } catch {
+          /* ignore */
+        }
       });
     });
 

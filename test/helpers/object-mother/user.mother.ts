@@ -69,9 +69,10 @@ export class CredentialAccountMother {
       uuid: overrides.uuid ?? '660f9511-f30c-4ae5-b827-557766551111',
       accountId: overrides.accountId ?? 1,
       email: overrides.email ?? 'test@example.com',
-      passwordHash: overrides.passwordHash !== undefined
-        ? overrides.passwordHash
-        : '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.z9OYHvJpzZ9y7u',
+      passwordHash:
+        overrides.passwordHash !== undefined
+          ? overrides.passwordHash
+          : '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.z9OYHvJpzZ9y7u',
       status: overrides.status ?? 'active',
       emailVerifiedAt: overrides.emailVerifiedAt !== undefined ? overrides.emailVerifiedAt : null,
       verificationBlockedUntil: overrides.verificationBlockedUntil ?? null,
@@ -153,7 +154,8 @@ export class CredentialAccountMother {
     return this.create({
       ...overrides,
       status: 'pending_verification',
-      verificationBlockedUntil: overrides.verificationBlockedUntil ?? new Date(Date.now() + 5 * 60 * 1000),
+      verificationBlockedUntil:
+        overrides.verificationBlockedUntil ?? new Date(Date.now() + 5 * 60 * 1000),
     });
   }
 

@@ -15,7 +15,10 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
   ],
   providers: [
     { provide: INJECTION_TOKENS.ACCOUNT_CONTRACT, useClass: TypeOrmAccountRepository },
-    { provide: INJECTION_TOKENS.CREDENTIAL_ACCOUNT_CONTRACT, useClass: TypeOrmCredentialAccountRepository },
+    {
+      provide: INJECTION_TOKENS.CREDENTIAL_ACCOUNT_CONTRACT,
+      useClass: TypeOrmCredentialAccountRepository,
+    },
     { provide: INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT, useClass: TypeOrmSocialAccountRepository },
     TypeOrmAccountRepository,
     TypeOrmCredentialAccountRepository,

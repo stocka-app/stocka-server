@@ -220,7 +220,8 @@ describe('GenerateRefreshTokensStep', () => {
           ],
         }).compile();
 
-        const stepWithDefaults = newModule.get<GenerateRefreshTokensStep>(GenerateRefreshTokensStep);
+        const stepWithDefaults =
+          newModule.get<GenerateRefreshTokensStep>(GenerateRefreshTokensStep);
         const ctx: RefreshSessionSagaContext = {
           refreshToken: 'old-token',
           user: UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440002' }),
@@ -246,10 +247,7 @@ describe('PublishRefreshEventsStep', () => {
     eventBus = { publish: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PublishRefreshEventsStep,
-        { provide: EventBus, useValue: eventBus },
-      ],
+      providers: [PublishRefreshEventsStep, { provide: EventBus, useValue: eventBus }],
     }).compile();
 
     step = module.get<PublishRefreshEventsStep>(PublishRefreshEventsStep);

@@ -23,6 +23,7 @@ export interface SignUpSagaContext {
 export interface SignUpSagaOutput {
   readonly user: UserAggregate;
   readonly credential: CredentialAccountModel;
+  readonly username: string;
   readonly accessToken: string;
   readonly refreshToken: string;
   readonly emailSent: boolean;

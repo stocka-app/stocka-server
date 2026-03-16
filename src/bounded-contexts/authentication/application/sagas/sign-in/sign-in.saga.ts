@@ -52,9 +52,7 @@ export class SignInSaga extends Saga<SignInSagaContext> {
     ];
   }
 
-  async execute(
-    input: SignInSagaContext,
-  ): Promise<Result<SignInSagaOutput, DomainException>> {
+  async execute(input: SignInSagaContext): Promise<Result<SignInSagaOutput, DomainException>> {
     try {
       const ctx = await this.run(input);
 
@@ -65,6 +63,7 @@ export class SignInSaga extends Saga<SignInSagaContext> {
       return ok({
         user: ctx.user,
         credential: ctx.credential,
+        username: ctx.username ?? ctx.credential.email,
         accessToken: ctx.accessToken,
         refreshToken: ctx.refreshToken,
         emailVerificationRequired: false,

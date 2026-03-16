@@ -22,7 +22,8 @@ export class CreateSignInSessionStep implements ISagaStepHandler<SignInSagaConte
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    if (!ctx.credential) throw new Error('CreateSignInSessionStep: ctx.credential not set by prior step');
+    if (!ctx.credential)
+      throw new Error('CreateSignInSessionStep: ctx.credential not set by prior step');
     const accountId = ctx.credential.accountId;
     const session = SessionModel.create({ accountId, tokenHash, expiresAt });
     ctx.session = await this.sessionContract.persist(session);

@@ -48,7 +48,9 @@ describe('Verification code resend — transactional email delivery', () => {
   beforeEach(async () => {
     mediatorService = {
       user: {
-        findUserByEmail: jest.fn().mockResolvedValue({ user: pendingUser, credential: pendingCredential }),
+        findUserByEmail: jest
+          .fn()
+          .mockResolvedValue({ user: pendingUser, credential: pendingCredential }),
       },
     };
 
@@ -107,7 +109,9 @@ describe('Verification code resend — transactional email delivery', () => {
   describe('Given the customer has an active verification code and requests it to be resent', () => {
     describe('When the customer indicates they did not receive the code or need a new one', () => {
       it('Then the system sends exactly one new email with the verification code', async () => {
-        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(buildActiveVerificationToken());
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(
+          buildActiveVerificationToken(),
+        );
 
         await handler.execute(
           new ResendVerificationCodeCommand(
@@ -123,7 +127,9 @@ describe('Verification code resend — transactional email delivery', () => {
       });
 
       it('Then the email with the code arrives in the language the customer uses in the app', async () => {
-        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(buildActiveVerificationToken());
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(
+          buildActiveVerificationToken(),
+        );
 
         await handler.execute(
           new ResendVerificationCodeCommand(
@@ -144,7 +150,9 @@ describe('Verification code resend — transactional email delivery', () => {
       });
 
       it('Then no other email type is sent (no password reset, no welcome) by mistake', async () => {
-        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(buildActiveVerificationToken());
+        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(
+          buildActiveVerificationToken(),
+        );
 
         await handler.execute(
           new ResendVerificationCodeCommand(

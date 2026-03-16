@@ -35,7 +35,9 @@ function buildSessionEntity(overrides?: Partial<SessionEntity>): SessionEntity {
   return Object.assign(e, overrides);
 }
 
-function buildEmailVerificationTokenEntity(overrides?: Partial<EmailVerificationTokenEntity>): EmailVerificationTokenEntity {
+function buildEmailVerificationTokenEntity(
+  overrides?: Partial<EmailVerificationTokenEntity>,
+): EmailVerificationTokenEntity {
   const e = new EmailVerificationTokenEntity();
   e.id = 1;
   e.uuid = UUID_EVT;
@@ -51,7 +53,9 @@ function buildEmailVerificationTokenEntity(overrides?: Partial<EmailVerification
   return Object.assign(e, overrides);
 }
 
-function buildPasswordResetTokenEntity(overrides?: Partial<PasswordResetTokenEntity>): PasswordResetTokenEntity {
+function buildPasswordResetTokenEntity(
+  overrides?: Partial<PasswordResetTokenEntity>,
+): PasswordResetTokenEntity {
   const e = new PasswordResetTokenEntity();
   e.id = 1;
   e.uuid = UUID_PRT;
@@ -65,7 +69,9 @@ function buildPasswordResetTokenEntity(overrides?: Partial<PasswordResetTokenEnt
   return Object.assign(e, overrides);
 }
 
-function buildVerificationAttemptEntity(overrides?: Partial<VerificationAttemptEntity>): VerificationAttemptEntity {
+function buildVerificationAttemptEntity(
+  overrides?: Partial<VerificationAttemptEntity>,
+): VerificationAttemptEntity {
   const e = new VerificationAttemptEntity();
   e.id = 1;
   e.uuid = UUID_VA;

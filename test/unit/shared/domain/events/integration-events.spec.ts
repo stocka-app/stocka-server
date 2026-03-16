@@ -35,11 +35,7 @@ describe('Integration events', () => {
     describe('When constructed with an explicit occurredOn', () => {
       it('Then it uses the provided date', () => {
         const date = new Date('2024-03-10');
-        const event = new UserVerificationBlockedByAuthenticationEvent(
-          'uuid',
-          new Date(),
-          date,
-        );
+        const event = new UserVerificationBlockedByAuthenticationEvent('uuid', new Date(), date);
         expect(event.occurredOn).toBe(date);
       });
     });

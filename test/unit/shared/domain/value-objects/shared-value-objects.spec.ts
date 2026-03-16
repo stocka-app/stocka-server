@@ -90,9 +90,7 @@ describe('UUIDVO', () => {
     it('Then it auto-generates a valid UUID v7', () => {
       const vo = new UUIDVO();
       const generated = vo.toString();
-      expect(generated).toMatch(
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-      );
+      expect(generated).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
       expect(uuidVersion(generated)).toBe(7);
     });
   });

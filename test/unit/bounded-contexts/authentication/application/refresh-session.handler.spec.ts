@@ -17,10 +17,7 @@ describe('RefreshSessionHandler', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        RefreshSessionHandler,
-        { provide: RefreshSessionSaga, useValue: saga },
-      ],
+      providers: [RefreshSessionHandler, { provide: RefreshSessionSaga, useValue: saga }],
     }).compile();
 
     handler = module.get<RefreshSessionHandler>(RefreshSessionHandler);

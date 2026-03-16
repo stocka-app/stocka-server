@@ -63,7 +63,7 @@ export class SignInController {
         const userOut: UserOutDto = {
           id: data.user.uuid,
           email: data.credential.email,
-          username: data.credential.email, // TODO: fetch from PersonalProfileModel
+          username: data.username,
           createdAt: data.user.createdAt.toISOString(),
         };
 

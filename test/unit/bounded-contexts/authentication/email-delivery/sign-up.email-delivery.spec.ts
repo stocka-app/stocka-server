@@ -52,7 +52,9 @@ describe('New account registration — transactional email delivery', () => {
       user: {
         existsByEmail: jest.fn().mockResolvedValue(false),
         existsByUsername: jest.fn().mockResolvedValue(false),
-        createUserWithCredentials: jest.fn().mockResolvedValue({ user: newUser, credential: newCredential }),
+        createUserWithCredentials: jest
+          .fn()
+          .mockResolvedValue({ user: newUser, credential: newCredential }),
       },
     };
 

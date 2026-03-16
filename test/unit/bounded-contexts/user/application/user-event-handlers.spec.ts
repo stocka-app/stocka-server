@@ -99,10 +99,7 @@ describe('UpdatePasswordOnResetHandler', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UpdatePasswordOnResetHandler,
-        { provide: MediatorService, useValue: mediator },
-      ],
+      providers: [UpdatePasswordOnResetHandler, { provide: MediatorService, useValue: mediator }],
     }).compile();
 
     handler = module.get<UpdatePasswordOnResetHandler>(UpdatePasswordOnResetHandler);

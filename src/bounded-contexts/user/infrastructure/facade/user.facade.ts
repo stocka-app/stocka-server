@@ -1,7 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { IUserFacade } from '@shared/domain/contracts/user-facade.contract';
 import { IUserContract } from '@user/domain/contracts/user.contract';
-import { IAccountContract, ICredentialAccountContract, ISocialAccountContract } from '@user/account/domain/contracts/account.contract';
+import {
+  IAccountContract,
+  ICredentialAccountContract,
+  ISocialAccountContract,
+} from '@user/account/domain/contracts/account.contract';
 import { IProfileContract } from '@user/profile/domain/contracts/profile.contract';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { AccountAggregate } from '@user/account/domain/account.aggregate';
@@ -94,7 +98,10 @@ export class UserFacade implements IUserFacade {
     provider: string,
     providerId: string,
   ): Promise<{ user: UserAggregate; social: SocialAccountModel } | null> {
-    const social = await this.socialAccountContract.findByProviderAndProviderId(provider, providerId);
+    const social = await this.socialAccountContract.findByProviderAndProviderId(
+      provider,
+      providerId,
+    );
     if (!social) return null;
 
     const account = await this.accountContract.findById(social.accountId);
@@ -116,6 +123,13 @@ export class UserFacade implements IUserFacade {
     return credential !== null;
   }
 
+  // === Helpers ===
+
+  private requireId(id: number | undefined, label: string): number {
+    if (id === undefined) throw new Error(`${label}: persist returned no id`);
+    return id;
+  }
+
   // === Commands ===
 
   async createUserWithCredentials(props: {
@@ -127,12 +141,12 @@ export class UserFacade implements IUserFacade {
     // 1. Create user anchor
     const user = UserAggregate.create();
     const persistedUser = await this.userContract.persist(user);
-    const userId = persistedUser.id!;
+    const userId = this.requireId(persistedUser.id, 'createUserWithCredentials:user');
 
     // 2. Create account anchor
     const account = AccountAggregate.create({ userId });
     const persistedAccount = await this.accountContract.persist(account);
-    const accountId = persistedAccount.id!;
+    const accountId = this.requireId(persistedAccount.id, 'createUserWithCredentials:account');
 
     // 3. Create credential account
     const credential = CredentialAccountModel.create({
@@ -146,7 +160,7 @@ export class UserFacade implements IUserFacade {
     // 4. Create profile anchor
     const profile = ProfileAggregate.create({ userId });
     const persistedProfile = await this.profileContract.persistProfile(profile);
-    const profileId = persistedProfile.id!;
+    const profileId = this.requireId(persistedProfile.id, 'createUserWithCredentials:profile');
 
     // 5. Create personal profile
     const personalProfile = PersonalProfileModel.create({
@@ -165,16 +179,20 @@ export class UserFacade implements IUserFacade {
     provider: string;
     providerId: string;
     providerEmail?: string;
-  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel; social: SocialAccountModel }> {
+  }): Promise<{
+    user: UserAggregate;
+    credential: CredentialAccountModel;
+    social: SocialAccountModel;
+  }> {
     // 1. Create user anchor
     const user = UserAggregate.create();
     const persistedUser = await this.userContract.persist(user);
-    const userId = persistedUser.id!;
+    const userId = this.requireId(persistedUser.id, 'createUserFromOAuth:user');
 
     // 2. Create account anchor
     const account = AccountAggregate.create({ userId });
     const persistedAccount = await this.accountContract.persist(account);
-    const accountId = persistedAccount.id!;
+    const accountId = this.requireId(persistedAccount.id, 'createUserFromOAuth:account');
 
     // 3. Create credential account (OAuth — email verified by provider, no password)
     const credential = CredentialAccountModel.createFromSocial({
@@ -196,7 +214,7 @@ export class UserFacade implements IUserFacade {
     // 5. Create profile anchor
     const profile = ProfileAggregate.create({ userId });
     const persistedProfile = await this.profileContract.persistProfile(profile);
-    const profileId = persistedProfile.id!;
+    const profileId = this.requireId(persistedProfile.id, 'createUserFromOAuth:profile');
 
     // 6. Create personal profile
     const personalProfile = PersonalProfileModel.create({
@@ -218,7 +236,7 @@ export class UserFacade implements IUserFacade {
     }
 
     const socialModel = SocialAccountModel.create({
-      accountId: account.id!,
+      accountId: this.requireId(account.id, 'linkSocialAccount:account'),
       provider: props.provider,
       providerId: props.providerId,
       providerEmail: props.providerEmail,
@@ -231,7 +249,9 @@ export class UserFacade implements IUserFacade {
   async verifyEmail(credentialAccountId: number): Promise<void> {
     const credential = await this.credentialAccountContract.findById(credentialAccountId);
     if (!credential) {
-      throw new Error(`UserFacade.verifyEmail: credentialAccount not found id=${credentialAccountId}`);
+      throw new Error(
+        `UserFacade.verifyEmail: credentialAccount not found id=${credentialAccountId}`,
+      );
     }
     credential.verifyEmail();
     await this.credentialAccountContract.persist(credential);
@@ -247,7 +267,9 @@ export class UserFacade implements IUserFacade {
   async updatePasswordHash(credentialAccountId: number, hash: string): Promise<void> {
     const credential = await this.credentialAccountContract.findById(credentialAccountId);
     if (!credential) {
-      throw new Error(`UserFacade.updatePasswordHash: credentialAccount not found id=${credentialAccountId}`);
+      throw new Error(
+        `UserFacade.updatePasswordHash: credentialAccount not found id=${credentialAccountId}`,
+      );
     }
     credential.updatePasswordHash(hash);
     await this.credentialAccountContract.persist(credential);

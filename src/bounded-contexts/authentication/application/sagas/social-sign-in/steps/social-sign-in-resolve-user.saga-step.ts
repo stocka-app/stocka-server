@@ -23,7 +23,9 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     const existingByEmail = await this.mediator.user.findUserByEmail(ctx.email);
     if (existingByEmail) {
       // Path B — existing account with different auth method: link the new provider
-      const newSocial = await this.mediator.user.linkSocialAccount(existingByEmail.user.id!, {
+      const existingUserId = existingByEmail.user.id;
+      if (existingUserId === undefined) throw new Error('ResolveSocialUserStep: user has no id');
+      const newSocial = await this.mediator.user.linkSocialAccount(existingUserId, {
         provider: ctx.provider,
         providerId: ctx.providerId,
       });

@@ -17,7 +17,9 @@ export class EmailVerificationRequestedEventHandler implements IEventHandler<Ema
   ) {}
 
   async handle(event: EmailVerificationRequestedEvent): Promise<void> {
-    this.logger.log(`Email verification requested: credentialAccountId=${event.credentialAccountId}`);
+    this.logger.log(
+      `Email verification requested: credentialAccountId=${event.credentialAccountId}`,
+    );
 
     try {
       const result = await withRetry(

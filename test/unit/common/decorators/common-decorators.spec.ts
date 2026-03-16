@@ -34,7 +34,9 @@ describe('ClientIp decorator', () => {
   let factory: (data: unknown, ctx: ExecutionContext) => unknown;
 
   beforeEach(() => {
-    factory = extractParamFactory(ClientIp as unknown as (...args: unknown[]) => ParameterDecorator);
+    factory = extractParamFactory(
+      ClientIp as unknown as (...args: unknown[]) => ParameterDecorator,
+    );
   });
 
   describe('Given a request with an x-forwarded-for header as a comma-separated string', () => {
@@ -108,7 +110,9 @@ describe('CurrentUser decorator', () => {
   let factory: (data: unknown, ctx: ExecutionContext) => unknown;
 
   beforeEach(() => {
-    factory = extractParamFactory(CurrentUser as unknown as (...args: unknown[]) => ParameterDecorator);
+    factory = extractParamFactory(
+      CurrentUser as unknown as (...args: unknown[]) => ParameterDecorator,
+    );
   });
 
   const mockUser: JwtPayload = { uuid: 'user-uuid-123', email: 'user@test.com' };

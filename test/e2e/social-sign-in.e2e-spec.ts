@@ -42,26 +42,25 @@ describe('Social Sign In (e2e)', () => {
 
         expect(result.accessToken).toBeDefined();
         expect(result.refreshToken).toBeDefined();
-        expect(result.user.email).toBe('newgoogle@example.com');
+        expect(result.credential.email).toBe('newgoogle@example.com');
       });
 
       it('Then their account is persisted in the database', async () => {
-        const [user] = await dataSource.query(
-          `SELECT id, email FROM users WHERE email = 'newgoogle@example.com'`,
+        const [socialAccount] = await dataSource.query(
+          `SELECT sa.id, sa.provider_id FROM social_accounts sa WHERE sa.provider_id = 'google-new-uid-001' AND sa.provider = 'google'`,
         );
 
-        expect(user).toBeDefined();
-        expect(user.email).toBe('newgoogle@example.com');
+        expect(socialAccount).toBeDefined();
+        expect(socialAccount.provider_id).toBe('google-new-uid-001');
       });
 
       it('Then a session is persisted in the database for their account', async () => {
-        const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'newgoogle@example.com'`,
+        const [socialAccount] = await dataSource.query(
+          `SELECT account_id FROM social_accounts WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
         );
-        const [session] = await dataSource.query(
-          `SELECT id FROM sessions WHERE user_id = $1`,
-          [user.id],
-        );
+        const [session] = await dataSource.query(`SELECT id FROM sessions WHERE account_id = $1`, [
+          socialAccount.account_id,
+        ]);
 
         expect(session).toBeDefined();
       });
@@ -76,7 +75,7 @@ describe('Social Sign In (e2e)', () => {
     describe('When they sign in with Google again', () => {
       it('Then the system recognises the provider link and signs them in without creating a new account', async () => {
         const before = await dataSource.query(
-          `SELECT COUNT(*) as count FROM users WHERE email = 'newgoogle@example.com'`,
+          `SELECT COUNT(*) as count FROM social_accounts WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
         );
 
         const result = await commandBus.execute(
@@ -89,11 +88,11 @@ describe('Social Sign In (e2e)', () => {
         );
 
         const after = await dataSource.query(
-          `SELECT COUNT(*) as count FROM users WHERE email = 'newgoogle@example.com'`,
+          `SELECT COUNT(*) as count FROM social_accounts WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
         );
 
         expect(result.accessToken).toBeDefined();
-        expect(parseInt(after[0].count)).toBe(parseInt(before[0].count)); // no new user created
+        expect(parseInt(after[0].count)).toBe(parseInt(before[0].count)); // no new social account created
       });
     });
   });
@@ -106,9 +105,11 @@ describe('Social Sign In (e2e)', () => {
     describe('When they use the same email as their manual account for the first time', () => {
       it('Then Google is linked to their existing account and they receive valid tokens', async () => {
         // Pre-setup: create a manual user via sign-up
-        await request(app.getHttpServer())
-          .post('/api/authentication/sign-up')
-          .send({ email: 'manual.then.oauth@example.com', username: 'manualthen', password: 'SecurePass1' });
+        await request(app.getHttpServer()).post('/api/authentication/sign-up').send({
+          email: 'manual.then.oauth@example.com',
+          username: 'manualthen',
+          password: 'SecurePass1',
+        });
 
         const result = await commandBus.execute(
           new SocialSignInCommand(
@@ -120,12 +121,12 @@ describe('Social Sign In (e2e)', () => {
         );
 
         expect(result.accessToken).toBeDefined();
-        expect(result.user.email).toBe('manual.then.oauth@example.com');
+        expect(result.credential.email).toBe('manual.then.oauth@example.com');
       });
 
       it('Then no new user account is created — only the existing one is updated', async () => {
         const rows = await dataSource.query(
-          `SELECT COUNT(*) as count FROM users WHERE email = 'manual.then.oauth@example.com'`,
+          `SELECT COUNT(*) as count FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'manual.then.oauth@example.com'`,
         );
 
         expect(parseInt(rows[0].count)).toBe(1);
@@ -155,11 +156,11 @@ describe('Social Sign In (e2e)', () => {
           ),
         ).rejects.toThrow('Session insert failed');
 
-        const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'rollback.social@example.com'`,
+        const [socialAccount] = await dataSource.query(
+          `SELECT id FROM social_accounts WHERE LOWER(provider_email) = 'rollback.social@example.com'`,
         );
 
-        expect(user).toBeUndefined();
+        expect(socialAccount).toBeUndefined();
         spy.mockRestore();
       });
     });

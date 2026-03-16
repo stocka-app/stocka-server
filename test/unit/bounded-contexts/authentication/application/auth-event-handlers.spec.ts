@@ -55,7 +55,11 @@ describe('EmailVerificationCompletedEventHandler', () => {
     describe('When email verification completes', () => {
       it('Then it sends a welcome email', async () => {
         mediator.user.findUsernameByUUID.mockResolvedValue('tester');
-        const event = new EmailVerificationCompletedEvent('550e8400-e29b-41d4-a716-446655440000', 'user@test.com', 'es');
+        const event = new EmailVerificationCompletedEvent(
+          '550e8400-e29b-41d4-a716-446655440000',
+          'user@test.com',
+          'es',
+        );
         await handler.handle(event);
         expect(emailProvider.sendWelcomeEmail).toHaveBeenCalledWith(
           'user@test.com',
@@ -82,7 +86,10 @@ describe('EmailVerificationCompletedEventHandler', () => {
       it('Then it handles the error gracefully without propagating', async () => {
         mediator.user.findUsernameByUUID.mockResolvedValue('user');
         emailProvider.sendWelcomeEmail.mockRejectedValue(new Error('SMTP down'));
-        const event = new EmailVerificationCompletedEvent('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'u@t.com');
+        const event = new EmailVerificationCompletedEvent(
+          'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          'u@t.com',
+        );
         await expect(handler.handle(event)).resolves.not.toThrow();
       });
     });
@@ -91,7 +98,10 @@ describe('EmailVerificationCompletedEventHandler', () => {
       it('Then it handles the non-Error value gracefully', async () => {
         mediator.user.findUsernameByUUID.mockResolvedValue('user');
         emailProvider.sendWelcomeEmail.mockRejectedValue('string error');
-        const event = new EmailVerificationCompletedEvent('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'u@t.com');
+        const event = new EmailVerificationCompletedEvent(
+          'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+          'u@t.com',
+        );
         await expect(handler.handle(event)).resolves.not.toThrow();
       });
     });
@@ -151,7 +161,13 @@ describe('EmailVerificationRequestedEventHandler', () => {
   describe('Given a verification email request', () => {
     describe('When the email provider succeeds', () => {
       it('Then it sends the verification email', async () => {
-        const event = new EmailVerificationRequestedEvent(1, 'user@test.com', 'ABC123', 'testuser', 'es');
+        const event = new EmailVerificationRequestedEvent(
+          1,
+          'user@test.com',
+          'ABC123',
+          'testuser',
+          'es',
+        );
         await handler.handle(event);
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledWith(
           'user@test.com',
@@ -270,7 +286,14 @@ describe('PasswordResetRequestedEventHandler', () => {
 
     describe('When the event includes social account provider info', () => {
       it('Then it passes the provider details to the email provider', async () => {
-        const event = new PasswordResetRequestedEvent(2, 'social@test.com', 'tok', 'en', true, 'google');
+        const event = new PasswordResetRequestedEvent(
+          2,
+          'social@test.com',
+          'tok',
+          'en',
+          true,
+          'google',
+        );
         await handler.handle(event);
         expect(emailProvider.sendPasswordResetEmail).toHaveBeenCalledWith(
           'social@test.com',

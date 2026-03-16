@@ -20,9 +20,10 @@ export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaConte
 
     const { user, credential } = result;
 
+    const passwordHash = credential.passwordHash ?? '';
     const isPasswordValid = await AuthenticationDomainService.comparePasswords(
       ctx.password,
-      credential.passwordHash!,
+      passwordHash,
     );
 
     if (!isPasswordValid) {
@@ -39,5 +40,6 @@ export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaConte
 
     ctx.user = user;
     ctx.credential = credential;
+    ctx.username = (await this.mediator.user.findUsernameByUUID(user.uuid)) ?? credential.email;
   }
 }

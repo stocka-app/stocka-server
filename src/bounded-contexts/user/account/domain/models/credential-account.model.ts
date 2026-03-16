@@ -1,6 +1,9 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
-import { AccountStatusVO, AccountStatusEnum } from '@user/account/domain/value-objects/account-status.vo';
+import {
+  AccountStatusVO,
+  AccountStatusEnum,
+} from '@user/account/domain/value-objects/account-status.vo';
 
 export interface CredentialAccountProps extends BaseModelProps {
   accountId: number;
