@@ -8,12 +8,12 @@ describe('SessionModel', () => {
       expiresAt.setDate(expiresAt.getDate() + 7);
 
       const session = SessionModel.create({
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
       });
 
-      expect(session.userId).toBe(1);
+      expect(session.accountId).toBe(1);
       expect(session.tokenHash).toBe('hash123');
       expect(session.expiresAt).toEqual(expiresAt);
       expect(session.uuid).toBeDefined();
@@ -29,7 +29,7 @@ describe('SessionModel', () => {
       const session = SessionModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         createdAt: new Date(),
@@ -39,7 +39,7 @@ describe('SessionModel', () => {
 
       expect(session.id).toBe(1);
       expect(session.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
-      expect(session.userId).toBe(1);
+      expect(session.accountId).toBe(1);
     });
   });
 
@@ -49,7 +49,7 @@ describe('SessionModel', () => {
       expiresAt.setDate(expiresAt.getDate() + 7);
 
       const session = SessionModel.create({
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
       });
@@ -64,7 +64,7 @@ describe('SessionModel', () => {
       const session = SessionModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         createdAt: new Date(),
@@ -83,7 +83,7 @@ describe('SessionModel', () => {
       const session = SessionModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         createdAt: new Date(),
@@ -102,7 +102,7 @@ describe('SessionModel', () => {
       expiresAt.setDate(expiresAt.getDate() + 7);
 
       const session = SessionModel.create({
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
       });
@@ -113,7 +113,7 @@ describe('SessionModel', () => {
       expect(events[0]).toBeInstanceOf(SessionCreatedEvent);
       const event = events[0] as SessionCreatedEvent;
       expect(event.sessionUUID).toBe(session.uuid);
-      expect(event.userId).toBe(1);
+      expect(event.accountId).toBe(1);
     });
 
     it('should NOT emit events when reconstituted from database', () => {
@@ -123,7 +123,7 @@ describe('SessionModel', () => {
       const session = SessionModel.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
         createdAt: new Date(),
@@ -141,7 +141,7 @@ describe('SessionModel', () => {
       expiresAt.setDate(expiresAt.getDate() + 7);
 
       const session = SessionModel.create({
-        userId: 1,
+        accountId: 1,
         tokenHash: 'hash123',
         expiresAt,
       });

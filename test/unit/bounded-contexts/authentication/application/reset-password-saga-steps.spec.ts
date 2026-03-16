@@ -22,7 +22,7 @@ function buildValidResetToken(): PasswordResetTokenModel {
   return PasswordResetTokenModel.reconstitute({
     id: 1,
     uuid: VALID_RESET_TOKEN_HASH_UUID,
-    userId: 1,
+    credentialAccountId: 1,
     tokenHash: 'stored-hash',
     expiresAt,
     usedAt: null,
@@ -35,10 +35,10 @@ function buildValidResetToken(): PasswordResetTokenModel {
 // ─── ArchiveUserSessionsStep ──────────────────────────────────────────────────
 describe('ArchiveUserSessionsStep', () => {
   let step: ArchiveUserSessionsStep;
-  let sessionContract: jest.Mocked<Pick<ISessionContract, 'archiveAllByUserId'>>;
+  let sessionContract: jest.Mocked<Pick<ISessionContract, 'archiveAllByAccountId'>>;
 
   beforeEach(async () => {
-    sessionContract = { archiveAllByUserId: jest.fn().mockResolvedValue(undefined) };
+    sessionContract = { archiveAllByAccountId: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -59,7 +59,7 @@ describe('ArchiveUserSessionsStep', () => {
           resetToken: buildValidResetToken(),
         };
         await step.execute(ctx);
-        expect(sessionContract.archiveAllByUserId).toHaveBeenCalledWith(1);
+        expect(sessionContract.archiveAllByAccountId).toHaveBeenCalledWith(1);
       });
     });
   });
@@ -249,7 +249,7 @@ describe('ValidateResetTokenStep', () => {
         };
         await step.execute(ctx);
         expect(ctx.resetToken).toBeDefined();
-        expect(ctx.resetToken!.userId).toBe(1);
+        expect(ctx.resetToken!.credentialAccountId).toBe(1);
       });
     });
   });

@@ -37,7 +37,7 @@ function buildContext(userSub?: string, skipMetadata?: boolean): ExecutionContex
 describe('EmailVerifiedGuard', () => {
   let guard: EmailVerifiedGuard;
   let reflector: jest.Mocked<Reflector>;
-  let mediator: { user: { findByUUID: jest.Mock } };
+  let mediator: { user: { findUserByUUIDWithCredential: jest.Mock } };
 
   beforeEach(async () => {
     reflector = {
@@ -45,7 +45,7 @@ describe('EmailVerifiedGuard', () => {
     } as unknown as jest.Mocked<Reflector>;
 
     mediator = {
-      user: { findByUUID: jest.fn() },
+      user: { findUserByUUIDWithCredential: jest.fn() },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -76,7 +76,7 @@ describe('EmailVerifiedGuard', () => {
       const ctx = buildCtx('any-uuid');
       const result = await guard.canActivate(ctx);
       expect(result).toBe(true);
-      expect(mediator.user.findByUUID).not.toHaveBeenCalled();
+      expect(mediator.user.findUserByUUIDWithCredential).not.toHaveBeenCalled();
     });
   });
 
@@ -94,17 +94,20 @@ describe('EmailVerifiedGuard', () => {
 
     describe('When the user is not found in the database', () => {
       it('Then it throws ForbiddenException with "User not found"', async () => {
-        mediator.user.findByUUID.mockResolvedValue(null);
-        const ctx = buildCtx('uuid-not-found');
+        mediator.user.findUserByUUIDWithCredential.mockResolvedValue(null);
+        const ctx = buildCtx('550e8400-e29b-41d4-a716-446655440000');
         await expect(guard.canActivate(ctx)).rejects.toThrow(ForbiddenException);
       });
     });
 
     describe('When the user exists and email is verified', () => {
       it('Then canActivate returns true', async () => {
-        const verifiedUser = { requiresEmailVerification: jest.fn().mockReturnValue(false) };
-        mediator.user.findByUUID.mockResolvedValue(verifiedUser);
-        const ctx = buildCtx('uuid-verified');
+        const mockCredential = { requiresEmailVerification: jest.fn().mockReturnValue(false) };
+        mediator.user.findUserByUUIDWithCredential.mockResolvedValue({
+          user: {},
+          credential: mockCredential,
+        });
+        const ctx = buildCtx('550e8400-e29b-41d4-a716-446655440001');
         const result = await guard.canActivate(ctx);
         expect(result).toBe(true);
       });
@@ -112,9 +115,12 @@ describe('EmailVerifiedGuard', () => {
 
     describe('When the user exists but email is not verified', () => {
       it('Then it throws ForbiddenException with EMAIL_NOT_VERIFIED code', async () => {
-        const unverifiedUser = { requiresEmailVerification: jest.fn().mockReturnValue(true) };
-        mediator.user.findByUUID.mockResolvedValue(unverifiedUser);
-        const ctx = buildCtx('uuid-unverified');
+        const mockCredential = { requiresEmailVerification: jest.fn().mockReturnValue(true) };
+        mediator.user.findUserByUUIDWithCredential.mockResolvedValue({
+          user: {},
+          credential: mockCredential,
+        });
+        const ctx = buildCtx('550e8400-e29b-41d4-a716-446655440002');
         await expect(guard.canActivate(ctx)).rejects.toThrow(ForbiddenException);
       });
     });

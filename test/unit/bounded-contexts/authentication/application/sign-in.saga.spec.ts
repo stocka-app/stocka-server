@@ -10,8 +10,7 @@ import {
 import { InvalidCredentialsException } from '@authentication/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@authentication/domain/exceptions/account-deactivated.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 describe('SignInSaga', () => {
   let saga: SignInSaga;
@@ -24,11 +23,15 @@ describe('SignInSaga', () => {
   const mockUser = UserMother.create({
     id: 1,
     uuid: '550e8400-e29b-41d4-a716-446655440001',
-    email: 'ana@example.com',
-    username: 'anatorres',
-  }) as unknown as IPersistedUserView;
+  });
 
-  const mockSession = { uuid: 'session-uuid-001', commit: jest.fn(), userId: 1 };
+  const mockCredential = CredentialAccountMother.create({
+    id: 1,
+    accountId: 1,
+    email: 'ana@example.com',
+  });
+
+  const mockSession = { uuid: 'session-uuid-001', commit: jest.fn(), accountId: 1 };
 
   const baseSagaContext: SignInSagaContext = {
     emailOrUsername: 'ana@example.com',
@@ -39,6 +42,7 @@ describe('SignInSaga', () => {
     const mockValidateCredentials = {
       execute: jest.fn().mockImplementation((ctx: SignInSagaContext) => {
         ctx.user = mockUser;
+        ctx.credential = mockCredential;
       }),
     };
     const mockGenerateTokens = {
@@ -179,6 +183,7 @@ describe('SignInSaga', () => {
       validateCredentials.execute.mockImplementation((ctx: SignInSagaContext) => {
         callOrder.push('validate-credentials');
         ctx.user = mockUser;
+        ctx.credential = mockCredential;
       });
       generateTokens.execute.mockImplementation((ctx: SignInSagaContext) => {
         callOrder.push('generate-tokens');
@@ -231,7 +236,7 @@ describe('SignInSaga', () => {
 
         expect(result.isOk()).toBe(true);
         const output = result._unsafeUnwrap();
-        expect(output.user.email).toBe('ana@example.com');
+        expect(output.credential.email).toBe('ana@example.com');
         expect(output.accessToken).toBe('mock-access-token');
         expect(output.refreshToken).toBe('mock-refresh-token');
         expect(output.emailVerificationRequired).toBe(false);

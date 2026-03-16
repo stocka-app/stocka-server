@@ -21,25 +21,28 @@ import { InvalidPasswordException } from '@authentication/domain/exceptions/inva
 import { UserSignedUpEvent } from '@authentication/domain/events/user-signed-up.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 const MOCK_USER = UserMother.create({
   id: 1,
   uuid: '550e8400-e29b-41d4-a716-446655440020',
+});
+
+const MOCK_CREDENTIAL = CredentialAccountMother.create({
+  id: 1,
+  accountId: 1,
   email: 'new@test.com',
-  username: 'newuser',
-}) as unknown as IPersistedUserView;
+});
 
 // ─── ValidateSignUpStep ───────────────────────────────────────────────────────
 describe('ValidateSignUpStep', () => {
   let step: ValidateSignUpStep;
-  let mediator: { user: { findByEmail: jest.Mock; existsByUsername: jest.Mock } };
+  let mediator: { user: { existsByEmail: jest.Mock; existsByUsername: jest.Mock } };
 
   beforeEach(async () => {
     mediator = {
       user: {
-        findByEmail: jest.fn().mockResolvedValue(null),
+        existsByEmail: jest.fn().mockResolvedValue(null),
         existsByUsername: jest.fn().mockResolvedValue(false),
       },
     };
@@ -70,7 +73,7 @@ describe('ValidateSignUpStep', () => {
 
   describe('Given an email that already exists', () => {
     beforeEach(() => {
-      mediator.user.findByEmail.mockResolvedValue(UserMother.create({}));
+      mediator.user.existsByEmail.mockResolvedValue(true);
     });
 
     describe('When execute() is called', () => {
@@ -114,7 +117,7 @@ describe('ValidateSignUpStep', () => {
           lang: 'es',
         };
         await expect(step.execute(ctx)).rejects.toThrow(InvalidPasswordException);
-        expect(mediator.user.findByEmail).not.toHaveBeenCalled();
+        expect(mediator.user.existsByEmail).not.toHaveBeenCalled();
       });
     });
   });
@@ -173,12 +176,12 @@ describe('PrepareCredentialsStep', () => {
 // ─── RegisterUserStep ─────────────────────────────────────────────────────────
 describe('RegisterUserStep', () => {
   let step: RegisterUserStep;
-  let mediator: { user: { createUser: jest.Mock } };
+  let mediator: { user: { createUserWithCredentials: jest.Mock } };
 
   beforeEach(async () => {
     mediator = {
       user: {
-        createUser: jest.fn().mockResolvedValue(MOCK_USER),
+        createUserWithCredentials: jest.fn().mockResolvedValue({ user: MOCK_USER, credential: MOCK_CREDENTIAL }),
       },
     };
 
@@ -203,7 +206,11 @@ describe('RegisterUserStep', () => {
           passwordHash: 'bcrypt-hash',
         };
         await step.execute(ctx);
-        expect(mediator.user.createUser).toHaveBeenCalledWith('u@t.com', 'user', 'bcrypt-hash');
+        expect(mediator.user.createUserWithCredentials).toHaveBeenCalledWith({
+          email: 'u@t.com',
+          username: 'user',
+          passwordHash: 'bcrypt-hash',
+        });
         expect(ctx.user).toBeDefined();
       });
     });
@@ -275,6 +282,7 @@ describe('GenerateTokensStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await step.execute(ctx);
         expect(ctx.accessToken).toBe('jwt-token');
@@ -324,6 +332,7 @@ describe('GenerateTokensStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await stepWithDefaults.execute(ctx);
 
@@ -365,6 +374,7 @@ describe('CreateSessionStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
           refreshToken: 'refresh-token',
         };
         await step.execute(ctx);
@@ -397,6 +407,7 @@ describe('CreateSessionStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.refreshToken not set');
       });
@@ -437,6 +448,7 @@ describe('CreateVerificationTokenStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
           verificationCode: 'ABC123',
         };
         await step.execute(ctx);
@@ -445,7 +457,7 @@ describe('CreateVerificationTokenStep', () => {
     });
   });
 
-  describe('Given a context without user', () => {
+  describe('Given a context without credential', () => {
     describe('When execute() is called', () => {
       it('Then it throws an invariant violation error', async () => {
         const ctx: SignUpSagaContext = {
@@ -455,7 +467,7 @@ describe('CreateVerificationTokenStep', () => {
           lang: 'es',
           verificationCode: 'ABC123',
         };
-        await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
       });
     });
   });
@@ -469,6 +481,7 @@ describe('CreateVerificationTokenStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.verificationCode not set');
       });
@@ -503,6 +516,7 @@ describe('PublishSignUpEventsStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await step.execute(ctx);
         expect(eventBus.publish).toHaveBeenCalledWith(expect.any(UserSignedUpEvent));
@@ -554,13 +568,14 @@ describe('SendVerificationEmailStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
           verificationCode: 'ABC123',
         };
         await step.execute(ctx);
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledWith(
-          MOCK_USER.email,
+          MOCK_CREDENTIAL.email,
           'ABC123',
-          MOCK_USER.username,
+          ctx.username,
           'es',
         );
         expect(ctx.emailSent).toBe(true);
@@ -592,6 +607,7 @@ describe('SendVerificationEmailStep', () => {
           password: 'StrongPass1',
           lang: 'es',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.verificationCode not set');
       });

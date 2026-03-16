@@ -9,7 +9,7 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { EventBus } from '@nestjs/cqrs';
 import { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/events/integration';
 
@@ -28,7 +28,7 @@ class OtherException extends DomainException {
 describe('RateLimitInterceptor', () => {
   let interceptor: RateLimitInterceptor;
   let attemptContract: jest.Mocked<IVerificationAttemptContract>;
-  let mediator: { user: { findByEmailOrUsername: jest.Mock } };
+  let mediator: { user: { findUserByEmailOrUsername: jest.Mock } };
   let eventBus: jest.Mocked<EventBus>;
 
   const signInRateLimitConfig: RateLimitConfig = {
@@ -106,7 +106,7 @@ describe('RateLimitInterceptor', () => {
 
     const mockMediator = {
       user: {
-        findByEmailOrUsername: jest.fn(),
+        findUserByEmailOrUsername: jest.fn(),
       },
     };
 
@@ -182,7 +182,8 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should track failed attempts when errorCode matches failureErrorCodes', async () => {
-      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockUser = UserMother.create({});
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const context = createMockExecutionContext(
         signInRateLimitConfig,
         '192.168.1.1',
@@ -191,7 +192,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -202,7 +203,8 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should track attempt with correct verification type', async () => {
-      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockUser = UserMother.create({});
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const context = createMockExecutionContext(
         signInRateLimitConfig,
         '192.168.1.1',
@@ -211,7 +213,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -224,10 +226,8 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should activate progressive block when threshold is exceeded', async () => {
-      const mockUser = UserMother.create({
-        uuid: '550e8400-e29b-41d4-a716-446655440001',
-        email: 'test@example.com',
-      });
+      const mockUser = UserMother.create({ uuid: '550e8400-e29b-41d4-a716-446655440001' });
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const context = createMockExecutionContext(
         signInRateLimitConfig,
         '192.168.1.1',
@@ -236,7 +236,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(7);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -251,10 +251,8 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should apply highest matching threshold', async () => {
-      const mockUser = UserMother.create({
-        uuid: '550e8400-e29b-41d4-a716-446655440001',
-        email: 'test@example.com',
-      });
+      const mockUser = UserMother.create({ uuid: '550e8400-e29b-41d4-a716-446655440001' });
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const context = createMockExecutionContext(
         signInRateLimitConfig,
         '192.168.1.1',
@@ -263,7 +261,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(10);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -276,7 +274,8 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should not block when below all thresholds', async () => {
-      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockUser = UserMother.create({});
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const context = createMockExecutionContext(
         signInRateLimitConfig,
         '192.168.1.1',
@@ -285,7 +284,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -303,7 +302,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
@@ -324,7 +323,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
@@ -337,7 +336,8 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should always re-throw the original exception', async () => {
-      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockUser = UserMother.create({});
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const context = createMockExecutionContext(
         signInRateLimitConfig,
         '192.168.1.1',
@@ -346,7 +346,7 @@ describe('RateLimitInterceptor', () => {
       const originalError = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, originalError);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
@@ -365,7 +365,10 @@ describe('RateLimitInterceptor', () => {
       const originalError = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, originalError);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue({ uuid: 'u', email: 'test@example.com' });
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({
+        user: UserMother.create({}),
+        credential: CredentialAccountMother.createWithEmail('test@example.com'),
+      });
       attemptContract.persist.mockRejectedValue(new Error('DB connection lost'));
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(0);
 
@@ -384,7 +387,7 @@ describe('RateLimitInterceptor', () => {
       const httpError = { response: { error: 'VALIDATION_ERROR', statusCode: 400 } };
       const callHandler = createMockCallHandler(undefined, httpError as unknown as Error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
@@ -431,7 +434,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
 
       await interceptAndCatchError(context, callHandler);
@@ -465,14 +468,15 @@ describe('RateLimitInterceptor', () => {
 
       await interceptAndCatchError(context, callHandler);
 
-      expect(mediator.user.findByEmailOrUsername).not.toHaveBeenCalled();
+      expect(mediator.user.findUserByEmailOrUsername).not.toHaveBeenCalled();
       const persistCall = attemptContract.persist.mock.calls[0][0];
       expect(persistCall.userUUID).toBeNull();
       expect(persistCall.email).toBeNull();
     });
 
     it('should set userAgent to null when no user-agent header is present (user found path)', async () => {
-      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockUser = UserMother.create({});
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const mockRequest = {
         body: { emailOrUsername: 'test@example.com' },
         headers: {},
@@ -493,7 +497,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
 
       await interceptAndCatchError(context, callHandler);
@@ -523,7 +527,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
 
       await interceptAndCatchError(context, callHandler);
@@ -533,7 +537,8 @@ describe('RateLimitInterceptor', () => {
     });
 
     it('should not call evaluateBlock when config has no progressiveBlock (user found path)', async () => {
-      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockUser = UserMother.create({});
+      const mockCredential = CredentialAccountMother.createWithEmail('test@example.com');
       const context = createMockExecutionContext(
         { ...signInRateLimitConfig, progressiveBlock: undefined },
         '192.168.1.1',
@@ -542,7 +547,7 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      mediator.user.findByEmailOrUsername.mockResolvedValue(mockUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({ user: mockUser, credential: mockCredential });
       attemptContract.persist.mockResolvedValue({} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel);
 
       await interceptAndCatchError(context, callHandler);
@@ -571,7 +576,7 @@ describe('RateLimitInterceptor', () => {
       // Call private evaluateBlock directly to cover the defensive early-return branch at line 150.
       // The public API never reaches this branch (caller checks progressiveBlock first),
       // so we access the private method via casting.
-      const mockUser = UserMother.create({ email: 'test@example.com' });
+      const mockUser = UserMother.create({});
       const configWithoutBlock = {
         type: 'sign_in' as const,
         maxAttemptsByIp: 30,

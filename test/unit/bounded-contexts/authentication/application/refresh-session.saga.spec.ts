@@ -11,7 +11,6 @@ import {
 import { TokenExpiredException } from '@authentication/domain/exceptions/token-expired.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
 
 describe('RefreshSessionSaga', () => {
   let saga: RefreshSessionSaga;
@@ -25,9 +24,7 @@ describe('RefreshSessionSaga', () => {
   const mockUser = UserMother.create({
     id: 7,
     uuid: '550e8400-e29b-41d4-a716-446655440007',
-    email: 'ana@example.com',
-    username: 'anatorres',
-  }) as unknown as IPersistedUserView;
+  });
 
   const baseSagaContext: RefreshSessionSagaContext = {
     refreshToken: 'valid-refresh-token',

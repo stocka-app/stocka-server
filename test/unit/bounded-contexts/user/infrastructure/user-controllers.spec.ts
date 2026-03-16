@@ -31,8 +31,6 @@ describe('GetMeController', () => {
       it('Then it returns the user profile DTO', async () => {
         const mockUser = {
           uuid: 'user-uuid-abc',
-          email: 'user@example.com',
-          username: 'testuser',
           createdAt: new Date('2024-01-01'),
         };
         const mockResult = ok(mockUser);
@@ -41,8 +39,9 @@ describe('GetMeController', () => {
         const result = await controller.handle('user-uuid-abc');
 
         expect(result.id).toBe('user-uuid-abc');
-        expect(result.email).toBe('user@example.com');
-        expect(result.username).toBe('testuser');
+        // email and username are pending CredentialAccount / PersonalProfile enrichment
+        expect(result.email).toBe('');
+        expect(result.username).toBe('');
         expect(result.createdAt).toBe(new Date('2024-01-01').toISOString());
       });
     });

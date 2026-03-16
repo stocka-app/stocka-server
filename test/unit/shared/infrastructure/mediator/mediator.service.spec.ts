@@ -25,7 +25,7 @@ describe('MediatorService', () => {
   describe('Given a MediatorService after onModuleInit runs', () => {
     let service: MediatorService;
     let moduleRef: jest.Mocked<ModuleRef>;
-    const mockFacade = { findById: jest.fn(), findByEmail: jest.fn() };
+    const mockFacade = { findByUUID: jest.fn(), findUserByEmail: jest.fn() };
 
     beforeEach(() => {
       moduleRef = buildMockModuleRef(mockFacade);
@@ -45,9 +45,9 @@ describe('MediatorService', () => {
       });
 
       it('Then calling a facade method works through the mediator', () => {
-        (mockFacade.findById as jest.Mock).mockResolvedValue({ id: 1 });
-        service.user.findById(1);
-        expect(mockFacade.findById).toHaveBeenCalledWith(1);
+        (mockFacade.findByUUID as jest.Mock).mockResolvedValue({ id: 1 });
+        service.user.findByUUID('some-uuid');
+        expect(mockFacade.findByUUID).toHaveBeenCalledWith('some-uuid');
       });
     });
   });

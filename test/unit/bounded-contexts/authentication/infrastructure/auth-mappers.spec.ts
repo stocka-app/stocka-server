@@ -8,7 +8,7 @@ import { EmailVerificationTokenModel } from '@authentication/domain/models/email
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
 
-import { SessionEntity } from '@authentication/infrastructure/persistence/entities/session.entity';
+import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
 import { EmailVerificationTokenEntity } from '@authentication/infrastructure/persistence/entities/email-verification-token.entity';
 import { PasswordResetTokenEntity } from '@authentication/infrastructure/persistence/entities/password-reset-token.entity';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
@@ -26,7 +26,7 @@ function buildSessionEntity(overrides?: Partial<SessionEntity>): SessionEntity {
   const e = new SessionEntity();
   e.id = 1;
   e.uuid = UUID_SESSION;
-  e.userId = 42;
+  e.accountId = 42;
   e.tokenHash = 'a'.repeat(64);
   e.expiresAt = new Date('2099-01-01');
   e.createdAt = new Date('2024-01-01');
@@ -39,7 +39,7 @@ function buildEmailVerificationTokenEntity(overrides?: Partial<EmailVerification
   const e = new EmailVerificationTokenEntity();
   e.id = 1;
   e.uuid = UUID_EVT;
-  e.userId = 42;
+  e.credentialAccountId = 42;
   e.codeHash = 'b'.repeat(64);
   e.expiresAt = new Date('2099-01-01');
   e.usedAt = null;
@@ -55,7 +55,7 @@ function buildPasswordResetTokenEntity(overrides?: Partial<PasswordResetTokenEnt
   const e = new PasswordResetTokenEntity();
   e.id = 1;
   e.uuid = UUID_PRT;
-  e.userId = 42;
+  e.credentialAccountId = 42;
   e.tokenHash = 'c'.repeat(64);
   e.expiresAt = new Date('2099-01-01');
   e.usedAt = null;
@@ -95,7 +95,7 @@ describe('SessionMapper', () => {
         expect(model).toBeInstanceOf(SessionModel);
         expect(model.id).toBe(entity.id);
         expect(model.uuid).toBe(entity.uuid);
-        expect(model.userId).toBe(entity.userId);
+        expect(model.accountId).toBe(entity.accountId);
         expect(model.tokenHash).toBe(entity.tokenHash);
         expect(model.expiresAt).toEqual(entity.expiresAt);
         expect(model.archivedAt).toBeNull();
@@ -112,7 +112,7 @@ describe('SessionMapper', () => {
 
         expect(result.id).toBe(1);
         expect(result.uuid).toBe(entity.uuid);
-        expect(result.userId).toBe(entity.userId);
+        expect(result.accountId).toBe(entity.accountId);
         expect(result.tokenHash).toBe(entity.tokenHash);
       });
     });
@@ -123,7 +123,7 @@ describe('SessionMapper', () => {
       it('Then the id field is omitted from the result', () => {
         const model = SessionModel.reconstitute({
           uuid: '550e8400-e29b-41d4-a716-446655440099',
-          userId: 99,
+          accountId: 99,
           tokenHash: 'd'.repeat(64),
           expiresAt: new Date('2099-01-01'),
           createdAt: new Date(),
@@ -152,7 +152,7 @@ describe('EmailVerificationTokenMapper', () => {
 
         expect(model).toBeInstanceOf(EmailVerificationTokenModel);
         expect(model.id).toBe(entity.id);
-        expect(model.userId).toBe(entity.userId);
+        expect(model.credentialAccountId).toBe(entity.credentialAccountId);
         expect(model.codeHash).toBe(entity.codeHash);
         expect(model.resendCount).toBe(2);
         expect(model.usedAt).toBeNull();
@@ -177,7 +177,7 @@ describe('EmailVerificationTokenMapper', () => {
         const model = EmailVerificationTokenMapper.toDomain(entity);
         const result = EmailVerificationTokenMapper.toEntity(model);
 
-        expect(result.userId).toBe(entity.userId);
+        expect(result.credentialAccountId).toBe(entity.credentialAccountId);
         expect(result.codeHash).toBe(entity.codeHash);
         expect(result.resendCount).toBe(entity.resendCount);
         expect(result.id).toBe(entity.id);
@@ -210,7 +210,7 @@ describe('PasswordResetTokenMapper', () => {
 
         expect(model).toBeInstanceOf(PasswordResetTokenModel);
         expect(model.id).toBe(entity.id);
-        expect(model.userId).toBe(entity.userId);
+        expect(model.credentialAccountId).toBe(entity.credentialAccountId);
         expect(model.tokenHash).toBe(entity.tokenHash);
         expect(model.usedAt).toBeNull();
       });
@@ -234,7 +234,7 @@ describe('PasswordResetTokenMapper', () => {
         const result = PasswordResetTokenMapper.toEntity(model);
 
         expect(result.id).toBe(entity.id);
-        expect(result.userId).toBe(entity.userId);
+        expect(result.credentialAccountId).toBe(entity.credentialAccountId);
         expect(result.tokenHash).toBe(entity.tokenHash);
       });
     });

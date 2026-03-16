@@ -28,16 +28,14 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { ConfigService } from '@nestjs/config';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-
 // ─── EmailVerificationCompletedEventHandler ──────────────────────────────────
 describe('EmailVerificationCompletedEventHandler', () => {
   let handler: EmailVerificationCompletedEventHandler;
-  let mediator: { user: { findByUUID: jest.Mock } };
+  let mediator: { user: { findUsernameByUUID: jest.Mock } };
   let emailProvider: jest.Mocked<Pick<IEmailProviderContract, 'sendWelcomeEmail'>>;
 
   beforeEach(async () => {
-    mediator = { user: { findByUUID: jest.fn() } };
+    mediator = { user: { findUsernameByUUID: jest.fn() } };
     emailProvider = { sendWelcomeEmail: jest.fn().mockResolvedValue({ id: 'email-id-1' }) };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -56,9 +54,7 @@ describe('EmailVerificationCompletedEventHandler', () => {
   describe('Given a user that exists', () => {
     describe('When email verification completes', () => {
       it('Then it sends a welcome email', async () => {
-        mediator.user.findByUUID.mockResolvedValue(
-          UserMother.create({ uuid: '550e8400-e29b-41d4-a716-446655440000', username: 'tester' }),
-        );
+        mediator.user.findUsernameByUUID.mockResolvedValue('tester');
         const event = new EmailVerificationCompletedEvent('550e8400-e29b-41d4-a716-446655440000', 'user@test.com', 'es');
         await handler.handle(event);
         expect(emailProvider.sendWelcomeEmail).toHaveBeenCalledWith(
@@ -73,7 +69,7 @@ describe('EmailVerificationCompletedEventHandler', () => {
   describe('Given the user is not found', () => {
     describe('When email verification completes', () => {
       it('Then it does not attempt to send a welcome email', async () => {
-        mediator.user.findByUUID.mockResolvedValue(null);
+        mediator.user.findUsernameByUUID.mockResolvedValue(null);
         const event = new EmailVerificationCompletedEvent('missing-uuid', 'u@t.com');
         await handler.handle(event);
         expect(emailProvider.sendWelcomeEmail).not.toHaveBeenCalled();
@@ -84,9 +80,7 @@ describe('EmailVerificationCompletedEventHandler', () => {
   describe('Given the email provider throws', () => {
     describe('When the welcome email fails to send with an Error instance', () => {
       it('Then it handles the error gracefully without propagating', async () => {
-        mediator.user.findByUUID.mockResolvedValue(
-          UserMother.create({ uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', username: 'user' }),
-        );
+        mediator.user.findUsernameByUUID.mockResolvedValue('user');
         emailProvider.sendWelcomeEmail.mockRejectedValue(new Error('SMTP down'));
         const event = new EmailVerificationCompletedEvent('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'u@t.com');
         await expect(handler.handle(event)).resolves.not.toThrow();
@@ -95,9 +89,7 @@ describe('EmailVerificationCompletedEventHandler', () => {
 
     describe('When the email provider throws a non-Error value', () => {
       it('Then it handles the non-Error value gracefully', async () => {
-        mediator.user.findByUUID.mockResolvedValue(
-          UserMother.create({ uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890', username: 'user' }),
-        );
+        mediator.user.findUsernameByUUID.mockResolvedValue('user');
         emailProvider.sendWelcomeEmail.mockRejectedValue('string error');
         const event = new EmailVerificationCompletedEvent('a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'u@t.com');
         await expect(handler.handle(event)).resolves.not.toThrow();

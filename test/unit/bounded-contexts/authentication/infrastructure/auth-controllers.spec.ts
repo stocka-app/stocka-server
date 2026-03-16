@@ -67,12 +67,14 @@ describe('SignInController', () => {
       it('Then it returns the sign-in response and sets the refresh cookie', async () => {
         const mockUser = {
           uuid: 'user-uuid-1',
-          email: 'user@example.com',
-          username: 'testuser',
           createdAt: new Date('2024-01-01'),
+        };
+        const mockCredential = {
+          email: 'user@example.com',
         };
         const mockResult = ok({
           user: mockUser,
+          credential: mockCredential,
           accessToken: 'access-token-123',
           refreshToken: 'refresh-token-abc',
           emailVerificationRequired: false,
@@ -135,12 +137,14 @@ describe('SignUpController', () => {
       it('Then it returns the sign-up response with emailSent flag', async () => {
         const mockUser = {
           uuid: 'new-uuid',
-          email: 'new@example.com',
-          username: 'newuser',
           createdAt: new Date('2024-01-01'),
+        };
+        const mockCredential = {
+          email: 'new@example.com',
         };
         const mockResult = ok({
           user: mockUser,
+          credential: mockCredential,
           accessToken: 'at-xyz',
           refreshToken: 'rt-xyz',
           emailSent: true,

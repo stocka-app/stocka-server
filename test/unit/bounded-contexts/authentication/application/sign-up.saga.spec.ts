@@ -13,8 +13,7 @@ import {
 } from '@authentication/application/sagas/sign-up/steps';
 import { EmailAlreadyExistsException } from '@authentication/domain/exceptions/email-already-exists.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 describe('SignUpSaga', () => {
   let saga: SignUpSaga;
@@ -31,9 +30,13 @@ describe('SignUpSaga', () => {
   const mockUser = UserMother.create({
     id: 1,
     uuid: '550e8400-e29b-41d4-a716-446655440001',
+  });
+
+  const mockCredential = CredentialAccountMother.create({
+    id: 1,
+    accountId: 1,
     email: 'test@example.com',
-    username: 'testuser',
-  }) as unknown as IPersistedUserView;
+  });
 
   const baseSagaContext: SignUpSagaContext = {
     email: 'test@example.com',
@@ -53,6 +56,7 @@ describe('SignUpSaga', () => {
     const mockRegisterUser = {
       execute: jest.fn().mockImplementation((ctx: SignUpSagaContext) => {
         ctx.user = mockUser;
+        ctx.credential = mockCredential;
       }),
     };
     const mockGenerateTokens = {
@@ -123,7 +127,7 @@ describe('SignUpSaga', () => {
 
         // Context populated by step handlers
         expect(ctx.user).toBeDefined();
-        expect(ctx.user?.email).toBe('test@example.com');
+        expect(ctx.credential?.email).toBe('test@example.com');
         expect(ctx.accessToken).toBe('mock-access-token');
         expect(ctx.refreshToken).toBe('mock-refresh-token');
       });
@@ -310,7 +314,7 @@ describe('SignUpSaga', () => {
 
         expect(result.isOk()).toBe(true);
         const output = result._unsafeUnwrap();
-        expect(output.user.email).toBe('test@example.com');
+        expect(output.credential.email).toBe('test@example.com');
         expect(output.accessToken).toBe('mock-access-token');
         expect(output.refreshToken).toBe('mock-refresh-token');
       });

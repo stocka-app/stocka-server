@@ -11,123 +11,131 @@ import { UserCreatedEvent } from '@user/domain/events/user-created.event';
 import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
 import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
 import { EmailVerificationCompletedEvent } from '@authentication/domain/events/email-verification-completed.event';
-import { IUserContract } from '@user/domain/contracts/user.contract';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+const USER_UUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
 // ─── BlockVerificationOnRateLimitHandler ────────────────────────────────────
+
 describe('BlockVerificationOnRateLimitHandler', () => {
   let handler: BlockVerificationOnRateLimitHandler;
-  let userContract: jest.Mocked<Pick<IUserContract, 'findByUUID' | 'persist'>>;
-
-  const USER_UUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
+  let mediator: {
+    user: {
+      findUserByUUIDWithCredential: jest.Mock;
+      blockVerification: jest.Mock;
+    };
+  };
 
   beforeEach(async () => {
-    userContract = {
-      findByUUID: jest.fn(),
-      persist: jest.fn().mockResolvedValue(undefined),
+    mediator = {
+      user: {
+        findUserByUUIDWithCredential: jest.fn(),
+        blockVerification: jest.fn().mockResolvedValue(undefined),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BlockVerificationOnRateLimitHandler,
-        { provide: INJECTION_TOKENS.USER_CONTRACT, useValue: userContract },
+        { provide: MediatorService, useValue: mediator },
       ],
     }).compile();
 
     handler = module.get<BlockVerificationOnRateLimitHandler>(BlockVerificationOnRateLimitHandler);
   });
 
-  describe('Given a user that exists', () => {
+  describe('Given a user and credential that exist', () => {
     beforeEach(() => {
-      userContract.findByUUID.mockResolvedValue(
-        UserMother.create({ uuid: USER_UUID, id: 1 }),
-      );
+      mediator.user.findUserByUUIDWithCredential.mockResolvedValue({
+        user: UserMother.create({ uuid: USER_UUID, id: 1 }),
+        credential: CredentialAccountMother.createPendingVerification({ id: 5, accountId: 1 }),
+      });
     });
 
     describe('When a rate-limit block event arrives', () => {
-      it('Then it blocks the user and persists the updated aggregate', async () => {
+      it('Then it calls blockVerification on the facade with the credential id and date', async () => {
         const blockedUntil = new Date(Date.now() + 10 * 60 * 1000);
         const event = new UserVerificationBlockedByAuthenticationEvent(USER_UUID, blockedUntil);
+
         await handler.handle(event);
-        expect(userContract.persist).toHaveBeenCalledTimes(1);
-        const persistedUser = userContract.persist.mock.calls[0][0] as ReturnType<typeof UserMother.create>;
-        expect(persistedUser.verificationBlockedUntil).toEqual(blockedUntil);
+
+        expect(mediator.user.blockVerification).toHaveBeenCalledTimes(1);
+        expect(mediator.user.blockVerification).toHaveBeenCalledWith(5, blockedUntil);
       });
     });
   });
 
-  describe('Given a user that does not exist', () => {
+  describe('Given no user exists for the uuid', () => {
     beforeEach(() => {
-      userContract.findByUUID.mockResolvedValue(null);
+      mediator.user.findUserByUUIDWithCredential.mockResolvedValue(null);
     });
 
     describe('When a rate-limit block event arrives', () => {
-      it('Then it does not persist anything', async () => {
-        const event = new UserVerificationBlockedByAuthenticationEvent(
-          'missing-uuid',
-          new Date(),
-        );
+      it('Then it does not call blockVerification', async () => {
+        const event = new UserVerificationBlockedByAuthenticationEvent('missing-uuid', new Date());
+
         await handler.handle(event);
-        expect(userContract.persist).not.toHaveBeenCalled();
+
+        expect(mediator.user.blockVerification).not.toHaveBeenCalled();
       });
     });
   });
 });
 
 // ─── UpdatePasswordOnResetHandler ────────────────────────────────────────────
+
 describe('UpdatePasswordOnResetHandler', () => {
   let handler: UpdatePasswordOnResetHandler;
-  let userContract: jest.Mocked<Pick<IUserContract, 'findById' | 'persist'>>;
+  let mediator: { user: { updatePasswordHash: jest.Mock } };
 
   beforeEach(async () => {
-    userContract = {
-      findById: jest.fn(),
-      persist: jest.fn().mockResolvedValue(undefined),
+    mediator = {
+      user: {
+        updatePasswordHash: jest.fn().mockResolvedValue(undefined),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UpdatePasswordOnResetHandler,
-        { provide: INJECTION_TOKENS.USER_CONTRACT, useValue: userContract },
+        { provide: MediatorService, useValue: mediator },
       ],
     }).compile();
 
     handler = module.get<UpdatePasswordOnResetHandler>(UpdatePasswordOnResetHandler);
   });
 
-  describe('Given a user that exists', () => {
-    beforeEach(() => {
-      userContract.findById.mockResolvedValue(UserMother.create({ id: 1 }));
-    });
-
-    describe('When a password reset integration event arrives', () => {
-      it('Then it updates the password hash and persists the user', async () => {
+  describe('Given a password reset event arrives', () => {
+    describe('When the handler processes it', () => {
+      it('Then it calls updatePasswordHash on the facade with the credential id and new hash', async () => {
         const event = new UserPasswordResetByAuthenticationEvent(1, 'new-bcrypt-hash');
+
         await handler.handle(event);
-        expect(userContract.persist).toHaveBeenCalledTimes(1);
-        const persistedUser = userContract.persist.mock.calls[0][0] as ReturnType<typeof UserMother.create>;
-        expect(persistedUser.passwordHash).toBe('new-bcrypt-hash');
+
+        expect(mediator.user.updatePasswordHash).toHaveBeenCalledTimes(1);
+        expect(mediator.user.updatePasswordHash).toHaveBeenCalledWith(1, 'new-bcrypt-hash');
       });
     });
   });
 
-  describe('Given a user that does not exist', () => {
-    beforeEach(() => {
-      userContract.findById.mockResolvedValue(null);
-    });
+  describe('Given the facade throws when updating the password', () => {
+    describe('When the handler processes the event', () => {
+      it('Then the error is swallowed and does not propagate', async () => {
+        mediator.user.updatePasswordHash.mockRejectedValue(new Error('DB error'));
 
-    describe('When a password reset integration event arrives', () => {
-      it('Then it does not persist anything', async () => {
         const event = new UserPasswordResetByAuthenticationEvent(99, 'some-hash');
-        await handler.handle(event);
-        expect(userContract.persist).not.toHaveBeenCalled();
+
+        await expect(handler.handle(event)).resolves.toBeUndefined();
       });
     });
   });
 });
 
 // ─── UserCreatedEventHandler ──────────────────────────────────────────────────
+
 describe('UserCreatedEventHandler', () => {
   let handler: UserCreatedEventHandler;
 
@@ -149,6 +157,7 @@ describe('UserCreatedEventHandler', () => {
 });
 
 // ─── UserCreatedFromSocialEventHandler ───────────────────────────────────────
+
 describe('UserCreatedFromSocialEventHandler', () => {
   let handler: UserCreatedFromSocialEventHandler;
 
@@ -170,6 +179,7 @@ describe('UserCreatedFromSocialEventHandler', () => {
 });
 
 // ─── UserPasswordUpdatedEventHandler ─────────────────────────────────────────
+
 describe('UserPasswordUpdatedEventHandler', () => {
   let handler: UserPasswordUpdatedEventHandler;
 
@@ -191,22 +201,30 @@ describe('UserPasswordUpdatedEventHandler', () => {
 });
 
 // ─── VerifyUserEmailOnVerificationCompletedHandler ───────────────────────────
+
 describe('VerifyUserEmailOnVerificationCompletedHandler', () => {
   let handler: VerifyUserEmailOnVerificationCompletedHandler;
-  let userContract: jest.Mocked<Pick<IUserContract, 'findByUUID' | 'persist'>>;
+  let mediator: {
+    user: {
+      findUserByUUIDWithCredential: jest.Mock;
+      verifyEmail: jest.Mock;
+    };
+  };
 
-  const USER_UUID = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
+  const HANDLER_USER_UUID = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
 
   beforeEach(async () => {
-    userContract = {
-      findByUUID: jest.fn(),
-      persist: jest.fn().mockResolvedValue(undefined),
+    mediator = {
+      user: {
+        findUserByUUIDWithCredential: jest.fn(),
+        verifyEmail: jest.fn().mockResolvedValue(undefined),
+      },
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         VerifyUserEmailOnVerificationCompletedHandler,
-        { provide: INJECTION_TOKENS.USER_CONTRACT, useValue: userContract },
+        { provide: MediatorService, useValue: mediator },
       ],
     }).compile();
 
@@ -215,34 +233,38 @@ describe('VerifyUserEmailOnVerificationCompletedHandler', () => {
     );
   });
 
-  describe('Given a user that exists', () => {
+  describe('Given a user and credential that exist', () => {
     beforeEach(() => {
-      userContract.findByUUID.mockResolvedValue(
-        UserMother.createPendingVerification({ uuid: USER_UUID, id: 1 }),
-      );
+      mediator.user.findUserByUUIDWithCredential.mockResolvedValue({
+        user: UserMother.create({ uuid: HANDLER_USER_UUID, id: 1 }),
+        credential: CredentialAccountMother.createPendingVerification({ id: 7, accountId: 1 }),
+      });
     });
 
     describe('When email verification completes', () => {
-      it('Then it marks the user email as verified and persists', async () => {
-        const event = new EmailVerificationCompletedEvent(USER_UUID, 'u@test.com', 'es');
+      it('Then it calls verifyEmail on the facade with the credential id', async () => {
+        const event = new EmailVerificationCompletedEvent(HANDLER_USER_UUID, 'u@test.com', 'es');
+
         await handler.handle(event);
-        expect(userContract.persist).toHaveBeenCalledTimes(1);
-        const persistedUser = userContract.persist.mock.calls[0][0] as ReturnType<typeof UserMother.create>;
-        expect(persistedUser.isEmailVerified()).toBe(true);
+
+        expect(mediator.user.verifyEmail).toHaveBeenCalledTimes(1);
+        expect(mediator.user.verifyEmail).toHaveBeenCalledWith(7);
       });
     });
   });
 
-  describe('Given a user that does not exist', () => {
+  describe('Given no user exists for the uuid', () => {
     beforeEach(() => {
-      userContract.findByUUID.mockResolvedValue(null);
+      mediator.user.findUserByUUIDWithCredential.mockResolvedValue(null);
     });
 
     describe('When email verification completes', () => {
-      it('Then it does not persist anything', async () => {
+      it('Then it does not call verifyEmail', async () => {
         const event = new EmailVerificationCompletedEvent('missing-uuid', 'u@t.com');
+
         await handler.handle(event);
-        expect(userContract.persist).not.toHaveBeenCalled();
+
+        expect(mediator.user.verifyEmail).not.toHaveBeenCalled();
       });
     });
   });

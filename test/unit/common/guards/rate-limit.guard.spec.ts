@@ -6,13 +6,13 @@ import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 describe('RateLimitGuard', () => {
   let guard: RateLimitGuard;
   let reflector: jest.Mocked<Reflector>;
   let attemptContract: jest.Mocked<IVerificationAttemptContract>;
-  let mediator: { user: { findByEmailOrUsername: jest.Mock } };
+  let mediator: { user: { findUserByEmailOrUsername: jest.Mock } };
 
   const createMockExecutionContext = (
     body: Record<string, unknown> = {},
@@ -74,7 +74,7 @@ describe('RateLimitGuard', () => {
 
     const mockMediator = {
       user: {
-        findByEmailOrUsername: jest.fn(),
+        findUserByEmailOrUsername: jest.fn(),
       },
     };
 
@@ -108,7 +108,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(2);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'test@example.com' });
 
@@ -163,11 +163,14 @@ describe('RateLimitGuard', () => {
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(5);
 
-      const blockedUser = UserMother.create({
+      const blockedCredential = CredentialAccountMother.createBlocked({
         email: 'blocked@example.com',
         verificationBlockedUntil: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
       });
-      mediator.user.findByEmailOrUsername.mockResolvedValue(blockedUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({
+        user: UserMother.create({}),
+        credential: blockedCredential,
+      });
 
       const context = createMockExecutionContext({ emailOrUsername: 'blocked@example.com' });
 
@@ -189,11 +192,14 @@ describe('RateLimitGuard', () => {
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(5);
 
-      const unlockedUser = UserMother.create({
+      const unlockedCredential = CredentialAccountMother.create({
         email: 'unlocked@example.com',
         verificationBlockedUntil: new Date(Date.now() - 1000), // Already expired
       });
-      mediator.user.findByEmailOrUsername.mockResolvedValue(unlockedUser);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({
+        user: UserMother.create({}),
+        credential: unlockedCredential,
+      });
 
       const context = createMockExecutionContext({ emailOrUsername: 'unlocked@example.com' });
 
@@ -206,7 +212,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(5);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'nonexistent@example.com' });
 
@@ -219,7 +225,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext(
         { emailOrUsername: 'test@example.com' },
@@ -239,7 +245,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'extracted@example.com' });
 
@@ -255,7 +261,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext({ emailOrUsername: 'test@example.com' });
       const request = context.switchToHttp().getRequest();
@@ -323,14 +329,14 @@ describe('RateLimitGuard', () => {
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(mediator.user.findByEmailOrUsername).not.toHaveBeenCalled();
+      expect(mediator.user.findUserByEmailOrUsername).not.toHaveBeenCalled();
     });
 
     it('should swallow non-HttpException errors from findByEmailOrUsername', async () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(5);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(5);
-      mediator.user.findByEmailOrUsername.mockRejectedValue(new Error('DB timeout'));
+      mediator.user.findUserByEmailOrUsername.mockRejectedValue(new Error('DB timeout'));
 
       const context = createMockExecutionContext({ emailOrUsername: 'test@example.com' });
 
@@ -344,7 +350,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       const context = createMockExecutionContext(
         { emailOrUsername: 'test@example.com' },
@@ -382,7 +388,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       // Custom context: no x-forwarded-for, request.ip is empty, socket.remoteAddress is set
       const mockRequest = {
@@ -412,7 +418,7 @@ describe('RateLimitGuard', () => {
       reflector.getAllAndOverride.mockReturnValue(signInRateLimitConfig);
       attemptContract.countFailedByIpAddressInLastHourByType.mockResolvedValue(0);
       attemptContract.countFailedByIdentifierInLastHourByType.mockResolvedValue(0);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
 
       const mockRequest = {
         body: { emailOrUsername: 'test@example.com' },

@@ -4,9 +4,9 @@ import { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/eve
 describe('Integration events', () => {
   describe('Given UserPasswordResetByAuthenticationEvent', () => {
     describe('When constructed with required fields', () => {
-      it('Then it holds userId, newPasswordHash, and a default occurredOn', () => {
+      it('Then it holds credentialAccountId, newPasswordHash, and a default occurredOn', () => {
         const event = new UserPasswordResetByAuthenticationEvent(1, 'bcrypt-hash');
-        expect(event.userId).toBe(1);
+        expect(event.credentialAccountId).toBe(1);
         expect(event.newPasswordHash).toBe('bcrypt-hash');
         expect(event.occurredOn).toBeInstanceOf(Date);
       });
