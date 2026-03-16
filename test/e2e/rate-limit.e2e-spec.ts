@@ -41,8 +41,7 @@ describe('Rate Limiting (e2e)', () => {
           password: process.env.DB_PASSWORD || 'stocka_dev',
           database: process.env.DB_DATABASE || 'stocka_test',
           autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
+          synchronize: false,
         }),
         CqrsModule,
         ThrottlerModule.forRoot([

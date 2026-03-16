@@ -101,8 +101,7 @@ describe('Infrastructure Repositories (e2e)', () => {
           password: process.env.DB_PASSWORD || 'stocka_dev',
           database: process.env.DB_DATABASE || 'stocka_test',
           autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
+          synchronize: false,
         }),
         EmailModule,
         UnitOfWorkModule,
@@ -824,6 +823,20 @@ describe('Infrastructure Repositories (e2e)', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('TypeOrmUnitOfWork edge cases', () => {
+    afterEach(async () => {
+      // Safety net: release any QRs still connected after each UoW edge-case test.
+      // Required because some tests use Object.defineProperty to force isReleased=true,
+      // which causes TypeORM's releasePostgresConnection() to early-return before calling
+      // the pg pool's releaseCallback — leaving pool connections permanently checked out.
+      const connectedQRs: any[] = [...((dataSource as any).driver?.connectedQueryRunners ?? [])];
+      for (const qr of connectedQRs) {
+        try {
+          Object.defineProperty(qr, 'isReleased', { value: false, configurable: true, writable: true });
+          await qr.releasePostgresConnection();
+        } catch { /* ignore */ }
+      }
+    });
+
     describe('Given begin() is called while a transaction is already active', () => {
       it('Then it warns and does not throw', async () => {
         await uow.begin();
@@ -893,15 +906,14 @@ describe('Infrastructure Repositories (e2e)', () => {
 
     describe('Given commit() is called with an already-released QueryRunner', () => {
       it('Then commit() warns and returns without throwing (lines 57-58)', async () => {
-        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
-        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
-          const qr = origCreateQR();
-          // Force isReleased to true so commit() sees it before commitTransaction
-          Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
-          return qr;
-        });
+        // Properly simulate an already-released QR:
+        // begin() → capture QR ref → rollback() (which genuinely sets isReleased=true
+        // and returns the connection to the pool) → re-inject the released QR into ALS
+        // so commit() hits the early-return warning path without leaking any connection.
         await uow.begin();
-        spy.mockRestore();
+        const qr = (uow as any).als.getStore();
+        await uow.rollback();
+        (uow as any).als.enterWith(qr);
         await expect(uow.commit()).resolves.toBeUndefined();
       });
     });
@@ -911,9 +923,11 @@ describe('Infrastructure Repositories (e2e)', () => {
         const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
         const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
           const qr = origCreateQR();
-          jest.spyOn(qr, 'commitTransaction').mockImplementationOnce(async () => {
-            // Simulate the QR becoming released mid-commit
-            Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
+          jest.spyOn(qr as any, 'commitTransaction').mockImplementationOnce(async () => {
+            // Simulate QR becoming released mid-commit: properly release the connection
+            // first (returns it to the pg pool and sets isReleased=true), then throw.
+            // Using qr.release() ensures releaseCallback is called — no connection leak.
+            await qr.release();
             throw new Error('QueryRunner is already released');
           });
           return qr;
@@ -929,8 +943,11 @@ describe('Infrastructure Repositories (e2e)', () => {
         const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
         const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
           const qr = origCreateQR();
-          jest.spyOn(qr, 'rollbackTransaction').mockImplementationOnce(async () => {
-            Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
+          jest.spyOn(qr as any, 'rollbackTransaction').mockImplementationOnce(async () => {
+            // Simulate QR becoming released mid-rollback: properly release the connection
+            // first (returns it to the pg pool and sets isReleased=true), then throw.
+            // Using qr.release() ensures releaseCallback is called — no connection leak.
+            await qr.release();
             throw new Error('QueryRunner is already released');
           });
           return qr;
