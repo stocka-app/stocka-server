@@ -111,6 +111,7 @@ export class TypeOrmUserRepository implements IUserContract {
       })
       .execute();
 
+    // istanbul ignore next — PostgreSQL always returns a numeric affected count
     return result.affected ?? 0;
   }
 }

@@ -1,20 +1,10 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
+import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
-import { UserModule } from '@user/infrastructure/user.module';
-import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
-import { EmailModule } from '@shared/infrastructure/email/email.module';
-import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
-import { validate } from '@core/config/environment/env.validation';
-import databaseConfig from '@core/config/database/database.config';
 import { MarkTokenUsedStep } from '@authentication/application/sagas/reset-password/steps';
+import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
 describe('Reset Password (e2e)', () => {
   let app: INestApplication;
@@ -57,57 +47,17 @@ describe('Reset Password (e2e)', () => {
   }
 
   beforeAll(async () => {
-    emailProvider = {
-      sendEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-      sendVerificationEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-      sendWelcomeEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-      sendPasswordResetEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-    };
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [databaseConfig],
-          validate,
-          envFilePath: '.env.test',
-        }),
-        TypeOrmModule.forRoot({
-          type: 'postgres',
-          host: process.env.DB_HOST || 'localhost',
-          port: parseInt(process.env.DB_PORT || '5434', 10),
-          username: process.env.DB_USERNAME || 'stocka',
-          password: process.env.DB_PASSWORD || 'stocka_dev',
-          database: process.env.DB_DATABASE || 'stocka_test',
-          autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
-        }),
-        EmailModule,
-        UnitOfWorkModule,
-        UserModule,
-        AuthenticationModule,
-        MediatorModule,
-      ],
-    })
-      .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
-      .useValue(emailProvider)
-      .compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+    const workerApp = await getWorkerApp();
+    app = workerApp.app;
+    dataSource = workerApp.dataSource;
+    emailProvider = app.get<jest.Mocked<IEmailProviderContract>>(
+      INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
     );
-    app.setGlobalPrefix('api');
-    app.useGlobalFilters(new DomainExceptionFilter());
-
-    await app.init();
-    dataSource = moduleFixture.get(DataSource);
-    markTokenUsedStep = moduleFixture.get(MarkTokenUsedStep);
+    markTokenUsedStep = app.get(MarkTokenUsedStep);
   });
 
   afterAll(async () => {
-    await app.close();
+    await truncateWorkerTables(dataSource);
   });
 
   // ---------------------------------------------------------------------------

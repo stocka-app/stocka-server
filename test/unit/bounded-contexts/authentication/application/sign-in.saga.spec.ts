@@ -256,5 +256,16 @@ describe('SignInSaga', () => {
         await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow('Hard DB failure');
       });
     });
+
+    describe('Given all steps succeed but a required output field is missing from context', () => {
+      it('Then it re-throws an invariant violation error', async () => {
+        // Steps complete without throwing but do not populate ctx.user
+        validateCredentials.execute.mockImplementation(() => Promise.resolve());
+
+        await expect(saga.execute({ ...baseSagaContext })).rejects.toThrow(
+          'SignInSaga completed without required output fields',
+        );
+      });
+    });
   });
 });

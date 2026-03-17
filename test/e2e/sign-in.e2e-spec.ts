@@ -1,29 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, HttpStatus, ValidationPipe } from '@nestjs/common';
+import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
-import cookieParser from 'cookie-parser';
 import * as bcrypt from 'bcrypt';
 import { v7 as uuidv7 } from 'uuid';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
-import { UserModule } from '@user/infrastructure/user.module';
-import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
-import { EmailModule } from '@shared/infrastructure/email/email.module';
-import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 import { CreateSignInSessionStep } from '@authentication/application/sagas/sign-in/steps';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
-import { validate } from '@core/config/environment/env.validation';
-import databaseConfig from '@core/config/database/database.config';
+import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
 describe('Sign In (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
-  let emailProvider: jest.Mocked<IEmailProviderContract>;
   let createSignInSessionStep: CreateSignInSessionStep;
 
   // Helper for rollback tests — uses HTTP so it runs through UoW/saga.
@@ -39,59 +25,15 @@ describe('Sign In (e2e)', () => {
   }
 
   beforeAll(async () => {
-    emailProvider = {
-      sendEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-      sendVerificationEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-      sendWelcomeEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-      sendPasswordResetEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
-    };
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [databaseConfig],
-          validate,
-          envFilePath: '.env.test',
-        }),
-        TypeOrmModule.forRoot({
-          type: 'postgres',
-          host: process.env.DB_HOST || 'localhost',
-          port: parseInt(process.env.DB_PORT || '5434', 10),
-          username: process.env.DB_USERNAME || 'stocka',
-          password: process.env.DB_PASSWORD || 'stocka_dev',
-          database: process.env.DB_DATABASE || 'stocka_test',
-          autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
-        }),
-        EmailModule,
-        UnitOfWorkModule,
-        UserModule,
-        AuthenticationModule,
-        MediatorModule,
-      ],
-    })
-      .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
-      .useValue(emailProvider)
-      .compile();
-
-    app = moduleFixture.createNestApplication();
-    app.use(cookieParser());
-    app.useGlobalPipes(
-      new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
-    );
-    app.setGlobalPrefix('api');
-    app.useGlobalFilters(new DomainExceptionFilter());
-
-    await app.init();
-    dataSource = moduleFixture.get(DataSource);
-    createSignInSessionStep = moduleFixture.get(CreateSignInSessionStep);
+    const workerApp = await getWorkerApp();
+    app = workerApp.app;
+    dataSource = workerApp.dataSource;
+    createSignInSessionStep = app.get(CreateSignInSessionStep);
 
     // Seed base verified user directly via TypeORM — no HTTP/saga/UoW involved.
     // Avoids ALS context leak from sagas running before sign-in tests.
     // Sign-in requires: status='active', emailVerifiedAt set, and known passwordHash.
-    const passwordHash = await bcrypt.hash('SecurePass1', 10);
+    const passwordHash = await bcrypt.hash('SecurePass1', 4);
     await dataSource.getRepository(UserEntity).save({
       uuid: uuidv7(),
       email: 'signin@example.com',
@@ -105,27 +47,11 @@ describe('Sign In (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (dataSource?.isInitialized) {
-      const tables = [
-        'password_reset_tokens',
-        'users',
-        'sessions',
-        'email_verification_tokens',
-        'verification_attempts',
-      ];
-      for (const table of tables) {
-        await dataSource.query(`TRUNCATE TABLE ${table} RESTART IDENTITY CASCADE`);
-      }
-    }
-    await app.close();
+    await truncateWorkerTables(dataSource);
   });
 
   beforeEach(() => {
     jest.resetAllMocks();
-    emailProvider.sendEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendVerificationEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendWelcomeEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
   });
 
   // ---------------------------------------------------------------------------

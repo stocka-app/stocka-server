@@ -1,20 +1,6 @@
 import * as crypto from 'crypto';
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { v4 as uuidv4, version as uuidVersion } from 'uuid';
-
-import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
-import { UserModule } from '@user/infrastructure/user.module';
-import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
-import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
-import { EmailModule } from '@shared/infrastructure/email/email.module';
-import databaseConfig from '@core/config/database/database.config';
-import { validate } from '@core/config/environment/env.validation';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { ISessionContract } from '@authentication/domain/contracts/session.contract';
@@ -23,12 +9,15 @@ import { IPasswordResetTokenContract } from '@authentication/domain/contracts/pa
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { ISocialAccountContract } from '@user/domain/contracts/social-account.contract';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 import { UserAggregate, AccountType } from '@user/domain/models/user.aggregate';
 import { SessionModel } from '@authentication/domain/models/session.model';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+
+import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -65,9 +54,7 @@ function buildUser(overrides: { email?: string; username?: string } = {}): UserA
 // ─── Test Suite ───────────────────────────────────────────────────────────────
 
 describe('Infrastructure Repositories (e2e)', () => {
-  let app: INestApplication;
   let dataSource: DataSource;
-  let module: TestingModule;
 
   let userRepo: IUserContract;
   let sessionRepo: ISessionContract;
@@ -77,74 +64,32 @@ describe('Infrastructure Repositories (e2e)', () => {
   let socialAccountRepo: ISocialAccountContract;
   let uow: IUnitOfWork;
 
-  const emailProvider: jest.Mocked<IEmailProviderContract> = {
-    sendEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-    sendVerificationEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-    sendWelcomeEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-    sendPasswordResetEmail: jest.fn().mockResolvedValue({ id: 'mock', success: true }),
-  };
-
   beforeAll(async () => {
-    module = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          load: [databaseConfig],
-          validate,
-          envFilePath: '.env.test',
-        }),
-        TypeOrmModule.forRoot({
-          type: 'postgres',
-          host: process.env.DB_HOST || 'localhost',
-          port: parseInt(process.env.DB_PORT || '5434', 10),
-          username: process.env.DB_USERNAME || 'stocka',
-          password: process.env.DB_PASSWORD || 'stocka_dev',
-          database: process.env.DB_DATABASE || 'stocka_test',
-          autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
-        }),
-        EmailModule,
-        UnitOfWorkModule,
-        UserModule,
-        AuthenticationModule,
-        MediatorModule,
-      ],
-    })
-      .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
-      .useValue(emailProvider)
-      .compile();
-
-    app = module.createNestApplication();
-    await app.init();
-
-    dataSource = module.get(DataSource);
-    userRepo = module.get<IUserContract>(INJECTION_TOKENS.USER_CONTRACT);
-    sessionRepo = module.get<ISessionContract>(INJECTION_TOKENS.SESSION_CONTRACT);
-    evtRepo = module.get<IEmailVerificationTokenContract>(
+    const { app, dataSource: ds } = await getWorkerApp();
+    dataSource = ds;
+    userRepo = app.get<IUserContract>(INJECTION_TOKENS.USER_CONTRACT);
+    sessionRepo = app.get<ISessionContract>(INJECTION_TOKENS.SESSION_CONTRACT);
+    evtRepo = app.get<IEmailVerificationTokenContract>(
       INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT,
     );
-    prtRepo = module.get<IPasswordResetTokenContract>(
+    prtRepo = app.get<IPasswordResetTokenContract>(
       INJECTION_TOKENS.PASSWORD_RESET_TOKEN_CONTRACT,
     );
-    attemptRepo = module.get<IVerificationAttemptContract>(
+    attemptRepo = app.get<IVerificationAttemptContract>(
       INJECTION_TOKENS.VERIFICATION_ATTEMPT_CONTRACT,
     );
-    socialAccountRepo = module.get<ISocialAccountContract>(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT);
-    uow = module.get<IUnitOfWork>(INJECTION_TOKENS.UNIT_OF_WORK);
+    socialAccountRepo = app.get<ISocialAccountContract>(INJECTION_TOKENS.SOCIAL_ACCOUNT_CONTRACT);
+    uow = app.get<IUnitOfWork>(INJECTION_TOKENS.UNIT_OF_WORK);
   });
 
+  // Strategy 4: single TRUNCATE replaces 6 sequential DELETE FROM queries.
   afterEach(async () => {
-    await dataSource.query('DELETE FROM verification_attempts');
-    await dataSource.query('DELETE FROM email_verification_tokens');
-    await dataSource.query('DELETE FROM password_reset_tokens');
-    await dataSource.query('DELETE FROM sessions');
-    await dataSource.query('DELETE FROM social_accounts');
-    await dataSource.query('DELETE FROM users');
+    await truncateWorkerTables(dataSource);
   });
 
   afterAll(async () => {
-    await app.close();
+    // The worker app singleton is not closed here — it is shared across all specs
+    // and the Jest process exits cleanly with --forceExit.
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -745,6 +690,30 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
     });
+
+    describe('Given persist is called within an active UoW transaction', () => {
+      it('Then it uses the transaction EntityManager and the attempt is saved', async () => {
+        const attempt = VerificationAttemptModel.create({
+          userUUID: testUUID,
+          email: testEmail,
+          ipAddress: testIP,
+          userAgent: null,
+          codeEntered: null,
+          success: false,
+          verificationType: 'sign_in',
+        });
+
+        await uow.begin();
+        try {
+          const saved = await attemptRepo.persist(attempt);
+          expect(saved.uuid).toBeDefined();
+          await uow.rollback();
+        } catch (error) {
+          await uow.rollback();
+          throw error;
+        }
+      });
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -824,6 +793,20 @@ describe('Infrastructure Repositories (e2e)', () => {
   // ═══════════════════════════════════════════════════════════════════════════
 
   describe('TypeOrmUnitOfWork edge cases', () => {
+    afterEach(async () => {
+      // Safety net: release any QRs still connected after each UoW edge-case test.
+      // Required because some tests use Object.defineProperty to force isReleased=true,
+      // which causes TypeORM's releasePostgresConnection() to early-return before calling
+      // the pg pool's releaseCallback — leaving pool connections permanently checked out.
+      const connectedQRs: any[] = [...((dataSource as any).driver?.connectedQueryRunners ?? [])];
+      for (const qr of connectedQRs) {
+        try {
+          Object.defineProperty(qr, 'isReleased', { value: false, configurable: true, writable: true });
+          await qr.releasePostgresConnection();
+        } catch { /* ignore */ }
+      }
+    });
+
     describe('Given begin() is called while a transaction is already active', () => {
       it('Then it warns and does not throw', async () => {
         await uow.begin();
@@ -872,6 +855,22 @@ describe('Infrastructure Repositories (e2e)', () => {
       });
     });
 
+    describe('Given the database connection fails AND qr.release() also fails during begin() cleanup', () => {
+      it('Then begin() swallows the release error and still throws the original connection error (line 48)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr, 'connect').mockRejectedValueOnce(new Error('Connection refused'));
+          jest.spyOn(qr, 'release').mockRejectedValueOnce(new Error('Release also failed'));
+          return qr;
+        });
+        // The original error must propagate; the release error is swallowed by .catch(() => {})
+        await expect(uow.begin()).rejects.toThrow('Connection refused');
+        spy.mockRestore();
+        try { await uow.rollback(); } catch { /* ignore */ }
+      });
+    });
+
     describe('Given the query runner release fails during rollback cleanup', () => {
       it('Then rollback completes without throwing even if release fails', async () => {
         const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
@@ -893,15 +892,14 @@ describe('Infrastructure Repositories (e2e)', () => {
 
     describe('Given commit() is called with an already-released QueryRunner', () => {
       it('Then commit() warns and returns without throwing (lines 57-58)', async () => {
-        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
-        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
-          const qr = origCreateQR();
-          // Force isReleased to true so commit() sees it before commitTransaction
-          Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
-          return qr;
-        });
+        // Properly simulate an already-released QR:
+        // begin() → capture QR ref → rollback() (which genuinely sets isReleased=true
+        // and returns the connection to the pool) → re-inject the released QR into ALS
+        // so commit() hits the early-return warning path without leaking any connection.
         await uow.begin();
-        spy.mockRestore();
+        const qr = (uow as any).als.getStore();
+        await uow.rollback();
+        (uow as any).als.enterWith(qr);
         await expect(uow.commit()).resolves.toBeUndefined();
       });
     });
@@ -911,9 +909,11 @@ describe('Infrastructure Repositories (e2e)', () => {
         const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
         const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
           const qr = origCreateQR();
-          jest.spyOn(qr, 'commitTransaction').mockImplementationOnce(async () => {
-            // Simulate the QR becoming released mid-commit
-            Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
+          jest.spyOn(qr as any, 'commitTransaction').mockImplementationOnce(async () => {
+            // Simulate QR becoming released mid-commit: properly release the connection
+            // first (returns it to the pg pool and sets isReleased=true), then throw.
+            // Using qr.release() ensures releaseCallback is called — no connection leak.
+            await qr.release();
             throw new Error('QueryRunner is already released');
           });
           return qr;
@@ -929,8 +929,11 @@ describe('Infrastructure Repositories (e2e)', () => {
         const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
         const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
           const qr = origCreateQR();
-          jest.spyOn(qr, 'rollbackTransaction').mockImplementationOnce(async () => {
-            Object.defineProperty(qr, 'isReleased', { value: true, configurable: true });
+          jest.spyOn(qr as any, 'rollbackTransaction').mockImplementationOnce(async () => {
+            // Simulate QR becoming released mid-rollback: properly release the connection
+            // first (returns it to the pg pool and sets isReleased=true), then throw.
+            // Using qr.release() ensures releaseCallback is called — no connection leak.
+            await qr.release();
             throw new Error('QueryRunner is already released');
           });
           return qr;
@@ -938,6 +941,42 @@ describe('Infrastructure Repositories (e2e)', () => {
         await uow.begin();
         spy.mockRestore();
         await expect(uow.rollback()).resolves.toBeUndefined();
+      });
+    });
+
+    describe('Given commitTransaction() throws a genuine DB error while the QR is still connected', () => {
+      it('Then commit() re-throws the error and the connection is returned to the pool (line 66)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr as any, 'commitTransaction').mockImplementationOnce(async () => {
+            // Throw WITHOUT releasing — simulates a genuine DB error (e.g. serialization failure).
+            // The finally block in commit() will properly release the connection.
+            throw new Error('DB commit failed: serialization failure');
+          });
+          return qr;
+        });
+        await uow.begin();
+        spy.mockRestore();
+        await expect(uow.commit()).rejects.toThrow('DB commit failed: serialization failure');
+      });
+    });
+
+    describe('Given rollbackTransaction() throws a genuine DB error while the QR is still connected', () => {
+      it('Then rollback() re-throws the error and the connection is returned to the pool (line 89)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr as any, 'rollbackTransaction').mockImplementationOnce(async () => {
+            // Throw WITHOUT releasing — simulates a genuine DB error during rollback.
+            // The finally block in rollback() will properly release the connection.
+            throw new Error('DB rollback failed: connection lost');
+          });
+          return qr;
+        });
+        await uow.begin();
+        spy.mockRestore();
+        await expect(uow.rollback()).rejects.toThrow('DB rollback failed: connection lost');
       });
     });
   });

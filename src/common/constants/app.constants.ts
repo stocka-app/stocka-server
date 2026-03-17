@@ -1,7 +1,7 @@
 export const APP_CONSTANTS = {
   API_PREFIX: 'api',
   DEFAULT_PORT: 3001,
-  BCRYPT_SALT_ROUNDS: 12,
+  BCRYPT_SALT_ROUNDS: parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10),
   DEFAULT_TIMEOUT_MS: 10000,
 } as const;
 
