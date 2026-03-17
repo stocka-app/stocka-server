@@ -101,4 +101,19 @@ export default tseslint.config(
       ],
     },
   },
+  // Enforce one HTTP operation (use case) per controller
+  {
+    files: ['src/**/*.controller.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            'ClassBody:has(MethodDefinition:has(Decorator > CallExpression[callee.name=/^(Get|Post|Put|Patch|Delete|Options|Head|All)$/]) ~ MethodDefinition:has(Decorator > CallExpression[callee.name=/^(Get|Post|Put|Patch|Delete|Options|Head|All)$/]))',
+          message:
+            'A controller can only expose one HTTP operation (one use case). Split additional endpoints into separate controllers.',
+        },
+      ],
+    },
+  }
 );
