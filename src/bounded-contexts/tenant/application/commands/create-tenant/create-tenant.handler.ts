@@ -1,9 +1,6 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
-import { Inject } from '@nestjs/common';
-import {
-  CreateTenantCommand,
-  CreateTenantCommandResult,
-} from '@tenant/application/commands/create-tenant/create-tenant.command';
+import { Inject, NotFoundException } from '@nestjs/common';
+import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantProfileContract } from '@tenant/domain/contracts/tenant-profile.contract';
@@ -20,6 +17,8 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { ok, err } from '@shared/domain/result';
 import { v7 as uuidV7 } from 'uuid';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { CreateTenantResult } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
 
 @CommandHandler(CreateTenantCommand)
 export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand> {
@@ -35,9 +34,16 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
     @Inject(INJECTION_TOKENS.UNIT_OF_WORK)
     private readonly uow: IUnitOfWork,
     private readonly eventPublisher: EventPublisher,
+    private readonly mediator: MediatorService,
   ) {}
 
-  async execute(command: CreateTenantCommand): Promise<CreateTenantCommandResult> {
+  async execute(command: CreateTenantCommand): Promise<CreateTenantResult> {
+    const userAggregate = await this.mediator.user.findByUUID(command.userUUID);
+
+    if (!userAggregate?.id) {
+      return err(new NotFoundException('User not found'));
+    }
+
     const existingMember = await this.memberContract.findActiveByUserUUID(command.userUUID);
     if (existingMember) {
       return err(new OnboardingAlreadyCompletedError());
@@ -66,7 +72,7 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
       businessType,
       country: command.country,
       timezone: command.timezone,
-      ownerUserId: command.userId,
+      ownerUserId: userAggregate.id,
     });
 
     await this.uow.begin();
@@ -76,10 +82,11 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
 
       const member = TenantMemberModel.create({
         tenantId,
-        userId: command.userId,
+        userId: userAggregate.id,
         userUUID: command.userUUID,
         role: 'OWNER',
       });
+
       await this.memberContract.persist(member);
 
       const profile = TenantProfileModel.createEmpty(tenantId);
@@ -93,7 +100,7 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
       this.eventPublisher.mergeObjectContext(savedTenant);
       savedTenant.commit();
 
-      return ok({ tenantUUID: savedTenant.uuid });
+      return ok({ tenantId: savedTenant.uuid, name: savedTenant.name });
     } catch (e) {
       await this.uow.rollback();
       if (e instanceof DomainException) return err(e);

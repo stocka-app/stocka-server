@@ -1,8 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, MaxLength, IsEnum, IsOptional, Length } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, IsTimeZone, Length, MaxLength } from 'class-validator';
 import { BusinessTypeEnum } from '@tenant/domain/value-objects/business-type.vo';
+import { IsCountryCode } from '@common/decorators/country-code.decorator';
 
-export class CreateTenantDto {
+export class CompleteOnboardingInDto {
   @ApiProperty({ description: 'Organization name', maxLength: 150 })
   @IsString()
   @IsNotEmpty()
@@ -13,14 +14,14 @@ export class CreateTenantDto {
   @IsEnum(BusinessTypeEnum)
   businessType!: string;
 
-  @ApiPropertyOptional({ description: 'Country code (ISO 3166-1 alpha-2)', default: 'MX' })
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'Country code (ISO 3166-1 alpha-2)' })
   @IsString()
   @Length(2, 2)
-  country?: string;
+  @IsCountryCode()
+  country!: string;
 
-  @ApiPropertyOptional({ description: 'IANA timezone', default: 'America/Mexico_City' })
-  @IsOptional()
+  @ApiPropertyOptional({ description: 'IANA timezone' })
   @IsString()
-  timezone?: string;
+  @IsTimeZone()
+  timezone!: string;
 }

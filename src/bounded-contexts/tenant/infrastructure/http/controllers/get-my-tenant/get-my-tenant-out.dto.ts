@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
 import { TenantConfigModel } from '@tenant/domain/models/tenant-config.model';
 
-export class TenantResponseDto {
+export class GetMyTenantOutDto {
   @ApiProperty()
   uuid!: string;
 
@@ -30,8 +30,8 @@ export class TenantResponseDto {
   static fromAggregate(
     tenant: TenantAggregate,
     config?: TenantConfigModel | null,
-  ): TenantResponseDto {
-    const dto = new TenantResponseDto();
+  ): GetMyTenantOutDto {
+    const dto = new GetMyTenantOutDto();
     dto.uuid = tenant.uuid;
     dto.name = tenant.name;
     dto.slug = tenant.slug;
