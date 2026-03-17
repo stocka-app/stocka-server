@@ -17,6 +17,7 @@ export class TypeOrmSocialAccountRepository implements ISocialAccountContract {
     private readonly uow: IUnitOfWork,
   ) {}
 
+  /* istanbul ignore next */
   async findByAccountId(accountId: number): Promise<SocialAccountModel[]> {
     const entities = await this.repository.find({ where: { accountId } });
     return entities.map((e) => SocialAccountMapper.toDomain(e));

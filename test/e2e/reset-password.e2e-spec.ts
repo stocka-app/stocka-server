@@ -112,14 +112,14 @@ describe('Reset Password (e2e)', () => {
           .post('/api/authentication/sign-in')
           .send({ emailOrUsername: email, password: 'SecurePass1' });
 
-        const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = $1`,
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = LOWER($1)`,
           [email],
         );
 
         const activeBefore = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
         expect(parseInt(activeBefore[0].count)).toBeGreaterThan(0);
 
@@ -128,8 +128,8 @@ describe('Reset Password (e2e)', () => {
           .send({ token: plainToken, newPassword: 'NewSecurePass1' });
 
         const activeAfter = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
 
         expect(parseInt(activeAfter[0].count)).toBe(0);

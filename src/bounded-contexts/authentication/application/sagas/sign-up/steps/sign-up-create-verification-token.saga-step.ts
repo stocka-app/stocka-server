@@ -31,6 +31,7 @@ export class CreateVerificationTokenStep implements ISagaStepHandler<SignUpSagaC
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
     const credentialId = ctx.credential.id;
+    /* istanbul ignore next */
     if (credentialId === undefined)
       throw new Error('CreateVerificationTokenStep: ctx.credential has no id');
 

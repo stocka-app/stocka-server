@@ -66,6 +66,24 @@ describe('BlockVerificationOnRateLimitHandler', () => {
         expect(mediator.user.blockVerification).toHaveBeenCalledWith(5, blockedUntil);
       });
     });
+
+    describe('When blockVerification throws an error', () => {
+      it('Then the error is swallowed and does not propagate', async () => {
+        mediator.user.blockVerification.mockRejectedValue(new Error('DB failure'));
+        const event = new UserVerificationBlockedByAuthenticationEvent(USER_UUID, new Date());
+
+        await expect(handler.handle(event)).resolves.toBeUndefined();
+      });
+    });
+
+    describe('When blockVerification throws a non-Error value', () => {
+      it('Then the raw value is used in the warning and does not propagate', async () => {
+        mediator.user.blockVerification.mockRejectedValue('plain string error');
+        const event = new UserVerificationBlockedByAuthenticationEvent(USER_UUID, new Date());
+
+        await expect(handler.handle(event)).resolves.toBeUndefined();
+      });
+    });
   });
 
   describe('Given no user exists for the uuid', () => {
@@ -122,6 +140,16 @@ describe('UpdatePasswordOnResetHandler', () => {
     describe('When the handler processes the event', () => {
       it('Then the error is swallowed and does not propagate', async () => {
         mediator.user.updatePasswordHash.mockRejectedValue(new Error('DB error'));
+
+        const event = new UserPasswordResetByAuthenticationEvent(99, 'some-hash');
+
+        await expect(handler.handle(event)).resolves.toBeUndefined();
+      });
+    });
+
+    describe('When a non-Error value is thrown', () => {
+      it('Then the raw value is used in the warning and does not propagate', async () => {
+        mediator.user.updatePasswordHash.mockRejectedValue('plain string error');
 
         const event = new UserPasswordResetByAuthenticationEvent(99, 'some-hash');
 
@@ -262,6 +290,42 @@ describe('VerifyUserEmailOnVerificationCompletedHandler', () => {
         await handler.handle(event);
 
         expect(mediator.user.verifyEmail).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given verifyEmail throws an error', () => {
+    beforeEach(() => {
+      mediator.user.findUserByUUIDWithCredential.mockResolvedValue({
+        user: UserMother.create({ uuid: HANDLER_USER_UUID, id: 1 }),
+        credential: CredentialAccountMother.createPendingVerification({ id: 7, accountId: 1 }),
+      });
+      mediator.user.verifyEmail.mockRejectedValue(new Error('Persist failed'));
+    });
+
+    describe('When email verification completes', () => {
+      it('Then the error is swallowed and does not propagate', async () => {
+        const event = new EmailVerificationCompletedEvent(HANDLER_USER_UUID, 'u@test.com', 'es');
+
+        await expect(handler.handle(event)).resolves.toBeUndefined();
+      });
+    });
+  });
+
+  describe('Given verifyEmail throws a non-Error value', () => {
+    beforeEach(() => {
+      mediator.user.findUserByUUIDWithCredential.mockResolvedValue({
+        user: UserMother.create({ uuid: HANDLER_USER_UUID, id: 1 }),
+        credential: CredentialAccountMother.createPendingVerification({ id: 7, accountId: 1 }),
+      });
+      mediator.user.verifyEmail.mockRejectedValue('plain string error');
+    });
+
+    describe('When email verification completes', () => {
+      it('Then the raw value is used in the warning and does not propagate', async () => {
+        const event = new EmailVerificationCompletedEvent(HANDLER_USER_UUID, 'u@test.com', 'es');
+
+        await expect(handler.handle(event)).resolves.toBeUndefined();
       });
     });
   });

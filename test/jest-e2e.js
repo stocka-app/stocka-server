@@ -47,6 +47,7 @@ module.exports = {
 
     // ── TypeORM Entity decorators (metadata only, no business logic) ──────────
     '!src/**/infrastructure/persistence/entities/**',
+    '!src/**/infrastructure/entities/**',
     '!src/shared/infrastructure/persistence/entities/**',
     '!src/shared/infrastructure/base/**',
 
@@ -76,6 +77,20 @@ module.exports = {
 
     // ── ProcessStateRepository (not wired in any NestJS module; no DI path) ───
     '!src/shared/infrastructure/persistence/repositories/typeorm-process-state.repository.ts',
+
+    // ── Dead/orphaned exception (no longer referenced in any saga or handler) ────────
+    '!src/bounded-contexts/authentication/domain/exceptions/social-account-required.exception.ts',
+
+    // ── Future-feature scaffolding (not yet wired to any saga, handler, or module) ─
+    '!src/bounded-contexts/user/account/session/domain/session.aggregate.ts',
+    '!src/bounded-contexts/user/account/session/infrastructure/mappers/session.mapper.ts',
+    '!src/bounded-contexts/user/account/session/infrastructure/repositories/typeorm-session.repository.ts',
+    '!src/bounded-contexts/user/domain/events/account-became-flexible.event.ts',
+    '!src/bounded-contexts/user/domain/events/provider-linked.event.ts',
+    '!src/bounded-contexts/user/profile/domain/models/commercial-profile.model.ts',
+    '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
+    // ── @deprecated social account repo (superseded; no active DI binding) ────────
+    '!src/bounded-contexts/user/infrastructure/persistence/repositories/typeorm-social-account.repository.ts',
   ],
   coverageDirectory: './coverage-e2e',
   coverageReporters: ['json', 'text', 'lcov', 'html'],

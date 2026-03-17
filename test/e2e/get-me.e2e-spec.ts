@@ -5,6 +5,7 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
+
 describe('Get Me (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
@@ -39,9 +40,7 @@ describe('Get Me (e2e)', () => {
     emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
 
     if (dataSource?.isInitialized) {
-      await dataSource.query('DELETE FROM email_verification_tokens');
-      await dataSource.query('DELETE FROM sessions');
-      await dataSource.query('DELETE FROM users');
+      await truncateWorkerTables(dataSource);
     }
   });
 

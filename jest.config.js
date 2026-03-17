@@ -29,6 +29,7 @@ module.exports = {
 
     // ── TypeORM Entities (metadata decorators, no logic) ─────────────────
     '!src/**/infrastructure/persistence/entities/**',
+    '!src/**/infrastructure/entities/**',
     '!src/shared/infrastructure/persistence/entities/**',
     '!src/shared/infrastructure/base/**',
 
@@ -45,6 +46,18 @@ module.exports = {
 
     // ── DTOs (class-validator decorators only, no logic) ─────────────────
     '!src/**/*.dto.ts',
+
+    // ── Dead/orphaned exception (no longer referenced in any saga or handler) ────
+    '!src/bounded-contexts/authentication/domain/exceptions/social-account-required.exception.ts',
+
+    // ── Future-feature scaffolding (not yet wired to any saga or handler) ────────
+    '!src/bounded-contexts/user/domain/events/account-became-flexible.event.ts',
+    '!src/bounded-contexts/user/domain/events/provider-linked.event.ts',
+    '!src/bounded-contexts/user/profile/domain/models/commercial-profile.model.ts',
+    '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
+    '!src/bounded-contexts/user/account/session/domain/session.aggregate.ts',
+    '!src/bounded-contexts/user/account/session/infrastructure/mappers/session.mapper.ts',
+    '!src/bounded-contexts/user/account/session/infrastructure/repositories/typeorm-session.repository.ts',
 
     // ── Passport OAuth strategies (integration scope — require Passport internals) ──
     '!src/**/infrastructure/strategies/**',

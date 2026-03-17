@@ -181,6 +181,19 @@ describe('UserFacade', () => {
         expect(result).toBeNull();
       });
     });
+
+    describe('When the user exists but has no personal profile', () => {
+      it('Then it returns null', async () => {
+        const targetUUID = '550e8400-e29b-41d4-a716-446655440003';
+        const user = UserMother.create({ id: 1, uuid: targetUUID });
+        userContract.findByUUID.mockResolvedValue(user);
+        (profileContract.findPersonalProfileByUserId as jest.Mock).mockResolvedValue(null);
+
+        const result = await facade.findUsernameByUUID(targetUUID);
+
+        expect(result).toBeNull();
+      });
+    });
   });
 
   // ── findUserByEmail ─────────────────────────────────────────────────────────
@@ -216,6 +229,33 @@ describe('UserFacade', () => {
         expect(result).toBeNull();
       });
     });
+
+    describe('When the credential is found but the account no longer exists', () => {
+      it('Then it returns null', async () => {
+        credentialAccountContract.findByEmail.mockResolvedValue(
+          CredentialAccountMother.createVerified({ email: 'orphan@example.com', accountId: 99 }),
+        );
+        accountContract.findById.mockResolvedValue(null);
+
+        const result = await facade.findUserByEmail('orphan@example.com');
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the credential and account are found but the user no longer exists', () => {
+      it('Then it returns null', async () => {
+        credentialAccountContract.findByEmail.mockResolvedValue(
+          CredentialAccountMother.createVerified({ email: 'orphan@example.com', accountId: 10 }),
+        );
+        accountContract.findById.mockResolvedValue(buildPersistedAccount(99));
+        userContract.findById.mockResolvedValue(null);
+
+        const result = await facade.findUserByEmail('orphan@example.com');
+
+        expect(result).toBeNull();
+      });
+    });
   });
 
   // ── findUserByEmailOrUsername ────────────────────────────────────────────────
@@ -246,6 +286,32 @@ describe('UserFacade', () => {
         credentialAccountContract.findByEmailOrUsername.mockResolvedValue(null);
 
         const result = await facade.findUserByEmailOrUsername('unknown');
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the credential is found but the account no longer exists', () => {
+      it('Then it returns null', async () => {
+        const mockCredential = CredentialAccountMother.createVerified({ accountId: 10 });
+        credentialAccountContract.findByEmailOrUsername.mockResolvedValue(mockCredential);
+        accountContract.findById.mockResolvedValue(null);
+
+        const result = await facade.findUserByEmailOrUsername('user@example.com');
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the credential and account are found but the user no longer exists', () => {
+      it('Then it returns null', async () => {
+        const mockCredential = CredentialAccountMother.createVerified({ accountId: 10 });
+        const mockAccount = buildPersistedAccount(1);
+        credentialAccountContract.findByEmailOrUsername.mockResolvedValue(mockCredential);
+        accountContract.findById.mockResolvedValue(mockAccount);
+        userContract.findById.mockResolvedValue(null);
+
+        const result = await facade.findUserByEmailOrUsername('user@example.com');
 
         expect(result).toBeNull();
       });
@@ -334,6 +400,96 @@ describe('UserFacade', () => {
         expect(result).toBeNull();
       });
     });
+
+    describe('When the social account is found but the account no longer exists', () => {
+      it('Then it returns null', async () => {
+        socialAccountContract.findByProviderAndProviderId.mockResolvedValue(
+          buildSocialAccount(10),
+        );
+        accountContract.findById.mockResolvedValue(null);
+
+        const result = await facade.findUserBySocialProvider('google', 'google-id-123');
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the social account and account are found but the user no longer exists', () => {
+      it('Then it returns null', async () => {
+        socialAccountContract.findByProviderAndProviderId.mockResolvedValue(
+          buildSocialAccount(10),
+        );
+        accountContract.findById.mockResolvedValue(buildPersistedAccount(1));
+        userContract.findById.mockResolvedValue(null);
+
+        const result = await facade.findUserBySocialProvider('google', 'google-id-123');
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  // ── findUserByUUIDWithCredential ─────────────────────────────────────────────
+
+  describe('Given findUserByUUIDWithCredential is called', () => {
+    describe('When the UUID maps to a user with credential', () => {
+      it('Then it returns the user and credential pair', async () => {
+        const uuid = '550e8400-e29b-41d4-a716-446655440099';
+        const mockUser = UserMother.create({ id: 1, uuid });
+        const mockAccount = buildPersistedAccount(1);
+        const mockCredential = CredentialAccountMother.createVerified({
+          id: 5,
+          accountId: 10,
+          email: 'user@example.com',
+        });
+
+        userContract.findByUUID.mockResolvedValue(mockUser);
+        accountContract.findByUserId.mockResolvedValue(mockAccount);
+        credentialAccountContract.findByAccountId.mockResolvedValue(mockCredential);
+
+        const result = await facade.findUserByUUIDWithCredential(uuid);
+
+        expect(result).not.toBeNull();
+        expect(result?.user.uuid).toBe(uuid);
+        expect(result?.credential.email).toBe('user@example.com');
+      });
+    });
+
+    describe('When no user is found for the UUID', () => {
+      it('Then it returns null', async () => {
+        userContract.findByUUID.mockResolvedValue(null);
+
+        const result = await facade.findUserByUUIDWithCredential('missing-uuid');
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the user has no account', () => {
+      it('Then it returns null', async () => {
+        const mockUser = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440099' });
+        userContract.findByUUID.mockResolvedValue(mockUser);
+        accountContract.findByUserId.mockResolvedValue(null);
+
+        const result = await facade.findUserByUUIDWithCredential('any-uuid');
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the account has no credential', () => {
+      it('Then it returns null', async () => {
+        const mockUser = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440099' });
+        const mockAccount = buildPersistedAccount(1);
+        userContract.findByUUID.mockResolvedValue(mockUser);
+        accountContract.findByUserId.mockResolvedValue(mockAccount);
+        credentialAccountContract.findByAccountId.mockResolvedValue(null);
+
+        const result = await facade.findUserByUUIDWithCredential('any-uuid');
+
+        expect(result).toBeNull();
+      });
+    });
   });
 
   // ── createUserWithCredentials ────────────────────────────────────────────────
@@ -404,6 +560,24 @@ describe('UserFacade', () => {
         expect(result.user.id).toBe(1);
         expect(result.credential.email).toBe('oauth@example.com');
         expect(result.social.provider).toBe('google');
+      });
+    });
+  });
+
+  // ── createUserWithCredentials — requireId guard ──────────────────────────────
+
+  describe('Given createUserWithCredentials is called', () => {
+    describe('When the persistence layer returns a user with no id assigned', () => {
+      it('Then it throws with a descriptive message identifying the failing step', async () => {
+        userContract.persist.mockResolvedValue({ id: undefined } as unknown as UserAggregate);
+
+        await expect(
+          facade.createUserWithCredentials({
+            email: 'fail@example.com',
+            username: 'failuser',
+            passwordHash: 'hash',
+          }),
+        ).rejects.toThrow('createUserWithCredentials:user');
       });
     });
   });

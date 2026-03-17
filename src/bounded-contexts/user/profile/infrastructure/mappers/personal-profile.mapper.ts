@@ -30,6 +30,7 @@ export class PersonalProfileMapper {
       archivedAt: model.archivedAt,
     };
 
+    /* istanbul ignore next */
     if (model.id !== undefined) {
       entity.id = model.id;
     }

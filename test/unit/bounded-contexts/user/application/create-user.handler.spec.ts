@@ -4,6 +4,7 @@ import { CreateUserHandler } from '@user/application/commands/create-user/create
 import { CreateUserCommand } from '@user/application/commands/create-user/create-user.command';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserNotFoundException } from '@user/domain/exceptions/user-not-found.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 
@@ -77,6 +78,26 @@ describe('CreateUserHandler', () => {
         await handler.execute(new CreateUserCommand(VALID_EMAIL, VALID_USERNAME, VALID_HASH));
 
         expect(eventPublisher.mergeObjectContext).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('Given UserAggregate.create throws a DomainException', () => {
+    describe('When the handler executes', () => {
+      it('Then it returns an err Result wrapping the domain exception', async () => {
+        const domainError = new UserNotFoundException('alice@example.com');
+        const spy = jest.spyOn(UserAggregate, 'create').mockImplementationOnce(() => {
+          throw domainError;
+        });
+
+        const result = await handler.execute(
+          new CreateUserCommand(VALID_EMAIL, VALID_USERNAME, VALID_HASH),
+        );
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBe(domainError);
+
+        spy.mockRestore();
       });
     });
   });

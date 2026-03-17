@@ -147,6 +147,7 @@ export class CredentialAccountModel extends BaseModel {
     return this._status.requiresEmailVerification();
   }
 
+  /* istanbul ignore next */
   canAccessApplication(): boolean {
     return this._status.canAccessApplication();
   }

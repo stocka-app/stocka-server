@@ -9,6 +9,7 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { getWorkerApp, truncateWorkerTables, emailProviderMock } from '@test/worker-app';
 
+
 describe('Sign Up (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
@@ -39,9 +40,7 @@ describe('Sign Up (e2e)', () => {
     emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
 
     if (dataSource?.isInitialized) {
-      await dataSource.query('DELETE FROM email_verification_tokens');
-      await dataSource.query('DELETE FROM sessions');
-      await dataSource.query('DELETE FROM users');
+      await truncateWorkerTables(dataSource);
     }
   });
 
@@ -97,7 +96,7 @@ describe('Sign Up (e2e)', () => {
         let userExistsAtEmailTime = false;
         emailProvider.sendVerificationEmail.mockImplementation(async () => {
           const [row] = await dataSource.query(
-            `SELECT id FROM users WHERE email = 'order@example.com'`,
+            `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'order@example.com'`,
           );
           userExistsAtEmailTime = !!row;
           return { id: 'mock-id', success: true };
@@ -132,7 +131,7 @@ describe('Sign Up (e2e)', () => {
         expect(response.body.emailSent).toBe(false);
 
         const [savedUser] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'localfirst@example.com'`,
+          `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'localfirst@example.com'`,
         );
         expect(savedUser).toBeDefined();
       }, 15000); // email step has retry: 3 attempts × backoff delays
@@ -153,7 +152,7 @@ describe('Sign Up (e2e)', () => {
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
         const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'rollback@example.com'`,
+          `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'rollback@example.com'`,
         );
         expect(user).toBeUndefined();
 
@@ -176,7 +175,7 @@ describe('Sign Up (e2e)', () => {
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
         const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'deeproll@example.com'`,
+          `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'deeproll@example.com'`,
         );
         expect(user).toBeUndefined();
 
