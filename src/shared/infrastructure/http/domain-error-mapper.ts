@@ -29,6 +29,13 @@ export const STATUS_MAP: Record<string, number> = {
   RATE_LIMIT_EXCEEDED: HttpStatus.TOO_MANY_REQUESTS,
   // Email delivery
   EMAIL_DELIVERY_FAILED: HttpStatus.SERVICE_UNAVAILABLE,
+  // Tenant
+  ONBOARDING_ALREADY_COMPLETED: HttpStatus.CONFLICT,
+  TENANT_NOT_FOUND: HttpStatus.NOT_FOUND,
+  MEMBER_NOT_FOUND: HttpStatus.NOT_FOUND,
+  MEMBER_ALREADY_EXISTS: HttpStatus.CONFLICT,
+  CANNOT_REMOVE_LAST_OWNER: HttpStatus.UNPROCESSABLE_ENTITY,
+  TENANT_LIMIT_EXCEEDED: HttpStatus.UNPROCESSABLE_ENTITY,
 };
 
 export function mapDomainErrorToHttp(error: DomainException): HttpException {

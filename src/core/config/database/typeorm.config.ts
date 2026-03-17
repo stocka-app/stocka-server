@@ -15,6 +15,10 @@ import { PasswordResetTokenEntity } from '@authentication/infrastructure/persist
 import { EmailVerificationTokenEntity } from '@authentication/infrastructure/persistence/entities/email-verification-token.entity';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
 import { ProcessStateEntity } from '@shared/infrastructure/persistence/entities/process-state.entity';
+import { TenantEntity } from '@tenant/infrastructure/entities/tenant.entity';
+import { TenantMemberEntity } from '@tenant/infrastructure/entities/tenant-member.entity';
+import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';
+import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
   useFactory: (configService: ConfigService) => ({
@@ -46,6 +50,11 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       VerificationAttemptEntity,
       // Shared — saga process state
       ProcessStateEntity,
+      // Tenant BC
+      TenantEntity,
+      TenantMemberEntity,
+      TenantProfileEntity,
+      TenantConfigEntity,
     ],
     // Migrations are run manually via CLI, not auto-loaded in app
     migrationsRun: false,
