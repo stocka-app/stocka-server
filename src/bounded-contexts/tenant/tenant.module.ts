@@ -13,8 +13,10 @@ import { CreateTenantHandler } from '@tenant/application/commands/create-tenant/
 import { GetMyTenantHandler } from '@tenant/application/queries/get-my-tenant/get-my-tenant.handler';
 import { GetTenantMembersHandler } from '@tenant/application/queries/get-tenant-members/get-tenant-members.handler';
 import { TenantFacade } from '@tenant/application/facades/tenant.facade';
-import { TenantController } from '@tenant/infrastructure/http/controllers/tenant.controller';
+import { CompleteOnboardingController } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding.controller';
+import { GetMyTenantController } from '@tenant/infrastructure/http/controllers/get-my-tenant/get-my-tenant.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 
 @Module({
   imports: [
@@ -25,8 +27,9 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
       TenantConfigEntity,
     ]),
     CqrsModule,
+    MediatorModule,
   ],
-  controllers: [TenantController],
+  controllers: [CompleteOnboardingController, GetMyTenantController],
   providers: [
     { provide: INJECTION_TOKENS.TENANT_CONTRACT, useClass: TypeOrmTenantRepository },
     { provide: INJECTION_TOKENS.TENANT_MEMBER_CONTRACT, useClass: TypeOrmTenantMemberRepository },
