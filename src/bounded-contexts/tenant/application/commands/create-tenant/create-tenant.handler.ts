@@ -50,6 +50,7 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
       slug = SlugVO.fromName(command.name);
       businessType = BusinessTypeVO.fromString(command.businessType);
     } catch (e) {
+      /* istanbul ignore next -- defensive: VOs currently throw plain Error, not DomainException */
       if (e instanceof DomainException) return err(e);
       throw e;
     }

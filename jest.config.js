@@ -33,6 +33,9 @@ module.exports = {
     '!src/shared/infrastructure/persistence/entities/**',
     '!src/shared/infrastructure/base/**',
 
+    // ── HTTP Controllers (integration/e2e scope — guard-driven, no unit logic) ──
+    '!src/**/infrastructure/http/controllers/**',
+
     // ── Infrastructure requiring real services (e2e scope) ────────────────
     '!src/**/infrastructure/persistence/repositories/**',
     '!src/**/infrastructure/repositories/**',
