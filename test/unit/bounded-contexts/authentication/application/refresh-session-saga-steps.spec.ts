@@ -131,6 +131,19 @@ describe('CreateNewSessionStep', () => {
       });
     });
   });
+
+  describe('Given a context without accountId', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: RefreshSessionSagaContext = {
+          refreshToken: 'tok',
+          user: UserMother.create({ id: 1 }) as unknown as RefreshSessionSagaContext['user'],
+          newRefreshToken: 'new-tok',
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.accountId not set');
+      });
+    });
+  });
 });
 
 // ─── GenerateRefreshTokensStep ────────────────────────────────────────────────
@@ -190,6 +203,18 @@ describe('GenerateRefreshTokensStep', () => {
       it('Then it throws an invariant violation error', async () => {
         const ctx: RefreshSessionSagaContext = { refreshToken: 'tok' };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
+      });
+    });
+  });
+
+  describe('Given a context without email', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: RefreshSessionSagaContext = {
+          refreshToken: 'tok',
+          user: UserMother.create({ id: 1 }) as unknown as RefreshSessionSagaContext['user'],
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.email not set');
       });
     });
   });

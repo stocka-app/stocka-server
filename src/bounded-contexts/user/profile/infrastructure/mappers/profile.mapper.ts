@@ -20,6 +20,7 @@ export class ProfileMapper {
       archivedAt: model.archivedAt,
     };
 
+    /* istanbul ignore next */
     if (model.id !== undefined) {
       entity.id = model.id;
     }

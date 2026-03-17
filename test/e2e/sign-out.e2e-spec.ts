@@ -85,14 +85,14 @@ describe('Sign Out (e2e)', () => {
       it('Then the user session is archived in the database', async () => {
         const cookie = await signUpAndGetCookie('signout3@example.com', 'signoutuser3');
 
-        const [user] = await dataSource.query(
-          `SELECT id FROM users WHERE email = 'signout3@example.com'`,
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'signout3@example.com'`,
         );
 
         // Verify the session exists and is active before sign-out
         const [activeSession] = await dataSource.query(
-          `SELECT uuid FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT uuid FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
         expect(activeSession).toBeDefined();
 
@@ -101,8 +101,8 @@ describe('Sign Out (e2e)', () => {
           .set('Cookie', cookie);
 
         const activeSessions = await dataSource.query(
-          `SELECT uuid FROM sessions WHERE user_id = $1 AND archived_at IS NULL`,
-          [user.id],
+          `SELECT uuid FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
         );
         expect(activeSessions.length).toBe(0);
       });

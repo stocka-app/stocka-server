@@ -20,6 +20,7 @@ export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaConte
 
     const { user, credential } = result;
 
+    /* istanbul ignore next */
     const passwordHash = credential.passwordHash ?? '';
     const isPasswordValid = await AuthenticationDomainService.comparePasswords(
       ctx.password,

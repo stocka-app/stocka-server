@@ -301,6 +301,21 @@ describe('GenerateTokensStep', () => {
     });
   });
 
+  describe('Given a context without credential', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SignUpSagaContext = {
+          email: 'u@t.com',
+          username: 'user',
+          password: 'StrongPass1',
+          lang: 'es',
+          user: MOCK_USER,
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
+      });
+    });
+  });
+
   describe('Given configService returns undefined for expiration keys', () => {
     describe('When execute() is called', () => {
       it('Then it falls back to the default expiration values (15m / 7d)', async () => {
@@ -406,6 +421,22 @@ describe('CreateSessionStep', () => {
           credential: MOCK_CREDENTIAL,
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.refreshToken not set');
+      });
+    });
+  });
+
+  describe('Given a context without credential', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SignUpSagaContext = {
+          email: 'u@t.com',
+          username: 'user',
+          password: 'StrongPass1',
+          lang: 'es',
+          user: MOCK_USER,
+          refreshToken: 'tok',
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
       });
     });
   });
@@ -533,6 +564,21 @@ describe('PublishSignUpEventsStep', () => {
       });
     });
   });
+
+  describe('Given a context without credential', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SignUpSagaContext = {
+          email: 'u@t.com',
+          username: 'user',
+          password: 'StrongPass1',
+          lang: 'es',
+          user: MOCK_USER,
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
+      });
+    });
+  });
 });
 
 // ─── SendVerificationEmailStep ────────────────────────────────────────────────
@@ -590,6 +636,22 @@ describe('SendVerificationEmailStep', () => {
           verificationCode: 'ABC123',
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
+      });
+    });
+  });
+
+  describe('Given a context without credential', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SignUpSagaContext = {
+          email: 'u@t.com',
+          username: 'user',
+          password: 'StrongPass1',
+          lang: 'es',
+          user: MOCK_USER,
+          verificationCode: 'ABC123',
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
       });
     });
   });

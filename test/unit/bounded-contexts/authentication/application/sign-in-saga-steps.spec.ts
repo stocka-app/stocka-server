@@ -11,27 +11,32 @@ import { AuthenticationDomainService } from '@authentication/domain/services/aut
 import { InvalidCredentialsException } from '@authentication/domain/exceptions/invalid-credentials.exception';
 import { AccountDeactivatedException } from '@authentication/domain/exceptions/account-deactivated.exception';
 import { EmailNotVerifiedException } from '@authentication/domain/exceptions/email-not-verified.exception';
-import { SocialAccountRequiredException } from '@authentication/domain/exceptions/social-account-required.exception';
 import { UserSignedInEvent } from '@authentication/domain/events/user-signed-in.event';
 import { ISessionContract } from '@authentication/domain/contracts/session.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import * as bcrypt from 'bcrypt';
-import { UserMother } from '@test/helpers/object-mother/user.mother';
-import { AccountType } from '@user/domain/models/user.aggregate';
-import { IPersistedUserView } from '@shared/domain/contracts/user-view.contract';
+import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 
 const MOCK_USER = UserMother.create({
   id: 1,
   uuid: '550e8400-e29b-41d4-a716-446655440001',
+});
+
+const MOCK_CREDENTIAL = CredentialAccountMother.create({
   email: 'test@example.com',
-  username: 'testuser',
-}) as unknown as IPersistedUserView;
+  accountId: 1,
+});
 
 // ─── ValidateCredentialsStep ──────────────────────────────────────────────────
 describe('ValidateCredentialsStep', () => {
   let step: ValidateCredentialsStep;
-  let mediator: { user: { findByEmailOrUsername: jest.Mock } };
+  let mediator: {
+    user: {
+      findUserByEmailOrUsername: jest.Mock;
+      findUsernameByUUID: jest.Mock;
+    };
+  };
 
   const baseCtx: SignInSagaContext = {
     emailOrUsername: 'test@example.com',
@@ -41,7 +46,10 @@ describe('ValidateCredentialsStep', () => {
   beforeEach(async () => {
     mediator = {
       user: {
-        findByEmailOrUsername: jest.fn().mockResolvedValue(MOCK_USER),
+        findUserByEmailOrUsername: jest
+          .fn()
+          .mockResolvedValue({ user: MOCK_USER, credential: MOCK_CREDENTIAL }),
+        findUsernameByUUID: jest.fn().mockResolvedValue('testuser'),
       },
     };
 
@@ -61,7 +69,7 @@ describe('ValidateCredentialsStep', () => {
 
   describe('Given a user who does not exist', () => {
     beforeEach(() => {
-      mediator.user.findByEmailOrUsername.mockResolvedValue(null);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
     });
 
     describe('When execute() is called', () => {
@@ -73,9 +81,10 @@ describe('ValidateCredentialsStep', () => {
 
   describe('Given a social-only account with no passwordHash', () => {
     beforeEach(() => {
-      mediator.user.findByEmailOrUsername.mockResolvedValue(
-        UserMother.createSocialOnly(),
-      );
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({
+        user: MOCK_USER,
+        credential: CredentialAccountMother.createSocialOnly(),
+      });
     });
 
     describe('When execute() is called', () => {
@@ -100,7 +109,10 @@ describe('ValidateCredentialsStep', () => {
   describe('Given a user whose account is archived', () => {
     beforeEach(() => {
       jest.spyOn(AuthenticationDomainService, 'comparePasswords').mockResolvedValue(true);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(UserMother.createArchived());
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({
+        user: UserMother.createArchived(),
+        credential: MOCK_CREDENTIAL,
+      });
     });
 
     describe('When execute() is called', () => {
@@ -110,30 +122,13 @@ describe('ValidateCredentialsStep', () => {
     });
   });
 
-  describe('Given a flexible account with pending verification status', () => {
+  describe('Given an account with pending email verification', () => {
     beforeEach(() => {
       jest.spyOn(AuthenticationDomainService, 'comparePasswords').mockResolvedValue(true);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(
-        UserMother.create({
-          accountType: AccountType.FLEXIBLE,
-          status: 'pending_verification',
-        }),
-      );
-    });
-
-    describe('When execute() is called', () => {
-      it('Then it throws SocialAccountRequiredException', async () => {
-        await expect(step.execute({ ...baseCtx })).rejects.toThrow(SocialAccountRequiredException);
+      mediator.user.findUserByEmailOrUsername.mockResolvedValue({
+        user: MOCK_USER,
+        credential: CredentialAccountMother.createPendingVerification(),
       });
-    });
-  });
-
-  describe('Given a manual account with pending verification status', () => {
-    beforeEach(() => {
-      jest.spyOn(AuthenticationDomainService, 'comparePasswords').mockResolvedValue(true);
-      mediator.user.findByEmailOrUsername.mockResolvedValue(
-        UserMother.createPendingVerification(),
-      );
     });
 
     describe('When execute() is called', () => {
@@ -149,11 +144,27 @@ describe('ValidateCredentialsStep', () => {
     });
 
     describe('When execute() is called', () => {
-      it('Then it sets ctx.user with the authenticated user', async () => {
+      it('Then it sets ctx.user and ctx.credential with the authenticated user', async () => {
         const ctx: SignInSagaContext = { ...baseCtx };
         await step.execute(ctx);
         expect(ctx.user).toBeDefined();
-        expect(ctx.user!.email).toBe('test@example.com');
+        expect(ctx.credential).toBeDefined();
+        expect(ctx.credential!.email).toBe('test@example.com');
+      });
+    });
+  });
+
+  describe('Given valid credentials but no username profile exists', () => {
+    beforeEach(() => {
+      jest.spyOn(AuthenticationDomainService, 'comparePasswords').mockResolvedValue(true);
+      mediator.user.findUsernameByUUID.mockResolvedValue(null);
+    });
+
+    describe('When execute() is called', () => {
+      it('Then it falls back to the credential email as the username', async () => {
+        const ctx: SignInSagaContext = { ...baseCtx };
+        await step.execute(ctx);
+        expect(ctx.username).toBe('test@example.com');
       });
     });
   });
@@ -201,13 +212,27 @@ describe('GenerateSignInTokensStep', () => {
     });
   });
 
-  describe('Given a context with user set', () => {
+  describe('Given a context without credential set', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SignInSagaContext = {
+          emailOrUsername: 'test@example.com',
+          password: 'Password1',
+          user: MOCK_USER,
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
+      });
+    });
+  });
+
+  describe('Given a context with user and credential set', () => {
     describe('When execute() is called', () => {
       it('Then it sets accessToken and refreshToken on the context', async () => {
         const ctx: SignInSagaContext = {
           emailOrUsername: 'test@example.com',
           password: 'Password1',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await step.execute(ctx);
         expect(ctx.accessToken).toBe('jwt-token');
@@ -237,6 +262,7 @@ describe('GenerateSignInTokensStep', () => {
           emailOrUsername: 'test@example.com',
           password: 'Password1',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await stepWithDefaults.execute(ctx);
 
@@ -276,6 +302,7 @@ describe('CreateSignInSessionStep', () => {
           emailOrUsername: 'test@example.com',
           password: 'Password1',
           refreshToken: 'refresh-token',
+          credential: MOCK_CREDENTIAL,
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
       });
@@ -289,19 +316,35 @@ describe('CreateSignInSessionStep', () => {
           emailOrUsername: 'test@example.com',
           password: 'Password1',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.refreshToken not set');
       });
     });
   });
 
-  describe('Given a context with user and refreshToken set', () => {
+  describe('Given a context without credential', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SignInSagaContext = {
+          emailOrUsername: 'test@example.com',
+          password: 'Password1',
+          user: MOCK_USER,
+          refreshToken: 'refresh-token',
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
+      });
+    });
+  });
+
+  describe('Given a context with user, credential, and refreshToken set', () => {
     describe('When execute() is called', () => {
       it('Then it creates and persists the session and sets ctx.session', async () => {
         const ctx: SignInSagaContext = {
           emailOrUsername: 'test@example.com',
           password: 'Password1',
           user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
           refreshToken: 'refresh-token',
         };
         await step.execute(ctx);
@@ -339,7 +382,10 @@ describe('PublishSignInEventsStep', () => {
         const ctx: SignInSagaContext = {
           emailOrUsername: 'test@example.com',
           password: 'Password1',
-          session: { uuid: 'session-uuid', commit: jest.fn() } as unknown as SignInSagaContext['session'],
+          session: {
+            uuid: 'session-uuid',
+            commit: jest.fn(),
+          } as unknown as SignInSagaContext['session'],
         };
         expect(() => step.execute(ctx)).toThrow('ctx.user not set');
       });

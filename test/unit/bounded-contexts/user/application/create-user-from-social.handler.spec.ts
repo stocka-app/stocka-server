@@ -4,6 +4,7 @@ import { CreateUserFromSocialHandler } from '@user/application/commands/create-u
 import { CreateUserFromSocialCommand } from '@user/application/commands/create-user-from-social/create-user-from-social.command';
 import { IUserContract } from '@user/domain/contracts/user.contract';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserNotFoundException } from '@user/domain/exceptions/user-not-found.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { UserMother } from '@test/helpers/object-mother/user.mother';
 
@@ -82,6 +83,26 @@ describe('CreateUserFromSocialHandler', () => {
         );
 
         expect(eventPublisher.mergeObjectContext).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('Given UserAggregate.create throws a DomainException', () => {
+    describe('When the handler executes', () => {
+      it('Then it returns an err Result wrapping the domain exception', async () => {
+        const domainError = new UserNotFoundException('alice@example.com');
+        const spy = jest.spyOn(UserAggregate, 'create').mockImplementationOnce(() => {
+          throw domainError;
+        });
+
+        const result = await handler.execute(
+          new CreateUserFromSocialCommand(VALID_EMAIL, VALID_USERNAME, PROVIDER, PROVIDER_ID),
+        );
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBe(domainError);
+
+        spy.mockRestore();
       });
     });
   });

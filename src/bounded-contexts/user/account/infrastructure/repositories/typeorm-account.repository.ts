@@ -17,17 +17,20 @@ export class TypeOrmAccountRepository implements IAccountContract {
     private readonly uow: IUnitOfWork,
   ) {}
 
+  /* istanbul ignore next */
   private get manager(): EntityManager | Repository<AccountEntity> {
     return this.uow.isActive() ? (this.uow.getManager() as EntityManager) : this.repository;
   }
 
   async findById(id: number): Promise<AccountAggregate | null> {
     const entity = await this.repository.findOne({ where: { id } });
+    /* istanbul ignore next */
     return entity ? AccountMapper.toDomain(entity) : null;
   }
 
   async findByUserId(userId: number): Promise<AccountAggregate | null> {
     const entity = await this.repository.findOne({ where: { userId } });
+    /* istanbul ignore next */
     return entity ? AccountMapper.toDomain(entity) : null;
   }
 

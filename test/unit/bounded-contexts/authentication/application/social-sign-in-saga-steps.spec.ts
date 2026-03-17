@@ -83,6 +83,22 @@ describe('CreateSocialSessionStep', () => {
       });
     });
   });
+
+  describe('Given a context without accountId', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SocialSignInSagaContext = {
+          email: 'u@test.com',
+          displayName: 'Test',
+          provider: 'google',
+          providerId: 'gid',
+          user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
+          refreshToken: 'tok',
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.accountId not set');
+      });
+    });
+  });
 });
 
 // ─── GenerateSocialTokensStep ─────────────────────────────────────────────────
@@ -144,6 +160,21 @@ describe('GenerateSocialTokensStep', () => {
           providerId: 'gid',
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
+      });
+    });
+  });
+
+  describe('Given a context without credential', () => {
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx: SocialSignInSagaContext = {
+          email: 'u@test.com',
+          displayName: 'Test',
+          provider: 'google',
+          providerId: 'gid',
+          user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
+        };
+        await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
       });
     });
   });
@@ -301,6 +332,23 @@ describe('ResolveSocialUserStep', () => {
     });
   });
 
+  describe('Given an existing user linked to the provider but with no email account (Path A, no credential)', () => {
+    beforeEach(() => {
+      mediator.user.findUserBySocialProvider.mockResolvedValue(MOCK_USER_WITH_SOCIAL);
+      mediator.user.findUserByEmail.mockResolvedValue(null);
+    });
+
+    describe('When execute() is called', () => {
+      it('Then it sets ctx.user without setting ctx.credential', async () => {
+        const ctx = { ...BASE_CTX };
+        await step.execute(ctx);
+        expect(ctx.user).toBeDefined();
+        expect(ctx.path).toBe('existing-provider');
+        expect(ctx.credential).toBeUndefined();
+      });
+    });
+  });
+
   describe('Given an existing user found by email but with a different auth method (Path B)', () => {
     beforeEach(() => {
       mediator.user.findUserBySocialProvider.mockResolvedValue(null);
@@ -316,6 +364,23 @@ describe('ResolveSocialUserStep', () => {
           providerId: 'google-id-001',
         });
         expect(ctx.path).toBe('linked-provider');
+      });
+    });
+  });
+
+  describe('Given an existing user found by email but the user has no id (Path B edge case)', () => {
+    beforeEach(() => {
+      mediator.user.findUserBySocialProvider.mockResolvedValue(null);
+      mediator.user.findUserByEmail.mockResolvedValue({
+        user: { ...MOCK_USER, id: undefined },
+        credential: MOCK_CREDENTIAL,
+      });
+    });
+
+    describe('When execute() is called', () => {
+      it('Then it throws an invariant violation error', async () => {
+        const ctx = { ...BASE_CTX };
+        await expect(step.execute(ctx)).rejects.toThrow('ResolveSocialUserStep: user has no id');
       });
     });
   });

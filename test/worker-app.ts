@@ -37,7 +37,16 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 
 // Tables to truncate between specs (restores a clean slate without a full schema drop).
 // Order does not matter because CASCADE handles FK dependencies.
+// NOTE: profile tables (social_profiles, personal_profiles, commercial_profiles, profiles)
+// are NOT reachable via FK cascade from users — ProfileEntity has no @ManyToOne decorator,
+// so synchronize() creates no FK. They must be listed explicitly.
 const TRUNCATE_TABLES = [
+  'social_profiles',
+  'personal_profiles',
+  'commercial_profiles',
+  'profiles',
+  'social_sessions',
+  'credential_sessions',
   'verification_attempts',
   'email_verification_tokens',
   'password_reset_tokens',
