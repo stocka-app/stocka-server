@@ -28,6 +28,7 @@
       "@common/*": ["src/common/*"],
       "@core/*": ["src/core/*"],
       "@test/*": ["test/*"],
+      "@tenant/*": ["src/bounded-contexts/tenant/*"],
       "@test-mockup/*": ["test/__mocks__/*"]
     }
   },

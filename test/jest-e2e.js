@@ -16,6 +16,7 @@ module.exports = {
   },
   transformIgnorePatterns: ['/node_modules/(?!uuid)/'],
   moduleNameMapper: {
+    '^@tenant/(.*)$': '<rootDir>/src/bounded-contexts/tenant/$1',
     '^@authentication/(.*)$': '<rootDir>/src/bounded-contexts/authentication/$1',
     '^@user/(.*)$': '<rootDir>/src/bounded-contexts/user/$1',
     '^@test-mockup/(.*)$': '<rootDir>/test/__mocks__/$1',

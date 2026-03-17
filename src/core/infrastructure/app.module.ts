@@ -11,6 +11,7 @@ import databaseConfig from '@core/config/database/database.config';
 import { typeOrmAsyncConfig } from '@core/config/database/typeorm.config';
 import { UserModule } from '@user/infrastructure/user.module';
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
+import { TenantModule } from '@tenant/tenant.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
@@ -47,6 +48,7 @@ import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
     UnitOfWorkModule,
     UserModule,
     AuthenticationModule,
+    TenantModule,
     MediatorModule,
   ],
   controllers: [AppController],
