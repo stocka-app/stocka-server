@@ -11,6 +11,7 @@ import { TenantMemberModel } from '@tenant/domain/models/tenant-member.model';
 import { TenantProfileModel } from '@tenant/domain/models/tenant-profile.model';
 import { TenantConfigModel } from '@tenant/domain/models/tenant-config.model';
 import { OnboardingAlreadyCompletedError } from '@tenant/domain/errors/onboarding-already-completed.error';
+import { TenantLimitExceededError } from '@tenant/domain/errors/tenant-limit-exceeded.error';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -195,6 +196,45 @@ describe('CreateTenantHandler', () => {
         const persistedTenant = tenantContract.persist.mock.calls[0][0];
         expect(persistedTenant.slug).not.toBe('mi-tienda');
         expect(persistedTenant.slug).toMatch(/^mi-tienda-[a-z0-9]{8}$/);
+      });
+    });
+  });
+
+  describe('Given an invalid business type that fails VO validation', () => {
+    const INVALID_BT_COMMAND = new CreateTenantCommand(
+      42,
+      '550e8400-e29b-41d4-a716-446655440000',
+      'Mi Tienda',
+      'INVALID_TYPE',
+      'MX',
+      'America/Mexico_City',
+    );
+
+    describe('When the handler executes', () => {
+      it('Then it re-throws the validation error', async () => {
+        await expect(handler.execute(INVALID_BT_COMMAND)).rejects.toThrow(
+          'Invalid BusinessType value: INVALID_TYPE',
+        );
+      });
+
+      it('Then the UoW transaction is never opened', async () => {
+        await expect(handler.execute(INVALID_BT_COMMAND)).rejects.toThrow();
+        expect(uow.begin).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a persist call throws a domain exception inside the transaction', () => {
+    beforeEach(() => {
+      tenantContract.persist.mockRejectedValue(new TenantLimitExceededError('warehouses'));
+    });
+
+    describe('When the handler executes', () => {
+      it('Then it rolls back the UoW and returns an err with the domain error', async () => {
+        const result = await handler.execute(VALID_COMMAND);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(TenantLimitExceededError);
+        expect(uow.rollback).toHaveBeenCalledTimes(1);
       });
     });
   });
