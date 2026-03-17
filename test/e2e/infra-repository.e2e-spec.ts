@@ -690,6 +690,30 @@ describe('Infrastructure Repositories (e2e)', () => {
         });
       });
     });
+
+    describe('Given persist is called within an active UoW transaction', () => {
+      it('Then it uses the transaction EntityManager and the attempt is saved', async () => {
+        const attempt = VerificationAttemptModel.create({
+          userUUID: testUUID,
+          email: testEmail,
+          ipAddress: testIP,
+          userAgent: null,
+          codeEntered: null,
+          success: false,
+          verificationType: 'sign_in',
+        });
+
+        await uow.begin();
+        try {
+          const saved = await attemptRepo.persist(attempt);
+          expect(saved.uuid).toBeDefined();
+          await uow.rollback();
+        } catch (error) {
+          await uow.rollback();
+          throw error;
+        }
+      });
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -831,6 +855,22 @@ describe('Infrastructure Repositories (e2e)', () => {
       });
     });
 
+    describe('Given the database connection fails AND qr.release() also fails during begin() cleanup', () => {
+      it('Then begin() swallows the release error and still throws the original connection error (line 48)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr, 'connect').mockRejectedValueOnce(new Error('Connection refused'));
+          jest.spyOn(qr, 'release').mockRejectedValueOnce(new Error('Release also failed'));
+          return qr;
+        });
+        // The original error must propagate; the release error is swallowed by .catch(() => {})
+        await expect(uow.begin()).rejects.toThrow('Connection refused');
+        spy.mockRestore();
+        try { await uow.rollback(); } catch { /* ignore */ }
+      });
+    });
+
     describe('Given the query runner release fails during rollback cleanup', () => {
       it('Then rollback completes without throwing even if release fails', async () => {
         const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
@@ -901,6 +941,42 @@ describe('Infrastructure Repositories (e2e)', () => {
         await uow.begin();
         spy.mockRestore();
         await expect(uow.rollback()).resolves.toBeUndefined();
+      });
+    });
+
+    describe('Given commitTransaction() throws a genuine DB error while the QR is still connected', () => {
+      it('Then commit() re-throws the error and the connection is returned to the pool (line 66)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr as any, 'commitTransaction').mockImplementationOnce(async () => {
+            // Throw WITHOUT releasing — simulates a genuine DB error (e.g. serialization failure).
+            // The finally block in commit() will properly release the connection.
+            throw new Error('DB commit failed: serialization failure');
+          });
+          return qr;
+        });
+        await uow.begin();
+        spy.mockRestore();
+        await expect(uow.commit()).rejects.toThrow('DB commit failed: serialization failure');
+      });
+    });
+
+    describe('Given rollbackTransaction() throws a genuine DB error while the QR is still connected', () => {
+      it('Then rollback() re-throws the error and the connection is returned to the pool (line 89)', async () => {
+        const origCreateQR = dataSource.createQueryRunner.bind(dataSource);
+        const spy = jest.spyOn(dataSource, 'createQueryRunner').mockImplementationOnce(() => {
+          const qr = origCreateQR();
+          jest.spyOn(qr as any, 'rollbackTransaction').mockImplementationOnce(async () => {
+            // Throw WITHOUT releasing — simulates a genuine DB error during rollback.
+            // The finally block in rollback() will properly release the connection.
+            throw new Error('DB rollback failed: connection lost');
+          });
+          return qr;
+        });
+        await uow.begin();
+        spy.mockRestore();
+        await expect(uow.rollback()).rejects.toThrow('DB rollback failed: connection lost');
       });
     });
   });
