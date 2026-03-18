@@ -35,11 +35,13 @@ import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
         name: 'short',
         ttl: 1000,
         limit: 3,
+        skipIf: () => process.env.NODE_ENV === 'test',
       },
       {
         name: 'medium',
         ttl: 60000,
         limit: 100,
+        skipIf: () => process.env.NODE_ENV === 'test',
       },
     ]),
     CqrsModule.forRoot(),

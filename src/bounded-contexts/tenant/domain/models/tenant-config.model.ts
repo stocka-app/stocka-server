@@ -1,5 +1,6 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
 import { TierVO } from '@tenant/domain/value-objects/tier.vo';
+import { CapabilitySnapshot } from '@shared/domain/policy/capability-snapshot';
 
 export interface TenantConfigReconstituteProps extends BaseModelProps {
   id: number;
@@ -10,6 +11,11 @@ export interface TenantConfigReconstituteProps extends BaseModelProps {
   maxUsers: number;
   maxProducts: number;
   notificationsEnabled: boolean;
+  productCount: number;
+  storageCount: number;
+  memberCount: number;
+  capabilities: CapabilitySnapshot | null;
+  capabilitiesBuiltAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Date | null;
@@ -22,6 +28,11 @@ export class TenantConfigModel extends BaseModel {
   private _maxUsers: number;
   private _maxProducts: number;
   private _notificationsEnabled: boolean;
+  private _productCount: number;
+  private _storageCount: number;
+  private _memberCount: number;
+  private _capabilities: CapabilitySnapshot | null;
+  private _capabilitiesBuiltAt: Date | null;
 
   private constructor(
     props: BaseModelProps & {
@@ -31,6 +42,11 @@ export class TenantConfigModel extends BaseModel {
       maxUsers: number;
       maxProducts: number;
       notificationsEnabled: boolean;
+      productCount: number;
+      storageCount: number;
+      memberCount: number;
+      capabilities: CapabilitySnapshot | null;
+      capabilitiesBuiltAt: Date | null;
     },
   ) {
     super(props);
@@ -40,6 +56,11 @@ export class TenantConfigModel extends BaseModel {
     this._maxUsers = props.maxUsers;
     this._maxProducts = props.maxProducts;
     this._notificationsEnabled = props.notificationsEnabled;
+    this._productCount = props.productCount;
+    this._storageCount = props.storageCount;
+    this._memberCount = props.memberCount;
+    this._capabilities = props.capabilities;
+    this._capabilitiesBuiltAt = props.capabilitiesBuiltAt;
   }
 
   static createFreeDefaults(tenantId: number): TenantConfigModel {
@@ -50,6 +71,11 @@ export class TenantConfigModel extends BaseModel {
       maxUsers: 1,
       maxProducts: 100,
       notificationsEnabled: true,
+      productCount: 0,
+      storageCount: 0,
+      memberCount: 1,
+      capabilities: null,
+      capabilitiesBuiltAt: null,
     });
   }
 
@@ -66,6 +92,11 @@ export class TenantConfigModel extends BaseModel {
       maxUsers: props.maxUsers,
       maxProducts: props.maxProducts,
       notificationsEnabled: props.notificationsEnabled,
+      productCount: props.productCount,
+      storageCount: props.storageCount,
+      memberCount: props.memberCount,
+      capabilities: props.capabilities,
+      capabilitiesBuiltAt: props.capabilitiesBuiltAt,
     });
   }
 
@@ -91,5 +122,31 @@ export class TenantConfigModel extends BaseModel {
 
   get notificationsEnabled(): boolean {
     return this._notificationsEnabled;
+  }
+
+  get productCount(): number {
+    return this._productCount;
+  }
+
+  get storageCount(): number {
+    return this._storageCount;
+  }
+
+  get memberCount(): number {
+    return this._memberCount;
+  }
+
+  get capabilities(): CapabilitySnapshot | null {
+    return this._capabilities;
+  }
+
+  get capabilitiesBuiltAt(): Date | null {
+    return this._capabilitiesBuiltAt;
+  }
+
+  updateCapabilities(snapshot: CapabilitySnapshot): void {
+    this._capabilities = snapshot;
+    this._capabilitiesBuiltAt = new Date();
+    this.touch();
   }
 }

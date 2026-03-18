@@ -14,12 +14,34 @@ import {
   TIER_NUMERIC_LIMITS,
   TIER_ORDER,
 } from '@shared/domain/policy/tier-policy.config';
+import { CapabilitySnapshot } from '@shared/domain/policy/capability-snapshot';
 
 @Injectable()
 export class CapabilityResolver {
   canPerformAction(context: PolicyContext): Result<void, PolicyViolationError> {
     const tierResult = this.checkTierFeature(context);
     if (tierResult.isErr()) return tierResult;
+
+    const roleResult = this.checkRolePermission(context);
+    if (roleResult.isErr()) return roleResult;
+
+    if (context.usageCounts) {
+      const limitResult = this.checkUsageLimit(context, context.usageCounts);
+      if (limitResult.isErr()) return limitResult;
+    }
+
+    return ok(undefined);
+  }
+
+  canPerformActionWithSnapshot(
+    context: PolicyContext,
+    snapshot: CapabilitySnapshot,
+  ): Result<void, PolicyViolationError> {
+    const capability = snapshot[context.action];
+    if (!capability.enabled) {
+      const requiredTier = ACTION_TIER_REQUIREMENTS[context.action];
+      return err(new FeatureNotInTierError(context.action, context.tenantTier, requiredTier));
+    }
 
     const roleResult = this.checkRolePermission(context);
     if (roleResult.isErr()) return roleResult;

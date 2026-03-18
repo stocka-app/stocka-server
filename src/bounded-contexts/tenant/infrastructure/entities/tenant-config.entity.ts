@@ -20,4 +20,19 @@ export class TenantConfigEntity extends BaseEntity {
 
   @Column({ name: 'notifications_enabled', type: 'boolean', default: true })
   notificationsEnabled!: boolean;
+
+  @Column({ name: 'product_count', type: 'int', default: 0 })
+  productCount!: number;
+
+  @Column({ name: 'storage_count', type: 'int', default: 0 })
+  storageCount!: number;
+
+  @Column({ name: 'member_count', type: 'int', default: 1 })
+  memberCount!: number;
+
+  @Column({ type: 'jsonb', nullable: true, default: null })
+  capabilities!: Record<string, unknown> | null;
+
+  @Column({ name: 'capabilities_built_at', type: 'timestamptz', nullable: true, default: null })
+  capabilitiesBuiltAt!: Date | null;
 }
