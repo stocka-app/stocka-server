@@ -1,8 +1,7 @@
-import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { CompleteOnboardingInDto } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-in.dto';
@@ -10,18 +9,13 @@ import {
   CompleteOnboardingOutDto,
   CreateTenantResult,
 } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
-import { IUserFacade } from '@shared/domain/contracts/user-facade.contract';
 
 @ApiTags('Tenant')
 @Controller('tenant')
 @ApiBearerAuth('JWT-authentication')
 @UseGuards(JwtAuthenticationGuard)
 export class CompleteOnboardingController {
-  constructor(
-    private readonly commandBus: CommandBus,
-    @Inject(INJECTION_TOKENS.USER_FACADE)
-    private readonly userFacade: IUserFacade,
-  ) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   @Post('onboarding/complete')
   @ApiOperation({ summary: 'Complete onboarding and create organization' })
@@ -48,7 +42,7 @@ export class CompleteOnboardingController {
 
     return result.match(
       (tenant) => {
-        return new CompleteOnboardingOutDto(tenant.name, tenant.tenantId);
+        return new CompleteOnboardingOutDto(tenant.tenantId, tenant.name);
       },
       (error) => {
         throw error;

@@ -6,11 +6,9 @@ import {
 } from '@tenant/domain/contracts/tenant-facade.contract';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
-import {
-  CreateTenantCommand,
-  CreateTenantCommandResult,
-} from '@tenant/application/commands/create-tenant/create-tenant.command';
+import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { CreateTenantResult } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
 
 @Injectable()
 export class TenantFacade implements ITenantFacade {
@@ -36,7 +34,6 @@ export class TenantFacade implements ITenantFacade {
 
   async createTenantForUser(props: CreateTenantFacadeProps): Promise<{ tenantUUID: string }> {
     const command = new CreateTenantCommand(
-      props.userId,
       props.userUUID,
       props.name,
       props.businessType,
@@ -44,11 +41,9 @@ export class TenantFacade implements ITenantFacade {
       props.timezone ?? 'America/Mexico_City',
     );
 
-    const result = await this.commandBus.execute<CreateTenantCommand, CreateTenantCommandResult>(
-      command,
-    );
+    const result = await this.commandBus.execute<CreateTenantCommand, CreateTenantResult>(command);
 
     if (result.isErr()) throw result.error;
-    return result.value;
+    return { tenantUUID: result.value.tenantId };
   }
 }

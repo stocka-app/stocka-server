@@ -147,7 +147,7 @@ describe('TenantFacade', () => {
   describe('createTenantForUser', () => {
     describe('Given the command bus returns a successful result', () => {
       beforeEach(() => {
-        commandBus.execute.mockResolvedValue(ok({ tenantUUID: TENANT_UUID }));
+        commandBus.execute.mockResolvedValue(ok({ tenantId: TENANT_UUID, name: 'Mi Tienda' }));
       });
 
       describe('When createTenantForUser is called', () => {

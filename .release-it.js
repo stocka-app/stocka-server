@@ -35,8 +35,9 @@ module.exports = {
     publish: false,
   },
   hooks: {
-    // Pause after CHANGELOG.md is written so you can enrich the new section before the commit
-    'after:bump': 'echo "\n📝  CHANGELOG.md updated — add your notes, then press Enter to commit..." && read',
+    // En modo manual (npm run release), pausa para que puedas agregar tus notas antes del commit.
+    // En modo auto (post-merge hook), RELEASE_IT_AUTO=1 salta la pausa.
+    'after:bump': 'if [ -z "$RELEASE_IT_AUTO" ]; then echo "\n📝  CHANGELOG.md updated — add your notes, then press Enter to commit..." && read; fi',
   },
   plugins: {
     '@release-it/conventional-changelog': {
