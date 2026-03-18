@@ -1,9 +1,5 @@
-export enum TierEnum {
-  FREE = 'FREE',
-  STARTER = 'STARTER',
-  GROWTH = 'GROWTH',
-  ENTERPRISE = 'ENTERPRISE',
-}
+export { TierEnum } from '@shared/domain/policy/tier.enum';
+import { TierEnum } from '@shared/domain/policy/tier.enum';
 
 export class TierVO {
   private readonly _value: TierEnum;
