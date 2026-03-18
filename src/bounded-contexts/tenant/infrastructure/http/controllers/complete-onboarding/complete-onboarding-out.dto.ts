@@ -18,7 +18,7 @@ export class CompleteOnboardingOutDto {
 
 export type CreateTenantErrors = NotFoundException | DomainException;
 export type CreateTenantSuccess = {
-  tenantId: string;
+  id: string;
   name: string;
 };
 export type CreateTenantResult = Result<CreateTenantSuccess, CreateTenantErrors>;

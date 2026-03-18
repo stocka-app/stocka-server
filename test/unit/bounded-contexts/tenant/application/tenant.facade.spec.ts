@@ -147,22 +147,27 @@ describe('TenantFacade', () => {
   describe('createTenantForUser', () => {
     describe('Given the command bus returns a successful result', () => {
       beforeEach(() => {
-        commandBus.execute.mockResolvedValue(ok({ tenantUUID: TENANT_UUID }));
+        commandBus.execute.mockResolvedValue(ok({ id: TENANT_UUID }));
       });
 
       describe('When createTenantForUser is called', () => {
         it('Then it returns the tenantUUID', async () => {
           const result = await facade.createTenantForUser({
+            country: 'MX',
+            timezone: 'America/Mexico_City',
             userId: 42,
             userUUID: USER_UUID,
             name: 'Mi Tienda',
             businessType: 'retail',
           });
+
           expect(result.tenantUUID).toBe(TENANT_UUID);
         });
 
         it('Then it defaults country and timezone for Mexico', async () => {
           await facade.createTenantForUser({
+            country: 'MX',
+            timezone: 'America/Mexico_City',
             userId: 42,
             userUUID: USER_UUID,
             name: 'Mi Tienda',
@@ -184,6 +189,8 @@ describe('TenantFacade', () => {
         it('Then it throws the domain error', async () => {
           await expect(
             facade.createTenantForUser({
+              country: 'MX',
+              timezone: 'America/Mexico_City',
               userId: 42,
               userUUID: USER_UUID,
               name: 'Mi Tienda',
