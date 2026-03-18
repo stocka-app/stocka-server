@@ -3,6 +3,31 @@
 All notable changes to this project are documented here.
 
 
+## [0.2.0](https://github.com/stocka-app/stocka-server/compare/v0.1.0...v0.2.0) (2026-03-18)
+
+### ✨ Features
+
+* add custom validator for ISO 3166-1 alpha-2 country codes ([389c7f1](https://github.com/stocka-app/stocka-server/commit/389c7f110dbc796fff8b83e4112bc044313577a3))
+* **eslint:** enforce single HTTP operation per controller ([62e4135](https://github.com/stocka-app/stocka-server/commit/62e4135ea4701495be755db715ce79ac44dd9557))
+* **tenant-bc:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — add application layer — commands, queries, facade ([a824d4f](https://github.com/stocka-app/stocka-server/commit/a824d4ff0fed803563453c79e7982d400a0a544e))
+* **tenant-bc:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — add infrastructure layer — entities, mappers, repos, HTTP, module ([2799961](https://github.com/stocka-app/stocka-server/commit/2799961aae684445f8219476c67dc93308617bae))
+* **tenant-bc:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — add Tenant BC domain layer ([d0c3e58](https://github.com/stocka-app/stocka-server/commit/d0c3e5853e8bf1f62262d8be96d67f9e64fddce7))
+* **tenant-bc:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — implement complete onboarding flow and refactor tenant commands ([d1efa3e](https://github.com/stocka-app/stocka-server/commit/d1efa3eaa335310cae41d46204b7d3b7a83a022e))
+* **tenant:** update CreateTenant command and result structure, refactor related components ([11f0e3d](https://github.com/stocka-app/stocka-server/commit/11f0e3d3bae4f635018938215ffd8dc74db6fbfc))
+
+### 🐛 Bug Fixes
+
+* **tenant:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — add MediatorService mock to CreateTenantHandler spec ([6f0edcd](https://github.com/stocka-app/stocka-server/commit/6f0edcde70ee052f69336ce29a54343ca2945cfe))
+
+### 🧹 Chores
+
+* **tenant-bc:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — add config, aliases, migration for Tenant BC ([50929c6](https://github.com/stocka-app/stocka-server/commit/50929c656b7ace510322b3022ee3fc7460d59423))
+
+### ✅ Tests
+
+* **tenant-bc:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — add 121 unit tests for Tenant BC ([0cae5a8](https://github.com/stocka-app/stocka-server/commit/0cae5a8422e7258d2408af15fa851e07a645d2b5))
+* **tenant-bc:** [STOC-254](https://austins-industries.atlassian.net/browse/STOC-254) — add edge-case tests for handler catch branches ([751f2aa](https://github.com/stocka-app/stocka-server/commit/751f2aa063c42375be9b6b2d26a97e34c184e9b1))
+
 ## 0.1.0 (2026-03-18)
 
 ### ✨ Features
