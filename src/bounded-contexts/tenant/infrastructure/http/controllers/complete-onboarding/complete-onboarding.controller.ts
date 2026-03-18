@@ -42,7 +42,7 @@ export class CompleteOnboardingController {
 
     return result.match(
       (tenant) => {
-        return new CompleteOnboardingOutDto(tenant.id, tenant.name);
+        return new CompleteOnboardingOutDto(tenant.tenantId, tenant.name);
       },
       (error) => {
         throw error;

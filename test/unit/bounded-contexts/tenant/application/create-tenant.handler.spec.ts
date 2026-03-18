@@ -118,7 +118,7 @@ describe('CreateTenantHandler', () => {
       it('Then the result is ok with a tenantUUID', async () => {
         const result = await handler.execute(VALID_COMMAND);
         expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap().id).toBeDefined();
+        expect(result._unsafeUnwrap().tenantId).toBeDefined();
       });
 
       it('Then the tenant is persisted', async () => {

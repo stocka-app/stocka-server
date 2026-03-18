@@ -3,8 +3,8 @@ export interface CreateTenantFacadeProps {
   userId: number;
   name: string;
   businessType: string;
-  country: string;
-  timezone: string;
+  country?: string;
+  timezone?: string;
 }
 
 export interface ITenantFacade {

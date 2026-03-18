@@ -100,7 +100,7 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
       this.eventPublisher.mergeObjectContext(savedTenant);
       savedTenant.commit();
 
-      return ok({ id: savedTenant.uuid, name: savedTenant.name });
+      return ok({ tenantId: savedTenant.uuid, name: savedTenant.name });
     } catch (e) {
       await this.uow.rollback();
       if (e instanceof DomainException) return err(e);

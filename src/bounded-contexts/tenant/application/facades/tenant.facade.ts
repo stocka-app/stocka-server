@@ -24,7 +24,7 @@ export class TenantFacade implements ITenantFacade {
     userUUID: string,
   ): Promise<{ tenantUUID: string; role: string } | null> {
     const member = await this.memberContract.findActiveByUserUUID(userUUID);
-    if (!member?.isActive()) return null;
+    if (!member || !member.isActive()) return null;
 
     const tenant = await this.tenantContract.findById(member.tenantId);
     if (!tenant) return null;
@@ -37,13 +37,13 @@ export class TenantFacade implements ITenantFacade {
       props.userUUID,
       props.name,
       props.businessType,
-      props.country,
-      props.timezone,
+      props.country ?? 'MX',
+      props.timezone ?? 'America/Mexico_City',
     );
 
     const result = await this.commandBus.execute<CreateTenantCommand, CreateTenantResult>(command);
 
     if (result.isErr()) throw result.error;
-    return { tenantUUID: result.value.id };
+    return { tenantUUID: result.value.tenantId };
   }
 }
