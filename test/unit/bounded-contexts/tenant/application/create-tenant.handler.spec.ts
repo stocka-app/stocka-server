@@ -13,7 +13,9 @@ import { TenantConfigModel } from '@tenant/domain/models/tenant-config.model';
 import { OnboardingAlreadyCompletedError } from '@tenant/domain/errors/onboarding-already-completed.error';
 import { TenantLimitExceededError } from '@tenant/domain/errors/tenant-limit-exceeded.error';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { UserMother } from '@test/helpers/object-mother/user.mother';
 
 describe('CreateTenantHandler', () => {
   let handler: CreateTenantHandler;
@@ -25,9 +27,9 @@ describe('CreateTenantHandler', () => {
     Pick<IUnitOfWork, 'begin' | 'commit' | 'rollback' | 'isActive' | 'getManager'>
   >;
   let eventPublisher: { mergeObjectContext: jest.Mock };
+  let mediator: { user: { findByUUID: jest.Mock } };
 
   const VALID_COMMAND = new CreateTenantCommand(
-    42,
     '550e8400-e29b-41d4-a716-446655440000',
     'Mi Tienda',
     'retail',
@@ -85,6 +87,16 @@ describe('CreateTenantHandler', () => {
       mergeObjectContext: jest.fn().mockImplementation((obj) => obj),
     };
 
+    mediator = {
+      user: {
+        findByUUID: jest
+          .fn()
+          .mockResolvedValue(
+            UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440000' }),
+          ),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateTenantHandler,
@@ -94,6 +106,7 @@ describe('CreateTenantHandler', () => {
         { provide: INJECTION_TOKENS.TENANT_CONFIG_CONTRACT, useValue: configContract },
         { provide: INJECTION_TOKENS.UNIT_OF_WORK, useValue: uow },
         { provide: EventPublisher, useValue: eventPublisher },
+        { provide: MediatorService, useValue: mediator },
       ],
     }).compile();
 
@@ -105,7 +118,7 @@ describe('CreateTenantHandler', () => {
       it('Then the result is ok with a tenantUUID', async () => {
         const result = await handler.execute(VALID_COMMAND);
         expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap().tenantUUID).toBeDefined();
+        expect(result._unsafeUnwrap().id).toBeDefined();
       });
 
       it('Then the tenant is persisted', async () => {
@@ -202,7 +215,6 @@ describe('CreateTenantHandler', () => {
 
   describe('Given an invalid business type that fails VO validation', () => {
     const INVALID_BT_COMMAND = new CreateTenantCommand(
-      42,
       '550e8400-e29b-41d4-a716-446655440000',
       'Mi Tienda',
       'INVALID_TYPE',
