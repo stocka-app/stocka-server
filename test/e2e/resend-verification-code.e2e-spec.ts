@@ -73,7 +73,9 @@ describe('Resend Verification Code (e2e)', () => {
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.success).toBe(true);
-        expect(typeof res.body.remainingResends === 'number' || res.body.remainingResends === undefined).toBe(true);
+        expect(
+          typeof res.body.remainingResends === 'number' || res.body.remainingResends === undefined,
+        ).toBe(true);
       });
     });
   });

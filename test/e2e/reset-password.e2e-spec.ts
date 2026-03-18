@@ -32,9 +32,7 @@ describe('Reset Password (e2e)', () => {
       },
     );
 
-    await request(app.getHttpServer())
-      .post('/api/authentication/forgot-password')
-      .send({ email });
+    await request(app.getHttpServer()).post('/api/authentication/forgot-password').send({ email });
 
     // Allow event handlers to flush (they are async fire-and-forget)
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -67,10 +65,7 @@ describe('Reset Password (e2e)', () => {
   describe('Given a customer with a valid password reset token', () => {
     describe('When they submit the token with a strong new password', () => {
       it('Then they receive a 200 OK with a success message', async () => {
-        const { plainToken } = await setupUserWithResetToken(
-          'reset1@example.com',
-          'resetuser1',
-        );
+        const { plainToken } = await setupUserWithResetToken('reset1@example.com', 'resetuser1');
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
@@ -81,14 +76,10 @@ describe('Reset Password (e2e)', () => {
       });
 
       it('Then the reset token is marked as used in the database', async () => {
-        const { plainToken } = await setupUserWithResetToken(
-          'reset2@example.com',
-          'resetuser2',
-        );
+        const { plainToken } = await setupUserWithResetToken('reset2@example.com', 'resetuser2');
 
-        const { AuthenticationDomainService } = await import(
-          '@authentication/domain/services/authentication-domain.service'
-        );
+        const { AuthenticationDomainService } =
+          await import('@authentication/domain/services/authentication-domain.service');
         const tokenHash = AuthenticationDomainService.hashToken(plainToken);
 
         await request(app.getHttpServer())
@@ -156,10 +147,7 @@ describe('Reset Password (e2e)', () => {
   describe('Given a customer who tries to reuse a token that was already consumed', () => {
     describe('When they call reset-password a second time with the same token', () => {
       it('Then they receive a 401 Unauthorized on the second attempt', async () => {
-        const { plainToken } = await setupUserWithResetToken(
-          'reset4@example.com',
-          'resetuser4',
-        );
+        const { plainToken } = await setupUserWithResetToken('reset4@example.com', 'resetuser4');
 
         await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
@@ -177,10 +165,7 @@ describe('Reset Password (e2e)', () => {
   describe('Given a customer who submits a weak new password', () => {
     describe('When the new password does not meet strength requirements', () => {
       it('Then they receive a 400 Bad Request', async () => {
-        const { plainToken } = await setupUserWithResetToken(
-          'reset5@example.com',
-          'resetuser5',
-        );
+        const { plainToken } = await setupUserWithResetToken('reset5@example.com', 'resetuser5');
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
@@ -203,9 +188,8 @@ describe('Reset Password (e2e)', () => {
           'rollbackreset',
         );
 
-        const { AuthenticationDomainService } = await import(
-          '@authentication/domain/services/authentication-domain.service'
-        );
+        const { AuthenticationDomainService } =
+          await import('@authentication/domain/services/authentication-domain.service');
         const tokenHash = AuthenticationDomainService.hashToken(plainToken);
 
         const spy = jest

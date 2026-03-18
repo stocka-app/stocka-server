@@ -158,7 +158,9 @@ describe('Rate Limiting (e2e)', () => {
           responses.push({ status: HttpStatus.TOO_MANY_REQUESTS });
         }
       }
-      const rateLimitedResponses = responses.filter((r) => r.status === HttpStatus.TOO_MANY_REQUESTS);
+      const rateLimitedResponses = responses.filter(
+        (r) => r.status === HttpStatus.TOO_MANY_REQUESTS,
+      );
       // At least some requests should be throttled or error
       expect(rateLimitedResponses.length > 0 || responses.length === 0).toBeTruthy();
     });
@@ -166,10 +168,12 @@ describe('Rate Limiting (e2e)', () => {
 
   describe('POST /api/authentication/verify-email', () => {
     it('should return 400 for invalid verification code', async () => {
-      const response = await request(app.getHttpServer()).post('/api/authentication/verify-email').send({
-        email: 'test@example.com',
-        code: 'INVALID',
-      });
+      const response = await request(app.getHttpServer())
+        .post('/api/authentication/verify-email')
+        .send({
+          email: 'test@example.com',
+          code: 'INVALID',
+        });
 
       // Should return domain exception (user not found or invalid code)
       expect([HttpStatus.BAD_REQUEST, HttpStatus.NOT_FOUND]).toContain(response.status);
@@ -191,16 +195,20 @@ describe('Rate Limiting (e2e)', () => {
           responses.push({ status: HttpStatus.TOO_MANY_REQUESTS });
         }
       }
-      const rateLimitedResponses = responses.filter((r) => r.status === HttpStatus.TOO_MANY_REQUESTS);
+      const rateLimitedResponses = responses.filter(
+        (r) => r.status === HttpStatus.TOO_MANY_REQUESTS,
+      );
       expect(rateLimitedResponses.length > 0 || responses.length === 0).toBeTruthy();
     });
   });
 
   describe('POST /api/authentication/forgot-password', () => {
     it('should return 200 even for non-existent email (security)', async () => {
-      const response = await request(app.getHttpServer()).post('/api/authentication/forgot-password').send({
-        email: 'nonexistent@example.com',
-      });
+      const response = await request(app.getHttpServer())
+        .post('/api/authentication/forgot-password')
+        .send({
+          email: 'nonexistent@example.com',
+        });
 
       // Should not reveal if email exists
       expect(response.status).toBe(HttpStatus.OK);
@@ -221,7 +229,9 @@ describe('Rate Limiting (e2e)', () => {
           responses.push({ status: HttpStatus.TOO_MANY_REQUESTS });
         }
       }
-      const rateLimitedResponses = responses.filter((r) => r.status === HttpStatus.TOO_MANY_REQUESTS);
+      const rateLimitedResponses = responses.filter(
+        (r) => r.status === HttpStatus.TOO_MANY_REQUESTS,
+      );
       expect(rateLimitedResponses.length > 0 || responses.length === 0).toBeTruthy();
     });
   });

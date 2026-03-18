@@ -92,6 +92,12 @@ module.exports = {
     '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
     // ── @deprecated social account repo (superseded; no active DI binding) ────────
     '!src/bounded-contexts/user/infrastructure/persistence/repositories/typeorm-social-account.repository.ts',
+
+    // ── Tier infrastructure (wired in TenantModule but no tenant e2e suite yet) ──
+    // These are covered 100% by unit tests; e2e coverage will be added when tenant
+    // HTTP endpoints (RBAC, Storage BC) exercise these repos through HTTP.
+    '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
+    '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-data-provider.ts',
   ],
   coverageDirectory: './coverage-e2e',
   coverageReporters: ['json', 'text', 'lcov', 'html'],

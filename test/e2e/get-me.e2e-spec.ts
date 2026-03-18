@@ -5,7 +5,6 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
-
 describe('Get Me (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;

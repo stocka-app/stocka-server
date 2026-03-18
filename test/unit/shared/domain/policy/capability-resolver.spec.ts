@@ -3,6 +3,7 @@ import { SystemAction } from '@shared/domain/policy/actions-catalog';
 import { TierEnum } from '@shared/domain/policy/tier.enum';
 import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
 import { PolicyContext } from '@shared/domain/policy/policy-context';
+import { CapabilitySnapshot, createEmptySnapshot } from '@shared/domain/policy/capability-snapshot';
 
 describe('CapabilityResolver', () => {
   let resolver: CapabilityResolver;
@@ -365,6 +366,101 @@ describe('CapabilityResolver', () => {
         const result = resolver.canPerformAction(context);
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+      });
+    });
+  });
+
+  // ── canPerformActionWithSnapshot ────────────────────────────────────────────
+
+  describe('Given a snapshot where PRODUCT_CREATE is enabled', () => {
+    let snapshot: CapabilitySnapshot;
+
+    beforeEach(() => {
+      snapshot = createEmptySnapshot();
+      snapshot[SystemAction.PRODUCT_CREATE] = { enabled: true, reason: 'Allowed' };
+      snapshot[SystemAction.PRODUCT_READ] = { enabled: true, reason: 'Allowed' };
+    });
+
+    describe('When an OWNER performs the action within limits', () => {
+      it('Then the action is allowed', () => {
+        const context: PolicyContext = {
+          tenantTier: TierEnum.FREE,
+          userRole: MemberRoleEnum.OWNER,
+          action: SystemAction.PRODUCT_CREATE,
+          usageCounts: { productCount: 50, storageCount: 0, memberCount: 1 },
+        };
+        const result = resolver.canPerformActionWithSnapshot(context, snapshot);
+        expect(result.isOk()).toBe(true);
+      });
+    });
+
+    describe('When a VIEWER tries the action', () => {
+      it('Then the action is denied by the role check', () => {
+        const context: PolicyContext = {
+          tenantTier: TierEnum.FREE,
+          userRole: MemberRoleEnum.VIEWER,
+          action: SystemAction.PRODUCT_CREATE,
+        };
+        const result = resolver.canPerformActionWithSnapshot(context, snapshot);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr().errorCode).toBe('ACTION_NOT_ALLOWED');
+      });
+    });
+
+    describe('When an OWNER exceeds the usage limit', () => {
+      it('Then the action is denied with TierLimitReachedError', () => {
+        const context: PolicyContext = {
+          tenantTier: TierEnum.FREE,
+          userRole: MemberRoleEnum.OWNER,
+          action: SystemAction.PRODUCT_CREATE,
+          usageCounts: { productCount: 100, storageCount: 0, memberCount: 1 },
+        };
+        const result = resolver.canPerformActionWithSnapshot(context, snapshot);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr().errorCode).toBe('TIER_LIMIT_REACHED');
+      });
+    });
+  });
+
+  describe('Given a snapshot where STORAGE_CREATE is disabled', () => {
+    let snapshot: CapabilitySnapshot;
+
+    beforeEach(() => {
+      snapshot = createEmptySnapshot();
+      snapshot[SystemAction.STORAGE_CREATE] = { enabled: false, reason: 'Module disabled' };
+    });
+
+    describe('When an OWNER on a STARTER tier tries the action', () => {
+      it('Then the action is denied by the snapshot', () => {
+        const context: PolicyContext = {
+          tenantTier: TierEnum.STARTER,
+          userRole: MemberRoleEnum.OWNER,
+          action: SystemAction.STORAGE_CREATE,
+        };
+        const result = resolver.canPerformActionWithSnapshot(context, snapshot);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+      });
+    });
+  });
+
+  describe('Given a snapshot-based check with no usageCounts', () => {
+    let snapshot: CapabilitySnapshot;
+
+    beforeEach(() => {
+      snapshot = createEmptySnapshot();
+      snapshot[SystemAction.PRODUCT_READ] = { enabled: true, reason: 'Allowed' };
+    });
+
+    describe('When an OWNER reads products', () => {
+      it('Then the action is allowed without usage check', () => {
+        const context: PolicyContext = {
+          tenantTier: TierEnum.FREE,
+          userRole: MemberRoleEnum.OWNER,
+          action: SystemAction.PRODUCT_READ,
+        };
+        const result = resolver.canPerformActionWithSnapshot(context, snapshot);
+        expect(result.isOk()).toBe(true);
       });
     });
   });

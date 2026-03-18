@@ -147,7 +147,5 @@ export default async function globalSetup(): Promise<void> {
   await setSynchronousCommitOff();
 
   // Strategy 5: create one isolated schema per Jest worker, all in parallel.
-  await Promise.all(
-    Array.from({ length: MAX_WORKERS }, (_, i) => createWorkerSchema(i + 1)),
-  );
+  await Promise.all(Array.from({ length: MAX_WORKERS }, (_, i) => createWorkerSchema(i + 1)));
 }

@@ -189,6 +189,11 @@ describe('TenantConfigMapper', () => {
           maxUsers: 1,
           maxProducts: 100,
           notificationsEnabled: true,
+          productCount: 10,
+          storageCount: 0,
+          memberCount: 1,
+          capabilities: null,
+          capabilitiesBuiltAt: null,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
           archivedAt: null,
@@ -202,20 +207,113 @@ describe('TenantConfigMapper', () => {
         expect(model.maxUsers).toBe(1);
         expect(model.maxProducts).toBe(100);
         expect(model.notificationsEnabled).toBe(true);
+        expect(model.productCount).toBe(10);
+        expect(model.storageCount).toBe(0);
+        expect(model.memberCount).toBe(1);
+        expect(model.capabilities).toBeNull();
+        expect(model.capabilitiesBuiltAt).toBeNull();
+      });
+    });
+
+    describe('When toDomain is called with an invalid capabilities snapshot', () => {
+      it('Then the capabilities are set to null', () => {
+        const entity = {
+          id: 4,
+          uuid: '550e8400-e29b-41d4-a716-446655440004',
+          tenantId: 2,
+          tier: 'FREE',
+          maxWarehouses: 0,
+          maxUsers: 1,
+          maxProducts: 100,
+          notificationsEnabled: true,
+          productCount: 0,
+          storageCount: 0,
+          memberCount: 1,
+          capabilities: { invalid: 'data' },
+          capabilitiesBuiltAt: new Date('2024-01-01'),
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          archivedAt: null,
+          generateUUID: (): void => {},
+        } as unknown as TenantConfigEntity;
+
+        const model = TenantConfigMapper.toDomain(entity);
+        expect(model.capabilities).toBeNull();
       });
     });
   });
 
   describe('Given a TenantConfigModel', () => {
     describe('When toEntity is called', () => {
-      it('Then it returns a partial entity', () => {
+      it('Then it returns a partial entity with all fields mapped', () => {
         const model = TenantConfigModel.createFreeDefaults(1);
         const entity = TenantConfigMapper.toEntity(model);
         expect(entity.uuid).toBeDefined();
         expect(entity.tenantId).toBe(1);
         expect(entity.tier).toBe('FREE');
         expect(entity.maxWarehouses).toBe(0);
+        expect(entity.productCount).toBe(0);
+        expect(entity.storageCount).toBe(0);
+        expect(entity.memberCount).toBe(1);
+        expect(entity.capabilities).toBeNull();
+        expect(entity.capabilitiesBuiltAt).toBeNull();
         expect(entity.id).toBeUndefined();
+      });
+    });
+  });
+});
+
+// ── TierPlanMapper ──────────────────────────────────────────────────────────────
+
+import { TierPlanMapper } from '@tenant/infrastructure/mappers/tier-plan.mapper';
+import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
+
+describe('TierPlanMapper', () => {
+  describe('Given a TierPlanEntity with numeric limits', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a TierPlanModel with all fields mapped', () => {
+        const entity = {
+          tier: 'STARTER',
+          name: 'Básico',
+          maxProducts: 1000,
+          maxUsers: 5,
+          maxWarehouses: 3,
+          policyVersion: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        } as TierPlanEntity;
+
+        const model = TierPlanMapper.toDomain(entity);
+
+        expect(model.tier).toBe('STARTER');
+        expect(model.name).toBe('Básico');
+        expect(model.maxProducts).toBe(1000);
+        expect(model.maxUsers).toBe(5);
+        expect(model.maxWarehouses).toBe(3);
+      });
+    });
+  });
+
+  describe('Given a TierPlanEntity with unlimited (null) limits', () => {
+    describe('When toDomain is called', () => {
+      it('Then the model reflects unlimited limits', () => {
+        const entity = {
+          tier: 'ENTERPRISE',
+          name: 'Empresarial',
+          maxProducts: null,
+          maxUsers: null,
+          maxWarehouses: null,
+          policyVersion: new Date('2026-01-01'),
+          createdAt: new Date('2026-01-01'),
+          updatedAt: new Date('2026-01-01'),
+        } as unknown as TierPlanEntity;
+
+        const model = TierPlanMapper.toDomain(entity);
+
+        expect(model.tier).toBe('ENTERPRISE');
+        expect(model.isUnlimitedProducts()).toBe(true);
+        expect(model.isUnlimitedUsers()).toBe(true);
+        expect(model.isUnlimitedWarehouses()).toBe(true);
       });
     });
   });

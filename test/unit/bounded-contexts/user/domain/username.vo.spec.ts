@@ -1,8 +1,5 @@
 import { UsernameVO } from '@user/domain/value-objects/username.vo';
-import {
-  USERNAME_MIN_LENGTH,
-  USERNAME_MAX_LENGTH,
-} from '@common/constants/validation.constants';
+import { USERNAME_MIN_LENGTH, USERNAME_MAX_LENGTH } from '@common/constants/validation.constants';
 
 describe('UsernameVO', () => {
   describe('Given a valid username', () => {
