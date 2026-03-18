@@ -14,3 +14,5 @@ npm-debug.log*
 /coverage-report
 /.nyc_output
 .eslint-cache
+.githooks/post-merge
+CLAUDE.md
