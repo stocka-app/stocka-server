@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 
 
+## [0.2.1](https://github.com/stocka-app/stocka-server/compare/v0.2.0...v0.2.1) (2026-03-18)
+
+### 🧹 Chores
+
+* update .gitignore to include all githooks ([76fc8a8](https://github.com/stocka-app/stocka-server/commit/76fc8a8b977bdb0312b66a60411f57a399cd4332))
+
 ## [0.2.0](https://github.com/stocka-app/stocka-server/compare/v0.1.0...v0.2.0) (2026-03-18)
 
 ### ✨ Features
