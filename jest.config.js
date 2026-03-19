@@ -64,9 +64,6 @@ module.exports = {
     '!src/bounded-contexts/user/account/session/infrastructure/mappers/session.mapper.ts',
     '!src/bounded-contexts/user/account/session/infrastructure/repositories/typeorm-session.repository.ts',
 
-    // ── Passport OAuth strategies (integration scope — require Passport internals) ──
-    '!src/**/infrastructure/strategies/**',
-
     // ── OAuth redirect-only controllers (no business logic, guard-driven) ─
     '!src/**/infrastructure/controllers/google-authentication/**',
     '!src/**/infrastructure/controllers/facebook-authentication/**',

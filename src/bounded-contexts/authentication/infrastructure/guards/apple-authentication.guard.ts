@@ -22,7 +22,7 @@ export class AppleAuthenticationGuard extends AuthGuard('apple') {
 
     if (!isEnabled) {
       throw new NotImplementedException(
-        'Apple Sign-In is not available. See ADR-001 for details. Use Google, Facebook, or Microsoft instead.',
+        'Apple Sign-In is not available. See ADR-001 for details. Use Google or Microsoft instead.',
       );
     }
 
