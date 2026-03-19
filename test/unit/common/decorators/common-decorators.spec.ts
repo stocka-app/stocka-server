@@ -4,6 +4,8 @@ import { RATE_LIMIT_KEY, RateLimit } from '@common/decorators/rate-limit.decorat
 import { ClientIp } from '@common/decorators/client-ip.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { IsCountryCode } from '@common/decorators/country-code.decorator';
+import { RequireAction, REQUIRE_ACTION_KEY } from '@common/decorators/require-action.decorator';
+import { SystemAction } from '@shared/domain/policy/actions-catalog';
 
 /** Extract the factory function stored by createParamDecorator */
 function extractParamFactory(
@@ -116,7 +118,12 @@ describe('CurrentUser decorator', () => {
     );
   });
 
-  const mockUser: JwtPayload = { uuid: 'user-uuid-123', email: 'user@test.com' };
+  const mockUser: JwtPayload = {
+    uuid: 'user-uuid-123',
+    email: 'user@test.com',
+    tenantId: null,
+    role: null,
+  };
 
   describe('Given a request with a valid user in the JWT payload', () => {
     describe('When called without a data key', () => {
@@ -197,7 +204,9 @@ describe('IsCountryCode decorator', () => {
     country!: unknown;
   }
 
-  async function runValidation(value: unknown): Promise<import('class-validator').ValidationError[]> {
+  async function runValidation(
+    value: unknown,
+  ): Promise<import('class-validator').ValidationError[]> {
     const { validate } = await import('class-validator');
     const dto = new CountryDto();
     dto.country = value;
@@ -237,6 +246,39 @@ describe('IsCountryCode decorator', () => {
       it('Then it fails validation for null', async () => {
         const errors = await runValidation(null);
         expect(errors).toHaveLength(1);
+      });
+    });
+  });
+});
+
+// ─── RequireAction decorator ─────────────────────────────────────────────────
+describe('RequireAction decorator', () => {
+  describe('Given a SystemAction value', () => {
+    describe('When applied to a controller method', () => {
+      it('Then it sets the REQUIRE_ACTION_KEY metadata to the provided action', () => {
+        class TestController {
+          @RequireAction(SystemAction.STORAGE_CREATE)
+          createStorage(): void {}
+        }
+
+        const metadata = Reflect.getMetadata(
+          REQUIRE_ACTION_KEY,
+          TestController.prototype.createStorage,
+        );
+        expect(metadata).toBe(SystemAction.STORAGE_CREATE);
+      });
+
+      it('Then different actions produce different metadata', () => {
+        class TestController {
+          @RequireAction(SystemAction.PRODUCT_READ)
+          readProducts(): void {}
+        }
+
+        const metadata = Reflect.getMetadata(
+          REQUIRE_ACTION_KEY,
+          TestController.prototype.readProducts,
+        );
+        expect(metadata).toBe(SystemAction.PRODUCT_READ);
       });
     });
   });
