@@ -1,5 +1,6 @@
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { AccountStatusVO } from '@user/account/domain/value-objects/account-status.vo';
 import { SocialAccountModel } from '@user/domain/models/social-account.model';
 import { UserCreatedEvent } from '@user/domain/events/user-created.event';
 
@@ -292,6 +293,28 @@ describe('CredentialAccountModel', () => {
 
         expect(credential.isEmailVerified()).toBe(true);
         expect(credential.emailVerifiedAt).toEqual(verifiedDate);
+      });
+    });
+
+    describe('When status getter is accessed', () => {
+      it('Then it returns an AccountStatusVO instance', () => {
+        const credential = CredentialAccountModel.reconstitute({
+          id: 1,
+          uuid: '660f9511-f30c-4ae5-b827-557766551111',
+          accountId: 1,
+          email: 'test@example.com',
+          passwordHash: 'hash',
+          status: 'active',
+          emailVerifiedAt: new Date(),
+          verificationBlockedUntil: null,
+          createdWith: 'email',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          archivedAt: null,
+        });
+
+        expect(credential.status).toBeInstanceOf(AccountStatusVO);
+        expect(credential.status.isActive()).toBe(true);
       });
     });
   });
