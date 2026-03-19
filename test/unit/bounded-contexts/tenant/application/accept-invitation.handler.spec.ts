@@ -229,4 +229,19 @@ describe('AcceptInvitationHandler', () => {
       });
     });
   });
+
+  describe('Given the persist call throws a DomainException inside the transaction', () => {
+    beforeEach(() => {
+      memberContract.persist.mockRejectedValue(new InvitationNotFoundError());
+    });
+
+    describe('When the handler executes', () => {
+      it('Then it rolls back the UoW and returns err with the DomainException', async () => {
+        const result = await handler.execute(VALID_COMMAND);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvitationNotFoundError);
+        expect(uow.rollback).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
 });
