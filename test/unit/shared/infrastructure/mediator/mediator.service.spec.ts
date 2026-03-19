@@ -93,4 +93,40 @@ describe('MediatorService', () => {
       });
     });
   });
+
+  describe('Given a MediatorService initialized in a context without TenantModule (e.g. isolated e2e worker)', () => {
+    let service: MediatorService;
+
+    beforeEach(() => {
+      const moduleRef = {
+        get: jest.fn().mockImplementation((token: string) => {
+          if (token === INJECTION_TOKENS.USER_FACADE) return {};
+          throw new Error('Nest could not find TenantFacade element');
+        }),
+      } as unknown as jest.Mocked<ModuleRef>;
+      service = new MediatorService(moduleRef);
+      service.onModuleInit();
+    });
+
+    it('Then getActiveMembership returns null without crashing', async () => {
+      const result = await service.tenant.getActiveMembership('user-uuid');
+      expect(result).toBeNull();
+    });
+
+    it('Then getMembershipContext returns null without crashing', async () => {
+      const result = await service.tenant.getMembershipContext('user-uuid');
+      expect(result).toBeNull();
+    });
+
+    it('Then createTenantForUser throws a meaningful error', async () => {
+      await expect(
+        service.tenant.createTenantForUser({
+          userUUID: 'u1',
+          userId: 1,
+          name: 'T',
+          businessType: 'retail',
+        }),
+      ).rejects.toThrow('TenantFacade not available in this context');
+    });
+  });
 });
