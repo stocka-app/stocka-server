@@ -93,11 +93,16 @@ module.exports = {
     // ── @deprecated social account repo (superseded; no active DI binding) ────────
     '!src/bounded-contexts/user/infrastructure/persistence/repositories/typeorm-social-account.repository.ts',
 
-    // ── Tier infrastructure (wired in TenantModule but no tenant e2e suite yet) ──
-    // These are covered 100% by unit tests; e2e coverage will be added when tenant
-    // HTTP endpoints (RBAC, Storage BC) exercise these repos through HTTP.
+    // ── Tenant infrastructure (no tenant e2e suite yet) ────────────────────────
+    // Covered by unit tests (tenant.facade.spec, create-tenant.handler.spec, etc.)
+    // e2e coverage will be added when tenant HTTP endpoints are exercised through HTTP.
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-data-provider.ts',
+    '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant.repository.ts',
+    '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-config.repository.ts',
+    '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-member.repository.ts',
+    '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-profile.repository.ts',
+    '!src/bounded-contexts/tenant/infrastructure/http/controllers/**',
   ],
   coverageDirectory: './coverage-e2e',
   coverageReporters: ['json', 'text', 'lcov', 'html'],

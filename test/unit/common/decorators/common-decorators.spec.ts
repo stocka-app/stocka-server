@@ -3,6 +3,7 @@ import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { RATE_LIMIT_KEY, RateLimit } from '@common/decorators/rate-limit.decorator';
 import { ClientIp } from '@common/decorators/client-ip.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { IsCountryCode } from '@common/decorators/country-code.decorator';
 
 /** Extract the factory function stored by createParamDecorator */
 function extractParamFactory(
@@ -184,6 +185,58 @@ describe('RateLimit decorator', () => {
         const metadata = Reflect.getMetadata(RATE_LIMIT_KEY, TestController.prototype.verify);
         expect(metadata.progressiveBlock).toBeDefined();
         expect(metadata.progressiveBlock.thresholds).toHaveLength(1);
+      });
+    });
+  });
+});
+
+// ─── IsCountryCode decorator ──────────────────────────────────────────────────
+describe('IsCountryCode decorator', () => {
+  class CountryDto {
+    @IsCountryCode()
+    country!: unknown;
+  }
+
+  async function runValidation(value: unknown): Promise<import('class-validator').ValidationError[]> {
+    const { validate } = await import('class-validator');
+    const dto = new CountryDto();
+    dto.country = value;
+    return validate(dto);
+  }
+
+  describe('Given the validator is applied to a property', () => {
+    describe('When validate is called with a valid ISO 3166-1 alpha-2 country code', () => {
+      it('Then it passes validation', async () => {
+        const errors = await runValidation('US');
+        expect(errors).toHaveLength(0);
+      });
+
+      it('Then it passes validation for lowercase codes too', async () => {
+        const errors = await runValidation('mx');
+        expect(errors).toHaveLength(0);
+      });
+    });
+
+    describe('When validate is called with an invalid country code string', () => {
+      it('Then it fails validation and the error message contains the property name', async () => {
+        const errors = await runValidation('XX');
+        expect(errors).toHaveLength(1);
+        const messages = errors[0].constraints ?? {};
+        const message = Object.values(messages)[0];
+        expect(message).toContain('country');
+        expect(message).toContain('ISO 3166-1 alpha-2');
+      });
+    });
+
+    describe('When validate is called with a non-string value', () => {
+      it('Then it fails validation for a number', async () => {
+        const errors = await runValidation(123);
+        expect(errors).toHaveLength(1);
+      });
+
+      it('Then it fails validation for null', async () => {
+        const errors = await runValidation(null);
+        expect(errors).toHaveLength(1);
       });
     });
   });

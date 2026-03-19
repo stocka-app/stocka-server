@@ -113,6 +113,25 @@ describe('CreateTenantHandler', () => {
     handler = module.get<CreateTenantHandler>(CreateTenantHandler);
   });
 
+  describe('Given the user does not exist', () => {
+    beforeEach(() => {
+      mediator.user.findByUUID.mockResolvedValue(null);
+    });
+
+    describe('When the handler executes', () => {
+      it('Then it returns an err with NotFoundException', async () => {
+        const result = await handler.execute(VALID_COMMAND);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr().message).toContain('User not found');
+      });
+
+      it('Then the UoW transaction is never opened', async () => {
+        await handler.execute(VALID_COMMAND);
+        expect(uow.begin).not.toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('Given valid onboarding data and no existing membership', () => {
     describe('When the handler executes', () => {
       it('Then the result is ok with a tenantUUID', async () => {

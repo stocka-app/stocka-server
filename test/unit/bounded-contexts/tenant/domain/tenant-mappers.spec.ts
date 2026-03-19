@@ -2,6 +2,7 @@ import { TenantMapper } from '@tenant/infrastructure/mappers/tenant.mapper';
 import { TenantMemberMapper } from '@tenant/infrastructure/mappers/tenant-member.mapper';
 import { TenantProfileMapper } from '@tenant/infrastructure/mappers/tenant-profile.mapper';
 import { TenantConfigMapper } from '@tenant/infrastructure/mappers/tenant-config.mapper';
+import { createEmptySnapshot } from '@shared/domain/policy/capability-snapshot';
 import { TenantEntity } from '@tenant/infrastructure/entities/tenant.entity';
 import { TenantMemberEntity } from '@tenant/infrastructure/entities/tenant-member.entity';
 import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';
@@ -212,6 +213,34 @@ describe('TenantConfigMapper', () => {
         expect(model.memberCount).toBe(1);
         expect(model.capabilities).toBeNull();
         expect(model.capabilitiesBuiltAt).toBeNull();
+      });
+    });
+
+    describe('When toDomain is called with a valid capabilities snapshot', () => {
+      it('Then the capabilities are preserved on the model', () => {
+        const validCaps = createEmptySnapshot();
+        const entity = {
+          id: 5,
+          uuid: '550e8400-e29b-41d4-a716-446655440005',
+          tenantId: 3,
+          tier: 'FREE',
+          maxWarehouses: 0,
+          maxUsers: 1,
+          maxProducts: 100,
+          notificationsEnabled: true,
+          productCount: 0,
+          storageCount: 0,
+          memberCount: 1,
+          capabilities: validCaps,
+          capabilitiesBuiltAt: new Date('2024-01-01'),
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          archivedAt: null,
+        } as unknown as TenantConfigEntity;
+
+        const model = TenantConfigMapper.toDomain(entity);
+        expect(model.capabilities).not.toBeNull();
+        expect(model.capabilities).toEqual(validCaps);
       });
     });
 
