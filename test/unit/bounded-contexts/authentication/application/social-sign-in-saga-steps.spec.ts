@@ -106,6 +106,7 @@ describe('GenerateSocialTokensStep', () => {
   let step: GenerateSocialTokensStep;
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
+  let mediator: { tenant: { getActiveMembership: jest.Mock } };
 
   beforeEach(async () => {
     jwtService = { signAsync: jest.fn().mockResolvedValue('signed-token') };
@@ -119,12 +120,18 @@ describe('GenerateSocialTokensStep', () => {
       }),
       getOrThrow: jest.fn().mockReturnValue('secret'),
     };
+    mediator = {
+      tenant: {
+        getActiveMembership: jest.fn().mockResolvedValue(null),
+      },
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GenerateSocialTokensStep,
         { provide: JwtService, useValue: jwtService },
         { provide: ConfigService, useValue: configService },
+        { provide: MediatorService, useValue: mediator },
       ],
     }).compile();
 
@@ -196,6 +203,7 @@ describe('GenerateSocialTokensStep', () => {
             GenerateSocialTokensStep,
             { provide: JwtService, useValue: jwtService },
             { provide: ConfigService, useValue: configWithUndefined },
+            { provide: MediatorService, useValue: mediator },
           ],
         }).compile();
 

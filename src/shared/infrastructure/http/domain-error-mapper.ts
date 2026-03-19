@@ -36,6 +36,10 @@ export const STATUS_MAP: Record<string, number> = {
   MEMBER_ALREADY_EXISTS: HttpStatus.CONFLICT,
   CANNOT_REMOVE_LAST_OWNER: HttpStatus.UNPROCESSABLE_ENTITY,
   TENANT_LIMIT_EXCEEDED: HttpStatus.UNPROCESSABLE_ENTITY,
+  // RBAC / Policy
+  FEATURE_NOT_IN_TIER: HttpStatus.FORBIDDEN,
+  ACTION_NOT_ALLOWED: HttpStatus.FORBIDDEN,
+  TIER_LIMIT_REACHED: HttpStatus.FORBIDDEN,
 };
 
 export function mapDomainErrorToHttp(error: DomainException): HttpException {

@@ -4,10 +4,12 @@ import { Request } from 'express';
 export interface JwtPayload {
   uuid: string;
   email: string;
+  tenantId: string | null;
+  role: string | null;
 }
 
 export const CurrentUser = createParamDecorator(
-  (data: keyof JwtPayload | undefined, ctx: ExecutionContext): JwtPayload | string => {
+  (data: keyof JwtPayload | undefined, ctx: ExecutionContext): JwtPayload | string | null => {
     const request = ctx.switchToHttp().getRequest<Request>();
     const user = request.user as JwtPayload | undefined;
 

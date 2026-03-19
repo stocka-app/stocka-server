@@ -151,6 +151,7 @@ describe('GenerateRefreshTokensStep', () => {
   let step: GenerateRefreshTokensStep;
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
+  let mediator: { tenant: { getActiveMembership: jest.Mock } };
 
   beforeEach(async () => {
     jwtService = { signAsync: jest.fn().mockResolvedValue('signed-token') };
@@ -170,12 +171,18 @@ describe('GenerateRefreshTokensStep', () => {
         return map[key];
       }),
     };
+    mediator = {
+      tenant: {
+        getActiveMembership: jest.fn().mockResolvedValue(null),
+      },
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GenerateRefreshTokensStep,
         { provide: JwtService, useValue: jwtService },
         { provide: ConfigService, useValue: configService },
+        { provide: MediatorService, useValue: mediator },
       ],
     }).compile();
 
@@ -242,6 +249,7 @@ describe('GenerateRefreshTokensStep', () => {
             GenerateRefreshTokensStep,
             { provide: JwtService, useValue: jwtService },
             { provide: ConfigService, useValue: configWithUndefined },
+            { provide: MediatorService, useValue: mediator },
           ],
         }).compile();
 

@@ -172,6 +172,7 @@ describe('GenerateSignInTokensStep', () => {
   let step: GenerateSignInTokensStep;
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
+  let mediator: { tenant: { getActiveMembership: jest.Mock } };
 
   beforeEach(async () => {
     jwtService = { signAsync: jest.fn().mockResolvedValue('jwt-token') };
@@ -185,12 +186,18 @@ describe('GenerateSignInTokensStep', () => {
       }),
       getOrThrow: jest.fn().mockReturnValue('jwt-secret'),
     };
+    mediator = {
+      tenant: {
+        getActiveMembership: jest.fn().mockResolvedValue(null),
+      },
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GenerateSignInTokensStep,
         { provide: JwtService, useValue: jwtService },
         { provide: ConfigService, useValue: configService },
+        { provide: MediatorService, useValue: mediator },
       ],
     }).compile();
 
@@ -251,6 +258,7 @@ describe('GenerateSignInTokensStep', () => {
             GenerateSignInTokensStep,
             { provide: JwtService, useValue: jwtService },
             { provide: ConfigService, useValue: configWithUndefined },
+            { provide: MediatorService, useValue: mediator },
           ],
         }).compile();
 
@@ -266,6 +274,63 @@ describe('GenerateSignInTokensStep', () => {
         expect(jwtService.signAsync).toHaveBeenCalledWith(
           expect.any(Object),
           expect.objectContaining({ expiresIn: '15m' }),
+        );
+      });
+    });
+  });
+
+  describe('Given a user who belongs to a tenant', () => {
+    beforeEach(() => {
+      mediator.tenant.getActiveMembership.mockResolvedValue({
+        tenantUUID: 'tenant-uuid-001',
+        role: 'OWNER',
+      });
+    });
+
+    describe('When execute() is called', () => {
+      it('Then the JWT payload includes tenantId and role from the membership', async () => {
+        const ctx: SignInSagaContext = {
+          emailOrUsername: 'test@example.com',
+          password: 'Password1',
+          user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
+        };
+        await step.execute(ctx);
+        expect(jwtService.signAsync).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sub: MOCK_USER.uuid,
+            email: MOCK_CREDENTIAL.email,
+            tenantId: 'tenant-uuid-001',
+            role: 'OWNER',
+          }),
+          expect.any(Object),
+        );
+      });
+    });
+  });
+
+  describe('Given a user who does not belong to any tenant', () => {
+    beforeEach(() => {
+      mediator.tenant.getActiveMembership.mockResolvedValue(null);
+    });
+
+    describe('When execute() is called', () => {
+      it('Then the JWT payload includes tenantId and role as null', async () => {
+        const ctx: SignInSagaContext = {
+          emailOrUsername: 'test@example.com',
+          password: 'Password1',
+          user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
+        };
+        await step.execute(ctx);
+        expect(jwtService.signAsync).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sub: MOCK_USER.uuid,
+            email: MOCK_CREDENTIAL.email,
+            tenantId: null,
+            role: null,
+          }),
+          expect.any(Object),
         );
       });
     });

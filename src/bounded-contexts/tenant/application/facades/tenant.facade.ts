@@ -3,9 +3,11 @@ import { CommandBus } from '@nestjs/cqrs';
 import {
   ITenantFacade,
   CreateTenantFacadeProps,
+  TenantMembershipContext,
 } from '@tenant/domain/contracts/tenant-facade.contract';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
+import { ITenantConfigContract } from '@tenant/domain/contracts/tenant-config.contract';
 import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { CreateTenantResult } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
@@ -17,6 +19,8 @@ export class TenantFacade implements ITenantFacade {
     private readonly memberContract: ITenantMemberContract,
     @Inject(INJECTION_TOKENS.TENANT_CONTRACT)
     private readonly tenantContract: ITenantContract,
+    @Inject(INJECTION_TOKENS.TENANT_CONFIG_CONTRACT)
+    private readonly configContract: ITenantConfigContract,
     private readonly commandBus: CommandBus,
   ) {}
 
@@ -30,6 +34,29 @@ export class TenantFacade implements ITenantFacade {
     if (!tenant) return null;
 
     return { tenantUUID: tenant.uuid, role: member.role.toString() };
+  }
+
+  async getMembershipContext(userUUID: string): Promise<TenantMembershipContext | null> {
+    const member = await this.memberContract.findActiveByUserUUID(userUUID);
+    if (!member || !member.isActive()) return null;
+
+    const tenant = await this.tenantContract.findById(member.tenantId);
+    if (!tenant) return null;
+
+    const config = await this.configContract.findByTenantId(member.tenantId);
+    if (!config) return null;
+
+    return {
+      tenantUUID: tenant.uuid,
+      role: member.role.toString(),
+      tenantStatus: tenant.status,
+      tier: config.tier.toString(),
+      usageCounts: {
+        storageCount: config.storageCount,
+        memberCount: config.memberCount,
+        productCount: config.productCount,
+      },
+    };
   }
 
   async createTenantForUser(props: CreateTenantFacadeProps): Promise<{ tenantUUID: string }> {

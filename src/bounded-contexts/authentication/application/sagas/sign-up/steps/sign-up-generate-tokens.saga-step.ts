@@ -19,7 +19,7 @@ export class GenerateTokensStep implements ISagaStepHandler<SignUpSagaContext> {
     if (!ctx.credential)
       throw new Error('GenerateTokensStep: ctx.credential not set by prior step');
 
-    const payload = { sub: user.uuid, email: ctx.credential.email };
+    const payload = { sub: user.uuid, email: ctx.credential.email, tenantId: null, role: null };
 
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
       '15m') as StringValue;

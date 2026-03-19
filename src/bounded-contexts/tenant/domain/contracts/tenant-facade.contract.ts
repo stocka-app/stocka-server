@@ -7,7 +7,20 @@ export interface CreateTenantFacadeProps {
   timezone?: string;
 }
 
+export interface TenantMembershipContext {
+  tenantUUID: string;
+  role: string;
+  tenantStatus: string;
+  tier: string;
+  usageCounts: {
+    storageCount: number;
+    memberCount: number;
+    productCount: number;
+  };
+}
+
 export interface ITenantFacade {
   getActiveMembership(userUUID: string): Promise<{ tenantUUID: string; role: string } | null>;
+  getMembershipContext(userUUID: string): Promise<TenantMembershipContext | null>;
   createTenantForUser(props: CreateTenantFacadeProps): Promise<{ tenantUUID: string }>;
 }
