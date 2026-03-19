@@ -16,12 +16,11 @@ import type { SocialProfile } from '@authentication/infrastructure/strategies/go
  */
 function buildConfigService(overrides: Record<string, string> = {}): ConfigService {
   return {
-    get: jest.fn(<T>(key: string, defaultValue?: T): T | undefined =>
-      (overrides[key] as T) ?? defaultValue,
+    get: jest.fn(
+      <T>(key: string, defaultValue?: T): T | undefined => (overrides[key] as T) ?? defaultValue,
     ),
     getOrThrow: jest.fn(<T>(key: string): T => {
-      if (!(key in overrides))
-        throw new TypeError(`Configuration key "${key}" does not exist`);
+      if (!(key in overrides)) throw new TypeError(`Configuration key "${key}" does not exist`);
       return overrides[key] as T;
     }),
   } as unknown as ConfigService;
@@ -354,9 +353,7 @@ describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
 
   beforeEach(() => {
-    strategy = new JwtStrategy(
-      buildConfigService({ JWT_ACCESS_SECRET: 'test-secret' }),
-    );
+    strategy = new JwtStrategy(buildConfigService({ JWT_ACCESS_SECRET: 'test-secret' }));
   });
 
   describe('When validate() receives a complete JWT payload', () => {

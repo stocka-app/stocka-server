@@ -79,7 +79,8 @@ describe('Invitation flow (e2e)', () => {
     ownerToken = await signIn(app, OWNER_EMAIL);
 
     // Upgrade tenant to STARTER so invite-member action is permitted
-    await dataSource.query(`
+    await dataSource.query(
+      `
       UPDATE tenant_config tc
       SET tier = 'STARTER', max_users = 5
       FROM tenant_members tm
@@ -89,7 +90,9 @@ describe('Invitation flow (e2e)', () => {
         AND tm.role = 'OWNER'
         AND tm.archived_at IS NULL
         AND LOWER(ca.email) = LOWER($1)
-    `, [OWNER_EMAIL]);
+    `,
+      [OWNER_EMAIL],
+    );
 
     // Sign in the invitee (tenantId = null — they have no tenant yet)
     inviteeToken = await signIn(app, INVITEE_EMAIL);

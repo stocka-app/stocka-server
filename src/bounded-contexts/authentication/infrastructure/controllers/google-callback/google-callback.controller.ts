@@ -8,6 +8,11 @@ import { SocialSignInCommand } from '@authentication/application/commands/social
 import { SocialSignInResult } from '@authentication/application/types/authentication-result.types';
 import { SocialProfile } from '@authentication/infrastructure/strategies/google.strategy';
 import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
+import {
+  POPUP_OAUTH_MODE_COOKIE,
+  POPUP_OAUTH_MODE_VALUE,
+  buildPopupHtmlResponse,
+} from '@authentication/infrastructure/helpers/popup-html.helper';
 
 @ApiTags('Authentication')
 @Controller('authentication')
@@ -38,7 +43,13 @@ export class GoogleCallbackController {
 
     setRefreshCookie(res, result.refreshToken);
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    res.redirect(`${frontendUrl}/auth/callback?accessToken=${result.accessToken}`);
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') as string;
+
+    if (req.cookies?.[POPUP_OAUTH_MODE_COOKIE] === POPUP_OAUTH_MODE_VALUE) {
+      res.clearCookie(POPUP_OAUTH_MODE_COOKIE, { path: '/api/authentication' });
+      res.send(buildPopupHtmlResponse(result.accessToken, frontendUrl));
+    } else {
+      res.redirect(`${frontendUrl}/auth/callback?accessToken=${result.accessToken}`);
+    }
   }
 }
