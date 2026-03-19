@@ -12,6 +12,7 @@ import { typeOrmAsyncConfig } from '@core/config/database/typeorm.config';
 import { UserModule } from '@user/infrastructure/user.module';
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { TenantModule } from '@tenant/tenant.module';
+import { StorageModule } from '@storage/storage.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
@@ -53,6 +54,7 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     UserModule,
     AuthenticationModule,
     TenantModule,
+    StorageModule,
     MediatorModule,
     CapabilityModule,
   ],
