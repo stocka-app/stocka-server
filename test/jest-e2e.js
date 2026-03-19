@@ -95,16 +95,16 @@ module.exports = {
     // ── @deprecated social account repo (superseded; no active DI binding) ────────
     '!src/bounded-contexts/user/infrastructure/persistence/repositories/typeorm-social-account.repository.ts',
 
-    // ── Tenant infrastructure (no tenant e2e suite yet) ────────────────────────
-    // Covered by unit tests (tenant.facade.spec, create-tenant.handler.spec, etc.)
-    // e2e coverage will be added when tenant HTTP endpoints are exercised through HTTP.
+    // ── Tenant infrastructure ─────────────────────────────────────────────────
+    // Tier-plan and tier-data-provider not exercised by any e2e flow — excluded.
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-data-provider.ts',
+    // Entity repositories excluded — covered by unit tests via mocks; e2e focuses on controllers.
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-config.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-member.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-profile.repository.ts',
-    '!src/bounded-contexts/tenant/infrastructure/http/controllers/**',
+    // All 7 tenant controllers are exercised by invitation.e2e-spec.ts — no blanket exclusion.
 
     // ── Storage infrastructure (no storage e2e suite yet) ────────────────────
     '!src/bounded-contexts/storage/infrastructure/repositories/typeorm-storage.repository.ts',

@@ -1,13 +1,24 @@
 import { UserMapper } from '@user/infrastructure/persistence/mappers/user.mapper';
 import { SocialAccountMapper } from '@user/infrastructure/persistence/mappers/social-account.mapper';
+import { CredentialAccountMapper } from '@user/account/infrastructure/mappers/credential-account.mapper';
+import { AccountMapper } from '@user/account/infrastructure/mappers/account.mapper';
+import { SocialAccountMapper as AccountSocialAccountMapper } from '@user/account/infrastructure/mappers/social-account.mapper';
+import { ProfileMapper } from '@user/profile/infrastructure/mappers/profile.mapper';
+import { PersonalProfileMapper } from '@user/profile/infrastructure/mappers/personal-profile.mapper';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
+import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 import { SocialAccountEntity } from '@user/account/infrastructure/entities/social-account.entity';
+import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
+import { AccountEntity } from '@user/account/infrastructure/entities/account.entity';
+import { ProfileEntity } from '@user/profile/infrastructure/entities/profile.entity';
+import { PersonalProfileEntity } from '@user/profile/infrastructure/entities/personal-profile.entity';
 
 // ── Builders ───────────────────────────────────────────────────────────────────
 
 const USER_UUID = '550e8400-e29b-41d4-a716-446655440010';
+const CRED_UUID = '550e8400-e29b-41d4-a716-446655440012';
 const SA_UUID = '550e8400-e29b-41d4-a716-446655440011';
 
 function buildUserEntity(overrides?: Partial<UserEntity>): UserEntity {
@@ -125,6 +136,265 @@ describe('SocialAccountMapper', () => {
 
         expect(model.provider).toBe('facebook');
         expect(model.providerId).toBe('fb-123');
+      });
+    });
+  });
+});
+
+// ── CredentialAccountMapper ────────────────────────────────────────────────────
+
+function buildCredentialAccountEntity(
+  overrides?: Partial<CredentialAccountEntity>,
+): CredentialAccountEntity {
+  const e = new CredentialAccountEntity();
+  e.id = 5;
+  e.uuid = CRED_UUID;
+  e.accountId = 1;
+  e.email = 'cred@example.com';
+  e.passwordHash = 'hashed';
+  e.status = 'active';
+  e.emailVerifiedAt = new Date('2024-03-01');
+  e.verificationBlockedUntil = null;
+  e.createdWith = 'email';
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-02-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
+describe('CredentialAccountMapper', () => {
+  describe('Given a CredentialAccountEntity', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a CredentialAccountModel with all fields mapped', () => {
+        const entity = buildCredentialAccountEntity();
+        const model = CredentialAccountMapper.toDomain(entity);
+
+        expect(model).toBeInstanceOf(CredentialAccountModel);
+        expect(model.id).toBe(entity.id);
+        expect(model.uuid).toBe(entity.uuid);
+        expect(model.email).toBe(entity.email);
+        expect(model.passwordHash).toBe(entity.passwordHash);
+        expect(model.emailVerifiedAt).toEqual(entity.emailVerifiedAt);
+      });
+    });
+  });
+
+  describe('Given a CredentialAccountModel with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then the entity includes the id field', () => {
+        const entity = buildCredentialAccountEntity();
+        const model = CredentialAccountMapper.toDomain(entity);
+        const result = CredentialAccountMapper.toEntity(model);
+
+        expect(result.id).toBe(5);
+        expect(result.email).toBe('cred@example.com');
+        expect(result.status).toBe('active');
+      });
+    });
+  });
+
+  describe('Given a new CredentialAccountModel without an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then the id field is omitted from the result', () => {
+        const model = CredentialAccountModel.create({
+          accountId: 1,
+          email: 'new@example.com',
+          passwordHash: 'hash',
+          createdWith: 'email',
+        });
+        const result = CredentialAccountMapper.toEntity(model);
+
+        expect(result.id).toBeUndefined();
+        expect(result.email).toBe('new@example.com');
+      });
+    });
+  });
+});
+
+// ── AccountMapper (account sub-BC) ────────────────────────────────────────────
+
+function buildAccountEntity(overrides?: Partial<AccountEntity>): AccountEntity {
+  const e = new AccountEntity();
+  e.id = 3;
+  e.uuid = '550e8400-e29b-41d4-a716-446655440013';
+  e.userId = 1;
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-02-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
+describe('AccountMapper', () => {
+  describe('Given an AccountEntity', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns an AccountAggregate with all fields mapped', () => {
+        const entity = buildAccountEntity();
+        const model = AccountMapper.toDomain(entity);
+
+        expect(model.id).toBe(3);
+        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440013');
+        expect(model.userId).toBe(1);
+        expect(model.archivedAt).toBeNull();
+      });
+    });
+  });
+
+  describe('Given an AccountAggregate with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then the entity includes uuid and userId', () => {
+        const entity = buildAccountEntity();
+        const model = AccountMapper.toDomain(entity);
+        const result = AccountMapper.toEntity(model);
+
+        expect(result.uuid).toBe('550e8400-e29b-41d4-a716-446655440013');
+        expect(result.userId).toBe(1);
+      });
+    });
+  });
+});
+
+// ── SocialAccountMapper (account sub-BC) ──────────────────────────────────────
+
+function buildAccountSocialAccountEntity(
+  overrides?: Partial<SocialAccountEntity>,
+): SocialAccountEntity {
+  const e = new SocialAccountEntity();
+  e.id = 20;
+  e.uuid = '550e8400-e29b-41d4-a716-446655440014';
+  e.accountId = 3;
+  e.provider = 'google';
+  e.providerId = 'google-123';
+  e.providerEmail = 'social@gmail.com';
+  e.linkedAt = new Date('2024-03-01');
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-02-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
+describe('AccountSocialAccountMapper', () => {
+  describe('Given a SocialAccountEntity', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a SocialAccountModel with all fields mapped', () => {
+        const entity = buildAccountSocialAccountEntity();
+        const model = AccountSocialAccountMapper.toDomain(entity);
+
+        expect(model).toBeInstanceOf(SocialAccountModel);
+        expect(model.id).toBe(20);
+        expect(model.accountId).toBe(3);
+        expect(model.provider).toBe('google');
+        expect(model.providerId).toBe('google-123');
+        expect(model.providerEmail).toBe('social@gmail.com');
+      });
+    });
+  });
+
+  describe('Given a SocialAccountModel with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then the entity includes all fields', () => {
+        const entity = buildAccountSocialAccountEntity();
+        const model = AccountSocialAccountMapper.toDomain(entity);
+        const result = AccountSocialAccountMapper.toEntity(model);
+
+        expect(result.provider).toBe('google');
+        expect(result.providerId).toBe('google-123');
+        expect(result.accountId).toBe(3);
+      });
+    });
+  });
+});
+
+// ── ProfileMapper ─────────────────────────────────────────────────────────────
+
+function buildProfileEntity(overrides?: Partial<ProfileEntity>): ProfileEntity {
+  const e = new ProfileEntity();
+  e.id = 8;
+  e.uuid = '550e8400-e29b-41d4-a716-446655440015';
+  e.userId = 1;
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-02-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
+describe('ProfileMapper', () => {
+  describe('Given a ProfileEntity', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a ProfileAggregate with all fields mapped', () => {
+        const entity = buildProfileEntity();
+        const model = ProfileMapper.toDomain(entity);
+
+        expect(model.id).toBe(8);
+        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440015');
+        expect(model.userId).toBe(1);
+        expect(model.archivedAt).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a ProfileAggregate with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then the entity includes uuid and userId', () => {
+        const entity = buildProfileEntity();
+        const model = ProfileMapper.toDomain(entity);
+        const result = ProfileMapper.toEntity(model);
+
+        expect(result.uuid).toBe('550e8400-e29b-41d4-a716-446655440015');
+        expect(result.userId).toBe(1);
+      });
+    });
+  });
+});
+
+// ── PersonalProfileMapper ─────────────────────────────────────────────────────
+
+function buildPersonalProfileEntity(
+  overrides?: Partial<PersonalProfileEntity>,
+): PersonalProfileEntity {
+  const e = new PersonalProfileEntity();
+  e.id = 11;
+  e.uuid = '550e8400-e29b-41d4-a716-446655440016';
+  e.profileId = 8;
+  e.username = 'johndoe';
+  e.displayName = 'John Doe';
+  e.avatarUrl = null;
+  e.locale = 'es';
+  e.timezone = 'America/Mexico_City';
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-02-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
+describe('PersonalProfileMapper', () => {
+  describe('Given a PersonalProfileEntity', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a PersonalProfileModel with all fields mapped', () => {
+        const entity = buildPersonalProfileEntity();
+        const model = PersonalProfileMapper.toDomain(entity);
+
+        expect(model.id).toBe(11);
+        expect(model.profileId).toBe(8);
+        expect(model.username).toBe('johndoe');
+        expect(model.displayName).toBe('John Doe');
+        expect(model.avatarUrl).toBeNull();
+        expect(model.locale).toBe('es');
+        expect(model.timezone).toBe('America/Mexico_City');
+      });
+    });
+  });
+
+  describe('Given a PersonalProfileModel with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then the entity includes all profile fields', () => {
+        const entity = buildPersonalProfileEntity();
+        const model = PersonalProfileMapper.toDomain(entity);
+        const result = PersonalProfileMapper.toEntity(model);
+
+        expect(result.username).toBe('johndoe');
+        expect(result.profileId).toBe(8);
+        expect(result.locale).toBe('es');
+        expect(result.timezone).toBe('America/Mexico_City');
       });
     });
   });

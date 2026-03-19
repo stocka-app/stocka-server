@@ -24,9 +24,11 @@ import { DataSource } from 'typeorm';
 
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
+import { TenantModule } from '@tenant/tenant.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
+import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
 import databaseConfig from '@core/config/database/database.config';
 import { validate } from '@core/config/environment/env.validation';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -99,6 +101,9 @@ async function createWorkerSchema(workerId: number): Promise<void> {
   }).compile();
   const bootstrapDs = bootstrapModuleRef.get(DataSource);
   await bootstrapDs.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+  // Ensure uuid-ossp is installed in public schema (survives per-worker dropSchema).
+  // TenantInvitationEntity uses @PrimaryGeneratedColumn('uuid') which requires uuid_generate_v4().
+  await bootstrapDs.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public`);
   await bootstrapDs.destroy();
 
   const moduleRef = await Test.createTestingModule({
@@ -123,13 +128,17 @@ async function createWorkerSchema(workerId: number): Promise<void> {
         logging: false,
         extra: {
           max: 1,
-          options: `-c search_path=${schemaName}`,
+          // Include public so uuid_generate_v4() (uuid-ossp in public schema) is found during
+          // CREATE TABLE DDL emitted by @PrimaryGeneratedColumn('uuid') on TenantInvitationEntity.
+          options: `-c search_path=${schemaName},public`,
         },
       }),
       EmailModule,
       UnitOfWorkModule,
       UserModule,
       AuthenticationModule,
+      TenantModule,
+      CapabilityModule,
       MediatorModule,
     ],
   })

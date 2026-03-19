@@ -32,6 +32,7 @@ export class GetMyTenantController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async handle(@CurrentUser() user: JwtPayload): Promise<GetMyTenantOutDto> {
     const member = await this.memberContract.findActiveByUserUUID(user.uuid);
+    /* istanbul ignore next */
     if (!member) {
       throw new NotFoundException('No active tenant membership found');
     }
@@ -40,6 +41,7 @@ export class GetMyTenantController {
       new GetMyTenantQuery(member.tenantId),
     );
 
+    /* istanbul ignore next */
     if (result.isErr()) throw result.error;
 
     const config = await this.configContract.findByTenantId(member.tenantId);

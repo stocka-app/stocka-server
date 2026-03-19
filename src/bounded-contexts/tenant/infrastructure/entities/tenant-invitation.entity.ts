@@ -1,9 +1,17 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index } from 'typeorm';
+import { Entity, Column, PrimaryColumn, CreateDateColumn, BeforeInsert, Index } from 'typeorm';
+import { v7 as uuidV7 } from 'uuid';
 
 @Entity('tenant_invitations')
 export class TenantInvitationEntity {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryColumn({ type: 'varchar', length: 36 })
   id!: string;
+
+  @BeforeInsert()
+  generateId(): void {
+    if (!this.id) {
+      this.id = uuidV7();
+    }
+  }
 
   @Column({ name: 'tenant_id', type: 'int' })
   tenantId!: number;
