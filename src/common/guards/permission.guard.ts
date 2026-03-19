@@ -10,7 +10,10 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { REQUIRE_ACTION_KEY } from '@common/decorators/require-action.decorator';
 import { JwtPayload } from '@common/decorators/current-user.decorator';
-import { ITenantFacade } from '@tenant/domain/contracts/tenant-facade.contract';
+import {
+  ITenantFacade,
+  TenantMembershipContext,
+} from '@tenant/domain/contracts/tenant-facade.contract';
 import { CapabilityResolver } from '@shared/domain/policy/capability.resolver';
 import { SystemAction } from '@shared/domain/policy/actions-catalog';
 import { TierEnum } from '@shared/domain/policy/tier.enum';
@@ -35,14 +38,17 @@ export class PermissionGuard implements CanActivate {
 
     if (!action) return true;
 
-    const request = context.switchToHttp().getRequest<Request>();
+    const request = context.switchToHttp().getRequest<
+      Request & { membershipContext?: TenantMembershipContext }
+    >();
     const user = request.user as JwtPayload | undefined;
 
     if (!user) {
       throw new HttpException({ error: 'NOT_AUTHENTICATED' }, HttpStatus.FORBIDDEN);
     }
 
-    const membershipContext = await this.tenantFacade.getMembershipContext(user.uuid);
+    const membershipContext =
+      request.membershipContext ?? (await this.tenantFacade.getMembershipContext(user.uuid));
 
     if (!membershipContext) {
       throw new HttpException({ error: 'MEMBERSHIP_REQUIRED' }, HttpStatus.FORBIDDEN);
