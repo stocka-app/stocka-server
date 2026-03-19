@@ -39,6 +39,7 @@ module.exports = {
     // ── Infrastructure requiring real services (e2e scope) ────────────────
     '!src/**/infrastructure/persistence/repositories/**',
     '!src/**/infrastructure/repositories/**',
+    '!src/**/infrastructure/adapters/**',
     '!src/shared/infrastructure/database/**',
     '!src/shared/infrastructure/email/providers/**',
 
@@ -75,6 +76,7 @@ module.exports = {
   coverageDirectory: './coverage',
   testEnvironment: 'node',
   moduleNameMapper: {
+    '^@storage/(.*)$': '<rootDir>/src/bounded-contexts/storage/$1',
     '^@tenant/(.*)$': '<rootDir>/src/bounded-contexts/tenant/$1',
     '^@authentication/(.*)$': '<rootDir>/src/bounded-contexts/authentication/$1',
     '^@user/(.*)$': '<rootDir>/src/bounded-contexts/user/$1',

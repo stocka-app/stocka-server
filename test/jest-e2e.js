@@ -16,6 +16,7 @@ module.exports = {
   },
   transformIgnorePatterns: ['/node_modules/(?!uuid)/'],
   moduleNameMapper: {
+    '^@storage/(.*)$': '<rootDir>/src/bounded-contexts/storage/$1',
     '^@tenant/(.*)$': '<rootDir>/src/bounded-contexts/tenant/$1',
     '^@authentication/(.*)$': '<rootDir>/src/bounded-contexts/authentication/$1',
     '^@user/(.*)$': '<rootDir>/src/bounded-contexts/user/$1',
@@ -103,6 +104,11 @@ module.exports = {
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-member.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-profile.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/http/controllers/**',
+
+    // ── Storage infrastructure (no storage e2e suite yet) ────────────────────
+    '!src/bounded-contexts/storage/infrastructure/repositories/typeorm-storage.repository.ts',
+    '!src/bounded-contexts/storage/infrastructure/adapters/tenant-capabilities.adapter.ts',
+    '!src/bounded-contexts/storage/infrastructure/http/controllers/**',
   ],
   coverageDirectory: './coverage-e2e',
   coverageReporters: ['json', 'text', 'lcov', 'html'],
