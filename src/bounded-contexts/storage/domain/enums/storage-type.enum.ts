@@ -1,0 +1,5 @@
+export enum StorageType {
+  CUSTOM_ROOM = 'CUSTOM_ROOM',
+  STORE_ROOM = 'STORE_ROOM',
+  WAREHOUSE = 'WAREHOUSE',
+}

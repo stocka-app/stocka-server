@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 
 
+## [0.3.0](https://github.com/stocka-app/stocka-server/compare/v0.2.1...v0.3.0) (2026-03-19)
+
+### ✨ Features
+
+* **auth:** [STOC-256](https://austins-industries.atlassian.net/browse/STOC-256) — extend JWT payload with tenantId and role via MediatorService ([bb1b082](https://github.com/stocka-app/stocka-server/commit/bb1b0825241b022b92e9612ec55c993ad30d3b44))
+* **auth:** [STOC-256](https://austins-industries.atlassian.net/browse/STOC-256) — include tenantId and role in all JWT token generation steps ([8ce8b85](https://github.com/stocka-app/stocka-server/commit/8ce8b8546a11c310636d1e944ee988880f28c8db))
+* **common:** [STOC-256](https://austins-industries.atlassian.net/browse/STOC-256) — add @RequireAction decorator and PermissionGuard — 7-step RBAC cascade ([e5e1f69](https://github.com/stocka-app/stocka-server/commit/e5e1f69c38ee63a505b0b2cb4531df745dc6640e))
+* **shared:** [STOC-279](https://austins-industries.atlassian.net/browse/STOC-279) — add SystemAction enum — Actions Catalog for Policy Engine ([32718b4](https://github.com/stocka-app/stocka-server/commit/32718b44bd72881715b8628c349fc390b8965a8d))
+* **tenant:** [STOC-279](https://austins-industries.atlassian.net/browse/STOC-279) — add DB-backed Policy Engine — tier plans, capabilities, snapshot ([dc8f78f](https://github.com/stocka-app/stocka-server/commit/dc8f78f9277f8ef18c05b83a41a7d94d3278a522))
+
+### 🐛 Bug Fixes
+
+* **shared:** [STOC-256](https://austins-industries.atlassian.net/browse/STOC-256) — make MediatorService graceful when TenantModule unavailable ([a7f0ec3](https://github.com/stocka-app/stocka-server/commit/a7f0ec3bca5ef8db6e64e09938fc65acd7626a4b))
+
+### ✅ Tests
+
+* **common,auth,tenant:** [STOC-256](https://austins-industries.atlassian.net/browse/STOC-256) — BDD unit tests for PermissionGuard and updated specs ([82f8141](https://github.com/stocka-app/stocka-server/commit/82f814126b8c4e4bc13e284d122a853bc5210679))
+* **shared:** [STOC-279](https://austins-industries.atlassian.net/browse/STOC-279) — add BDD unit tests for CapabilityResolver and TierPolicyConfig ([fb00f1a](https://github.com/stocka-app/stocka-server/commit/fb00f1a4106bbaaf3c5a9c7c14064f90c9d9afdc))
+* **tenant,common:** [STOC-279](https://austins-industries.atlassian.net/browse/STOC-279) — achieve 100% MERGED coverage ([fa4d3cd](https://github.com/stocka-app/stocka-server/commit/fa4d3cd388a0fe521f6a2577fecda8177fcd25d7))
+* **tenant:** [STOC-279](https://austins-industries.atlassian.net/browse/STOC-279) — add unit coverage for tier infra layer and recover MERGED ≥ 98.87% ([aebede7](https://github.com/stocka-app/stocka-server/commit/aebede7b10b9792970b099a5e79891f69646a3ce))
+
 ## [0.2.1](https://github.com/stocka-app/stocka-server/compare/v0.2.0...v0.2.1) (2026-03-18)
 
 ### 🧹 Chores

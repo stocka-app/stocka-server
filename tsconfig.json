@@ -29,7 +29,8 @@
       "@core/*": ["src/core/*"],
       "@test/*": ["test/*"],
       "@tenant/*": ["src/bounded-contexts/tenant/*"],
-      "@test-mockup/*": ["test/__mocks__/*"]
+      "@test-mockup/*": ["test/__mocks__/*"],
+      "@storage/*": ["src/bounded-contexts/storage/*"]
     }
   },
   "include": ["src/**/*", "test/**/*", "test/__mocks__/*"],

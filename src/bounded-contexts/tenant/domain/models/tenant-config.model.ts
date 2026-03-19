@@ -8,6 +8,8 @@ export interface TenantConfigReconstituteProps extends BaseModelProps {
   tenantId: number;
   tier: string;
   maxWarehouses: number;
+  maxCustomRooms: number;
+  maxStoreRooms: number;
   maxUsers: number;
   maxProducts: number;
   notificationsEnabled: boolean;
@@ -25,6 +27,8 @@ export class TenantConfigModel extends BaseModel {
   private readonly _tenantId: number;
   private _tier: TierVO;
   private _maxWarehouses: number;
+  private _maxCustomRooms: number;
+  private _maxStoreRooms: number;
   private _maxUsers: number;
   private _maxProducts: number;
   private _notificationsEnabled: boolean;
@@ -39,6 +43,8 @@ export class TenantConfigModel extends BaseModel {
       tenantId: number;
       tier: TierVO;
       maxWarehouses: number;
+      maxCustomRooms: number;
+      maxStoreRooms: number;
       maxUsers: number;
       maxProducts: number;
       notificationsEnabled: boolean;
@@ -53,6 +59,8 @@ export class TenantConfigModel extends BaseModel {
     this._tenantId = props.tenantId;
     this._tier = props.tier;
     this._maxWarehouses = props.maxWarehouses;
+    this._maxCustomRooms = props.maxCustomRooms;
+    this._maxStoreRooms = props.maxStoreRooms;
     this._maxUsers = props.maxUsers;
     this._maxProducts = props.maxProducts;
     this._notificationsEnabled = props.notificationsEnabled;
@@ -68,6 +76,8 @@ export class TenantConfigModel extends BaseModel {
       tenantId,
       tier: TierVO.free(),
       maxWarehouses: 0,
+      maxCustomRooms: 1,
+      maxStoreRooms: 1,
       maxUsers: 1,
       maxProducts: 100,
       notificationsEnabled: true,
@@ -89,6 +99,8 @@ export class TenantConfigModel extends BaseModel {
       tenantId: props.tenantId,
       tier: TierVO.fromString(props.tier),
       maxWarehouses: props.maxWarehouses,
+      maxCustomRooms: props.maxCustomRooms,
+      maxStoreRooms: props.maxStoreRooms,
       maxUsers: props.maxUsers,
       maxProducts: props.maxProducts,
       notificationsEnabled: props.notificationsEnabled,
@@ -110,6 +122,14 @@ export class TenantConfigModel extends BaseModel {
 
   get maxWarehouses(): number {
     return this._maxWarehouses;
+  }
+
+  get maxCustomRooms(): number {
+    return this._maxCustomRooms;
+  }
+
+  get maxStoreRooms(): number {
+    return this._maxStoreRooms;
   }
 
   get maxUsers(): number {

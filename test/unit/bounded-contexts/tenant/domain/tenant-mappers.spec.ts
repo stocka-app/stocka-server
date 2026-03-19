@@ -187,6 +187,8 @@ describe('TenantConfigMapper', () => {
           tenantId: 1,
           tier: 'FREE',
           maxWarehouses: 0,
+          maxCustomRooms: 1,
+          maxStoreRooms: 1,
           maxUsers: 1,
           maxProducts: 100,
           notificationsEnabled: true,
@@ -205,6 +207,8 @@ describe('TenantConfigMapper', () => {
         expect(model.tenantId).toBe(1);
         expect(model.tier.toString()).toBe('FREE');
         expect(model.maxWarehouses).toBe(0);
+        expect(model.maxCustomRooms).toBe(1);
+        expect(model.maxStoreRooms).toBe(1);
         expect(model.maxUsers).toBe(1);
         expect(model.maxProducts).toBe(100);
         expect(model.notificationsEnabled).toBe(true);
@@ -225,6 +229,8 @@ describe('TenantConfigMapper', () => {
           tenantId: 3,
           tier: 'FREE',
           maxWarehouses: 0,
+          maxCustomRooms: 1,
+          maxStoreRooms: 1,
           maxUsers: 1,
           maxProducts: 100,
           notificationsEnabled: true,
@@ -252,6 +258,8 @@ describe('TenantConfigMapper', () => {
           tenantId: 2,
           tier: 'FREE',
           maxWarehouses: 0,
+          maxCustomRooms: 1,
+          maxStoreRooms: 1,
           maxUsers: 1,
           maxProducts: 100,
           notificationsEnabled: true,
@@ -281,6 +289,8 @@ describe('TenantConfigMapper', () => {
         expect(entity.tenantId).toBe(1);
         expect(entity.tier).toBe('FREE');
         expect(entity.maxWarehouses).toBe(0);
+        expect(entity.maxCustomRooms).toBe(1);
+        expect(entity.maxStoreRooms).toBe(1);
         expect(entity.productCount).toBe(0);
         expect(entity.storageCount).toBe(0);
         expect(entity.memberCount).toBe(1);

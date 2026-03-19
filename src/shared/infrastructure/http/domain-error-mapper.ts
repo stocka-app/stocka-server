@@ -40,6 +40,13 @@ export const STATUS_MAP: Record<string, number> = {
   FEATURE_NOT_IN_TIER: HttpStatus.FORBIDDEN,
   ACTION_NOT_ALLOWED: HttpStatus.FORBIDDEN,
   TIER_LIMIT_REACHED: HttpStatus.FORBIDDEN,
+  // Storage
+  STORAGE_NOT_FOUND: HttpStatus.NOT_FOUND,
+  STORAGE_NAME_ALREADY_EXISTS: HttpStatus.CONFLICT,
+  STORAGE_ALREADY_ARCHIVED: HttpStatus.CONFLICT,
+  CUSTOM_ROOM_LIMIT_REACHED: HttpStatus.FORBIDDEN,
+  STORE_ROOM_LIMIT_REACHED: HttpStatus.FORBIDDEN,
+  WAREHOUSE_REQUIRES_TIER_UPGRADE: HttpStatus.FORBIDDEN,
 };
 
 export function mapDomainErrorToHttp(error: DomainException): HttpException {

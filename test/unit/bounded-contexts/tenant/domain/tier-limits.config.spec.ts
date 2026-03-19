@@ -6,6 +6,8 @@ describe('TierLimitsConfig', () => {
       it('Then it returns free-tier limits', () => {
         const limits = getTierLimits('FREE');
         expect(limits.maxWarehouses).toBe(0);
+        expect(limits.maxCustomRooms).toBe(1);
+        expect(limits.maxStoreRooms).toBe(1);
         expect(limits.maxUsers).toBe(1);
         expect(limits.maxProducts).toBe(100);
         expect(limits.invitationsEnabled).toBe(false);
@@ -18,7 +20,9 @@ describe('TierLimitsConfig', () => {
     describe('When getTierLimits is called with STARTER', () => {
       it('Then it returns starter-tier limits', () => {
         const limits = getTierLimits('STARTER');
-        expect(limits.maxWarehouses).toBe(3);
+        expect(limits.maxWarehouses).toBe(1);
+        expect(limits.maxCustomRooms).toBe(3);
+        expect(limits.maxStoreRooms).toBe(3);
         expect(limits.maxUsers).toBe(5);
         expect(limits.maxProducts).toBe(1000);
         expect(limits.invitationsEnabled).toBe(true);
@@ -31,7 +35,9 @@ describe('TierLimitsConfig', () => {
     describe('When getTierLimits is called with GROWTH', () => {
       it('Then it returns growth-tier limits', () => {
         const limits = getTierLimits('GROWTH');
-        expect(limits.maxWarehouses).toBe(10);
+        expect(limits.maxWarehouses).toBe(1);
+        expect(limits.maxCustomRooms).toBe(10);
+        expect(limits.maxStoreRooms).toBe(10);
         expect(limits.maxUsers).toBe(25);
         expect(limits.maxProducts).toBe(5000);
         expect(limits.invitationsEnabled).toBe(true);
@@ -45,6 +51,8 @@ describe('TierLimitsConfig', () => {
       it('Then it returns unlimited limits', () => {
         const limits = getTierLimits('ENTERPRISE');
         expect(limits.maxWarehouses).toBe(-1);
+        expect(limits.maxCustomRooms).toBe(-1);
+        expect(limits.maxStoreRooms).toBe(-1);
         expect(limits.maxUsers).toBe(-1);
         expect(limits.maxProducts).toBe(-1);
         expect(limits.invitationsEnabled).toBe(true);
