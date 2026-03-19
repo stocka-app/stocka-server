@@ -12,6 +12,12 @@ export class TenantConfigEntity extends BaseEntity {
   @Column({ name: 'max_warehouses', type: 'int', default: 0 })
   maxWarehouses!: number;
 
+  @Column({ name: 'max_custom_rooms', type: 'int', default: 1 })
+  maxCustomRooms!: number;
+
+  @Column({ name: 'max_store_rooms', type: 'int', default: 1 })
+  maxStoreRooms!: number;
+
   @Column({ name: 'max_users', type: 'int', default: 1 })
   maxUsers!: number;
 

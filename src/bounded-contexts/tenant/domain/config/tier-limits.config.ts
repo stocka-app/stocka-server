@@ -1,5 +1,7 @@
 export interface TierLimits {
   maxWarehouses: number;
+  maxCustomRooms: number;
+  maxStoreRooms: number;
   maxUsers: number;
   maxProducts: number;
   invitationsEnabled: boolean;
@@ -9,20 +11,26 @@ export interface TierLimits {
 export const TIER_LIMITS_CONFIG: Record<string, TierLimits> = {
   FREE: {
     maxWarehouses: 0,
+    maxCustomRooms: 1,
+    maxStoreRooms: 1,
     maxUsers: 1,
     maxProducts: 100,
     invitationsEnabled: false,
     advancedReportsEnabled: false,
   },
   STARTER: {
-    maxWarehouses: 3,
+    maxWarehouses: 1,
+    maxCustomRooms: 3,
+    maxStoreRooms: 3,
     maxUsers: 5,
     maxProducts: 1000,
     invitationsEnabled: true,
     advancedReportsEnabled: false,
   },
   GROWTH: {
-    maxWarehouses: 10,
+    maxWarehouses: 1,
+    maxCustomRooms: 10,
+    maxStoreRooms: 10,
     maxUsers: 25,
     maxProducts: 5000,
     invitationsEnabled: true,
@@ -30,6 +38,8 @@ export const TIER_LIMITS_CONFIG: Record<string, TierLimits> = {
   },
   ENTERPRISE: {
     maxWarehouses: -1,
+    maxCustomRooms: -1,
+    maxStoreRooms: -1,
     maxUsers: -1,
     maxProducts: -1,
     invitationsEnabled: true,
