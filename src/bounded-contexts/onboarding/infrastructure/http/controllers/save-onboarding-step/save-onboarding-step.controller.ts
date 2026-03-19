@@ -25,9 +25,10 @@ export class SaveOnboardingStepController {
     @Body() dto: SaveOnboardingStepInDto,
     @CurrentUser() user: JwtPayload,
   ): Promise<Record<string, unknown>> {
-    const result = await this.commandBus.execute<SaveOnboardingStepCommand, SaveOnboardingStepResult>(
-      new SaveOnboardingStepCommand(user.uuid, step, dto.data),
-    );
+    const result = await this.commandBus.execute<
+      SaveOnboardingStepCommand,
+      SaveOnboardingStepResult
+    >(new SaveOnboardingStepCommand(user.uuid, step, dto.data));
 
     return result.match(
       (session) => ({

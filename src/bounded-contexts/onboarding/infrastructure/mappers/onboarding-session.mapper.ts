@@ -5,15 +5,15 @@ import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enu
 
 export class OnboardingSessionMapper {
   static toDomain(entity: OnboardingSessionEntity): OnboardingSessionModel {
-    const path = entity.path === 'CREATE'
-      ? OnboardingPath.CREATE
-      : entity.path === 'JOIN'
-        ? OnboardingPath.JOIN
-        : null;
+    const path =
+      entity.path === 'CREATE'
+        ? OnboardingPath.CREATE
+        : entity.path === 'JOIN'
+          ? OnboardingPath.JOIN
+          : null;
 
-    const status = entity.status === 'COMPLETED'
-      ? OnboardingStatus.COMPLETED
-      : OnboardingStatus.IN_PROGRESS;
+    const status =
+      entity.status === 'COMPLETED' ? OnboardingStatus.COMPLETED : OnboardingStatus.IN_PROGRESS;
 
     return OnboardingSessionModel.reconstitute({
       id: entity.id,

@@ -66,7 +66,8 @@ export class OnboardingSessionModel {
     }
     if (step === 0) {
       const path = (data['path'] as string | undefined) ?? null;
-      this._path = path === 'CREATE' ? OnboardingPath.CREATE : path === 'JOIN' ? OnboardingPath.JOIN : null;
+      this._path =
+        path === 'CREATE' ? OnboardingPath.CREATE : path === 'JOIN' ? OnboardingPath.JOIN : null;
       this._invitationCode = (data['invitationCode'] as string | undefined) ?? null;
     }
     this._updatedAt = new Date();

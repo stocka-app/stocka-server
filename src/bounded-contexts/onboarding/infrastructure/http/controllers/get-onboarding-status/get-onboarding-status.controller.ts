@@ -17,9 +17,10 @@ export class GetOnboardingStatusController {
   @ApiOperation({ summary: 'Get current onboarding status for the authenticated user' })
   @ApiResponse({ status: 200, description: 'Onboarding status returned' })
   async handle(@CurrentUser() user: JwtPayload): Promise<Record<string, unknown>> {
-    const session = await this.queryBus.execute<GetOnboardingStatusQuery, GetOnboardingStatusResult>(
-      new GetOnboardingStatusQuery(user.uuid),
-    );
+    const session = await this.queryBus.execute<
+      GetOnboardingStatusQuery,
+      GetOnboardingStatusResult
+    >(new GetOnboardingStatusQuery(user.uuid));
 
     if (!session) {
       return { status: null, currentStep: null, path: null };

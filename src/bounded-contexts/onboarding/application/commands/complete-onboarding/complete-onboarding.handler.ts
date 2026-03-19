@@ -21,7 +21,10 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
-import { CreateTenantResult, CreateTenantErrors } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
+import {
+  CreateTenantResult,
+  CreateTenantErrors,
+} from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
 import { CreateStorageResult } from '@storage/application/commands/create-storage/create-storage.handler';
 
 export interface CompleteOnboardingData {
@@ -99,7 +102,10 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
       return err(new OnboardingIncompleteError('step 3 (business profile)'));
     }
 
-    const createTenantResult = await this.commandBus.execute<CreateTenantCommand, CreateTenantResult>(
+    const createTenantResult = await this.commandBus.execute<
+      CreateTenantCommand,
+      CreateTenantResult
+    >(
       new CreateTenantCommand(
         command.userUUID,
         step3.name,
@@ -120,12 +126,18 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     const { tenantId, name } = createTenantResult.value;
 
     const step4 = session.getStepData(4) as { storages?: unknown[] } | null;
-    const hasCustomStorages = step4?.storages && (step4.storages as unknown[]).length > 0;
+    const hasCustomStorages = step4?.storages && step4.storages.length > 0;
 
     if (!hasCustomStorages) {
       const storageName = defaultStorageName(step3.businessType);
       await this.commandBus.execute<CreateStorageCommand, CreateStorageResult>(
-        new CreateStorageCommand(tenantId, StorageType.CUSTOM_ROOM, storageName, undefined, 'General'),
+        new CreateStorageCommand(
+          tenantId,
+          StorageType.CUSTOM_ROOM,
+          storageName,
+          undefined,
+          'General',
+        ),
       );
     }
 
