@@ -16,10 +16,12 @@ import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module'
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { RateLimitGuard } from '@common/guards/rate-limit.guard';
+import { PermissionGuard } from '@common/guards/permission.guard';
 import { RateLimitInterceptor } from '@common/interceptors/rate-limit.interceptor';
 import { AppController } from '@core/infrastructure/app.controller';
 import { HealthModule } from '@core/infrastructure/health/health.module';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
+import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
 
 @Module({
   imports: [
@@ -52,6 +54,7 @@ import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
     AuthenticationModule,
     TenantModule,
     MediatorModule,
+    CapabilityModule,
   ],
   controllers: [AppController],
   providers: [
@@ -62,6 +65,10 @@ import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
     {
       provide: APP_GUARD,
       useClass: RateLimitGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionGuard,
     },
     {
       provide: APP_INTERCEPTOR,
