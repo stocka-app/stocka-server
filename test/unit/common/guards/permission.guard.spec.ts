@@ -8,10 +8,13 @@ import {
 import { CapabilityResolver } from '@shared/domain/policy/capability.resolver';
 import { SystemAction } from '@shared/domain/policy/actions-catalog';
 
-function buildContext(user?: Record<string, unknown>): ExecutionContext {
+function buildContext(
+  user?: Record<string, unknown>,
+  membershipContext?: TenantMembershipContext,
+): ExecutionContext {
   return {
     switchToHttp: () => ({
-      getRequest: () => ({ user }),
+      getRequest: () => ({ user, membershipContext }),
     }),
     getHandler: () => ({}),
     getClass: () => ({}),
@@ -306,6 +309,26 @@ describe('PermissionGuard', () => {
         });
         const result = await guard.canActivate(context);
         expect(result).toBe(true);
+      });
+    });
+  });
+
+  describe('Given TenantGuard already ran and membershipContext is cached in the request', () => {
+    beforeEach(() => {
+      reflector.getAllAndOverride.mockReturnValue(SystemAction.STORAGE_CREATE);
+    });
+
+    describe('When PermissionGuard evaluates the request', () => {
+      it('Then it uses the cached context and does not call the tenant facade', async () => {
+        const context = buildContext(
+          { uuid: 'user-uuid', email: 'u@t.com', tenantId: 'tid', role: 'OWNER' },
+          ACTIVE_CONTEXT,
+        );
+
+        const result = await guard.canActivate(context);
+
+        expect(result).toBe(true);
+        expect(tenantFacade.getMembershipContext).not.toHaveBeenCalled();
       });
     });
   });
