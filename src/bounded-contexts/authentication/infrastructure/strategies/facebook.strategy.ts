@@ -8,9 +8,9 @@ import { SocialProfile } from '@authentication/infrastructure/strategies/google.
 export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
   constructor(configService: ConfigService) {
     super({
-      clientID: configService.getOrThrow<string>('FACEBOOK_APP_ID'),
-      clientSecret: configService.getOrThrow<string>('FACEBOOK_APP_SECRET'),
-      callbackURL: configService.getOrThrow<string>('FACEBOOK_CALLBACK_URL'),
+      clientID: configService.get<string>('FACEBOOK_APP_ID', 'disabled'),
+      clientSecret: configService.get<string>('FACEBOOK_APP_SECRET', 'disabled'),
+      callbackURL: configService.get<string>('FACEBOOK_CALLBACK_URL', 'http://localhost:3001/api/authentication/facebook/callback'),
       scope: ['email'],
       profileFields: ['emails', 'name', 'displayName'],
     });
