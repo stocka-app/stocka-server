@@ -160,5 +160,16 @@ describe('mapDomainErrorToHttp', () => {
         WAREHOUSE_REQUIRES_TIER_UPGRADE: HttpStatus.FORBIDDEN,
       });
     });
+
+    it('Then it contains all expected Onboarding error codes', () => {
+      expect(STATUS_MAP).toMatchObject({
+        ONBOARDING_NOT_FOUND: HttpStatus.NOT_FOUND,
+        ONBOARDING_INCOMPLETE: HttpStatus.UNPROCESSABLE_ENTITY,
+        INVITATION_NOT_FOUND: HttpStatus.NOT_FOUND,
+        INVITATION_EXPIRED: HttpStatus.GONE,
+        INVITATION_ALREADY_USED: HttpStatus.CONFLICT,
+        INVITATION_EMAIL_MISMATCH: HttpStatus.FORBIDDEN,
+      });
+    });
   });
 });

@@ -17,6 +17,7 @@ module.exports = {
   transformIgnorePatterns: ['/node_modules/(?!uuid)/'],
   moduleNameMapper: {
     '^@storage/(.*)$': '<rootDir>/src/bounded-contexts/storage/$1',
+    '^@onboarding/(.*)$': '<rootDir>/src/bounded-contexts/onboarding/$1',
     '^@tenant/(.*)$': '<rootDir>/src/bounded-contexts/tenant/$1',
     '^@authentication/(.*)$': '<rootDir>/src/bounded-contexts/authentication/$1',
     '^@user/(.*)$': '<rootDir>/src/bounded-contexts/user/$1',
@@ -109,6 +110,12 @@ module.exports = {
     '!src/bounded-contexts/storage/infrastructure/repositories/typeorm-storage.repository.ts',
     '!src/bounded-contexts/storage/infrastructure/adapters/tenant-capabilities.adapter.ts',
     '!src/bounded-contexts/storage/infrastructure/http/controllers/**',
+
+    // ── Onboarding infrastructure (no onboarding e2e suite yet) ─────────────
+    '!src/bounded-contexts/onboarding/infrastructure/repositories/**',
+    '!src/bounded-contexts/onboarding/infrastructure/http/controllers/**',
+    '!src/bounded-contexts/onboarding/infrastructure/mappers/**',
+    '!src/bounded-contexts/onboarding/infrastructure/entities/**',
   ],
   coverageDirectory: './coverage-e2e',
   coverageReporters: ['json', 'text', 'lcov', 'html'],

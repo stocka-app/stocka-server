@@ -30,7 +30,8 @@
       "@test/*": ["test/*"],
       "@tenant/*": ["src/bounded-contexts/tenant/*"],
       "@test-mockup/*": ["test/__mocks__/*"],
-      "@storage/*": ["src/bounded-contexts/storage/*"]
+      "@storage/*": ["src/bounded-contexts/storage/*"],
+      "@onboarding/*": ["src/bounded-contexts/onboarding/*"]
     }
   },
   "include": ["src/**/*", "test/**/*", "test/__mocks__/*"],
