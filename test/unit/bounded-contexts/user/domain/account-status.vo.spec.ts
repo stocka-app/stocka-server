@@ -1,4 +1,7 @@
-import { AccountStatusVO, AccountStatusEnum } from '@user/account/domain/value-objects/account-status.vo';
+import {
+  AccountStatusVO,
+  AccountStatusEnum,
+} from '@user/account/domain/value-objects/account-status.vo';
 
 describe('AccountStatusVO', () => {
   describe('Given an invalid status value', () => {

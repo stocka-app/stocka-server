@@ -403,9 +403,7 @@ describe('UserFacade', () => {
 
     describe('When the social account is found but the account no longer exists', () => {
       it('Then it returns null', async () => {
-        socialAccountContract.findByProviderAndProviderId.mockResolvedValue(
-          buildSocialAccount(10),
-        );
+        socialAccountContract.findByProviderAndProviderId.mockResolvedValue(buildSocialAccount(10));
         accountContract.findById.mockResolvedValue(null);
 
         const result = await facade.findUserBySocialProvider('google', 'google-id-123');
@@ -416,9 +414,7 @@ describe('UserFacade', () => {
 
     describe('When the social account and account are found but the user no longer exists', () => {
       it('Then it returns null', async () => {
-        socialAccountContract.findByProviderAndProviderId.mockResolvedValue(
-          buildSocialAccount(10),
-        );
+        socialAccountContract.findByProviderAndProviderId.mockResolvedValue(buildSocialAccount(10));
         accountContract.findById.mockResolvedValue(buildPersistedAccount(1));
         userContract.findById.mockResolvedValue(null);
 

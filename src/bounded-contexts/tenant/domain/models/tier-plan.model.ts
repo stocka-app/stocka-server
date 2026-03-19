@@ -1,0 +1,105 @@
+import { TierEnum } from '@shared/domain/policy/tier.enum';
+
+export interface TierPlanReconstituteProps {
+  tier: string;
+  name: string;
+  maxProducts: number | null;
+  maxUsers: number | null;
+  maxWarehouses: number | null;
+  policyVersion: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export class TierPlanModel {
+  private readonly _tier: TierEnum;
+  private readonly _name: string;
+  private readonly _maxProducts: number | null;
+  private readonly _maxUsers: number | null;
+  private readonly _maxWarehouses: number | null;
+  private readonly _policyVersion: Date;
+  private readonly _createdAt: Date;
+  private readonly _updatedAt: Date;
+
+  private constructor(props: {
+    tier: TierEnum;
+    name: string;
+    maxProducts: number | null;
+    maxUsers: number | null;
+    maxWarehouses: number | null;
+    policyVersion: Date;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    this._tier = props.tier;
+    this._name = props.name;
+    this._maxProducts = props.maxProducts;
+    this._maxUsers = props.maxUsers;
+    this._maxWarehouses = props.maxWarehouses;
+    this._policyVersion = props.policyVersion;
+    this._createdAt = props.createdAt;
+    this._updatedAt = props.updatedAt;
+  }
+
+  static reconstitute(props: TierPlanReconstituteProps): TierPlanModel {
+    const tierValue = props.tier as TierEnum;
+    if (!Object.values(TierEnum).includes(tierValue)) {
+      throw new Error(`Invalid tier value: ${props.tier}`);
+    }
+
+    return new TierPlanModel({
+      tier: tierValue,
+      name: props.name,
+      maxProducts: props.maxProducts,
+      maxUsers: props.maxUsers,
+      maxWarehouses: props.maxWarehouses,
+      policyVersion: props.policyVersion,
+      createdAt: props.createdAt,
+      updatedAt: props.updatedAt,
+    });
+  }
+
+  get tier(): TierEnum {
+    return this._tier;
+  }
+
+  get name(): string {
+    return this._name;
+  }
+
+  get maxProducts(): number | null {
+    return this._maxProducts;
+  }
+
+  get maxUsers(): number | null {
+    return this._maxUsers;
+  }
+
+  get maxWarehouses(): number | null {
+    return this._maxWarehouses;
+  }
+
+  get policyVersion(): Date {
+    return this._policyVersion;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  isUnlimitedProducts(): boolean {
+    return this._maxProducts === null;
+  }
+
+  isUnlimitedUsers(): boolean {
+    return this._maxUsers === null;
+  }
+
+  isUnlimitedWarehouses(): boolean {
+    return this._maxWarehouses === null;
+  }
+}

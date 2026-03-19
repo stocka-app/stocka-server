@@ -67,9 +67,7 @@ describe('Infrastructure Repositories (e2e)', () => {
     evtRepo = app.get<IEmailVerificationTokenContract>(
       INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT,
     );
-    prtRepo = app.get<IPasswordResetTokenContract>(
-      INJECTION_TOKENS.PASSWORD_RESET_TOKEN_CONTRACT,
-    );
+    prtRepo = app.get<IPasswordResetTokenContract>(INJECTION_TOKENS.PASSWORD_RESET_TOKEN_CONTRACT);
     attemptRepo = app.get<IVerificationAttemptContract>(
       INJECTION_TOKENS.VERIFICATION_ATTEMPT_CONTRACT,
     );
@@ -819,9 +817,15 @@ describe('Infrastructure Repositories (e2e)', () => {
       const connectedQRs: any[] = [...((dataSource as any).driver?.connectedQueryRunners ?? [])];
       for (const qr of connectedQRs) {
         try {
-          Object.defineProperty(qr, 'isReleased', { value: false, configurable: true, writable: true });
+          Object.defineProperty(qr, 'isReleased', {
+            value: false,
+            configurable: true,
+            writable: true,
+          });
           await qr.releasePostgresConnection();
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
     });
 
@@ -889,7 +893,11 @@ describe('Infrastructure Repositories (e2e)', () => {
         // The original error must propagate; the release error is swallowed by .catch(() => {})
         await expect(uow.begin()).rejects.toThrow('Connection refused');
         spy.mockRestore();
-        try { await uow.rollback(); } catch { /* ignore */ }
+        try {
+          await uow.rollback();
+        } catch {
+          /* ignore */
+        }
       });
     });
 

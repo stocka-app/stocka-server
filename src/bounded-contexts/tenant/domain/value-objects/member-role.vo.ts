@@ -1,12 +1,5 @@
-export enum MemberRoleEnum {
-  OWNER = 'OWNER',
-  PARTNER = 'PARTNER',
-  MANAGER = 'MANAGER',
-  BUYER = 'BUYER',
-  WAREHOUSE_KEEPER = 'WAREHOUSE_KEEPER',
-  SALES_REP = 'SALES_REP',
-  VIEWER = 'VIEWER',
-}
+export { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
+import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
 
 export class MemberRoleVO {
   private readonly _value: MemberRoleEnum;

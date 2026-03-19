@@ -1,0 +1,9 @@
+export enum MemberRoleEnum {
+  OWNER = 'OWNER',
+  PARTNER = 'PARTNER',
+  MANAGER = 'MANAGER',
+  BUYER = 'BUYER',
+  WAREHOUSE_KEEPER = 'WAREHOUSE_KEEPER',
+  SALES_REP = 'SALES_REP',
+  VIEWER = 'VIEWER',
+}

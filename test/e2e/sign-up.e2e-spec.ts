@@ -9,7 +9,6 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { getWorkerApp, truncateWorkerTables, emailProviderMock } from '@test/worker-app';
 
-
 describe('Sign Up (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
@@ -147,7 +146,11 @@ describe('Sign Up (e2e)', () => {
 
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'rollback@example.com', username: 'rollbackuser', password: 'SecurePass1' });
+          .send({
+            email: 'rollback@example.com',
+            username: 'rollbackuser',
+            password: 'SecurePass1',
+          });
 
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -170,7 +173,11 @@ describe('Sign Up (e2e)', () => {
 
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'deeproll@example.com', username: 'deeprolluser', password: 'SecurePass1' });
+          .send({
+            email: 'deeproll@example.com',
+            username: 'deeprolluser',
+            password: 'SecurePass1',
+          });
 
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -239,7 +246,11 @@ describe('Sign Up (e2e)', () => {
       it('Then they receive a 400 or 422 with a validation error', async () => {
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'nostrong@example.com', username: 'nostronguser', password: 'alllowercase' });
+          .send({
+            email: 'nostrong@example.com',
+            username: 'nostronguser',
+            password: 'alllowercase',
+          });
 
         expect([HttpStatus.BAD_REQUEST, HttpStatus.UNPROCESSABLE_ENTITY]).toContain(
           response.status,

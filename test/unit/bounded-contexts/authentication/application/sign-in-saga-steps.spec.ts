@@ -54,10 +54,7 @@ describe('ValidateCredentialsStep', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ValidateCredentialsStep,
-        { provide: MediatorService, useValue: mediator },
-      ],
+      providers: [ValidateCredentialsStep, { provide: MediatorService, useValue: mediator }],
     }).compile();
 
     step = module.get<ValidateCredentialsStep>(ValidateCredentialsStep);
@@ -430,9 +427,9 @@ describe('AuthenticationDomainService', () => {
     describe('Given a plain password and its bcrypt hash', () => {
       it('Then it returns true when they match', async () => {
         const hash = await bcrypt.hash('TestPass1', 4);
-        await expect(
-          AuthenticationDomainService.comparePasswords('TestPass1', hash),
-        ).resolves.toBe(true);
+        await expect(AuthenticationDomainService.comparePasswords('TestPass1', hash)).resolves.toBe(
+          true,
+        );
       });
     });
   });
