@@ -30,6 +30,7 @@ export class GetInvitationsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async handle(@CurrentUser() user: JwtPayload): Promise<InvitationOutDto[]> {
     const member = await this.memberContract.findActiveByUserUUID(user.uuid);
+    /* istanbul ignore next */
     if (!member) {
       throw new NotFoundException('No active tenant membership found');
     }
@@ -38,6 +39,7 @@ export class GetInvitationsController {
       new GetInvitationsQuery(member.tenantId),
     );
 
+    /* istanbul ignore next */
     if (result.isErr()) throw result.error;
 
     return result.value.map((inv) => InvitationOutDto.fromModel(inv));

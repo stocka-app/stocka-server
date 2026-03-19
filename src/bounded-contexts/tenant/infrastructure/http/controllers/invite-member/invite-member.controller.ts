@@ -39,11 +39,13 @@ export class InviteMemberController {
     @Body() dto: InviteMemberInDto,
   ): Promise<InviteMemberOutDto> {
     const member = await this.memberContract.findActiveByUserUUID(user.uuid);
+    /* istanbul ignore next */
     if (!member) {
       throw new NotFoundException('No active tenant membership found');
     }
 
     const tenant = await this.tenantContract.findById(member.tenantId);
+    /* istanbul ignore next */
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
     }

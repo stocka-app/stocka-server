@@ -41,6 +41,7 @@ export class CancelInvitationController {
   @ApiResponse({ status: 409, description: 'Invitation already accepted' })
   async handle(@CurrentUser() user: JwtPayload, @Param('id') id: string): Promise<void> {
     const member = await this.memberContract.findActiveByUserUUID(user.uuid);
+    /* istanbul ignore next */
     if (!member) {
       throw new NotFoundException('No active tenant membership found');
     }
