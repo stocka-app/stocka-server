@@ -21,7 +21,10 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
       teamID: configService.get<string>('APPLE_TEAM_ID', 'disabled'),
       keyID: configService.get<string>('APPLE_KEY_ID', 'disabled'),
       key: configService.get<string>('APPLE_PRIVATE_KEY', 'disabled'),
-      callbackURL: configService.get<string>('APPLE_CALLBACK_URL', 'http://localhost:3001/api/authentication/apple/callback'),
+      callbackURL: configService.get<string>(
+        'APPLE_CALLBACK_URL',
+        'http://localhost:3001/api/authentication/apple/callback',
+      ),
       scope: ['email', 'name'],
       passReqToCallback: false,
     });

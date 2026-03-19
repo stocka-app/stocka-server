@@ -133,6 +133,20 @@ describe('EmailVerifiedGuard', () => {
 // OAuth Passport Guards — canActivate with feature-flag check
 // ─────────────────────────────────────────────────────────────────────────────
 
+function buildCtxWithHttp(queryMode?: string): ExecutionContext {
+  const mockRes = { cookie: jest.fn() };
+  const req = { query: queryMode !== undefined ? { mode: queryMode } : {} };
+  return {
+    getHandler: jest.fn(),
+    getClass: jest.fn(),
+    switchToHttp: jest.fn().mockReturnValue({
+      getRequest: jest.fn().mockReturnValue(req),
+      getResponse: jest.fn().mockReturnValue(mockRes),
+    }),
+    _mockRes: mockRes,
+  } as unknown as ExecutionContext;
+}
+
 function buildOAuthGuardTests(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   GuardClass: new (...args: any[]) => any,
@@ -142,9 +156,6 @@ function buildOAuthGuardTests(
   describe(`${providerName}AuthenticationGuard`, () => {
     let guard: { canActivate: (ctx: ExecutionContext) => boolean };
     let configService: jest.Mocked<ConfigService>;
-
-    const buildCtx = (): ExecutionContext =>
-      ({ getHandler: jest.fn(), getClass: jest.fn() }) as unknown as ExecutionContext;
 
     beforeEach(async () => {
       configService = { get: jest.fn() } as unknown as jest.Mocked<ConfigService>;
@@ -159,7 +170,7 @@ function buildOAuthGuardTests(
     describe(`Given the ${providerName} provider is disabled via feature flag`, () => {
       it('Then canActivate throws NotImplementedException', () => {
         configService.get.mockReturnValue('false');
-        const ctx = buildCtx();
+        const ctx = buildCtxWithHttp();
         expect(() => guard.canActivate(ctx)).toThrow(NotImplementedException);
       });
     });
@@ -171,7 +182,7 @@ function buildOAuthGuardTests(
         const proto = Object.getPrototypeOf(guard.constructor.prototype);
         jest.spyOn(proto, 'canActivate').mockReturnValue(true);
 
-        const ctx = buildCtx();
+        const ctx = buildCtxWithHttp();
         const result = guard.canActivate(ctx);
         expect(result).toBe(true);
 
@@ -185,6 +196,72 @@ buildOAuthGuardTests(GoogleAuthenticationGuard, 'Google', 'GOOGLE_AUTHENTICATION
 buildOAuthGuardTests(FacebookAuthenticationGuard, 'Facebook', 'FACEBOOK_AUTHENTICATION_ENABLED');
 buildOAuthGuardTests(MicrosoftAuthenticationGuard, 'Microsoft', 'MICROSOFT_AUTHENTICATION_ENABLED');
 buildOAuthGuardTests(AppleAuthenticationGuard, 'Apple', 'APPLE_AUTHENTICATION_ENABLED');
+
+// ── Popup mode tests — Google & Microsoft only ────────────────────────────────
+
+function buildPopupGuardTests(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  GuardClass: new (...args: any[]) => any,
+  providerName: string,
+): void {
+  describe(`${providerName}AuthenticationGuard — popup mode`, () => {
+    let guard: { canActivate: (ctx: ExecutionContext) => boolean };
+    let configService: jest.Mocked<ConfigService>;
+
+    beforeEach(async () => {
+      configService = {
+        get: jest.fn().mockReturnValue('true'),
+      } as unknown as jest.Mocked<ConfigService>;
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [GuardClass, { provide: ConfigService, useValue: configService }],
+      }).compile();
+
+      guard = module.get(GuardClass);
+    });
+
+    describe('Given the request has mode=popup in the query string', () => {
+      it('Then canActivate sets the oauth_mode cookie on the response', () => {
+        const proto = Object.getPrototypeOf(guard.constructor.prototype) as {
+          canActivate: jest.Mock;
+        };
+        const spy = jest.spyOn(proto, 'canActivate').mockReturnValue(true);
+
+        const ctx = buildCtxWithHttp('popup');
+        guard.canActivate(ctx);
+
+        const mockRes = (ctx as unknown as { _mockRes: { cookie: jest.Mock } })._mockRes;
+        expect(mockRes.cookie).toHaveBeenCalledWith(
+          'oauth_mode',
+          'popup',
+          expect.objectContaining({ httpOnly: true, sameSite: 'lax' }),
+        );
+
+        spy.mockRestore();
+      });
+    });
+
+    describe('Given the request does not have mode=popup in the query string', () => {
+      it('Then canActivate does not set the oauth_mode cookie', () => {
+        const proto = Object.getPrototypeOf(guard.constructor.prototype) as {
+          canActivate: jest.Mock;
+        };
+        const spy = jest.spyOn(proto, 'canActivate').mockReturnValue(true);
+
+        const ctx = buildCtxWithHttp();
+        guard.canActivate(ctx);
+
+        const mockRes = (ctx as unknown as { _mockRes: { cookie: jest.Mock } })._mockRes;
+        expect(mockRes.cookie).not.toHaveBeenCalled();
+
+        spy.mockRestore();
+      });
+    });
+  });
+}
+
+buildPopupGuardTests(GoogleAuthenticationGuard, 'Google');
+buildPopupGuardTests(MicrosoftAuthenticationGuard, 'Microsoft');
 
 // ─────────────────────────────────────────────────────────────────────────────
 

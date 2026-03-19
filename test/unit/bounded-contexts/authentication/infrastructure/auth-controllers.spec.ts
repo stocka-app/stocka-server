@@ -31,6 +31,7 @@ function buildMockRes(): jest.Mocked<Response> {
     cookie: jest.fn(),
     clearCookie: jest.fn(),
     redirect: jest.fn(),
+    send: jest.fn(),
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
   } as unknown as jest.Mocked<Response>;
@@ -697,3 +698,70 @@ buildOAuthCallbackTests(GoogleCallbackController, 'Google', 'google');
 buildOAuthCallbackTests(FacebookCallbackController, 'Facebook', 'facebook');
 buildOAuthCallbackTests(MicrosoftCallbackController, 'Microsoft', 'microsoft');
 buildOAuthCallbackTests(AppleCallbackController, 'Apple', 'apple');
+
+// ── Popup mode tests — Google & Microsoft only ────────────────────────────────
+
+function buildPopupCallbackTests(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ControllerClass: new (...args: any[]) => any,
+  displayName: string,
+  provider: string,
+): void {
+  describe(`${displayName}CallbackController — popup mode`, () => {
+    let controller: { handle: (req: Request, res: Response) => Promise<void> };
+    let commandBus: jest.Mocked<CommandBus>;
+    let configService: jest.Mocked<ConfigService>;
+
+    beforeEach(async () => {
+      commandBus = buildMockCommandBus();
+      configService = {
+        get: jest.fn().mockReturnValue('http://localhost:5173'),
+      } as unknown as jest.Mocked<ConfigService>;
+
+      const module: TestingModule = await Test.createTestingModule({
+        controllers: [ControllerClass],
+        providers: [
+          { provide: CommandBus, useValue: commandBus },
+          { provide: ConfigService, useValue: configService },
+        ],
+      }).compile();
+
+      controller = module.get(ControllerClass);
+    });
+
+    describe(`Given a ${provider} OAuth callback with oauth_mode=popup cookie`, () => {
+      describe('When handle is called', () => {
+        it('Then it sends an HTML page with postMessage instead of redirecting', async () => {
+          commandBus.execute.mockResolvedValue({
+            accessToken: 'popup-access-token',
+            refreshToken: 'rt-popup',
+          });
+          const res = buildMockRes();
+          const req = buildMockReq({
+            cookies: { oauth_mode: 'popup' },
+            user: {
+              email: 'popup@example.com',
+              displayName: 'Popup User',
+              provider,
+              providerId: 'provider-id-popup',
+            } as unknown as Request['user'],
+          });
+
+          await controller.handle(req, res);
+
+          expect(res.send).toHaveBeenCalled();
+          expect(res.redirect).not.toHaveBeenCalled();
+          const sentHtml = (res.send as jest.Mock).mock.calls[0][0] as string;
+          expect(sentHtml).toContain('postMessage');
+          expect(sentHtml).toContain('popup-access-token');
+          expect(res.clearCookie).toHaveBeenCalledWith('oauth_mode', {
+            path: '/api/authentication',
+          });
+        });
+      });
+    });
+  });
+}
+
+buildPopupCallbackTests(GoogleCallbackController, 'Google', 'google');
+buildPopupCallbackTests(MicrosoftCallbackController, 'Microsoft', 'microsoft');
