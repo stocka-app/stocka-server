@@ -3,9 +3,12 @@ import { ROUTE_ARGS_METADATA } from '@nestjs/common/constants';
 import { RATE_LIMIT_KEY, RateLimit } from '@common/decorators/rate-limit.decorator';
 import { ClientIp } from '@common/decorators/client-ip.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentTenant } from '@common/decorators/current-tenant.decorator';
+import { CurrentMember } from '@common/decorators/current-member.decorator';
 import { IsCountryCode } from '@common/decorators/country-code.decorator';
 import { RequireAction, REQUIRE_ACTION_KEY } from '@common/decorators/require-action.decorator';
 import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
 
 /** Extract the factory function stored by createParamDecorator */
 function extractParamFactory(
@@ -246,6 +249,87 @@ describe('IsCountryCode decorator', () => {
       it('Then it fails validation for null', async () => {
         const errors = await runValidation(null);
         expect(errors).toHaveLength(1);
+      });
+    });
+  });
+});
+
+// ─── CurrentTenant decorator ──────────────────────────────────────────────────
+describe('CurrentTenant decorator', () => {
+  let factory: (data: unknown, ctx: ExecutionContext) => unknown;
+
+  const MEMBERSHIP_CONTEXT: TenantMembershipContext = {
+    tenantUUID: 'tenant-uuid-001',
+    role: 'OWNER',
+    tenantStatus: 'active',
+    tier: 'ENTERPRISE',
+    usageCounts: { storageCount: 1, memberCount: 2, productCount: 5 },
+  };
+
+  beforeEach(() => {
+    factory = extractParamFactory(
+      CurrentTenant as unknown as (...args: unknown[]) => ParameterDecorator,
+    );
+  });
+
+  describe('Given a request with a membership context (TenantGuard ran)', () => {
+    describe('When CurrentTenant is invoked', () => {
+      it('Then it returns tenantUUID, status, and tier from the context', () => {
+        const ctx = buildContext({ membershipContext: MEMBERSHIP_CONTEXT });
+        expect(factory(undefined, ctx)).toEqual({
+          tenantUUID: 'tenant-uuid-001',
+          status: 'active',
+          tier: 'ENTERPRISE',
+        });
+      });
+    });
+  });
+
+  describe('Given a request without membership context (TenantGuard not applied)', () => {
+    describe('When CurrentTenant is invoked', () => {
+      it('Then it throws an error indicating TenantGuard is not applied', () => {
+        const ctx = buildContext({ membershipContext: undefined });
+        expect(() => factory(undefined, ctx)).toThrow('Ensure TenantGuard is applied');
+      });
+    });
+  });
+});
+
+// ─── CurrentMember decorator ──────────────────────────────────────────────────
+describe('CurrentMember decorator', () => {
+  let factory: (data: unknown, ctx: ExecutionContext) => unknown;
+
+  const MEMBERSHIP_CONTEXT: TenantMembershipContext = {
+    tenantUUID: 'tenant-uuid-002',
+    role: 'MANAGER',
+    tenantStatus: 'active',
+    tier: 'STARTER',
+    usageCounts: { storageCount: 1, memberCount: 3, productCount: 50 },
+  };
+
+  beforeEach(() => {
+    factory = extractParamFactory(
+      CurrentMember as unknown as (...args: unknown[]) => ParameterDecorator,
+    );
+  });
+
+  describe('Given a request with a membership context (TenantGuard ran)', () => {
+    describe('When CurrentMember is invoked', () => {
+      it('Then it returns role and tenantUUID from the context', () => {
+        const ctx = buildContext({ membershipContext: MEMBERSHIP_CONTEXT });
+        expect(factory(undefined, ctx)).toEqual({
+          role: 'MANAGER',
+          tenantUUID: 'tenant-uuid-002',
+        });
+      });
+    });
+  });
+
+  describe('Given a request without membership context (TenantGuard not applied)', () => {
+    describe('When CurrentMember is invoked', () => {
+      it('Then it throws an error indicating TenantGuard is not applied', () => {
+        const ctx = buildContext({ membershipContext: undefined });
+        expect(() => factory(undefined, ctx)).toThrow('Ensure TenantGuard is applied');
       });
     });
   });
