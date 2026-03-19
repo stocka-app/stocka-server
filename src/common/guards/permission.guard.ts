@@ -38,9 +38,9 @@ export class PermissionGuard implements CanActivate {
 
     if (!action) return true;
 
-    const request = context.switchToHttp().getRequest<
-      Request & { membershipContext?: TenantMembershipContext }
-    >();
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { membershipContext?: TenantMembershipContext }>();
     const user = request.user as JwtPayload | undefined;
 
     if (!user) {

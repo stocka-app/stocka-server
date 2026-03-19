@@ -14,15 +14,18 @@ export class CompleteOnboardingController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('complete')
-  @ApiOperation({ summary: 'Complete onboarding — creates tenant + default storage or joins via invitation' })
+  @ApiOperation({
+    summary: 'Complete onboarding — creates tenant + default storage or joins via invitation',
+  })
   @ApiResponse({ status: 201, description: 'Onboarding completed successfully' })
   @ApiResponse({ status: 404, description: 'Onboarding session not found' })
   @ApiResponse({ status: 409, description: 'Onboarding already completed' })
   @ApiResponse({ status: 422, description: 'Required step data missing' })
   async handle(@CurrentUser() user: JwtPayload): Promise<Record<string, unknown>> {
-    const result = await this.commandBus.execute<CompleteOnboardingCommand, CompleteOnboardingResult>(
-      new CompleteOnboardingCommand(user.uuid, user.email),
-    );
+    const result = await this.commandBus.execute<
+      CompleteOnboardingCommand,
+      CompleteOnboardingResult
+    >(new CompleteOnboardingCommand(user.uuid, user.email));
 
     return result.match(
       (data) => ({

@@ -2,9 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 import { OnboardingSessionEntity } from '@onboarding/infrastructure/entities/onboarding-session.entity';
-import { TenantInvitationEntity } from '@onboarding/infrastructure/entities/tenant-invitation.entity';
 import { TypeOrmOnboardingSessionRepository } from '@onboarding/infrastructure/repositories/typeorm-onboarding-session.repository';
-import { TypeOrmTenantInvitationRepository } from '@onboarding/infrastructure/repositories/typeorm-tenant-invitation.repository';
 import { StartOnboardingHandler } from '@onboarding/application/commands/start-onboarding/start-onboarding.handler';
 import { SaveOnboardingStepHandler } from '@onboarding/application/commands/save-onboarding-step/save-onboarding-step.handler';
 import { CompleteOnboardingHandler } from '@onboarding/application/commands/complete-onboarding/complete-onboarding.handler';
@@ -19,7 +17,7 @@ import { TenantModule } from '@tenant/tenant.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([OnboardingSessionEntity, TenantInvitationEntity]),
+    TypeOrmModule.forFeature([OnboardingSessionEntity]),
     CqrsModule,
     MediatorModule,
     TenantModule,
@@ -35,12 +33,7 @@ import { TenantModule } from '@tenant/tenant.module';
       provide: INJECTION_TOKENS.ONBOARDING_SESSION_CONTRACT,
       useClass: TypeOrmOnboardingSessionRepository,
     },
-    {
-      provide: INJECTION_TOKENS.TENANT_INVITATION_CONTRACT,
-      useClass: TypeOrmTenantInvitationRepository,
-    },
     TypeOrmOnboardingSessionRepository,
-    TypeOrmTenantInvitationRepository,
     StartOnboardingHandler,
     SaveOnboardingStepHandler,
     CompleteOnboardingHandler,

@@ -73,6 +73,7 @@ module.exports = {
     '!src/**/infrastructure/controllers/microsoft-authentication/**',
     '!src/**/infrastructure/controllers/apple-authentication/**',
   ],
+  testPathIgnorePatterns: ['/node_modules/', '/.claude/'],
   coverageDirectory: './coverage',
   testEnvironment: 'node',
   moduleNameMapper: {

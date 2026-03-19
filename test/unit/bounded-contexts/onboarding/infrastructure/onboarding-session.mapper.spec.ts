@@ -42,7 +42,12 @@ describe('OnboardingSessionMapper', () => {
     describe('Given an entity with JOIN path and IN_PROGRESS status', () => {
       describe('When toDomain is called', () => {
         it('Then it returns a model with JOIN path, IN_PROGRESS status, and the invitation code', () => {
-          const entity = makeEntity({ path: 'JOIN', status: 'IN_PROGRESS', invitationCode: 'abc123', currentStep: 0 });
+          const entity = makeEntity({
+            path: 'JOIN',
+            status: 'IN_PROGRESS',
+            invitationCode: 'abc123',
+            currentStep: 0,
+          });
 
           const model = OnboardingSessionMapper.toDomain(entity);
 
@@ -56,7 +61,11 @@ describe('OnboardingSessionMapper', () => {
     describe('Given an entity with null path', () => {
       describe('When toDomain is called', () => {
         it('Then it returns a model with null path', () => {
-          const entity = makeEntity({ path: null as unknown as string, currentStep: 0, stepData: {} });
+          const entity = makeEntity({
+            path: null as unknown as string,
+            currentStep: 0,
+            stepData: {},
+          });
 
           const model = OnboardingSessionMapper.toDomain(entity);
 

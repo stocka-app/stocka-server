@@ -16,9 +16,7 @@ export const CurrentTenant = createParamDecorator(
     const membershipContext = request.membershipContext;
 
     if (!membershipContext) {
-      throw new Error(
-        'Membership context not found in request. Ensure TenantGuard is applied.',
-      );
+      throw new Error('Membership context not found in request. Ensure TenantGuard is applied.');
     }
 
     return {
