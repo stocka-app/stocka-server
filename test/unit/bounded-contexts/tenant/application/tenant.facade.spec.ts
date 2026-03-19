@@ -73,6 +73,8 @@ describe('TenantFacade', () => {
     tenantId: 1,
     tier: 'STARTER',
     maxWarehouses: 3,
+    maxCustomRooms: 3,
+    maxStoreRooms: 3,
     maxUsers: 5,
     maxProducts: 1000,
     notificationsEnabled: true,

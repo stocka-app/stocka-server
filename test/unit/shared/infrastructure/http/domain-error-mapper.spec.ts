@@ -149,5 +149,16 @@ describe('mapDomainErrorToHttp', () => {
         TIER_LIMIT_REACHED: HttpStatus.FORBIDDEN,
       });
     });
+
+    it('Then it contains all expected Storage error codes', () => {
+      expect(STATUS_MAP).toMatchObject({
+        STORAGE_NOT_FOUND: HttpStatus.NOT_FOUND,
+        STORAGE_NAME_ALREADY_EXISTS: HttpStatus.CONFLICT,
+        STORAGE_ALREADY_ARCHIVED: HttpStatus.CONFLICT,
+        CUSTOM_ROOM_LIMIT_REACHED: HttpStatus.FORBIDDEN,
+        STORE_ROOM_LIMIT_REACHED: HttpStatus.FORBIDDEN,
+        WAREHOUSE_REQUIRES_TIER_UPGRADE: HttpStatus.FORBIDDEN,
+      });
+    });
   });
 });

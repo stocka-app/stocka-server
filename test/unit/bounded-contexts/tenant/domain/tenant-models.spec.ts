@@ -170,6 +170,8 @@ describe('TenantConfigModel', () => {
 
       it('Then the limits are set to free-tier defaults', () => {
         expect(config.maxWarehouses).toBe(0);
+        expect(config.maxCustomRooms).toBe(1);
+        expect(config.maxStoreRooms).toBe(1);
         expect(config.maxUsers).toBe(1);
         expect(config.maxProducts).toBe(100);
       });
@@ -205,6 +207,8 @@ describe('TenantConfigModel', () => {
           tenantId: 1,
           tier: 'STARTER',
           maxWarehouses: 3,
+          maxCustomRooms: 3,
+          maxStoreRooms: 3,
           maxUsers: 5,
           maxProducts: 1000,
           notificationsEnabled: false,
@@ -222,6 +226,8 @@ describe('TenantConfigModel', () => {
         expect(config.tenantId).toBe(1);
         expect(config.tier.toString()).toBe('STARTER');
         expect(config.maxWarehouses).toBe(3);
+        expect(config.maxCustomRooms).toBe(3);
+        expect(config.maxStoreRooms).toBe(3);
         expect(config.maxUsers).toBe(5);
         expect(config.maxProducts).toBe(1000);
         expect(config.notificationsEnabled).toBe(false);
