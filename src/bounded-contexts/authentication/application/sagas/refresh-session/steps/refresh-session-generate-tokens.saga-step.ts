@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 import { v4 as uuidv4 } from 'uuid';
 import { ISagaStepHandler } from '@shared/domain/saga';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { RefreshSessionSagaContext } from '@authentication/application/sagas/refresh-session/refresh-session.saga-context';
 
 @Injectable()
@@ -11,13 +12,21 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mediator: MediatorService,
   ) {}
 
   async execute(ctx: RefreshSessionSagaContext): Promise<void> {
     if (!ctx.user) throw new Error('GenerateRefreshTokensStep: ctx.user not set by prior step');
     if (!ctx.email) throw new Error('GenerateRefreshTokensStep: ctx.email not set by prior step');
 
-    const payload = { sub: ctx.user.uuid, email: ctx.email };
+    const membership = await this.mediator.tenant.getActiveMembership(ctx.user.uuid);
+
+    const payload = {
+      sub: ctx.user.uuid,
+      email: ctx.email,
+      tenantId: membership?.tenantUUID ?? null,
+      role: membership?.role ?? null,
+    };
 
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
       '15m') as StringValue;
