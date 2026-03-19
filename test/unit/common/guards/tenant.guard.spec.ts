@@ -13,9 +13,7 @@ const ACTIVE_CONTEXT: TenantMembershipContext = {
   usageCounts: { storageCount: 1, memberCount: 2, productCount: 5 },
 };
 
-function buildMutableRequest(
-  user?: Record<string, unknown>,
-): Record<string, unknown> {
+function buildMutableRequest(user?: Record<string, unknown>): Record<string, unknown> {
   return { user };
 }
 

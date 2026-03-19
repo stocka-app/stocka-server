@@ -23,7 +23,9 @@ import { StorageType } from '@storage/domain/enums/storage-type.enum';
 describe('CompleteOnboardingHandler', () => {
   let handler: CompleteOnboardingHandler;
   let sessionContract: jest.Mocked<IOnboardingSessionContract>;
-  let invitationContract: jest.Mocked<ITenantInvitationContract>;
+  let invitationContract: jest.Mocked<
+    Pick<ITenantInvitationContract, 'findByToken' | 'markAccepted'>
+  >;
   let memberContract: jest.Mocked<ITenantMemberContract>;
   let tenantContract: jest.Mocked<ITenantContract>;
   let commandBus: jest.Mocked<CommandBus>;
@@ -32,7 +34,10 @@ describe('CompleteOnboardingHandler', () => {
   const USER_UUID = '019538a0-0000-7000-8000-000000000001';
   const USER_EMAIL = 'owner@empresa.mx';
 
-  const makeSession = (path: 'CREATE' | 'JOIN' | null = null, invitationCode?: string): OnboardingSessionModel => {
+  const makeSession = (
+    path: 'CREATE' | 'JOIN' | null = null,
+    invitationCode?: string,
+  ): OnboardingSessionModel => {
     const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
     if (path) {
       session.saveStep(0, { path, ...(invitationCode ? { invitationCode } : {}) });
@@ -40,11 +45,13 @@ describe('CompleteOnboardingHandler', () => {
     return session;
   };
 
-  const makeInvitation = (overrides: Partial<{
-    acceptedAt: Date | null;
-    expiresAt: Date;
-    email: string;
-  }> = {}): TenantInvitationModel =>
+  const makeInvitation = (
+    overrides: Partial<{
+      acceptedAt: Date | null;
+      expiresAt: Date;
+      email: string;
+    }> = {},
+  ): TenantInvitationModel =>
     TenantInvitationModel.reconstitute({
       id: 'inv-uuid-1',
       tenantId: 42,
@@ -79,7 +86,7 @@ describe('CompleteOnboardingHandler', () => {
 
     handler = new CompleteOnboardingHandler(
       sessionContract,
-      invitationContract,
+      invitationContract as unknown as ITenantInvitationContract,
       memberContract,
       tenantContract,
       commandBus,
@@ -190,7 +197,9 @@ describe('CompleteOnboardingHandler', () => {
         sessionContract.findByUserUUID.mockResolvedValue(session);
         sessionContract.save.mockImplementation((s) => Promise.resolve(s));
 
-        commandBus.execute.mockResolvedValueOnce(ok({ tenantId: 'new-tenant-uuid', name: 'Mi Tienda' }));
+        commandBus.execute.mockResolvedValueOnce(
+          ok({ tenantId: 'new-tenant-uuid', name: 'Mi Tienda' }),
+        );
 
         const result = await handler.execute(new CompleteOnboardingCommand(USER_UUID, USER_EMAIL));
 
@@ -422,9 +431,12 @@ describe('CompleteOnboardingHandler', () => {
         });
         sessionContract.findByUserUUID.mockResolvedValue(session);
 
-        const { BusinessLogicException } = await import('@shared/domain/exceptions/business-logic.exception');
+        const { BusinessLogicException } =
+          await import('@shared/domain/exceptions/business-logic.exception');
         class StubTenantError extends BusinessLogicException {
-          constructor() { super('some domain error', 'TENANT_ERROR'); }
+          constructor() {
+            super('some domain error', 'TENANT_ERROR');
+          }
         }
         commandBus.execute.mockResolvedValueOnce(err(new StubTenantError()));
 
