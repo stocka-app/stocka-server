@@ -8,11 +8,7 @@ import { SocialSignInCommand } from '@authentication/application/commands/social
 import { SocialSignInResult } from '@authentication/application/types/authentication-result.types';
 import { SocialProfile } from '@authentication/infrastructure/strategies/google.strategy';
 import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
-import {
-  POPUP_OAUTH_MODE_COOKIE,
-  POPUP_OAUTH_MODE_VALUE,
-  buildPopupHtmlResponse,
-} from '@authentication/infrastructure/helpers/popup-html.helper';
+import { isPopupState } from '@authentication/infrastructure/helpers/popup-state-store';
 
 @ApiTags('Authentication')
 @Controller('authentication')
@@ -47,12 +43,12 @@ export class MicrosoftCallbackController {
     setRefreshCookie(res, result.refreshToken);
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') as string;
+    const state = req.query['state'] as string | undefined;
 
-    if (req.cookies?.[POPUP_OAUTH_MODE_COOKIE] === POPUP_OAUTH_MODE_VALUE) {
-      res.clearCookie(POPUP_OAUTH_MODE_COOKIE, { path: '/api/authentication' });
-      res.send(buildPopupHtmlResponse(result.accessToken, frontendUrl));
+    if (isPopupState(state)) {
+      res.redirect(`${frontendUrl}/authentication/callback?accessToken=${result.accessToken}&popup=true`);
     } else {
-      res.redirect(`${frontendUrl}/auth/callback?accessToken=${result.accessToken}`);
+      res.redirect(`${frontendUrl}/authentication/callback?accessToken=${result.accessToken}`);
     }
   }
 }

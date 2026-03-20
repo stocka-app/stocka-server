@@ -3,12 +3,10 @@ import {
   clearRefreshCookie,
 } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 import {
-  setPopupModeCookie,
-  buildPopupHtmlResponse,
-  POPUP_OAUTH_MODE_COOKIE,
-  POPUP_OAUTH_MODE_VALUE,
-} from '@authentication/infrastructure/helpers/popup-html.helper';
-import { Response } from 'express';
+  PopupStateStore,
+  isPopupState,
+} from '@authentication/infrastructure/helpers/popup-state-store';
+import { Response, Request } from 'express';
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
@@ -94,57 +92,52 @@ describe('clearRefreshCookie', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('setPopupModeCookie', () => {
-  const FIVE_MINUTES_MS = 5 * 60 * 1000;
+describe('PopupStateStore', () => {
+  let store: PopupStateStore;
 
-  describe('Given a response object in a non-production environment', () => {
-    let originalNodeEnv: string | undefined;
+  beforeEach(() => {
+    store = new PopupStateStore();
+  });
 
-    beforeEach(() => {
-      originalNodeEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'development';
-    });
+  describe('Given a request with mode=popup in the query string', () => {
+    describe('When store is called', () => {
+      it('Then it produces a state string prefixed with "popup:"', (done) => {
+        const req = { query: { mode: 'popup' } } as unknown as Request;
 
-    afterEach(() => {
-      process.env.NODE_ENV = originalNodeEnv;
-    });
-
-    it('Then it sets the oauth_mode cookie with secure: false and a 5-minute maxAge', () => {
-      const res = buildMockResponse();
-      setPopupModeCookie(res as unknown as Response);
-
-      expect(res.cookie).toHaveBeenCalledWith(POPUP_OAUTH_MODE_COOKIE, POPUP_OAUTH_MODE_VALUE, {
-        httpOnly: true,
-        secure: false,
-        sameSite: 'lax',
-        path: '/api/authentication',
-        maxAge: FIVE_MINUTES_MS,
+        store.store(req, (err, state) => {
+          expect(err).toBeNull();
+          expect(state).toMatch(/^popup:[a-f0-9]{32}$/);
+          done();
+        });
       });
     });
   });
 
-  describe('Given a response object in a production environment', () => {
-    let originalNodeEnv: string | undefined;
+  describe('Given a request without mode=popup in the query string', () => {
+    describe('When store is called', () => {
+      it('Then it produces a state string without the popup prefix', (done) => {
+        const req = { query: {} } as unknown as Request;
 
-    beforeEach(() => {
-      originalNodeEnv = process.env.NODE_ENV;
-      process.env.NODE_ENV = 'production';
+        store.store(req, (err, state) => {
+          expect(err).toBeNull();
+          expect(state).not.toMatch(/^popup:/);
+          expect(state).toMatch(/^[a-f0-9]{32}$/);
+          done();
+        });
+      });
     });
+  });
 
-    afterEach(() => {
-      process.env.NODE_ENV = originalNodeEnv;
-    });
+  describe('Given any OAuth state value', () => {
+    describe('When verify is called', () => {
+      it('Then it always accepts the state', (done) => {
+        const req = {} as unknown as Request;
 
-    it('Then it sets the oauth_mode cookie with secure: true', () => {
-      const res = buildMockResponse();
-      setPopupModeCookie(res as unknown as Response);
-
-      expect(res.cookie).toHaveBeenCalledWith(POPUP_OAUTH_MODE_COOKIE, POPUP_OAUTH_MODE_VALUE, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
-        path: '/api/authentication',
-        maxAge: FIVE_MINUTES_MS,
+        store.verify(req, 'any-state-value', (err, ok) => {
+          expect(err).toBeNull();
+          expect(ok).toBe(true);
+          done();
+        });
       });
     });
   });
@@ -152,26 +145,26 @@ describe('setPopupModeCookie', () => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe('buildPopupHtmlResponse', () => {
-  describe('Given a valid access token and frontend origin', () => {
-    it('Then it returns an HTML string that posts the token to the opener and closes the window', () => {
-      const html = buildPopupHtmlResponse('test-access-token', 'https://app.stocka.mx');
-
-      expect(html).toContain('<!DOCTYPE html>');
-      expect(html).toContain("type: 'oauth-success'");
-      expect(html).toContain("accessToken: 'test-access-token'");
-      expect(html).toContain("'https://app.stocka.mx'");
-      expect(html).toContain('window.opener.postMessage');
-      expect(html).toContain('window.close()');
+describe('isPopupState', () => {
+  describe('Given a state string that starts with "popup:"', () => {
+    it('Then it returns true', () => {
+      expect(isPopupState('popup:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4')).toBe(true);
     });
   });
 
-  describe('Given a different token and localhost origin', () => {
-    it('Then it embeds the correct token and origin in the generated HTML', () => {
-      const html = buildPopupHtmlResponse('jwt.token.value', 'http://localhost:5173');
+  describe('Given a state string that does not start with "popup:"', () => {
+    it('Then it returns false for a standard state', () => {
+      expect(isPopupState('a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4')).toBe(false);
+    });
 
-      expect(html).toContain("accessToken: 'jwt.token.value'");
-      expect(html).toContain("'http://localhost:5173'");
+    it('Then it returns false for an empty string', () => {
+      expect(isPopupState('')).toBe(false);
+    });
+  });
+
+  describe('Given an undefined state', () => {
+    it('Then it returns false', () => {
+      expect(isPopupState(undefined)).toBe(false);
     });
   });
 });

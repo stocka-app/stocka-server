@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback, Profile } from 'passport-google-oauth20';
 import { ConfigService } from '@nestjs/config';
+import { PopupStateStore } from '@authentication/infrastructure/helpers/popup-state-store';
 
 export interface SocialProfile {
   email: string;
@@ -13,12 +14,17 @@ export interface SocialProfile {
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(configService: ConfigService) {
+    // `store` is a valid passport-oauth2 option (inherited by passport-google-oauth20)
+    // but is not declared in the @types/passport-google-oauth20 StrategyOptions interface.
+    // The cast via unknown is intentional and safe: the option is passed through to
+    // the underlying OAuth2Strategy constructor which reads it at runtime.
     super({
       clientID: configService.getOrThrow<string>('GOOGLE_CLIENT_ID'),
       clientSecret: configService.getOrThrow<string>('GOOGLE_CLIENT_SECRET'),
       callbackURL: configService.getOrThrow<string>('GOOGLE_CALLBACK_URL'),
       scope: ['email', 'profile'],
-    });
+      store: new PopupStateStore(),
+    } as unknown as ConstructorParameters<typeof Strategy>[0]);
   }
 
   /**
