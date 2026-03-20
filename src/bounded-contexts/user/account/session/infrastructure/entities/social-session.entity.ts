@@ -3,7 +3,7 @@ import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
 import { SocialAccountEntity } from '@user/account/infrastructure/entities/social-account.entity';
 
-@Entity({ name: 'social_sessions', schema: 'identity' })
+@Entity({ name: 'social_sessions', schema: 'sessions' })
 export class SocialSessionEntity extends BaseEntity {
   @Column({ name: 'session_id', type: 'int', unique: true })
   sessionId!: number;

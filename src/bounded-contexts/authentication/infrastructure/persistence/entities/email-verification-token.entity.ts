@@ -2,7 +2,7 @@ import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
 
-@Entity({ name: 'email_verification_tokens', schema: 'auth' })
+@Entity({ name: 'email_verification_tokens', schema: 'authn' })
 export class EmailVerificationTokenEntity extends BaseEntity {
   @Column({ name: 'credential_account_id', type: 'int' })
   @Index()

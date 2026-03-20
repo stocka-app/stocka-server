@@ -3,7 +3,7 @@ import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
 import { SocialAccountEntity } from '@user/account/infrastructure/entities/social-account.entity';
 
-@Entity({ name: 'accounts', schema: 'identity' })
+@Entity({ name: 'accounts', schema: 'accounts' })
 export class AccountEntity extends BaseEntity {
   @Column({ name: 'user_id', type: 'int', unique: true })
   userId!: number;

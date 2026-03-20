@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
 import { ModuleEntity } from '@tenant/infrastructure/entities/module.entity';
 
-@Entity({ name: 'tier_module_policies', schema: 'tenants' })
+@Entity({ name: 'tier_module_policies', schema: 'tiers' })
 export class TierModulePolicyEntity {
   @PrimaryColumn({ type: 'varchar', length: 20 })
   tier!: string;

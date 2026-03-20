@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
-@Entity({ name: 'tier_plans', schema: 'tenants' })
+@Entity({ name: 'tier_plans', schema: 'tiers' })
 export class TierPlanEntity {
   @PrimaryColumn({ type: 'varchar', length: 20 })
   tier!: string;

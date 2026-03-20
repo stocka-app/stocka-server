@@ -4,7 +4,7 @@ import { AccountEntity } from '@user/account/infrastructure/entities/account.ent
 import { CredentialSessionEntity } from '@user/account/session/infrastructure/entities/credential-session.entity';
 import { SocialSessionEntity } from '@user/account/session/infrastructure/entities/social-session.entity';
 
-@Entity({ name: 'sessions', schema: 'identity' })
+@Entity({ name: 'sessions', schema: 'sessions' })
 export class SessionEntity extends BaseEntity {
   @Column({ name: 'account_id', type: 'int' })
   accountId!: number;

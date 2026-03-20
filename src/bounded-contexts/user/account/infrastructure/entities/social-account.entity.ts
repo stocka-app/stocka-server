@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { AccountEntity } from '@user/account/infrastructure/entities/account.entity';
 
-@Entity({ name: 'social_accounts', schema: 'identity' })
+@Entity({ name: 'social_accounts', schema: 'accounts' })
 @Index(['provider', 'providerId'], { unique: true })
 @Index(['accountId', 'provider'], { unique: true })
 export class SocialAccountEntity extends BaseEntity {

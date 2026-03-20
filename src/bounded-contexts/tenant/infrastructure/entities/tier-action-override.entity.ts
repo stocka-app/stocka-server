@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
 import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-action.entity';
 
-@Entity({ name: 'tier_action_overrides', schema: 'tenants' })
+@Entity({ name: 'tier_action_overrides', schema: 'tiers' })
 export class TierActionOverrideEntity {
   @PrimaryColumn({ type: 'varchar', length: 20 })
   tier!: string;

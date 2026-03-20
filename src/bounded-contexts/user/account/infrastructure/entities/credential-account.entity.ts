@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { AccountEntity } from '@user/account/infrastructure/entities/account.entity';
 
-@Entity({ name: 'credential_accounts', schema: 'identity' })
+@Entity({ name: 'credential_accounts', schema: 'accounts' })
 export class CredentialAccountEntity extends BaseEntity {
   @Column({ name: 'account_id', type: 'int', unique: true })
   accountId!: number;
