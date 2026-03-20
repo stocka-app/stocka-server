@@ -16,7 +16,7 @@ describe('Sign In (e2e)', () => {
       .post('/api/authentication/sign-up')
       .send({ email, username, password });
     await dataSource.query(
-      `UPDATE credential_accounts SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = LOWER($1)`,
+      `UPDATE "identity"."credential_accounts" SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = LOWER($1)`,
       [email],
     );
   }
@@ -33,7 +33,7 @@ describe('Sign In (e2e)', () => {
       .post('/api/authentication/sign-up')
       .send({ email: 'signin@example.com', username: 'signinuser', password: 'SecurePass1' });
     await dataSource.query(
-      `UPDATE credential_accounts SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = 'signin@example.com'`,
+      `UPDATE "identity"."credential_accounts" SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = 'signin@example.com'`,
     );
   });
 
@@ -86,10 +86,10 @@ describe('Sign In (e2e)', () => {
 
       it('Then a new session is persisted in the database', async () => {
         const [account] = await dataSource.query(
-          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'signin@example.com'`,
+          `SELECT a.id FROM "identity"."accounts" a JOIN "identity"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'signin@example.com'`,
         );
         const before = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT COUNT(*) as count FROM "identity"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
 
@@ -98,7 +98,7 @@ describe('Sign In (e2e)', () => {
           .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1' });
 
         const after = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT COUNT(*) as count FROM "identity"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
 
@@ -182,11 +182,11 @@ describe('Sign In (e2e)', () => {
         await signUp(email, 'rollbacksignin');
 
         const [account] = await dataSource.query(
-          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = LOWER($1)`,
+          `SELECT a.id FROM "identity"."accounts" a JOIN "identity"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = LOWER($1)`,
           [email],
         );
         const before = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1`,
+          `SELECT COUNT(*) as count FROM "identity"."sessions" WHERE account_id = $1`,
           [account.id],
         );
 
@@ -201,7 +201,7 @@ describe('Sign In (e2e)', () => {
         expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
         const after = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1`,
+          `SELECT COUNT(*) as count FROM "identity"."sessions" WHERE account_id = $1`,
           [account.id],
         );
 

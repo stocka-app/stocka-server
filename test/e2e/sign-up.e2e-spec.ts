@@ -95,7 +95,7 @@ describe('Sign Up (e2e)', () => {
         let userExistsAtEmailTime = false;
         emailProvider.sendVerificationEmail.mockImplementation(async () => {
           const [row] = await dataSource.query(
-            `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'order@example.com'`,
+            `SELECT ca.id FROM "identity"."credential_accounts" ca WHERE LOWER(ca.email) = 'order@example.com'`,
           );
           userExistsAtEmailTime = !!row;
           return { id: 'mock-id', success: true };
@@ -130,7 +130,7 @@ describe('Sign Up (e2e)', () => {
         expect(response.body.emailSent).toBe(false);
 
         const [savedUser] = await dataSource.query(
-          `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'localfirst@example.com'`,
+          `SELECT ca.id FROM "identity"."credential_accounts" ca WHERE LOWER(ca.email) = 'localfirst@example.com'`,
         );
         expect(savedUser).toBeDefined();
       }, 15000); // email step has retry: 3 attempts × backoff delays
@@ -155,7 +155,7 @@ describe('Sign Up (e2e)', () => {
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
         const [user] = await dataSource.query(
-          `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'rollback@example.com'`,
+          `SELECT ca.id FROM "identity"."credential_accounts" ca WHERE LOWER(ca.email) = 'rollback@example.com'`,
         );
         expect(user).toBeUndefined();
 
@@ -182,12 +182,12 @@ describe('Sign Up (e2e)', () => {
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 
         const [user] = await dataSource.query(
-          `SELECT ca.id FROM credential_accounts ca WHERE LOWER(ca.email) = 'deeproll@example.com'`,
+          `SELECT ca.id FROM "identity"."credential_accounts" ca WHERE LOWER(ca.email) = 'deeproll@example.com'`,
         );
         expect(user).toBeUndefined();
 
         const [session] = await dataSource.query(
-          `SELECT id FROM sessions WHERE id IS NOT NULL LIMIT 1`,
+          `SELECT id FROM "identity"."sessions" WHERE id IS NOT NULL LIMIT 1`,
         );
         // No sessions should exist since the whole transaction was rolled back
         expect(session).toBeUndefined();

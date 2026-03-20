@@ -46,10 +46,10 @@ describe('Resend Verification Code (e2e)', () => {
     emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
 
     if (dataSource?.isInitialized) {
-      await dataSource.query('DELETE FROM verification_attempts');
-      await dataSource.query('DELETE FROM email_verification_tokens');
-      await dataSource.query('DELETE FROM sessions');
-      await dataSource.query('DELETE FROM users');
+      await dataSource.query('DELETE FROM "auth"."verification_attempts"');
+      await dataSource.query('DELETE FROM "auth"."email_verification_tokens"');
+      await dataSource.query('DELETE FROM "identity"."sessions"');
+      await dataSource.query('DELETE FROM "identity"."users"');
     }
   });
 
@@ -65,7 +65,7 @@ describe('Resend Verification Code (e2e)', () => {
         await signUpAndCaptureCode('resend1@example.com', 'resenduser1');
 
         // Delete the existing token to bypass cooldown and create a fresh one
-        await dataSource.query('DELETE FROM email_verification_tokens');
+        await dataSource.query('DELETE FROM "auth"."email_verification_tokens"');
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/resend-verification-code')

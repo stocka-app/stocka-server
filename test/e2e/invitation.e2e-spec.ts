@@ -21,7 +21,7 @@ async function signUp(
     .post('/api/authentication/sign-up')
     .send({ email, username, password: 'SecurePass1!' });
   await dataSource.query(
-    `UPDATE credential_accounts SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = LOWER($1)`,
+    `UPDATE "identity"."credential_accounts" SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = LOWER($1)`,
     [email],
   );
 }
@@ -81,11 +81,11 @@ describe('Invitation flow (e2e)', () => {
     // Upgrade tenant to STARTER so invite-member action is permitted
     await dataSource.query(
       `
-      UPDATE tenant_config tc
+      UPDATE "tenants"."tenant_config" tc
       SET tier = 'STARTER', max_users = 5
-      FROM tenant_members tm
-        JOIN users u ON u.id = tm.user_id
-        JOIN credential_accounts ca ON ca.account_id = u.id
+      FROM "tenants"."tenant_members" tm
+        JOIN "identity"."users" u ON u.id = tm.user_id
+        JOIN "identity"."credential_accounts" ca ON ca.account_id = u.id
       WHERE tm.tenant_id = tc.tenant_id
         AND tm.role = 'OWNER'
         AND tm.archived_at IS NULL
@@ -208,7 +208,7 @@ describe('Invitation flow (e2e)', () => {
         // Fetch the token from DB if the list endpoint did not expose it
         if (!invitationToken) {
           const rows = await dataSource.query<{ token: string }[]>(
-            `SELECT token FROM tenant_invitations WHERE id = $1`,
+            `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
             [invitationId],
           );
           invitationToken = rows[0].token;
@@ -245,7 +245,7 @@ describe('Invitation flow (e2e)', () => {
         // Ensure invitationToken is available
         if (!invitationToken) {
           const rows = await dataSource.query<{ token: string }[]>(
-            `SELECT token FROM tenant_invitations WHERE id = $1`,
+            `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
             [invitationId],
           );
           invitationToken = rows[0].token;
@@ -294,7 +294,7 @@ describe('Invitation flow (e2e)', () => {
 
       if (!cancelInvitationToken) {
         const rows = await dataSource.query<{ token: string }[]>(
-          `SELECT token FROM tenant_invitations WHERE id = $1`,
+          `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
           [cancelInvitationId],
         );
         cancelInvitationToken = rows[0]?.token ?? '';

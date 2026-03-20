@@ -27,27 +27,27 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TRUNCATE_TABLES = [
-  // User / Auth tables
-  'social_profiles',
-  'personal_profiles',
-  'commercial_profiles',
-  'profiles',
-  'social_sessions',
-  'credential_sessions',
-  'verification_attempts',
-  'email_verification_tokens',
-  'password_reset_tokens',
-  'sessions',
-  'social_accounts',
-  'credential_accounts',
-  'accounts',
-  'users',
-  // Tenant tables
-  'tenant_invitations',
-  'tenant_members',
-  'tenant_profiles',
-  'tenant_config',
-  'tenants',
+  // User / Auth tables (schema-qualified)
+  '"identity"."social_profiles"',
+  '"identity"."personal_profiles"',
+  '"identity"."commercial_profiles"',
+  '"identity"."profiles"',
+  '"identity"."social_sessions"',
+  '"identity"."credential_sessions"',
+  '"auth"."verification_attempts"',
+  '"auth"."email_verification_tokens"',
+  '"auth"."password_reset_tokens"',
+  '"identity"."sessions"',
+  '"identity"."social_accounts"',
+  '"identity"."credential_accounts"',
+  '"identity"."accounts"',
+  '"identity"."users"',
+  // Tenant tables (schema-qualified)
+  '"tenants"."tenant_invitations"',
+  '"tenants"."tenant_members"',
+  '"tenants"."tenant_profiles"',
+  '"tenants"."tenant_config"',
+  '"tenants"."tenants"',
 ] as const;
 
 // ─── Singleton state ──────────────────────────────────────────────────────────
@@ -59,13 +59,6 @@ interface TenantWorkerApp {
 
 let tenantWorkerAppInstance: TenantWorkerApp | null = null;
 let tenantWorkerAppPromise: Promise<TenantWorkerApp> | null = null;
-
-// ─── Schema name ──────────────────────────────────────────────────────────────
-
-export function getTenantWorkerSchemaName(): string {
-  const workerId = process.env.JEST_WORKER_ID ?? '1';
-  return `test_w${workerId}`;
-}
 
 // ─── Email provider mock ──────────────────────────────────────────────────────
 
@@ -79,8 +72,6 @@ export const tenantEmailProviderMock: jest.Mocked<IEmailProviderContract> = {
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function bootstrap(): Promise<TenantWorkerApp> {
-  const schemaName = getTenantWorkerSchemaName();
-
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [
       ConfigModule.forRoot({
@@ -96,13 +87,9 @@ async function bootstrap(): Promise<TenantWorkerApp> {
         username: process.env.DB_USERNAME ?? 'stocka',
         password: process.env.DB_PASSWORD ?? 'stocka_dev_password',
         database: process.env.DB_DATABASE ?? 'stocka_db',
-        schema: schemaName,
         autoLoadEntities: true,
         synchronize: false,
         logging: false,
-        extra: {
-          options: `-c search_path=${schemaName}`,
-        },
       }),
       EmailModule,
       UnitOfWorkModule,
@@ -151,6 +138,6 @@ export async function getTenantWorkerApp(): Promise<TenantWorkerApp> {
 }
 
 export async function truncateTenantWorkerTables(dataSource: DataSource): Promise<void> {
-  const tableList = TRUNCATE_TABLES.map((t) => `"${t}"`).join(', ');
+  const tableList = TRUNCATE_TABLES.join(', ');
   await dataSource.query(`TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE`);
 }
