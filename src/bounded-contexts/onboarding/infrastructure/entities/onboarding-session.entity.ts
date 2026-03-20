@@ -7,7 +7,7 @@ import {
   Index,
 } from 'typeorm';
 
-@Entity('onboarding_sessions')
+@Entity({ name: 'onboarding_sessions', schema: 'onboarding' })
 export class OnboardingSessionEntity {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { ModuleEntity } from '@tenant/infrastructure/entities/module.entity';
 
-@Entity('catalog_actions')
+@Entity({ name: 'catalog_actions', schema: 'tenants' })
 export class CatalogActionEntity {
   @PrimaryGeneratedColumn()
   id!: number;

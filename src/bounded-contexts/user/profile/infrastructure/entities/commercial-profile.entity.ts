@@ -2,7 +2,7 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { ProfileEntity } from '@user/profile/infrastructure/entities/profile.entity';
 
-@Entity('commercial_profiles')
+@Entity({ name: 'commercial_profiles', schema: 'identity' })
 export class CommercialProfileEntity extends BaseEntity {
   @Column({ name: 'profile_id', type: 'int', unique: true })
   profileId!: number;

@@ -3,7 +3,7 @@ import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { PersonalProfileEntity } from '@user/profile/infrastructure/entities/personal-profile.entity';
 import { CommercialProfileEntity } from '@user/profile/infrastructure/entities/commercial-profile.entity';
 
-@Entity('profiles')
+@Entity({ name: 'profiles', schema: 'identity' })
 export class ProfileEntity extends BaseEntity {
   @Column({ name: 'user_id', type: 'int', unique: true })
   userId!: number;
