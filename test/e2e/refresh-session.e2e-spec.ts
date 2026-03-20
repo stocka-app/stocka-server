@@ -74,10 +74,10 @@ describe('Refresh Session (e2e)', () => {
 
         // Get the original session before refresh
         const [account] = await dataSource.query(
-          `SELECT a.id FROM "identity"."accounts" a JOIN "identity"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'refresh3@example.com'`,
+          `SELECT a.id FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'refresh3@example.com'`,
         );
         const [originalSession] = await dataSource.query(
-          `SELECT uuid FROM "identity"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT uuid FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
 
@@ -86,7 +86,7 @@ describe('Refresh Session (e2e)', () => {
           .set('Cookie', cookie);
 
         const [archivedCheck] = await dataSource.query(
-          `SELECT archived_at FROM "identity"."sessions" WHERE uuid = $1`,
+          `SELECT archived_at FROM "sessions"."sessions" WHERE uuid = $1`,
           [originalSession.uuid],
         );
 
@@ -97,11 +97,11 @@ describe('Refresh Session (e2e)', () => {
         const { cookie } = await signUpAndGetCookie('refresh4@example.com', 'refreshuser4');
 
         const [account] = await dataSource.query(
-          `SELECT a.id FROM "identity"."accounts" a JOIN "identity"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'refresh4@example.com'`,
+          `SELECT a.id FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'refresh4@example.com'`,
         );
 
         const sessionsBefore = await dataSource.query(
-          `SELECT COUNT(*) as count FROM "identity"."sessions" WHERE account_id = $1`,
+          `SELECT COUNT(*) as count FROM "sessions"."sessions" WHERE account_id = $1`,
           [account.id],
         );
 
@@ -110,7 +110,7 @@ describe('Refresh Session (e2e)', () => {
           .set('Cookie', cookie);
 
         const sessionsAfter = await dataSource.query(
-          `SELECT COUNT(*) as count FROM "identity"."sessions" WHERE account_id = $1`,
+          `SELECT COUNT(*) as count FROM "sessions"."sessions" WHERE account_id = $1`,
           [account.id],
         );
 
@@ -155,10 +155,10 @@ describe('Refresh Session (e2e)', () => {
         const { cookie } = await signUpAndGetCookie('rollback.refresh@example.com', 'rollbackref');
 
         const [account] = await dataSource.query(
-          `SELECT a.id FROM "identity"."accounts" a JOIN "identity"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'rollback.refresh@example.com'`,
+          `SELECT a.id FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'rollback.refresh@example.com'`,
         );
         const [originalSession] = await dataSource.query(
-          `SELECT uuid FROM "identity"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT uuid FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
 
@@ -174,7 +174,7 @@ describe('Refresh Session (e2e)', () => {
 
         // Original session must still be active (archive rolled back)
         const [sessionCheck] = await dataSource.query(
-          `SELECT archived_at FROM "identity"."sessions" WHERE uuid = $1`,
+          `SELECT archived_at FROM "sessions"."sessions" WHERE uuid = $1`,
           [originalSession.uuid],
         );
 

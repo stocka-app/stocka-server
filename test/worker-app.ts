@@ -3,7 +3,8 @@
  *
  * With --runInBand all specs share a single process and this singleton is shared
  * across all specs. Run e2e tests with `test:e2e:seq` (--runInBand) to avoid
- * data races — the 6 domain schemas (auth, identity, tenants, etc.) are shared
+ * data races — the 12 domain schemas (authn, authz, identity, accounts, sessions,
+ * profiles, tenants, tiers, capabilities, storage, onboarding, shared) are shared
  * and per-worker isolation is not available with entity-declared schemas.
  *
  * Key decisions:
@@ -42,19 +43,19 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 // are NOT reachable via FK cascade from users — ProfileEntity has no @ManyToOne decorator,
 // so there is no FK. They must be listed explicitly.
 const TRUNCATE_TABLES = [
-  '"identity"."social_profiles"',
-  '"identity"."personal_profiles"',
-  '"identity"."commercial_profiles"',
-  '"identity"."profiles"',
-  '"identity"."social_sessions"',
-  '"identity"."credential_sessions"',
-  '"auth"."verification_attempts"',
-  '"auth"."email_verification_tokens"',
-  '"auth"."password_reset_tokens"',
-  '"identity"."sessions"',
-  '"identity"."social_accounts"',
-  '"identity"."credential_accounts"',
-  '"identity"."accounts"',
+  '"profiles"."social_profiles"',
+  '"profiles"."personal_profiles"',
+  '"profiles"."commercial_profiles"',
+  '"profiles"."profiles"',
+  '"sessions"."social_sessions"',
+  '"sessions"."credential_sessions"',
+  '"authn"."verification_attempts"',
+  '"authn"."email_verification_tokens"',
+  '"authn"."password_reset_tokens"',
+  '"sessions"."sessions"',
+  '"accounts"."social_accounts"',
+  '"accounts"."credential_accounts"',
+  '"accounts"."accounts"',
   '"identity"."users"',
 ] as const;
 

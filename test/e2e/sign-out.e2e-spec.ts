@@ -41,8 +41,8 @@ describe('Sign Out (e2e)', () => {
     emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
 
     if (dataSource?.isInitialized) {
-      await dataSource.query('DELETE FROM "auth"."email_verification_tokens"');
-      await dataSource.query('DELETE FROM "identity"."sessions"');
+      await dataSource.query('DELETE FROM "authn"."email_verification_tokens"');
+      await dataSource.query('DELETE FROM "sessions"."sessions"');
       await dataSource.query('DELETE FROM "identity"."users"');
     }
   });
@@ -86,12 +86,12 @@ describe('Sign Out (e2e)', () => {
         const cookie = await signUpAndGetCookie('signout3@example.com', 'signoutuser3');
 
         const [account] = await dataSource.query(
-          `SELECT a.id FROM "identity"."accounts" a JOIN "identity"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'signout3@example.com'`,
+          `SELECT a.id FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'signout3@example.com'`,
         );
 
         // Verify the session exists and is active before sign-out
         const [activeSession] = await dataSource.query(
-          `SELECT uuid FROM "identity"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT uuid FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
         expect(activeSession).toBeDefined();
@@ -101,7 +101,7 @@ describe('Sign Out (e2e)', () => {
           .set('Cookie', cookie);
 
         const activeSessions = await dataSource.query(
-          `SELECT uuid FROM "identity"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT uuid FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
         expect(activeSessions.length).toBe(0);

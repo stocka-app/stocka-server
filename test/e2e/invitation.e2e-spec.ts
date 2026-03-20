@@ -21,7 +21,7 @@ async function signUp(
     .post('/api/authentication/sign-up')
     .send({ email, username, password: 'SecurePass1!' });
   await dataSource.query(
-    `UPDATE "identity"."credential_accounts" SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = LOWER($1)`,
+    `UPDATE "accounts"."credential_accounts" SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = LOWER($1)`,
     [email],
   );
 }
@@ -85,7 +85,7 @@ describe('Invitation flow (e2e)', () => {
       SET tier = 'STARTER', max_users = 5
       FROM "tenants"."tenant_members" tm
         JOIN "identity"."users" u ON u.id = tm.user_id
-        JOIN "identity"."credential_accounts" ca ON ca.account_id = u.id
+        JOIN "accounts"."credential_accounts" ca ON ca.account_id = u.id
       WHERE tm.tenant_id = tc.tenant_id
         AND tm.role = 'OWNER'
         AND tm.archived_at IS NULL

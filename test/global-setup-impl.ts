@@ -4,8 +4,9 @@
  * Responsibilities:
  *  1. Set synchronous_commit = off on the test database — eliminates fsync wait on
  *     every INSERT/UPDATE across all specs.
- *  2. Drop and recreate the 6 domain schemas (auth, identity, tenants, storage,
- *     onboarding, shared) and run all production migrations inside them.
+ *  2. Drop and recreate the 12 domain schemas (authn, authz, identity, accounts,
+ *     sessions, profiles, tenants, tiers, capabilities, storage, onboarding, shared)
+ *     and run all production migrations inside them.
  *     This guarantees the test DB schema is always identical to what migration:run
  *     produces. Any entity/migration mismatch surfaces here as a RED failure.
  *
@@ -17,7 +18,20 @@
 import * as path from 'path';
 import { DataSource } from 'typeorm';
 
-const DOMAIN_SCHEMAS = ['auth', 'identity', 'tenants', 'storage', 'onboarding', 'shared'] as const;
+const DOMAIN_SCHEMAS = [
+  'authn',
+  'authz',
+  'identity',
+  'accounts',
+  'sessions',
+  'profiles',
+  'tenants',
+  'tiers',
+  'capabilities',
+  'storage',
+  'onboarding',
+  'shared',
+] as const;
 
 async function setSynchronousCommitOff(): Promise<void> {
   const ds = new DataSource({

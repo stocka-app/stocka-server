@@ -47,7 +47,7 @@ describe('Social Sign In (e2e)', () => {
 
       it('Then their account is persisted in the database', async () => {
         const [socialAccount] = await dataSource.query(
-          `SELECT sa.id, sa.provider_id FROM "identity"."social_accounts" sa WHERE sa.provider_id = 'google-new-uid-001' AND sa.provider = 'google'`,
+          `SELECT sa.id, sa.provider_id FROM "accounts"."social_accounts" sa WHERE sa.provider_id = 'google-new-uid-001' AND sa.provider = 'google'`,
         );
 
         expect(socialAccount).toBeDefined();
@@ -56,10 +56,10 @@ describe('Social Sign In (e2e)', () => {
 
       it('Then a session is persisted in the database for their account', async () => {
         const [socialAccount] = await dataSource.query(
-          `SELECT account_id FROM "identity"."social_accounts" WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
+          `SELECT account_id FROM "accounts"."social_accounts" WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
         );
         const [session] = await dataSource.query(
-          `SELECT id FROM "identity"."sessions" WHERE account_id = $1`,
+          `SELECT id FROM "sessions"."sessions" WHERE account_id = $1`,
           [socialAccount.account_id],
         );
 
@@ -76,7 +76,7 @@ describe('Social Sign In (e2e)', () => {
     describe('When they sign in with Google again', () => {
       it('Then the system recognises the provider link and signs them in without creating a new account', async () => {
         const before = await dataSource.query(
-          `SELECT COUNT(*) as count FROM "identity"."social_accounts" WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
+          `SELECT COUNT(*) as count FROM "accounts"."social_accounts" WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
         );
 
         const result = await commandBus.execute(
@@ -89,7 +89,7 @@ describe('Social Sign In (e2e)', () => {
         );
 
         const after = await dataSource.query(
-          `SELECT COUNT(*) as count FROM "identity"."social_accounts" WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
+          `SELECT COUNT(*) as count FROM "accounts"."social_accounts" WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
         );
 
         expect(result.accessToken).toBeDefined();
@@ -127,7 +127,7 @@ describe('Social Sign In (e2e)', () => {
 
       it('Then no new user account is created — only the existing one is updated', async () => {
         const rows = await dataSource.query(
-          `SELECT COUNT(*) as count FROM "identity"."accounts" a JOIN "identity"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'manual.then.oauth@example.com'`,
+          `SELECT COUNT(*) as count FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'manual.then.oauth@example.com'`,
         );
 
         expect(parseInt(rows[0].count)).toBe(1);
@@ -158,7 +158,7 @@ describe('Social Sign In (e2e)', () => {
         ).rejects.toThrow('Session insert failed');
 
         const [socialAccount] = await dataSource.query(
-          `SELECT id FROM "identity"."social_accounts" WHERE LOWER(provider_email) = 'rollback.social@example.com'`,
+          `SELECT id FROM "accounts"."social_accounts" WHERE LOWER(provider_email) = 'rollback.social@example.com'`,
         );
 
         expect(socialAccount).toBeUndefined();

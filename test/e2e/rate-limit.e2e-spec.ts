@@ -117,9 +117,9 @@ describe('Rate Limiting (e2e)', () => {
   beforeEach(async () => {
     // Clean up verification_attempts table before each test
     if (dataSource?.isInitialized) {
-      await dataSource.query('DELETE FROM "auth"."verification_attempts"');
-      await dataSource.query('DELETE FROM "auth"."email_verification_tokens"');
-      await dataSource.query('DELETE FROM "identity"."sessions"');
+      await dataSource.query('DELETE FROM "authn"."verification_attempts"');
+      await dataSource.query('DELETE FROM "authn"."email_verification_tokens"');
+      await dataSource.query('DELETE FROM "sessions"."sessions"');
       await dataSource.query('DELETE FROM "identity"."users"');
     }
   });
