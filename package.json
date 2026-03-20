@@ -29,7 +29,7 @@
     "release:preview": "release-it --dry-run --no-git.requireBranch",
     "release:notes": "RELEASE_IT_AUTO=1 release-it --ci --no-git.push && echo 'Edit CHANGELOG.md, then: git commit --amend --no-edit'",
     "prepare": "git config core.hooksPath .githooks",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm",
+    "typeorm": "npx ts-node -r tsconfig-paths/register node_modules/typeorm/cli.js",
     "migration:generate": "npm run typeorm -- migration:generate -d src/core/config/database/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/core/config/database/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/core/config/database/data-source.ts",
