@@ -41,6 +41,7 @@ function buildMockRes(): jest.Mocked<Response> {
 function buildMockReq(overrides?: Partial<Request>): Request {
   return {
     cookies: {},
+    query: {},
     headers: { 'accept-language': 'en-US' },
     ip: '127.0.0.1',
     socket: { remoteAddress: '127.0.0.1' },
@@ -730,16 +731,16 @@ function buildPopupCallbackTests(
       controller = module.get(ControllerClass);
     });
 
-    describe(`Given a ${provider} OAuth callback with oauth_mode=popup cookie`, () => {
+    describe(`Given a ${provider} OAuth callback with a popup state parameter`, () => {
       describe('When handle is called', () => {
-        it('Then it redirects to the frontend callback page with popup=true instead of sending HTML', async () => {
+        it('Then it redirects to the frontend callback page with popup=true', async () => {
           commandBus.execute.mockResolvedValue({
             accessToken: 'popup-access-token',
             refreshToken: 'rt-popup',
           });
           const res = buildMockRes();
           const req = buildMockReq({
-            cookies: { oauth_mode: 'popup' },
+            query: { state: 'popup:a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4' },
             user: {
               email: 'popup@example.com',
               displayName: 'Popup User',
@@ -755,9 +756,6 @@ function buildPopupCallbackTests(
           const redirectUrl = (res.redirect as jest.Mock).mock.calls[0][0] as string;
           expect(redirectUrl).toContain('popup=true');
           expect(redirectUrl).toContain('popup-access-token');
-          expect(res.clearCookie).toHaveBeenCalledWith('oauth_mode', {
-            path: '/api/authentication',
-          });
         });
       });
     });
