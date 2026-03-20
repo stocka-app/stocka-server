@@ -11,7 +11,6 @@ import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh
 import {
   POPUP_OAUTH_MODE_COOKIE,
   POPUP_OAUTH_MODE_VALUE,
-  sendPopupResponse,
 } from '@authentication/infrastructure/helpers/popup-html.helper';
 
 @ApiTags('Authentication')
@@ -47,7 +46,7 @@ export class GoogleCallbackController {
 
     if (req.cookies?.[POPUP_OAUTH_MODE_COOKIE] === POPUP_OAUTH_MODE_VALUE) {
       res.clearCookie(POPUP_OAUTH_MODE_COOKIE, { path: '/api/authentication' });
-      sendPopupResponse(res, result.accessToken, frontendUrl);
+      res.redirect(`${frontendUrl}/authentication/callback?accessToken=${result.accessToken}&popup=true`);
     } else {
       res.redirect(`${frontendUrl}/authentication/callback?accessToken=${result.accessToken}`);
     }

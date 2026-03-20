@@ -732,7 +732,7 @@ function buildPopupCallbackTests(
 
     describe(`Given a ${provider} OAuth callback with oauth_mode=popup cookie`, () => {
       describe('When handle is called', () => {
-        it('Then it sends an HTML page with postMessage instead of redirecting', async () => {
+        it('Then it redirects to the frontend callback page with popup=true instead of sending HTML', async () => {
           commandBus.execute.mockResolvedValue({
             accessToken: 'popup-access-token',
             refreshToken: 'rt-popup',
@@ -750,11 +750,11 @@ function buildPopupCallbackTests(
 
           await controller.handle(req, res);
 
-          expect(res.send).toHaveBeenCalled();
-          expect(res.redirect).not.toHaveBeenCalled();
-          const sentHtml = (res.send as jest.Mock).mock.calls[0][0] as string;
-          expect(sentHtml).toContain('postMessage');
-          expect(sentHtml).toContain('popup-access-token');
+          expect(res.redirect).toHaveBeenCalled();
+          expect(res.send).not.toHaveBeenCalled();
+          const redirectUrl = (res.redirect as jest.Mock).mock.calls[0][0] as string;
+          expect(redirectUrl).toContain('popup=true');
+          expect(redirectUrl).toContain('popup-access-token');
           expect(res.clearCookie).toHaveBeenCalledWith('oauth_mode', {
             path: '/api/authentication',
           });

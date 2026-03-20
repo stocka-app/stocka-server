@@ -4,7 +4,6 @@ import {
 } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 import {
   setPopupModeCookie,
-  sendPopupResponse,
   POPUP_OAUTH_MODE_COOKIE,
   POPUP_OAUTH_MODE_VALUE,
 } from '@authentication/infrastructure/helpers/popup-html.helper';
@@ -12,13 +11,11 @@ import { Response } from 'express';
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
-function buildMockResponse(): jest.Mocked<Pick<Response, 'cookie' | 'clearCookie' | 'setHeader' | 'send'>> {
+function buildMockResponse(): jest.Mocked<Pick<Response, 'cookie' | 'clearCookie'>> {
   return {
     cookie: jest.fn(),
     clearCookie: jest.fn(),
-    setHeader: jest.fn(),
-    send: jest.fn(),
-  } as unknown as jest.Mocked<Pick<Response, 'cookie' | 'clearCookie' | 'setHeader' | 'send'>>;
+  } as unknown as jest.Mocked<Pick<Response, 'cookie' | 'clearCookie'>>;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,49 +149,3 @@ describe('setPopupModeCookie', () => {
   });
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe('sendPopupResponse', () => {
-  describe('Given a valid access token and frontend origin', () => {
-    it('Then it sets a narrow Content-Security-Policy that permits inline scripts', () => {
-      const res = buildMockResponse();
-      sendPopupResponse(res as unknown as Response, 'test-access-token', 'https://app.stocka.mx');
-
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'Content-Security-Policy',
-        "default-src 'none'; script-src 'unsafe-inline'",
-      );
-    });
-
-    it('Then it sets Cross-Origin-Opener-Policy to unsafe-none to preserve window.opener', () => {
-      const res = buildMockResponse();
-      sendPopupResponse(res as unknown as Response, 'test-access-token', 'https://app.stocka.mx');
-
-      expect(res.setHeader).toHaveBeenCalledWith('Cross-Origin-Opener-Policy', 'unsafe-none');
-    });
-
-    it('Then it sends HTML that posts the token to the opener and closes the window', () => {
-      const res = buildMockResponse();
-      sendPopupResponse(res as unknown as Response, 'test-access-token', 'https://app.stocka.mx');
-
-      const sentHtml = (res.send as jest.Mock).mock.calls[0][0] as string;
-      expect(sentHtml).toContain('<!DOCTYPE html>');
-      expect(sentHtml).toContain("type: 'oauth-success'");
-      expect(sentHtml).toContain("accessToken: 'test-access-token'");
-      expect(sentHtml).toContain("'https://app.stocka.mx'");
-      expect(sentHtml).toContain('window.opener.postMessage');
-      expect(sentHtml).toContain('window.close()');
-    });
-  });
-
-  describe('Given a different token and localhost origin', () => {
-    it('Then it embeds the correct token and origin in the generated HTML', () => {
-      const res = buildMockResponse();
-      sendPopupResponse(res as unknown as Response, 'jwt.token.value', 'http://localhost:5173');
-
-      const sentHtml = (res.send as jest.Mock).mock.calls[0][0] as string;
-      expect(sentHtml).toContain("accessToken: 'jwt.token.value'");
-      expect(sentHtml).toContain("'http://localhost:5173'");
-    });
-  });
-});
