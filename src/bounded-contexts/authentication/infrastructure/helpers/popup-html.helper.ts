@@ -41,15 +41,22 @@ function buildPopupHtml(accessToken: string, frontendOrigin: string): string {
 /**
  * Sends the OAuth popup HTML response.
  *
- * Overrides Helmet's default CSP to allow the inline script that posts the
- * OAuth tokens to the parent window and closes the popup. The override is
- * scoped to this response only and uses the most restrictive policy possible:
- * no external resources, only inline scripts are permitted.
+ * Overrides two Helmet defaults that would otherwise break the popup flow:
+ *
+ * 1. Content-Security-Policy: Helmet blocks inline scripts by default.
+ *    The popup contains only a self-contained inline script with no external
+ *    resources, so a narrow override is safe here.
+ *
+ * 2. Cross-Origin-Opener-Policy: Helmet sets COOP: same-origin by default.
+ *    This severs the opener relationship between the popup (localhost:3001)
+ *    and the frontend window (localhost:5173), making window.opener null and
+ *    blocking window.close(). Setting unsafe-none restores the opener reference
+ *    for this ephemeral page only.
+ *
+ * Both overrides are scoped to this single response.
  */
 export function sendPopupResponse(res: Response, accessToken: string, frontendOrigin: string): void {
-  // Helmet sets "script-src 'self'" by default, which blocks inline scripts.
-  // This specific HTML page contains only a self-contained inline script with
-  // no external resources, so a narrow override is safe here.
   res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'");
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
   res.send(buildPopupHtml(accessToken, frontendOrigin));
 }

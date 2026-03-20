@@ -166,6 +166,13 @@ describe('sendPopupResponse', () => {
       );
     });
 
+    it('Then it sets Cross-Origin-Opener-Policy to unsafe-none to preserve window.opener', () => {
+      const res = buildMockResponse();
+      sendPopupResponse(res as unknown as Response, 'test-access-token', 'https://app.stocka.mx');
+
+      expect(res.setHeader).toHaveBeenCalledWith('Cross-Origin-Opener-Policy', 'unsafe-none');
+    });
+
     it('Then it sends HTML that posts the token to the opener and closes the window', () => {
       const res = buildMockResponse();
       sendPopupResponse(res as unknown as Response, 'test-access-token', 'https://app.stocka.mx');
