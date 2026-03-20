@@ -11,7 +11,7 @@ import {
 import { v7 as uuidV7 } from 'uuid';
 import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
 
-@Entity('store_rooms')
+@Entity({ name: 'store_rooms', schema: 'storage' })
 export class StoreRoomEntity {
   @PrimaryGeneratedColumn()
   id!: number;

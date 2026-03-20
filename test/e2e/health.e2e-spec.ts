@@ -5,16 +5,12 @@ import request from 'supertest';
 import { App } from 'supertest/types';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HealthModule } from '@core/infrastructure/health/health.module';
-import { getWorkerSchemaName } from '@test/worker-app';
 
 describe('Health Check (e2e)', () => {
   let app: INestApplication<App>;
 
   beforeAll(async () => {
     // HealthModule only needs a DB connection — no entities or business logic.
-    // It uses the worker's schema for DB isolation but boots its own minimal module.
-    const schemaName = getWorkerSchemaName();
-
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [
         TypeOrmModule.forRoot({
@@ -24,11 +20,7 @@ describe('Health Check (e2e)', () => {
           username: process.env.DB_USERNAME ?? 'stocka',
           password: process.env.DB_PASSWORD ?? 'stocka_dev_password',
           database: process.env.DB_DATABASE ?? 'stocka_db',
-          schema: schemaName,
           synchronize: false,
-          extra: {
-            options: `-c search_path=${schemaName}`,
-          },
         }),
         HealthModule,
       ],

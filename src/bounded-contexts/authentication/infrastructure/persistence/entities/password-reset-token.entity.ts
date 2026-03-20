@@ -2,7 +2,7 @@ import { Entity, Column, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
 
-@Entity('password_reset_tokens')
+@Entity({ name: 'password_reset_tokens', schema: 'authn' })
 export class PasswordResetTokenEntity extends BaseEntity {
   @Column({ name: 'credential_account_id', type: 'int' })
   credentialAccountId!: number;

@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn, CreateDateColumn, BeforeInsert, Index } from 'typeorm';
 import { v7 as uuidV7 } from 'uuid';
 
-@Entity('tenant_invitations')
+@Entity({ name: 'tenant_invitations', schema: 'tenants' })
 export class TenantInvitationEntity {
   @PrimaryColumn({ type: 'varchar', length: 36 })
   id!: string;

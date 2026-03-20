@@ -1,7 +1,7 @@
 import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 
-@Entity('tenant_members')
+@Entity({ name: 'tenant_members', schema: 'tenants' })
 export class TenantMemberEntity extends BaseEntity {
   @Column({ name: 'tenant_id', type: 'int' })
   @Index()

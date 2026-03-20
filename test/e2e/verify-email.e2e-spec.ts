@@ -46,10 +46,10 @@ describe('Verify Email (e2e)', () => {
     emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
 
     if (dataSource?.isInitialized) {
-      await dataSource.query('DELETE FROM verification_attempts');
-      await dataSource.query('DELETE FROM email_verification_tokens');
-      await dataSource.query('DELETE FROM sessions');
-      await dataSource.query('DELETE FROM users');
+      await dataSource.query('DELETE FROM "authn"."verification_attempts"');
+      await dataSource.query('DELETE FROM "authn"."email_verification_tokens"');
+      await dataSource.query('DELETE FROM "sessions"."sessions"');
+      await dataSource.query('DELETE FROM "identity"."users"');
     }
   });
 

@@ -1,15 +1,16 @@
 /**
- * Worker-scoped NestJS application singleton (Strategy 3).
+ * Worker-scoped NestJS application singleton.
  *
- * With --runInBand all specs share JEST_WORKER_ID=1 and a single process,
- * so this module is evaluated once and the singleton is shared across all 15 specs.
- * With parallel workers (maxWorkers=4), each worker process has its own module scope
- * and therefore its own singleton — fully isolated via schema (test_w1..test_wN).
+ * With --runInBand all specs share a single process and this singleton is shared
+ * across all specs. Run e2e tests with `test:e2e:seq` (--runInBand) to avoid
+ * data races — the 12 domain schemas (authn, authz, identity, accounts, sessions,
+ * profiles, tenants, tiers, capabilities, storage, onboarding, shared) are shared
+ * and per-worker isolation is not available with entity-declared schemas.
  *
  * Key decisions:
- *  - `synchronize: false` — globalSetup already ran dropSchema + synchronize once.
- *  - `schema: schemaName` — TypeORM sets search_path on every connection; all queries
- *    are automatically scoped to this schema with zero additional effort per query.
+ *  - `synchronize: false` — globalSetup already created domain schemas + ran migrations.
+ *  - No connection-level `schema` — entities declare their own schemas; TypeORM uses
+ *    schema-qualified names (e.g. "identity"."users") in all generated SQL.
  *  - `app.listen(0)` — binds to a random available OS port; supertest uses
  *    app.getHttpServer() which works regardless of port.
  *  - The singleton is never closed — the Jest worker process exits (--forceExit)
@@ -37,24 +38,25 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 
 // Tables to truncate between specs (restores a clean slate without a full schema drop).
 // Order does not matter because CASCADE handles FK dependencies.
+// Schema-qualified names are required since entities live in named PostgreSQL schemas.
 // NOTE: profile tables (social_profiles, personal_profiles, commercial_profiles, profiles)
 // are NOT reachable via FK cascade from users — ProfileEntity has no @ManyToOne decorator,
-// so synchronize() creates no FK. They must be listed explicitly.
+// so there is no FK. They must be listed explicitly.
 const TRUNCATE_TABLES = [
-  'social_profiles',
-  'personal_profiles',
-  'commercial_profiles',
-  'profiles',
-  'social_sessions',
-  'credential_sessions',
-  'verification_attempts',
-  'email_verification_tokens',
-  'password_reset_tokens',
-  'sessions',
-  'social_accounts',
-  'credential_accounts',
-  'accounts',
-  'users',
+  '"profiles"."social_profiles"',
+  '"profiles"."personal_profiles"',
+  '"profiles"."commercial_profiles"',
+  '"profiles"."profiles"',
+  '"sessions"."social_sessions"',
+  '"sessions"."credential_sessions"',
+  '"authn"."verification_attempts"',
+  '"authn"."email_verification_tokens"',
+  '"authn"."password_reset_tokens"',
+  '"sessions"."sessions"',
+  '"accounts"."social_accounts"',
+  '"accounts"."credential_accounts"',
+  '"accounts"."accounts"',
+  '"identity"."users"',
 ] as const;
 
 // ─── Singleton state ──────────────────────────────────────────────────────────
@@ -66,13 +68,6 @@ interface WorkerApp {
 
 let workerAppInstance: WorkerApp | null = null;
 let workerAppPromise: Promise<WorkerApp> | null = null;
-
-// ─── Schema name ──────────────────────────────────────────────────────────────
-
-export function getWorkerSchemaName(): string {
-  const workerId = process.env.JEST_WORKER_ID ?? '1';
-  return `test_w${workerId}`;
-}
 
 // ─── Email provider mock ──────────────────────────────────────────────────────
 
@@ -86,8 +81,6 @@ export const emailProviderMock: jest.Mocked<IEmailProviderContract> = {
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function bootstrap(): Promise<WorkerApp> {
-  const schemaName = getWorkerSchemaName();
-
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [
       ConfigModule.forRoot({
@@ -103,16 +96,9 @@ async function bootstrap(): Promise<WorkerApp> {
         username: process.env.DB_USERNAME ?? 'stocka',
         password: process.env.DB_PASSWORD ?? 'stocka_dev_password',
         database: process.env.DB_DATABASE ?? 'stocka_db',
-        schema: schemaName,
         autoLoadEntities: true,
         synchronize: false,
         logging: false,
-        // Set search_path so raw SQL queries (dataSource.query) also land in the correct
-        // worker schema. Without this, raw queries fall back to the public schema.
-        // pg passes `options` as a PostgreSQL startup parameter (equivalent to SET search_path).
-        extra: {
-          options: `-c search_path=${schemaName}`,
-        },
       }),
       EmailModule,
       UnitOfWorkModule,
@@ -172,6 +158,6 @@ export async function getWorkerApp(): Promise<WorkerApp> {
  * for isolation between individual tests within a spec.
  */
 export async function truncateWorkerTables(dataSource: DataSource): Promise<void> {
-  const tableList = TRUNCATE_TABLES.map((t) => `"${t}"`).join(', ');
+  const tableList = TRUNCATE_TABLES.join(', ');
   await dataSource.query(`TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE`);
 }

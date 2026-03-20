@@ -87,7 +87,7 @@ describe('Reset Password (e2e)', () => {
           .send({ token: plainToken, newPassword: 'NewSecurePass1' });
 
         const [tokenRow] = await dataSource.query(
-          `SELECT used_at FROM password_reset_tokens WHERE token_hash = $1`,
+          `SELECT used_at FROM "authn"."password_reset_tokens" WHERE token_hash = $1`,
           [tokenHash],
         );
 
@@ -104,12 +104,12 @@ describe('Reset Password (e2e)', () => {
           .send({ emailOrUsername: email, password: 'SecurePass1' });
 
         const [account] = await dataSource.query(
-          `SELECT a.id FROM accounts a JOIN credential_accounts ca ON ca.account_id = a.id WHERE LOWER(ca.email) = LOWER($1)`,
+          `SELECT a.id FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = LOWER($1)`,
           [email],
         );
 
         const activeBefore = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT COUNT(*) as count FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
         expect(parseInt(activeBefore[0].count)).toBeGreaterThan(0);
@@ -119,7 +119,7 @@ describe('Reset Password (e2e)', () => {
           .send({ token: plainToken, newPassword: 'NewSecurePass1' });
 
         const activeAfter = await dataSource.query(
-          `SELECT COUNT(*) as count FROM sessions WHERE account_id = $1 AND archived_at IS NULL`,
+          `SELECT COUNT(*) as count FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
           [account.id],
         );
 
@@ -204,7 +204,7 @@ describe('Reset Password (e2e)', () => {
 
         // Token must still be valid (used_at should be NULL — rollback succeeded)
         const [tokenRow] = await dataSource.query(
-          `SELECT used_at FROM password_reset_tokens WHERE token_hash = $1`,
+          `SELECT used_at FROM "authn"."password_reset_tokens" WHERE token_hash = $1`,
           [tokenHash],
         );
 

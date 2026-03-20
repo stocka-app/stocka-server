@@ -21,7 +21,7 @@ import databaseConfig from '@core/config/database/database.config';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { truncateWorkerTables, getWorkerSchemaName } from '@test/worker-app';
+import { truncateWorkerTables } from '@test/worker-app';
 
 describe('Rate Limiting (e2e)', () => {
   let app: INestApplication;
@@ -30,9 +30,7 @@ describe('Rate Limiting (e2e)', () => {
   beforeAll(async () => {
     // This spec requires ThrottlerModule + ThrottlerGuard wired at the module level,
     // which differs from the shared worker app configuration. It bootstraps its own
-    // NestJS app, but reuses the worker's schema for DB isolation.
-    const schemaName = getWorkerSchemaName();
-
+    // NestJS app against the shared domain schemas.
     const emailProvider: jest.Mocked<IEmailProviderContract> = {
       sendEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
       sendVerificationEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
@@ -55,12 +53,8 @@ describe('Rate Limiting (e2e)', () => {
           username: process.env.DB_USERNAME ?? 'stocka',
           password: process.env.DB_PASSWORD ?? 'stocka_dev_password',
           database: process.env.DB_DATABASE ?? 'stocka_db',
-          schema: schemaName,
           autoLoadEntities: true,
           synchronize: false,
-          extra: {
-            options: `-c search_path=${schemaName}`,
-          },
         }),
         CqrsModule,
         ThrottlerModule.forRoot([
@@ -123,10 +117,10 @@ describe('Rate Limiting (e2e)', () => {
   beforeEach(async () => {
     // Clean up verification_attempts table before each test
     if (dataSource?.isInitialized) {
-      await dataSource.query('DELETE FROM verification_attempts');
-      await dataSource.query('DELETE FROM email_verification_tokens');
-      await dataSource.query('DELETE FROM sessions');
-      await dataSource.query('DELETE FROM users');
+      await dataSource.query('DELETE FROM "authn"."verification_attempts"');
+      await dataSource.query('DELETE FROM "authn"."email_verification_tokens"');
+      await dataSource.query('DELETE FROM "sessions"."sessions"');
+      await dataSource.query('DELETE FROM "identity"."users"');
     }
   });
 

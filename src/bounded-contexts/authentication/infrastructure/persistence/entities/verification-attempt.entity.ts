@@ -1,7 +1,7 @@
 import { Entity, Column, Index } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 
-@Entity('verification_attempts')
+@Entity({ name: 'verification_attempts', schema: 'authn' })
 export class VerificationAttemptEntity extends BaseEntity {
   @Column({ name: 'user_uuid', type: 'varchar', length: 36, nullable: true })
   @Index()

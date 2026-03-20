@@ -4,7 +4,7 @@ import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.e
 import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
 
-@Entity('storages')
+@Entity({ name: 'storages', schema: 'storage' })
 @Index('idx_storages_tenant_uuid', ['tenantUUID'])
 export class StorageEntity extends BaseEntity {
   @Column({ name: 'tenant_uuid', type: 'uuid' })

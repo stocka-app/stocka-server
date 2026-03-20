@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryColumn, CreateDateColumn, UpdateDateColumn, Index } from 'typeorm';
 
-@Entity('process_state')
+@Entity({ name: 'process_state', schema: 'shared' })
 export class ProcessStateEntity {
   @PrimaryColumn('uuid')
   id!: string;
