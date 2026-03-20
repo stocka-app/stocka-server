@@ -32,6 +32,7 @@ function buildMockRes(): jest.Mocked<Response> {
     clearCookie: jest.fn(),
     redirect: jest.fn(),
     send: jest.fn(),
+    setHeader: jest.fn(),
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
   } as unknown as jest.Mocked<Response>;

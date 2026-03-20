@@ -11,7 +11,7 @@ import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh
 import {
   POPUP_OAUTH_MODE_COOKIE,
   POPUP_OAUTH_MODE_VALUE,
-  buildPopupHtmlResponse,
+  sendPopupResponse,
 } from '@authentication/infrastructure/helpers/popup-html.helper';
 
 @ApiTags('Authentication')
@@ -50,9 +50,9 @@ export class MicrosoftCallbackController {
 
     if (req.cookies?.[POPUP_OAUTH_MODE_COOKIE] === POPUP_OAUTH_MODE_VALUE) {
       res.clearCookie(POPUP_OAUTH_MODE_COOKIE, { path: '/api/authentication' });
-      res.send(buildPopupHtmlResponse(result.accessToken, frontendUrl));
+      sendPopupResponse(res, result.accessToken, frontendUrl);
     } else {
-      res.redirect(`${frontendUrl}/auth/callback?accessToken=${result.accessToken}`);
+      res.redirect(`${frontendUrl}/authentication/callback?accessToken=${result.accessToken}`);
     }
   }
 }
