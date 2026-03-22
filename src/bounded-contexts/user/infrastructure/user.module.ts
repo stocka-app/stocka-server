@@ -3,8 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CqrsModule } from '@nestjs/cqrs';
 
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
+import { UserConsentEntity } from '@user/infrastructure/persistence/entities/user-consent.entity';
 import { TypeOrmUserRepository } from '@user/infrastructure/persistence/repositories/typeorm-user.repository';
 import { GetMeController } from '@user/infrastructure/controllers/get-me/get-me.controller';
+import { RecordUserConsentsController } from '@user/infrastructure/http/controllers/record-user-consents/record-user-consents.controller';
+import { RecordUserConsentsHandler } from '@user/application/commands/record-user-consents/record-user-consents.handler';
+import { GetUserConsentsHandler } from '@user/application/queries/get-user-consents/get-user-consents.handler';
+import { GetUserConsentsController } from '@user/infrastructure/http/controllers/get-user-consents/get-user-consents.controller';
 import { UserFacade } from '@user/infrastructure/facade/user.facade';
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { AccountModule } from '@user/account/account.module';
@@ -30,7 +35,7 @@ const EventHandlers = [
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, UserConsentEntity]),
     CqrsModule,
     forwardRef(() => AuthenticationModule),
     AccountModule,
@@ -38,7 +43,7 @@ const EventHandlers = [
     SessionModule,
     MediatorModule,
   ],
-  controllers: [GetMeController],
+  controllers: [GetMeController, RecordUserConsentsController, GetUserConsentsController],
   providers: [
     {
       provide: INJECTION_TOKENS.USER_CONTRACT,
@@ -49,6 +54,8 @@ const EventHandlers = [
       useExisting: UserFacade,
     },
     TypeOrmUserRepository,
+    RecordUserConsentsHandler,
+    GetUserConsentsHandler,
     UserFacade,
     ...EventHandlers,
   ],

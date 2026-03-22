@@ -48,12 +48,12 @@ describe('Get Me (e2e)', () => {
   // ---------------------------------------------------------------------------
 
   describe('Given an authenticated user with a valid access token', () => {
-    describe('When they call GET /api/authentication/me', () => {
+    describe('When they call GET /api/users/me', () => {
       it('Then they receive a 200 with their profile: id, email, username, and createdAt', async () => {
         const token = await signUpAndGetToken('me1@example.com', 'meuser1');
 
         const res = await request(app.getHttpServer())
-          .get('/api/authentication/me')
+          .get('/api/users/me')
           .set('Authorization', `Bearer ${token}`);
 
         expect(res.status).toBe(HttpStatus.OK);
@@ -70,9 +70,9 @@ describe('Get Me (e2e)', () => {
   // ---------------------------------------------------------------------------
 
   describe('Given a client that sends a request without any authorization token', () => {
-    describe('When they call GET /api/authentication/me', () => {
+    describe('When they call GET /api/users/me', () => {
       it('Then they receive a 401 Unauthorized', async () => {
-        const res = await request(app.getHttpServer()).get('/api/authentication/me');
+        const res = await request(app.getHttpServer()).get('/api/users/me');
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
       });
@@ -80,10 +80,10 @@ describe('Get Me (e2e)', () => {
   });
 
   describe('Given a client that presents a malformed or tampered JWT', () => {
-    describe('When they call GET /api/authentication/me', () => {
+    describe('When they call GET /api/users/me', () => {
       it('Then they receive a 401 Unauthorized', async () => {
         const res = await request(app.getHttpServer())
-          .get('/api/authentication/me')
+          .get('/api/users/me')
           .set('Authorization', 'Bearer this.is.not.a.valid.jwt');
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);

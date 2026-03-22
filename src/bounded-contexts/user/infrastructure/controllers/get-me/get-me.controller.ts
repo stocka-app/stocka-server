@@ -5,8 +5,8 @@ import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { UserFacade } from '@user/infrastructure/facade/user.facade';
 import { GetMeOutDto } from '@user/infrastructure/controllers/get-me/get-me-out.dto';
 
-@ApiTags('Authentication')
-@Controller('authentication')
+@ApiTags('Users')
+@Controller('users')
 export class GetMeController {
   constructor(private readonly userFacade: UserFacade) {}
 

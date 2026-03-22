@@ -19,6 +19,13 @@ import { TenantEntity } from '@tenant/infrastructure/entities/tenant.entity';
 import { TenantMemberEntity } from '@tenant/infrastructure/entities/tenant-member.entity';
 import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';
 import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
+import { UserConsentEntity } from '@user/infrastructure/persistence/entities/user-consent.entity';
+import { OnboardingSessionEntity } from '@onboarding/infrastructure/entities/onboarding-session.entity';
+import { TenantInvitationEntity } from '@onboarding/infrastructure/entities/tenant-invitation.entity';
+import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
+import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
+import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
+import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.entity';
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
   useFactory: (configService: ConfigService) => ({
@@ -31,6 +38,8 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
     entities: [
       // User BC — anchor
       UserEntity,
+      // User BC — Consent audit trail
+      UserConsentEntity,
       // User BC — Profile sub-aggregate
       ProfileEntity,
       PersonalProfileEntity,
@@ -55,6 +64,14 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       TenantMemberEntity,
       TenantProfileEntity,
       TenantConfigEntity,
+      // Onboarding BC
+      OnboardingSessionEntity,
+      TenantInvitationEntity,
+      // Storage BC
+      StorageEntity,
+      WarehouseEntity,
+      StoreRoomEntity,
+      CustomRoomEntity,
     ],
     // Migrations are run manually via CLI, not auto-loaded in app
     migrationsRun: false,
