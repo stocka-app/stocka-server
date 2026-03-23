@@ -21,12 +21,12 @@ describe('SaveOnboardingStepHandler', () => {
   });
 
   describe('Given a user with no onboarding session', () => {
-    describe('When step data is submitted', () => {
+    describe('When section data is submitted', () => {
       it('Then it returns an OnboardingNotFoundError', async () => {
         sessionContract.findByUserUUID.mockResolvedValue(null);
 
         const result = await handler.execute(
-          new SaveOnboardingStepCommand(USER_UUID, 1, { acceptedTyC: true }),
+          new SaveOnboardingStepCommand(USER_UUID, 'consents', { acceptedTyC: true }),
         );
 
         expect(result.isErr()).toBe(true);
@@ -36,14 +36,14 @@ describe('SaveOnboardingStepHandler', () => {
   });
 
   describe('Given a user whose onboarding is already COMPLETED', () => {
-    describe('When step data is submitted', () => {
+    describe('When section data is submitted', () => {
       it('Then it returns an OnboardingAlreadyCompletedError', async () => {
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
         session.markCompleted();
         sessionContract.findByUserUUID.mockResolvedValue(session);
 
         const result = await handler.execute(
-          new SaveOnboardingStepCommand(USER_UUID, 3, { name: 'My Shop' }),
+          new SaveOnboardingStepCommand(USER_UUID, 'businessProfile', { name: 'My Shop' }),
         );
 
         expect(result.isErr()).toBe(true);
@@ -52,15 +52,15 @@ describe('SaveOnboardingStepHandler', () => {
     });
   });
 
-  describe('Given a user with an IN_PROGRESS session saving step 0 with CREATE path', () => {
-    describe('When step 0 data with path=CREATE is submitted', () => {
+  describe('Given a user with an IN_PROGRESS session saving the path section with CREATE path', () => {
+    describe('When path section data with path=CREATE is submitted', () => {
       it('Then it saves the path and returns the updated session', async () => {
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
         sessionContract.findByUserUUID.mockResolvedValue(session);
         sessionContract.save.mockImplementation((s) => Promise.resolve(s));
 
         const result = await handler.execute(
-          new SaveOnboardingStepCommand(USER_UUID, 0, { path: 'CREATE' }),
+          new SaveOnboardingStepCommand(USER_UUID, 'path', { path: 'CREATE' }, 0),
         );
 
         expect(result.isOk()).toBe(true);
@@ -72,15 +72,15 @@ describe('SaveOnboardingStepHandler', () => {
     });
   });
 
-  describe('Given a user with an IN_PROGRESS session saving step 0 with JOIN path', () => {
-    describe('When step 0 data with path=JOIN and an invitation code is submitted', () => {
+  describe('Given a user with an IN_PROGRESS session saving the path section with JOIN path', () => {
+    describe('When path section data with path=JOIN and an invitation code is submitted', () => {
       it('Then it saves the path and invitation code', async () => {
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
         sessionContract.findByUserUUID.mockResolvedValue(session);
         sessionContract.save.mockImplementation((s) => Promise.resolve(s));
 
         const result = await handler.execute(
-          new SaveOnboardingStepCommand(USER_UUID, 0, { path: 'JOIN', invitationCode: 'abc123' }),
+          new SaveOnboardingStepCommand(USER_UUID, 'path', { path: 'JOIN', invitationCode: 'abc123' }, 0),
         );
 
         expect(result.isOk()).toBe(true);
@@ -93,20 +93,20 @@ describe('SaveOnboardingStepHandler', () => {
   });
 
   describe('Given a user advancing to a later step', () => {
-    describe('When step 3 data is submitted after step 0', () => {
+    describe('When businessProfile section data is submitted with currentStep 3', () => {
       it('Then currentStep advances to 3', async () => {
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
-        session.saveStep(0, { path: 'CREATE' });
+        session.saveProgress('path', { path: 'CREATE' }, 0);
         sessionContract.findByUserUUID.mockResolvedValue(session);
         sessionContract.save.mockImplementation((s) => Promise.resolve(s));
 
         const result = await handler.execute(
-          new SaveOnboardingStepCommand(USER_UUID, 3, {
+          new SaveOnboardingStepCommand(USER_UUID, 'businessProfile', {
             name: 'Mi Tienda',
             businessType: 'retail',
             country: 'MX',
             timezone: 'America/Mexico_City',
-          }),
+          }, 3),
         );
 
         expect(result.isOk()).toBe(true);

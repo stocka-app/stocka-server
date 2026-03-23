@@ -1,6 +1,6 @@
-import { Body, Controller, Param, ParseIntPipe, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Patch, UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { SaveOnboardingStepCommand } from '@onboarding/application/commands/save-onboarding-step/save-onboarding-step.command';
@@ -14,21 +14,19 @@ import { SaveOnboardingStepInDto } from '@onboarding/infrastructure/http/control
 export class SaveOnboardingStepController {
   constructor(private readonly commandBus: CommandBus) {}
 
-  @Post('step/:step')
-  @ApiOperation({ summary: 'Save progress for an onboarding step (0-7)' })
-  @ApiParam({ name: 'step', type: Number, description: 'Step number (0-7)' })
-  @ApiResponse({ status: 201, description: 'Step data saved' })
+  @Patch('progress')
+  @ApiOperation({ summary: 'Save progress for an onboarding section' })
+  @ApiResponse({ status: 200, description: 'Section data saved' })
   @ApiResponse({ status: 404, description: 'Onboarding session not found' })
   @ApiResponse({ status: 409, description: 'Onboarding already completed' })
   async handle(
-    @Param('step', ParseIntPipe) step: number,
     @Body() dto: SaveOnboardingStepInDto,
     @CurrentUser() user: JwtPayload,
   ): Promise<Record<string, unknown>> {
     const result = await this.commandBus.execute<
       SaveOnboardingStepCommand,
       SaveOnboardingStepResult
-    >(new SaveOnboardingStepCommand(user.uuid, step, dto.data));
+    >(new SaveOnboardingStepCommand(user.uuid, dto.section, dto.data, dto.currentStep));
 
     return result.match(
       (session) => ({

@@ -27,7 +27,7 @@ export class SaveOnboardingStepHandler implements ICommandHandler<SaveOnboarding
       return err(new OnboardingAlreadyCompletedError());
     }
 
-    session.saveStep(command.step, command.data);
+    session.saveProgress(command.section, command.data, command.currentStep);
     const saved = await this.sessionContract.save(session);
     return ok(saved);
   }

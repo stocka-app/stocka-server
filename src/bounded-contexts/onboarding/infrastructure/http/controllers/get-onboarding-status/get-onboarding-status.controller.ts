@@ -23,13 +23,14 @@ export class GetOnboardingStatusController {
     >(new GetOnboardingStatusQuery(user.uuid));
 
     if (!session) {
-      return { status: null, currentStep: null, path: null };
+      return { status: null, currentStep: null, path: null, stepData: null };
     }
 
     return {
       status: session.status,
       currentStep: session.currentStep,
       path: session.path,
+      stepData: session.stepData,
     };
   }
 }

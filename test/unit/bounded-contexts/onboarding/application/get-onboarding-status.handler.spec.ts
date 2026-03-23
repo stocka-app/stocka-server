@@ -34,9 +34,9 @@ describe('GetOnboardingStatusHandler', () => {
     describe('When the status is queried', () => {
       it('Then it returns the session with correct status and currentStep', async () => {
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
-        session.saveStep(0, { path: 'CREATE' });
-        session.saveStep(1, { acceptedTyC: true });
-        session.saveStep(2, { language: 'es', currency: 'MXN' });
+        session.saveProgress('path', { path: 'CREATE' }, 0);
+        session.saveProgress('consents', { acceptedTyC: true }, 1);
+        session.saveProgress('preferences', { language: 'es', currency: 'MXN' }, 2);
         sessionContract.findByUserUUID.mockResolvedValue(session);
 
         const result = await handler.execute(new GetOnboardingStatusQuery(USER_UUID));

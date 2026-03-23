@@ -59,16 +59,16 @@ export class OnboardingSessionModel {
     return new OnboardingSessionModel(props);
   }
 
-  saveStep(step: number, data: Record<string, unknown>): void {
-    this._stepData = { ...this._stepData, [step]: data };
-    if (step > this._currentStep) {
-      this._currentStep = step;
-    }
-    if (step === 0) {
+  saveProgress(section: string, data: Record<string, unknown>, currentStep?: number): void {
+    this._stepData = { ...this._stepData, [section]: data };
+    if (section === 'path') {
       const path = (data['path'] as string | undefined) ?? null;
       this._path =
         path === 'CREATE' ? OnboardingPath.CREATE : path === 'JOIN' ? OnboardingPath.JOIN : null;
       this._invitationCode = (data['invitationCode'] as string | undefined) ?? null;
+    }
+    if (currentStep !== undefined && currentStep > this._currentStep) {
+      this._currentStep = currentStep;
     }
     this._updatedAt = new Date();
   }
@@ -82,8 +82,8 @@ export class OnboardingSessionModel {
     return this._status === OnboardingStatus.COMPLETED;
   }
 
-  getStepData(step: number): Record<string, unknown> | null {
-    return (this._stepData[step] as Record<string, unknown> | undefined) ?? null;
+  getSectionData(section: string): Record<string, unknown> | null {
+    return (this._stepData[section] as Record<string, unknown> | undefined) ?? null;
   }
 
   get id(): string {

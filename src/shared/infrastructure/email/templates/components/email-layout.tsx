@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Body, Container, Head, Html, Preview, Section, Text, Hr } from '@react-email/components';
+import { Body, Container, Head, Html, Img, Preview, Section, Text, Hr } from '@react-email/components';
 
 interface EmailLayoutProps {
   preview: string;
@@ -14,7 +14,22 @@ export const EmailLayout: React.FC<EmailLayoutProps> = ({ preview, children }) =
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
-            <Text style={logo}>Stocka</Text>
+            <table cellPadding="0" cellSpacing="0" role="presentation">
+              <tr>
+                <td style={{ verticalAlign: 'middle', paddingRight: '10px' }}>
+                  <Img
+                    src="https://stocka.app/stocka-icon.png"
+                    width="32"
+                    height="32"
+                    alt="Stocka"
+                    style={{ borderRadius: '7px' }}
+                  />
+                </td>
+                <td style={{ verticalAlign: 'middle' }}>
+                  <Text style={logo}>Stocka</Text>
+                </td>
+              </tr>
+            </table>
           </Section>
           {children}
           <Hr style={hr} />

@@ -7,6 +7,105 @@ import {
 } from '@tenant/domain/contracts/tenant-facade.contract';
 import { CapabilityResolver } from '@shared/domain/policy/capability.resolver';
 import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+import { TierEnum } from '@shared/domain/policy/tier.enum';
+import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
+
+// ── Mock RBAC policy data ─────────────────────────────────────────────────────
+
+const ALL_ACTIONS = new Set(Object.values(SystemAction));
+
+const ROLE_ACTIONS: Record<string, ReadonlySet<string>> = {
+  [MemberRoleEnum.OWNER]: ALL_ACTIONS,
+  [MemberRoleEnum.PARTNER]: new Set(
+    [...ALL_ACTIONS].filter((a) => a !== SystemAction.TENANT_SETTINGS_UPDATE),
+  ),
+  [MemberRoleEnum.MANAGER]: new Set([
+    SystemAction.STORAGE_CREATE, SystemAction.STORAGE_READ,
+    SystemAction.STORAGE_UPDATE, SystemAction.STORAGE_DELETE,
+    SystemAction.MEMBER_INVITE, SystemAction.MEMBER_READ,
+    SystemAction.PRODUCT_CREATE, SystemAction.PRODUCT_READ,
+    SystemAction.PRODUCT_UPDATE, SystemAction.PRODUCT_DELETE,
+    SystemAction.REPORT_READ, SystemAction.REPORT_ADVANCED,
+    SystemAction.INVENTORY_EXPORT, SystemAction.TENANT_SETTINGS_READ,
+  ]),
+  [MemberRoleEnum.BUYER]: new Set([
+    SystemAction.PRODUCT_CREATE, SystemAction.PRODUCT_READ,
+    SystemAction.PRODUCT_UPDATE, SystemAction.REPORT_READ,
+    SystemAction.TENANT_SETTINGS_READ,
+  ]),
+  [MemberRoleEnum.WAREHOUSE_KEEPER]: new Set([
+    SystemAction.STORAGE_READ, SystemAction.STORAGE_UPDATE,
+    SystemAction.PRODUCT_READ, SystemAction.PRODUCT_UPDATE,
+    SystemAction.INVENTORY_EXPORT, SystemAction.REPORT_READ,
+    SystemAction.TENANT_SETTINGS_READ,
+  ]),
+  [MemberRoleEnum.SALES_REP]: new Set([
+    SystemAction.PRODUCT_READ, SystemAction.REPORT_READ,
+    SystemAction.TENANT_SETTINGS_READ,
+  ]),
+  [MemberRoleEnum.VIEWER]: new Set([
+    SystemAction.STORAGE_READ, SystemAction.MEMBER_READ,
+    SystemAction.PRODUCT_READ, SystemAction.REPORT_READ,
+    SystemAction.TENANT_SETTINGS_READ,
+  ]),
+};
+
+const ACTION_TIER_REQUIREMENTS: Readonly<Record<string, string>> = {
+  [SystemAction.STORAGE_CREATE]: TierEnum.STARTER,
+  [SystemAction.STORAGE_READ]: TierEnum.FREE,
+  [SystemAction.STORAGE_UPDATE]: TierEnum.STARTER,
+  [SystemAction.STORAGE_DELETE]: TierEnum.STARTER,
+  [SystemAction.MEMBER_INVITE]: TierEnum.STARTER,
+  [SystemAction.MEMBER_READ]: TierEnum.FREE,
+  [SystemAction.MEMBER_UPDATE_ROLE]: TierEnum.STARTER,
+  [SystemAction.MEMBER_REMOVE]: TierEnum.STARTER,
+  [SystemAction.PRODUCT_CREATE]: TierEnum.FREE,
+  [SystemAction.PRODUCT_READ]: TierEnum.FREE,
+  [SystemAction.PRODUCT_UPDATE]: TierEnum.FREE,
+  [SystemAction.PRODUCT_DELETE]: TierEnum.FREE,
+  [SystemAction.REPORT_READ]: TierEnum.FREE,
+  [SystemAction.REPORT_ADVANCED]: TierEnum.GROWTH,
+  [SystemAction.INVENTORY_EXPORT]: TierEnum.STARTER,
+  [SystemAction.TENANT_SETTINGS_READ]: TierEnum.FREE,
+  [SystemAction.TENANT_SETTINGS_UPDATE]: TierEnum.FREE,
+};
+
+const TIER_ORDER: Readonly<Record<string, number>> = {
+  [TierEnum.FREE]: 0, [TierEnum.STARTER]: 1,
+  [TierEnum.GROWTH]: 2, [TierEnum.ENTERPRISE]: 3,
+};
+
+const TIER_NUMERIC_LIMITS: Record<string, Readonly<Record<string, number>>> = {
+  [TierEnum.FREE]: { storageCount: 0, memberCount: 1, productCount: 100 },
+  [TierEnum.STARTER]: { storageCount: 3, memberCount: 5, productCount: 1000 },
+  [TierEnum.GROWTH]: { storageCount: 10, memberCount: 25, productCount: 5000 },
+  [TierEnum.ENTERPRISE]: { storageCount: -1, memberCount: -1, productCount: -1 },
+};
+
+const ACTION_LIMIT_CHECKS: Readonly<Record<string, string>> = {
+  [SystemAction.STORAGE_CREATE]: 'storageCount',
+  [SystemAction.MEMBER_INVITE]: 'memberCount',
+  [SystemAction.PRODUCT_CREATE]: 'productCount',
+};
+
+function createMockRbacPolicyPort(): IRbacPolicyPort {
+  return {
+    getRoleActions: jest.fn((roleKey: string) =>
+      Promise.resolve(ROLE_ACTIONS[roleKey] ?? new Set<string>()),
+    ),
+    getActionTierRequirements: jest.fn(() => Promise.resolve(ACTION_TIER_REQUIREMENTS)),
+    getTierNumericLimits: jest.fn((tier: string) =>
+      Promise.resolve(TIER_NUMERIC_LIMITS[tier] ?? {}),
+    ),
+    getTierOrder: jest.fn(() => Promise.resolve(TIER_ORDER)),
+    getActionLimitChecks: jest.fn(() => Promise.resolve(ACTION_LIMIT_CHECKS)),
+    getAssignableRoles: jest.fn(() => Promise.resolve([])),
+    getUserGrants: jest.fn(() => Promise.resolve([])),
+  };
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildContext(
   user?: Record<string, unknown>,
@@ -44,7 +143,8 @@ describe('PermissionGuard', () => {
       getMembershipContext: jest.fn(),
     };
 
-    capabilityResolver = new CapabilityResolver();
+    const mockPort = createMockRbacPolicyPort();
+    capabilityResolver = new CapabilityResolver(mockPort);
 
     guard = new PermissionGuard(
       reflector,

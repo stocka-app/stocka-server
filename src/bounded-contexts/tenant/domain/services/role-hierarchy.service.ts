@@ -1,17 +1,16 @@
-/**
- * Role hierarchy rules for invitation assignment (from A-07 Confluence doc):
- *
- * OWNER   → can assign PARTNER, MANAGER, BUYER, WAREHOUSE_KEEPER, SALES_REP, VIEWER
- * PARTNER → can assign MANAGER, BUYER, WAREHOUSE_KEEPER, SALES_REP, VIEWER
- * MANAGER → can assign BUYER, WAREHOUSE_KEEPER, SALES_REP, VIEWER
- * Others  → cannot assign anyone
- */
-const ASSIGNABLE_ROLES: Record<string, string[]> = {
-  OWNER: ['PARTNER', 'MANAGER', 'BUYER', 'WAREHOUSE_KEEPER', 'SALES_REP', 'VIEWER'],
-  PARTNER: ['MANAGER', 'BUYER', 'WAREHOUSE_KEEPER', 'SALES_REP', 'VIEWER'],
-  MANAGER: ['BUYER', 'WAREHOUSE_KEEPER', 'SALES_REP', 'VIEWER'],
-};
+import { Inject, Injectable } from '@nestjs/common';
+import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-export function canAssignRole(inviterRole: string, targetRole: string): boolean {
-  return ASSIGNABLE_ROLES[inviterRole]?.includes(targetRole) ?? false;
+@Injectable()
+export class RoleHierarchyService {
+  constructor(
+    @Inject(INJECTION_TOKENS.RBAC_POLICY_PORT)
+    private readonly rbacPort: IRbacPolicyPort,
+  ) {}
+
+  async canAssignRole(inviterRole: string, targetRole: string): Promise<boolean> {
+    const assignable = await this.rbacPort.getAssignableRoles(inviterRole);
+    return assignable.includes(targetRole);
+  }
 }

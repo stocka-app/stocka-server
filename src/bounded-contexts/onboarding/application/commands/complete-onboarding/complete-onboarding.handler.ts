@@ -91,15 +91,15 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     command: CompleteOnboardingCommand,
     session: import('@onboarding/domain/models/onboarding-session.model').OnboardingSessionModel,
   ): Promise<CompleteOnboardingResult> {
-    const step3 = session.getStepData(3) as {
+    const businessProfile = session.getSectionData('businessProfile') as {
       name?: string;
       businessType?: string;
       country?: string;
       timezone?: string;
     } | null;
 
-    if (!step3?.name || !step3.businessType || !step3.country || !step3.timezone) {
-      return err(new OnboardingIncompleteError('step 3 (business profile)'));
+    if (!businessProfile?.name || !businessProfile.businessType || !businessProfile.country || !businessProfile.timezone) {
+      return err(new OnboardingIncompleteError('businessProfile section'));
     }
 
     const createTenantResult = await this.commandBus.execute<
@@ -108,10 +108,10 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     >(
       new CreateTenantCommand(
         command.userUUID,
-        step3.name,
-        step3.businessType,
-        step3.country,
-        step3.timezone,
+        businessProfile.name,
+        businessProfile.businessType,
+        businessProfile.country,
+        businessProfile.timezone,
       ),
     );
 
@@ -125,11 +125,11 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
 
     const { tenantId, name } = createTenantResult.value;
 
-    const step4 = session.getStepData(4) as { storages?: unknown[] } | null;
-    const hasCustomStorages = step4?.storages && step4.storages.length > 0;
+    const context = session.getSectionData('context') as { storages?: unknown[] } | null;
+    const hasCustomStorages = context?.storages && context.storages.length > 0;
 
     if (!hasCustomStorages) {
-      const storageName = defaultStorageName(step3.businessType);
+      const storageName = defaultStorageName(businessProfile.businessType);
       await this.commandBus.execute<CreateStorageCommand, CreateStorageResult>(
         new CreateStorageCommand(
           tenantId,

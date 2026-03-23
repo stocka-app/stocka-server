@@ -5,7 +5,14 @@ import { ITenantInvitationContract } from '@tenant/domain/contracts/tenant-invit
 import { TenantInvitationModel } from '@tenant/domain/models/tenant-invitation.model';
 import { InvitationAlreadyPendingError } from '@tenant/domain/errors/invitation-already-pending.error';
 import { InsufficientPermissionsError } from '@tenant/domain/errors/insufficient-permissions.error';
+import { RoleHierarchyService } from '@tenant/domain/services/role-hierarchy.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
+
+const ASSIGNABLE_ROLES: Record<string, string[]> = {
+  OWNER: ['PARTNER', 'MANAGER', 'BUYER', 'WAREHOUSE_KEEPER', 'SALES_REP', 'VIEWER'],
+  PARTNER: ['MANAGER', 'BUYER', 'WAREHOUSE_KEEPER', 'SALES_REP', 'VIEWER'],
+  MANAGER: ['BUYER', 'WAREHOUSE_KEEPER', 'SALES_REP', 'VIEWER'],
+};
 
 describe('InviteMemberHandler', () => {
   let handler: InviteMemberHandler;
@@ -45,12 +52,31 @@ describe('InviteMemberHandler', () => {
       ),
     };
 
+    const mockRbacPort = {
+      getRoleActions: jest.fn(),
+      getActionTierRequirements: jest.fn(),
+      getTierNumericLimits: jest.fn(),
+      getTierOrder: jest.fn(),
+      getActionLimitChecks: jest.fn(),
+      getAssignableRoles: jest
+        .fn()
+        .mockImplementation((role: string) =>
+          Promise.resolve(ASSIGNABLE_ROLES[role] ?? []),
+        ),
+      getUserGrants: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InviteMemberHandler,
+        RoleHierarchyService,
         {
           provide: INJECTION_TOKENS.TENANT_INVITATION_CONTRACT,
           useValue: invitationContract,
+        },
+        {
+          provide: INJECTION_TOKENS.RBAC_POLICY_PORT,
+          useValue: mockRbacPort,
         },
       ],
     }).compile();

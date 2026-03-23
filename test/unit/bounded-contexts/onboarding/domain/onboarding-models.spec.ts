@@ -11,7 +11,7 @@ describe('OnboardingSessionModel', () => {
       it('Then it exposes id, stepData, createdAt, and updatedAt correctly', () => {
         const createdAt = new Date('2024-01-01T00:00:00Z');
         const updatedAt = new Date('2024-01-02T00:00:00Z');
-        const stepData = { '0': { path: 'CREATE' }, '1': { acceptedTyC: true } };
+        const stepData = { path: { path: 'CREATE' }, consents: { acceptedTyC: true } };
 
         const session = OnboardingSessionModel.reconstitute({
           id: 'session-uuid-recon',
@@ -34,11 +34,11 @@ describe('OnboardingSessionModel', () => {
   });
 
   describe('Given a newly created session', () => {
-    describe('When updatedAt is read after calling saveStep', () => {
+    describe('When updatedAt is read after calling saveProgress', () => {
       it('Then updatedAt reflects the most recent mutation', () => {
         const before = new Date();
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
-        session.saveStep(0, { path: 'CREATE' });
+        session.saveProgress('path', { path: 'CREATE' });
         const after = new Date();
 
         expect(session.updatedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
@@ -47,24 +47,58 @@ describe('OnboardingSessionModel', () => {
     });
   });
 
-  describe('Given a session where step 0 is saved with an unrecognised path value', () => {
-    describe('When saveStep is called with an unknown path string', () => {
+  describe('Given a session where path section is saved with an unrecognised path value', () => {
+    describe('When saveProgress is called with an unknown path string', () => {
       it('Then path remains null', () => {
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
-        session.saveStep(0, { path: 'UNKNOWN' });
+        session.saveProgress('path', { path: 'UNKNOWN' });
 
         expect(session.path).toBeNull();
       });
     });
   });
 
-  describe('Given a session where step 0 is saved without a path key', () => {
-    describe('When saveStep is called with empty step data', () => {
+  describe('Given a session where path section is saved without a path key', () => {
+    describe('When saveProgress is called with empty section data', () => {
       it('Then path defaults to null', () => {
         const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
-        session.saveStep(0, {});
+        session.saveProgress('path', {});
 
         expect(session.path).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a session where saveProgress is called with a currentStep', () => {
+    describe('When currentStep is greater than the existing one', () => {
+      it('Then currentStep advances', () => {
+        const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
+        session.saveProgress('path', { path: 'CREATE' }, 0);
+        session.saveProgress('businessProfile', { name: 'Mi Tienda' }, 3);
+
+        expect(session.currentStep).toBe(3);
+      });
+    });
+
+    describe('When currentStep is less than the existing one', () => {
+      it('Then currentStep does not regress', () => {
+        const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
+        session.saveProgress('path', { path: 'CREATE' }, 3);
+        session.saveProgress('consents', { acceptedTyC: true }, 1);
+
+        expect(session.currentStep).toBe(3);
+      });
+    });
+  });
+
+  describe('Given a session where a non-path section is saved', () => {
+    describe('When saveProgress is called for consents', () => {
+      it('Then path and invitationCode remain unchanged', () => {
+        const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
+        session.saveProgress('consents', { acceptedTyC: true });
+
+        expect(session.path).toBeNull();
+        expect(session.invitationCode).toBeNull();
       });
     });
   });

@@ -47,8 +47,8 @@ export class TenantCapabilitiesAdapter implements ITenantCapabilitiesPort {
   async getCapabilities(tenantUUID: string): Promise<TenantCapabilities> {
     const rows: TenantConfigRow[] = await this.dataSource.query(
       `SELECT tc.tier, tc.max_warehouses, tc.max_custom_rooms, tc.max_store_rooms
-       FROM tenant_config tc
-       JOIN tenants t ON t.id = tc.tenant_id
+       FROM tenants.tenant_config tc
+       JOIN tenants.tenants t ON t.id = tc.tenant_id
        WHERE t.uuid = $1`,
       [tenantUUID],
     );

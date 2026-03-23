@@ -5,7 +5,7 @@ import { InviteMemberCommand } from '@tenant/application/commands/invite-member/
 import { ITenantInvitationContract } from '@tenant/domain/contracts/tenant-invitation.contract';
 import { InvitationAlreadyPendingError } from '@tenant/domain/errors/invitation-already-pending.error';
 import { InsufficientPermissionsError } from '@tenant/domain/errors/insufficient-permissions.error';
-import { canAssignRole } from '@tenant/domain/services/role-hierarchy.service';
+import { RoleHierarchyService } from '@tenant/domain/services/role-hierarchy.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
@@ -28,10 +28,15 @@ export class InviteMemberHandler implements ICommandHandler<InviteMemberCommand>
   constructor(
     @Inject(INJECTION_TOKENS.TENANT_INVITATION_CONTRACT)
     private readonly invitationContract: ITenantInvitationContract,
+    private readonly roleHierarchyService: RoleHierarchyService,
   ) {}
 
   async execute(command: InviteMemberCommand): Promise<InviteMemberResult> {
-    if (!canAssignRole(command.inviterRole, command.role)) {
+    const canAssign = await this.roleHierarchyService.canAssignRole(
+      command.inviterRole,
+      command.role,
+    );
+    if (!canAssign) {
       return err(new InsufficientPermissionsError());
     }
 

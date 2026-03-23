@@ -17,6 +17,21 @@ export class TierPlanEntity {
   @Column({ name: 'max_warehouses', type: 'int', nullable: true, default: 0 })
   maxWarehouses!: number | null;
 
+  @Column({ name: 'tier_order', type: 'smallint', nullable: true })
+  tierOrder!: number | null;
+
+  @Column({ name: 'max_custom_rooms', type: 'int', default: 0 })
+  maxCustomRooms!: number;
+
+  @Column({ name: 'max_store_rooms', type: 'int', default: 0 })
+  maxStoreRooms!: number;
+
+  @Column({ name: 'invitations_enabled', type: 'boolean', default: false })
+  invitationsEnabled!: boolean;
+
+  @Column({ name: 'advanced_reports_enabled', type: 'boolean', default: false })
+  advancedReportsEnabled!: boolean;
+
   @Column({ name: 'policy_version', type: 'timestamptz' })
   policyVersion!: Date;
 

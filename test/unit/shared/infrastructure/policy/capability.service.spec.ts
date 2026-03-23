@@ -8,6 +8,7 @@ import {
   ActionOverride,
 } from '@shared/domain/policy/tier-data-provider.contract';
 import { CapabilitySnapshot, createEmptySnapshot } from '@shared/domain/policy/capability-snapshot';
+import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 describe('CapabilityService', () => {
@@ -34,6 +35,43 @@ describe('CapabilityService', () => {
     [SystemAction.TENANT_SETTINGS_UPDATE]: 'settings',
   };
 
+  const ACTION_TIER_REQUIREMENTS: Record<string, string> = {
+    [SystemAction.STORAGE_CREATE]: TierEnum.STARTER,
+    [SystemAction.STORAGE_READ]: TierEnum.FREE,
+    [SystemAction.STORAGE_UPDATE]: TierEnum.STARTER,
+    [SystemAction.STORAGE_DELETE]: TierEnum.STARTER,
+    [SystemAction.MEMBER_INVITE]: TierEnum.STARTER,
+    [SystemAction.MEMBER_READ]: TierEnum.FREE,
+    [SystemAction.MEMBER_UPDATE_ROLE]: TierEnum.STARTER,
+    [SystemAction.MEMBER_REMOVE]: TierEnum.STARTER,
+    [SystemAction.PRODUCT_CREATE]: TierEnum.FREE,
+    [SystemAction.PRODUCT_READ]: TierEnum.FREE,
+    [SystemAction.PRODUCT_UPDATE]: TierEnum.FREE,
+    [SystemAction.PRODUCT_DELETE]: TierEnum.FREE,
+    [SystemAction.REPORT_READ]: TierEnum.FREE,
+    [SystemAction.REPORT_ADVANCED]: TierEnum.GROWTH,
+    [SystemAction.INVENTORY_EXPORT]: TierEnum.STARTER,
+    [SystemAction.TENANT_SETTINGS_READ]: TierEnum.FREE,
+    [SystemAction.TENANT_SETTINGS_UPDATE]: TierEnum.FREE,
+  };
+
+  const TIER_ORDER: Record<string, number> = {
+    [TierEnum.FREE]: 0,
+    [TierEnum.STARTER]: 1,
+    [TierEnum.GROWTH]: 2,
+    [TierEnum.ENTERPRISE]: 3,
+  };
+
+  const mockRbacPort: jest.Mocked<IRbacPolicyPort> = {
+    getRoleActions: jest.fn(),
+    getActionTierRequirements: jest.fn().mockResolvedValue(ACTION_TIER_REQUIREMENTS),
+    getTierNumericLimits: jest.fn(),
+    getTierOrder: jest.fn().mockResolvedValue(TIER_ORDER),
+    getActionLimitChecks: jest.fn(),
+    getAssignableRoles: jest.fn(),
+    getUserGrants: jest.fn(),
+  };
+
   beforeEach(async () => {
     tierDataProvider = {
       getSnapshot: jest.fn().mockResolvedValue(null),
@@ -48,6 +86,7 @@ describe('CapabilityService', () => {
       providers: [
         CapabilityService,
         { provide: INJECTION_TOKENS.TIER_DATA_PROVIDER, useValue: tierDataProvider },
+        { provide: INJECTION_TOKENS.RBAC_POLICY_PORT, useValue: mockRbacPort },
       ],
     }).compile();
 

@@ -40,7 +40,7 @@ describe('CompleteOnboardingHandler', () => {
   ): OnboardingSessionModel => {
     const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
     if (path) {
-      session.saveStep(0, { path, ...(invitationCode ? { invitationCode } : {}) });
+      session.saveProgress('path', { path, ...(invitationCode ? { invitationCode } : {}) });
     }
     return session;
   };
@@ -154,7 +154,7 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called without step 4 data (skipped)', () => {
       it('Then it creates the tenant and a default storage space', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Mi Tienda',
           businessType: 'retail',
           country: 'MX',
@@ -187,13 +187,13 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called with step 4 data (custom storage defined)', () => {
       it('Then it creates the tenant but skips the default storage creation', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Mi Tienda',
           businessType: 'food',
           country: 'MX',
           timezone: 'America/Mexico_City',
         });
-        session.saveStep(4, { storages: [{ name: 'Cocina', type: 'CUSTOM_ROOM' }] });
+        session.saveProgress('context', { storages: [{ name: 'Cocina', type: 'CUSTOM_ROOM' }] });
         sessionContract.findByUserUUID.mockResolvedValue(session);
         sessionContract.save.mockImplementation((s) => Promise.resolve(s));
 
@@ -319,7 +319,7 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called', () => {
       it('Then it creates the default storage named "Cocina / Preparación"', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Taquería El Sabor',
           businessType: 'food',
           country: 'MX',
@@ -345,7 +345,7 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called', () => {
       it('Then it creates the default storage named "Consultorio Principal"', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Clínica Salud',
           businessType: 'healthcare',
           country: 'MX',
@@ -371,7 +371,7 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called', () => {
       it('Then it creates the default storage named "Taller Principal"', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Taller Mecánico',
           businessType: 'manufacturing',
           country: 'MX',
@@ -397,7 +397,7 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called', () => {
       it('Then it creates the default storage named "Espacio Principal"', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Mi Negocio',
           businessType: 'other',
           country: 'MX',
@@ -423,7 +423,7 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called', () => {
       it('Then it returns err with the domain error', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Mi Tienda',
           businessType: 'retail',
           country: 'MX',
@@ -451,7 +451,7 @@ describe('CompleteOnboardingHandler', () => {
     describe('When complete is called', () => {
       it('Then it re-throws the NotFoundException instead of returning err', async () => {
         const session = makeSession('CREATE');
-        session.saveStep(3, {
+        session.saveProgress('businessProfile', {
           name: 'Mi Tienda',
           businessType: 'retail',
           country: 'MX',

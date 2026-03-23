@@ -65,7 +65,7 @@ export class PermissionGuard implements CanActivate {
       usageCounts: membershipContext.usageCounts,
     };
 
-    const result = this.capabilityResolver.canPerformAction(policyContext);
+    const result = await this.capabilityResolver.canPerformAction(policyContext);
 
     if (result.isErr()) {
       throw new HttpException(

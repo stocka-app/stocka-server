@@ -56,6 +56,7 @@ const TRUNCATE_TABLES = [
   '"accounts"."social_accounts"',
   '"accounts"."credential_accounts"',
   '"accounts"."accounts"',
+  '"identity"."user_consents"',
   '"identity"."users"',
 ] as const;
 
