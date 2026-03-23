@@ -1,168 +1,184 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/NestJS-11-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeORM-Latest-FE0803?style=for-the-badge&logo=typeorm&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+</p>
+
 # Stocka Server
 
-Backend API para el sistema de gestión de inventario Stocka.
+Backend API for the Stocka inventory management system — a multi-tenant platform designed for small businesses in Mexico.
 
-## Tecnologías
+---
 
-- **NestJS 11** - Framework de Node.js
-- **TypeScript 5.7** - Tipado estático
-- **PostgreSQL 15** - Base de datos
-- **TypeORM** - ORM
-- **JWT** - Autenticación
-- **Passport** - Estrategias de autenticación (JWT, Google, Facebook, Apple)
+## Features
 
-## Arquitectura
+- **Authentication & Authorization** — JWT access/refresh tokens, OAuth (Google, Facebook, Apple)
+- **Multi-Tenant Architecture** — Schema-per-bounded-context isolation with PostgreSQL
+- **Domain-Driven Design** — Bounded Contexts with rich domain models
+- **CQRS Pattern** — Strict separation of commands (writes) and queries (reads)
+- **Clean Architecture** — Domain → Application → Infrastructure dependency rule
+- **API Documentation** — Auto-generated Swagger/OpenAPI docs
+- **Docker Support** — Development and production Docker Compose setups
 
-El proyecto sigue los principios de:
-- **Clean Architecture** - Separación de capas
-- **DDD (Domain-Driven Design)** - Bounded Contexts
-- **CQRS** - Separación de comandos y consultas
+---
 
-### Estructura de carpetas
+## Architecture
 
 ```
 src/
-├── bounded-contexts/     # Contextos de dominio
-│   ├── auth/            # Autenticación y sesiones
-│   └── user/            # Gestión de usuarios
-├── common/              # Utilidades compartidas (filters, pipes, decorators)
-├── core/                # Configuración central (database, swagger)
-└── shared/              # Dominio compartido (value objects, exceptions, base classes)
+├── bounded-contexts/        # Domain Bounded Contexts
+│   ├── auth/                # Authentication & sessions
+│   └── user/                # User management
+├── common/                  # Shared utilities (filters, pipes, decorators)
+├── core/                    # Central config (database, swagger)
+└── shared/                  # Shared domain (value objects, exceptions, base classes)
 ```
 
-## Requisitos previos
+### Design Principles
+
+| Principle | Description |
+|-----------|-------------|
+| **DDD** | Business logic lives in domain entities and value objects |
+| **CQRS** | Commands mutate state, Queries read — never mixed |
+| **Clean Architecture** | Dependencies point inward: domain has zero external deps |
+| **Result Pattern** | `neverthrow` Result<T, E> instead of thrown exceptions |
+| **Soft Deletes** | Entities use `archived_at` instead of hard deletes |
+| **UUIDv7** | Time-sortable unique identifiers for all entities |
+
+---
+
+## Prerequisites
 
 - Node.js 20+
 - npm 10+
-- Docker y Docker Compose (para la base de datos)
+- Docker & Docker Compose (for the database)
 
-## Instalación
+---
+
+## Getting Started
+
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-## Configuración
-
-Copia el archivo `.env.example` a `.env` y configura las variables de entorno:
+### 2. Configure environment
 
 ```bash
 cp .env.example .env
 ```
 
-Variables requeridas:
-- `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE`
-- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
-- Credenciales OAuth (Google, Facebook, Apple) si se usan
+**Required variables:**
+| Variable | Description |
+|----------|-------------|
+| `DB_HOST`, `DB_PORT` | PostgreSQL connection |
+| `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` | Database credentials |
+| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | Token signing secrets |
+| Google / Facebook / Apple credentials | OAuth providers (optional) |
+
+### 3. Start the database
+
+```bash
+npm run docker:db
+```
+
+### 4. Run the server
+
+```bash
+npm run start:dev
+```
+
+---
 
 ## Docker
 
-### Estructura de archivos Docker
+### File Structure
 
 ```
 docker/
-├── Dockerfile           # Dockerfile de producción (multi-stage)
-├── Dockerfile.dev       # Dockerfile de desarrollo
-├── docker-compose.yml   # Compose de producción (API + PostgreSQL)
-└── docker-compose.dev.yml  # Compose de desarrollo (solo PostgreSQL)
+├── Dockerfile              # Production (multi-stage build)
+├── Dockerfile.dev          # Development
+├── docker-compose.yml      # Production (API + PostgreSQL)
+└── docker-compose.dev.yml  # Development (PostgreSQL only)
 ```
 
-### Comandos disponibles
+### Commands
 
-| Comando | Descripción |
+| Command | Description |
 |---------|-------------|
-| `npm run docker:db` | Inicia solo PostgreSQL (desarrollo local) |
-| `npm run docker:dev` | Inicia el entorno de desarrollo completo |
-| `npm run docker:dev:build` | Reconstruye y levanta el entorno de desarrollo |
-| `npm run docker:dev:down` | Detiene el entorno de desarrollo |
-| `npm run docker:prod` | Inicia el entorno de producción (detached) |
-| `npm run docker:prod:build` | Reconstruye y levanta producción |
-| `npm run docker:prod:down` | Detiene el entorno de producción |
-| `npm run docker:logs` | Muestra los logs de los contenedores |
+| `npm run docker:db` | Start PostgreSQL only (local dev) |
+| `npm run docker:dev` | Start full dev environment |
+| `npm run docker:dev:build` | Rebuild & start dev environment |
+| `npm run docker:dev:down` | Stop dev environment |
+| `npm run docker:prod` | Start production (detached) |
+| `npm run docker:prod:build` | Rebuild & start production |
+| `npm run docker:prod:down` | Stop production |
+| `npm run docker:logs` | View container logs |
 
-### Uso típico
+---
 
-```bash
-# Para desarrollo local (solo base de datos):
-npm run docker:db
-
-# En otra terminal, ejecutar la aplicación:
-npm run start:dev
-
-# Para desarrollo con todo en contenedores:
-npm run docker:dev
-
-# Para producción:
-npm run docker:prod:build
-```
-
-## Ejecución
+## Database Migrations
 
 ```bash
-# Desarrollo (con hot-reload)
-npm run start:dev
+# Generate a new migration
+npm run migration:generate -- src/migrations/MigrationName
 
-# Producción
-npm run build
-npm run start:prod
-```
-
-## Migraciones
-
-```bash
-# Generar una nueva migración
-npm run migration:generate -- src/migrations/NombreMigracion
-
-# Ejecutar migraciones pendientes
+# Run pending migrations
 npm run migration:run
 
-# Revertir última migración
+# Revert last migration
 npm run migration:revert
 ```
 
-## Tests
+---
+
+## Testing
 
 ```bash
-# Ejecutar todos los tests
-npm run test
-
-# Tests en modo watch
-npm run test:watch
-
-# Tests con cobertura
-npm run test:cov
-
-# Solo tests unitarios
-npm run test:unit
-
-# Tests e2e
-npm run test:e2e
+npm run test          # Run all tests
+npm run test:watch    # Watch mode
+npm run test:cov      # With coverage report
+npm run test:unit     # Unit tests only
+npm run test:e2e      # End-to-end tests
 ```
+
+---
 
 ## API Documentation
 
-Una vez ejecutando el servidor, la documentación Swagger está disponible en:
+Once the server is running, Swagger docs are available at:
 
 ```
 http://localhost:3001/api/docs
 ```
 
-## Endpoints principales
+### Main Endpoints
 
-### Auth
-- `POST /auth/sign-up` - Registro de usuario
-- `POST /auth/sign-in` - Inicio de sesión
-- `POST /auth/sign-out` - Cerrar sesión
-- `POST /auth/refresh` - Refrescar tokens
-- `POST /auth/forgot-password` - Solicitar reset de contraseña
-- `POST /auth/reset-password` - Resetear contraseña
-- `GET /auth/google` - OAuth con Google
-- `GET /auth/facebook` - OAuth con Facebook
-- `GET /auth/apple` - OAuth con Apple
+#### Auth
 
-### User
-- `GET /users/me` - Obtener usuario actual
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/auth/sign-up` | Register a new user |
+| `POST` | `/auth/sign-in` | Sign in |
+| `POST` | `/auth/sign-out` | Sign out |
+| `POST` | `/auth/refresh` | Refresh tokens |
+| `POST` | `/auth/forgot-password` | Request password reset |
+| `POST` | `/auth/reset-password` | Reset password |
+| `GET` | `/auth/google` | Google OAuth |
+| `GET` | `/auth/facebook` | Facebook OAuth |
+| `GET` | `/auth/apple` | Apple OAuth |
 
-## Licencia
+#### User
 
-Privado - Todos los derechos reservados.
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/users/me` | Get current user profile |
+
+---
+
+## License
+
+Private — All rights reserved.
