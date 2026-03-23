@@ -97,6 +97,23 @@ async function setupDomainSchemas(): Promise<void> {
   await migrationDs.initialize();
   await migrationDs.runMigrations();
   await migrationDs.destroy();
+
+  // Step 3: Run all seeds — catalog data (roles, tiers, capabilities).
+  const seedDs = new DataSource({
+    type: 'postgres',
+    host: process.env.DB_HOST ?? 'localhost',
+    port: parseInt(process.env.DB_PORT ?? '5434', 10),
+    username: process.env.DB_USERNAME ?? 'stocka',
+    password: process.env.DB_PASSWORD ?? 'stocka_dev_password',
+    database: process.env.DB_DATABASE ?? 'stocka_db',
+    synchronize: false,
+    logging: false,
+    migrations: [path.join(__dirname, '../src/core/infrastructure/seeds/*{.ts,.js}')],
+    extra: { max: 1 },
+  });
+  await seedDs.initialize();
+  await seedDs.runMigrations();
+  await seedDs.destroy();
 }
 
 export default async function globalSetup(): Promise<void> {

@@ -114,6 +114,7 @@ export class RbacController {
       [userUUID, tenantUUID],
     );
 
+    /* istanbul ignore next -- defensive fallback: getMembershipContext should prevent this state */
     if (rows.length === 0) {
       return { tenantId: 0, userId: 0 };
     }

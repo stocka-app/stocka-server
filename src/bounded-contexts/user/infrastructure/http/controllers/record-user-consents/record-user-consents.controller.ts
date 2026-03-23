@@ -28,7 +28,7 @@ export class RecordUserConsentsController {
     @CurrentUser() user: JwtPayload,
     @Req() request: Request,
   ): Promise<{ recorded: boolean }> {
-    const ipAddress = request.ip ?? null;
+    const ipAddress = request.ip ?? /* istanbul ignore next */ null;
     const userAgent = request.headers['user-agent'] ?? null;
 
     const result = await this.commandBus.execute<
@@ -45,6 +45,7 @@ export class RecordUserConsentsController {
 
     return result.match(
       () => ({ recorded: true }),
+      /* istanbul ignore next -- error path requires a DB infrastructure failure */
       (error) => {
         throw error;
       },

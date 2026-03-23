@@ -584,4 +584,66 @@ describe('CapabilityResolver', () => {
       });
     });
   });
+
+  // ── Nullish fallback branches ────────────────────────────────────────────
+
+  describe('Given the tier requirements catalog does not include the action key', () => {
+    beforeEach(() => {
+      (mockPort.getActionTierRequirements as jest.Mock).mockResolvedValue({});
+    });
+
+    describe('When canPerformActionWithSnapshot is called with a disabled snapshot entry', () => {
+      it('Then the required tier defaults to FREE and FeatureNotInTierError is returned', async () => {
+        const snapshot = createEmptySnapshot();
+        snapshot[SystemAction.STORAGE_CREATE] = { enabled: false, reason: 'Module disabled' };
+        const context: PolicyContext = {
+          tenantTier: TierEnum.FREE,
+          userRole: MemberRoleEnum.OWNER,
+          action: SystemAction.STORAGE_CREATE,
+        };
+        const result = await resolver.canPerformActionWithSnapshot(context, snapshot);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+      });
+    });
+  });
+
+  describe('Given neither the tier requirements nor the tier order maps contain the action or tier keys', () => {
+    beforeEach(() => {
+      (mockPort.getActionTierRequirements as jest.Mock).mockResolvedValue({});
+      (mockPort.getTierOrder as jest.Mock).mockResolvedValue({});
+    });
+
+    describe('When an OWNER reads a product and both order lookups fall back to 0', () => {
+      it('Then the tier check passes because 0 is not less than 0 and the action is allowed', async () => {
+        const context: PolicyContext = {
+          tenantTier: TierEnum.STARTER,
+          userRole: MemberRoleEnum.OWNER,
+          action: SystemAction.PRODUCT_READ,
+        };
+        const result = await resolver.canPerformAction(context);
+        expect(result.isOk()).toBe(true);
+      });
+    });
+  });
+
+  describe('Given the tier numeric limits map does not contain the relevant limit key', () => {
+    beforeEach(() => {
+      (mockPort.getTierNumericLimits as jest.Mock).mockResolvedValue({});
+    });
+
+    describe('When an OWNER creates a product with existing usage', () => {
+      it('Then the limit defaults to 0 and the action is denied because usage exceeds 0', async () => {
+        const context: PolicyContext = {
+          tenantTier: TierEnum.STARTER,
+          userRole: MemberRoleEnum.OWNER,
+          action: SystemAction.PRODUCT_CREATE,
+          usageCounts: { productCount: 5, storageCount: 0, memberCount: 1 },
+        };
+        const result = await resolver.canPerformAction(context);
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr().errorCode).toBe('TIER_LIMIT_REACHED');
+      });
+    });
+  });
 });

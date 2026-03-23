@@ -26,6 +26,7 @@ module.exports = {
 
     // ── SQL Migrations ────────────────────────────────────────────────────
     '!src/core/infrastructure/migrations/**',
+    '!src/core/infrastructure/seeds/**',
 
     // ── TypeORM Entities (metadata decorators, no logic) ─────────────────
     '!src/**/infrastructure/persistence/entities/**',

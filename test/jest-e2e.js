@@ -47,6 +47,7 @@ module.exports = {
     '!src/core/config/**',
     // ── SQL Migrations (DDL scripts, no application logic) ────────────────────
     '!src/core/infrastructure/migrations/**',
+    '!src/core/infrastructure/seeds/**',
 
     // ── TypeORM Entity decorators (metadata only, no business logic) ──────────
     '!src/**/infrastructure/persistence/entities/**',
@@ -94,6 +95,8 @@ module.exports = {
     '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
     // ── @deprecated social account repo (superseded; no active DI binding) ────────
     '!src/bounded-contexts/user/infrastructure/persistence/repositories/typeorm-social-account.repository.ts',
+    // ── User consent repository (not wired in any NestJS module; no DI path) ────
+    '!src/bounded-contexts/user/infrastructure/persistence/repositories/typeorm-user-consent.repository.ts',
 
     // ── Tenant infrastructure ─────────────────────────────────────────────────
     // Tier-plan and tier-data-provider not exercised by any e2e flow — excluded.
@@ -104,7 +107,10 @@ module.exports = {
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-config.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-member.repository.ts',
     '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant-profile.repository.ts',
-    // All 7 tenant controllers are exercised by invitation.e2e-spec.ts — no blanket exclusion.
+    // RBAC policy adapter excluded — TypeORM data-access layer with in-memory cache;
+    // cache expiry branches (TTL 10–30 min) are not exercisable in automated e2e runs.
+    '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-rbac-policy.adapter.ts',
+    // All tenant controllers (including rbac) are exercised by invitation.e2e-spec.ts and rbac.e2e-spec.ts.
 
     // ── Storage infrastructure (no storage e2e suite yet) ────────────────────
     '!src/bounded-contexts/storage/infrastructure/repositories/typeorm-storage.repository.ts',

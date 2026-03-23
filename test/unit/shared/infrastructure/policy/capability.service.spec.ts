@@ -273,4 +273,22 @@ describe('CapabilityService', () => {
       });
     });
   });
+
+  describe('Given both tier requirements and tier order maps return no data for the action or tier', () => {
+    beforeEach(() => {
+      mockRbacPort.getActionTierRequirements.mockResolvedValueOnce({});
+      mockRbacPort.getTierOrder.mockResolvedValueOnce({});
+      tierDataProvider.getActionModuleMap.mockResolvedValue({});
+    });
+
+    describe('When building a snapshot for any tier', () => {
+      it('Then all actions default to enabled because both orders fall back to 0', async () => {
+        const snapshot = await service.buildSnapshotForTenant(TierEnum.STARTER);
+        const allActions = Object.values(SystemAction);
+        for (const action of allActions) {
+          expect(snapshot[action].enabled).toBe(true);
+        }
+      });
+    });
+  });
 });

@@ -106,6 +106,21 @@ async function resetDatabase(): Promise<void> {
   await migrationDs.runMigrations();
   await migrationDs.destroy();
 
+  // Step 3: Run all seeds — catalog data (roles, tiers, capabilities)
+  console.log('  Running seeds...');
+  const seedDs = new DataSource({
+    type: 'postgres',
+    ...config,
+    synchronize: false,
+    logging: false,
+    migrations: [path.join(__dirname, '../src/core/infrastructure/seeds/*{.ts,.js}')],
+    extra: { max: 1 },
+  });
+
+  await seedDs.initialize();
+  await seedDs.runMigrations();
+  await seedDs.destroy();
+
   console.log('  Done! Database is clean and ready.\n');
 }
 
