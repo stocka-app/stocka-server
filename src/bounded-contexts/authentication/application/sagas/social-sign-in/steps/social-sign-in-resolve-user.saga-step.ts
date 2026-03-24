@@ -43,6 +43,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       username,
       provider: ctx.provider,
       providerId: ctx.providerId,
+      displayName: ctx.displayName,
     });
     ctx.user = result.user;
     ctx.credential = result.credential;

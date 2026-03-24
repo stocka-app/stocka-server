@@ -173,12 +173,20 @@ export class UserFacade implements IUserFacade {
     return { user: persistedUser, credential: persistedCredential };
   }
 
+  async findDisplayNameByUserUUID(userUUID: string): Promise<string | null> {
+    const user = await this.userContract.findByUUID(userUUID);
+    if (!user || user.id === undefined) return null;
+    const profile = await this.profileContract.findPersonalProfileByUserId(user.id);
+    return profile?.displayName ?? null;
+  }
+
   async createUserFromOAuth(props: {
     email: string;
     username: string;
     provider: string;
     providerId: string;
     providerEmail?: string;
+    displayName?: string | null;
   }): Promise<{
     user: UserAggregate;
     credential: CredentialAccountModel;
@@ -220,6 +228,7 @@ export class UserFacade implements IUserFacade {
     const personalProfile = PersonalProfileModel.create({
       profileId,
       username: props.username,
+      displayName: props.displayName,
     });
     await this.profileContract.persistPersonalProfile(personalProfile);
 

@@ -30,11 +30,13 @@ export class GetMeController {
 
     const { user, credential } = result;
     const username = (await this.userFacade.findUsernameByUUID(uuid)) ?? credential.email;
+    const displayName = await this.userFacade.findDisplayNameByUserUUID(uuid);
 
     return {
       id: user.uuid,
       email: credential.email,
       username,
+      displayName,
       createdAt: user.createdAt.toISOString(),
     };
   }

@@ -20,6 +20,13 @@ export class GetMeOutDto {
   username!: string;
 
   @ApiProperty({
+    example: 'Roberto Eduardo Medina Austin',
+    description: 'User display name from OAuth provider',
+    nullable: true,
+  })
+  displayName!: string | null;
+
+  @ApiProperty({
     example: '2024-01-01T00:00:00.000Z',
     description: 'User creation date in ISO 8601 format',
   })

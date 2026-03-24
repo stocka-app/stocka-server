@@ -41,6 +41,7 @@ export class PersonalProfileModel extends BaseModel {
   static create(props: {
     profileId: number;
     username: string;
+    displayName?: string | null;
     locale?: string;
     timezone?: string;
   }): PersonalProfileModel {
@@ -49,7 +50,7 @@ export class PersonalProfileModel extends BaseModel {
       uuid: undefined as unknown as string,
       profileId: props.profileId,
       username: props.username,
-      displayName: null,
+      displayName: props.displayName ?? null,
       avatarUrl: null,
       locale: props.locale ?? 'es',
       timezone: props.timezone ?? 'America/Mexico_City',

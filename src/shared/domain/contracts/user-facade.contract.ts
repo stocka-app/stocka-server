@@ -33,6 +33,7 @@ export interface IUserFacade {
   ): Promise<{ user: UserAggregate; social: SocialAccountModel } | null>;
   existsByUsername(username: string): Promise<boolean>;
   existsByEmail(email: string): Promise<boolean>;
+  findDisplayNameByUserUUID(userUUID: string): Promise<string | null>;
 
   // === Commands ===
   createUserWithCredentials(props: {
@@ -48,6 +49,7 @@ export interface IUserFacade {
     provider: string;
     providerId: string;
     providerEmail?: string;
+    displayName?: string | null;
   }): Promise<{
     user: UserAggregate;
     credential: CredentialAccountModel;
