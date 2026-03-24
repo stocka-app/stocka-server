@@ -5,6 +5,8 @@ import { ConfigService } from '@nestjs/config';
 import { SocialProfile } from '@authentication/infrastructure/strategies/google.strategy';
 import { PopupStateStore } from '@authentication/infrastructure/helpers/popup-state-store';
 
+const GRAPH_PHOTO_URL = 'https://graph.microsoft.com/v1.0/me/photos/96x96/$value';
+
 interface MicrosoftProfile {
   id: string;
   displayName: string;
@@ -48,16 +50,19 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     return { prompt: 'select_account' };
   }
 
-  validate(
+  async validate(
     accessToken: string,
-    refreshToken: string,
+    _refreshToken: string,
     profile: MicrosoftProfile,
     done: DoneCallback,
-  ): void {
+  ): Promise<void> {
     const { id, displayName } = profile;
     const email =
       profile.emails?.[0]?.value || profile._json?.mail || profile._json?.userPrincipalName || '';
     const json = (profile._json as Record<string, unknown>) ?? {};
+
+    const avatarUrl = await this.fetchProfilePhoto(accessToken);
+
     const user: SocialProfile = {
       email,
       displayName: displayName || '',
@@ -65,12 +70,34 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
       providerId: id,
       givenName: profile._json?.givenName ?? null,
       familyName: profile._json?.surname ?? null,
-      avatarUrl: null,
+      avatarUrl,
       locale: profile._json?.preferredLanguage ?? null,
       emailVerified: true,
       jobTitle: profile._json?.jobTitle ?? null,
       rawData: json,
     };
     done(null, user);
+  }
+
+  /**
+   * Fetches the user's profile photo from Microsoft Graph API and converts it
+   * to a base64 data URI. Returns null when the user has no photo set (404)
+   * or when the Graph API call fails for any reason.
+   *
+   * Microsoft does not provide a public photo URL in the OAuth profile — the
+   * photo endpoint requires a Bearer token and returns raw image bytes.
+   */
+  private async fetchProfilePhoto(accessToken: string): Promise<string | null> {
+    try {
+      const response = await fetch(GRAPH_PHOTO_URL, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (!response.ok) return null;
+      const buffer = await response.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString('base64');
+      return `data:image/jpeg;base64,${base64}`;
+    } catch {
+      return null;
+    }
   }
 }
