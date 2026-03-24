@@ -6,6 +6,7 @@ import { CreateSocialSessionStep } from '@authentication/application/sagas/socia
 import { GenerateSocialTokensStep } from '@authentication/application/sagas/social-sign-in/steps/social-sign-in-generate-tokens.saga-step';
 import { PublishSocialSignInEventsStep } from '@authentication/application/sagas/social-sign-in/steps/social-sign-in-publish-events.saga-step';
 import { ResolveSocialUserStep } from '@authentication/application/sagas/social-sign-in/steps/social-sign-in-resolve-user.saga-step';
+import { SyncSocialProfileStep } from '@authentication/application/sagas/social-sign-in/steps/social-sign-in-sync-profile.saga-step';
 import { SocialSignInSagaContext } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga-context';
 import { ISessionContract } from '@authentication/domain/contracts/session.contract';
 import { UserSignedInEvent } from '@authentication/domain/events/user-signed-in.event';
@@ -358,7 +359,6 @@ describe('ResolveSocialUserStep', () => {
       linkSocialAccount: jest.Mock;
       createUserFromOAuth: jest.Mock;
       existsByUsername: jest.Mock;
-      upsertSocialProfile: jest.Mock;
     };
   };
 
@@ -394,7 +394,6 @@ describe('ResolveSocialUserStep', () => {
         linkSocialAccount: jest.fn().mockResolvedValue(MOCK_SOCIAL),
         createUserFromOAuth: jest.fn().mockResolvedValue(MOCK_OAUTH_RESULT),
         existsByUsername: jest.fn().mockResolvedValue(false),
-        upsertSocialProfile: jest.fn().mockResolvedValue(undefined),
       },
     };
 
@@ -561,6 +560,99 @@ describe('ResolveSocialUserStep', () => {
         expect(mediator.user.createUserFromOAuth).toHaveBeenCalledWith(
           expect.objectContaining({ locale: 'es' }),
         );
+      });
+    });
+  });
+});
+
+// ─── SyncSocialProfileStep ────────────────────────────────────────────────────
+describe('SyncSocialProfileStep', () => {
+  let step: SyncSocialProfileStep;
+  let mediator: { user: { upsertSocialProfile: jest.Mock } };
+
+  const BASE_CTX: SocialSignInSagaContext = {
+    email: 'user@test.com',
+    displayName: 'Google User',
+    provider: 'google',
+    providerId: 'google-id-001',
+    givenName: 'Google',
+    familyName: 'User',
+    avatarUrl: 'https://example.com/avatar.jpg',
+    locale: 'es',
+    emailVerified: true,
+    jobTitle: null,
+    rawData: { sub: 'google-id-001' },
+  };
+
+  beforeEach(async () => {
+    mediator = {
+      user: {
+        upsertSocialProfile: jest.fn().mockResolvedValue(undefined),
+      },
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [SyncSocialProfileStep, { provide: MediatorService, useValue: mediator }],
+    }).compile();
+
+    step = module.get<SyncSocialProfileStep>(SyncSocialProfileStep);
+  });
+
+  describe('Given a context with user and socialAccountUUID set after the UoW has committed', () => {
+    describe('When execute() is called', () => {
+      it('Then it calls upsertSocialProfile with the full profile data from the context', async () => {
+        const ctx: SocialSignInSagaContext = {
+          ...BASE_CTX,
+          user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
+          socialAccountUUID: 'social-uuid-001',
+        };
+
+        await step.execute(ctx);
+
+        expect(mediator.user.upsertSocialProfile).toHaveBeenCalledTimes(1);
+        expect(mediator.user.upsertSocialProfile).toHaveBeenCalledWith({
+          userUUID: MOCK_USER.uuid,
+          socialAccountUUID: 'social-uuid-001',
+          provider: 'google',
+          providerDisplayName: 'Google User',
+          providerAvatarUrl: 'https://example.com/avatar.jpg',
+          givenName: 'Google',
+          familyName: 'User',
+          locale: 'es',
+          emailVerified: true,
+          jobTitle: null,
+          rawData: { sub: 'google-id-001' },
+        });
+      });
+    });
+  });
+
+  describe('Given a context where the user has not been resolved yet', () => {
+    describe('When execute() is called without ctx.user', () => {
+      it('Then it returns early without calling upsertSocialProfile', async () => {
+        const ctx: SocialSignInSagaContext = {
+          ...BASE_CTX,
+          socialAccountUUID: 'social-uuid-001',
+        };
+
+        await step.execute(ctx);
+
+        expect(mediator.user.upsertSocialProfile).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a context where the social account UUID has not been resolved yet', () => {
+    describe('When execute() is called without ctx.socialAccountUUID', () => {
+      it('Then it returns early without calling upsertSocialProfile', async () => {
+        const ctx: SocialSignInSagaContext = {
+          ...BASE_CTX,
+          user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
+        };
+
+        await step.execute(ctx);
+
+        expect(mediator.user.upsertSocialProfile).not.toHaveBeenCalled();
       });
     });
   });

@@ -18,8 +18,6 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       const credResult = await this.mediator.user.findUserByEmail(ctx.email);
       if (credResult) ctx.credential = credResult.credential;
       ctx.path = 'existing-provider';
-
-      await this.upsertSocialProfile(ctx, linked.social.uuid);
       return;
     }
 
@@ -37,8 +35,6 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       ctx.accountId = newSocial.accountId;
       ctx.socialAccountUUID = newSocial.uuid;
       ctx.path = 'linked-provider';
-
-      await this.upsertSocialProfile(ctx, newSocial.uuid);
       return;
     }
 
@@ -58,29 +54,6 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     ctx.accountId = result.social.accountId;
     ctx.socialAccountUUID = result.social.uuid;
     ctx.path = 'new-user';
-
-    await this.upsertSocialProfile(ctx, result.social.uuid);
-  }
-
-  private async upsertSocialProfile(
-    ctx: SocialSignInSagaContext,
-    socialAccountUUID: string,
-  ): Promise<void> {
-    /* istanbul ignore next — ctx.user is always set by all three execute() paths before this call */
-    if (!ctx.user) return;
-    await this.mediator.user.upsertSocialProfile({
-      userUUID: ctx.user.uuid,
-      socialAccountUUID,
-      provider: ctx.provider,
-      providerDisplayName: ctx.displayName,
-      providerAvatarUrl: ctx.avatarUrl,
-      givenName: ctx.givenName,
-      familyName: ctx.familyName,
-      locale: ctx.locale,
-      emailVerified: ctx.emailVerified,
-      jobTitle: ctx.jobTitle,
-      rawData: ctx.rawData,
-    });
   }
 
   private normalizeLocale(raw: string | null | undefined): string {

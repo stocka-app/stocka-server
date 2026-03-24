@@ -5,6 +5,7 @@ import {
   ResolveSocialUserStep,
   GenerateSocialTokensStep,
   CreateSocialSessionStep,
+  SyncSocialProfileStep,
   PublishSocialSignInEventsStep,
 } from '@authentication/application/sagas/social-sign-in/steps';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -16,6 +17,7 @@ describe('SocialSignInSaga', () => {
   let resolveUser: { execute: jest.Mock };
   let generateTokens: { execute: jest.Mock };
   let createSession: { execute: jest.Mock };
+  let syncProfile: { execute: jest.Mock };
   let publishEvents: { execute: jest.Mock };
   let uow: { begin: jest.Mock; commit: jest.Mock; rollback: jest.Mock; isActive: jest.Mock };
 
@@ -55,6 +57,7 @@ describe('SocialSignInSaga', () => {
       }),
     };
     const mockCreateSession = { execute: jest.fn() };
+    const mockSyncProfile = { execute: jest.fn() };
     const mockPublishEvents = { execute: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -63,6 +66,7 @@ describe('SocialSignInSaga', () => {
         { provide: ResolveSocialUserStep, useValue: mockResolveUser },
         { provide: GenerateSocialTokensStep, useValue: mockGenerateTokens },
         { provide: CreateSocialSessionStep, useValue: mockCreateSession },
+        { provide: SyncSocialProfileStep, useValue: mockSyncProfile },
         { provide: PublishSocialSignInEventsStep, useValue: mockPublishEvents },
         {
           provide: INJECTION_TOKENS.UNIT_OF_WORK,
@@ -80,13 +84,14 @@ describe('SocialSignInSaga', () => {
     resolveUser = module.get(ResolveSocialUserStep);
     generateTokens = module.get(GenerateSocialTokensStep);
     createSession = module.get(CreateSocialSessionStep);
+    syncProfile = module.get(SyncSocialProfileStep);
     publishEvents = module.get(PublishSocialSignInEventsStep);
     uow = module.get(INJECTION_TOKENS.UNIT_OF_WORK);
   });
 
   describe('Given a customer who signs in via an already-linked OAuth provider', () => {
     describe('When the saga runs successfully', () => {
-      it('Then it calls all steps in order and commits the transaction before publishing events', async () => {
+      it('Then it calls all steps in order and commits the transaction before syncing profile and publishing events', async () => {
         const ctx = await saga.run({ ...baseSagaContext });
 
         expect(uow.begin).toHaveBeenCalledTimes(1);
@@ -96,6 +101,7 @@ describe('SocialSignInSaga', () => {
         expect(resolveUser.execute).toHaveBeenCalledTimes(1);
         expect(generateTokens.execute).toHaveBeenCalledTimes(1);
         expect(createSession.execute).toHaveBeenCalledTimes(1);
+        expect(syncProfile.execute).toHaveBeenCalledTimes(1);
         expect(publishEvents.execute).toHaveBeenCalledTimes(1);
 
         expect(ctx.user).toBeDefined();
@@ -175,6 +181,7 @@ describe('SocialSignInSaga', () => {
 
         expect(uow.rollback).toHaveBeenCalledTimes(1);
         expect(uow.commit).not.toHaveBeenCalled();
+        expect(syncProfile.execute).not.toHaveBeenCalled();
         expect(publishEvents.execute).not.toHaveBeenCalled();
       });
     });
@@ -196,7 +203,7 @@ describe('SocialSignInSaga', () => {
   });
 
   describe('Step execution order', () => {
-    it('should call resolve → generate → create-session → publish in declared order', async () => {
+    it('should call resolve → generate → create-session → sync-profile → publish in declared order', async () => {
       const callOrder: string[] = [];
 
       resolveUser.execute.mockImplementation((ctx: SocialSignInSagaContext) => {
@@ -213,6 +220,9 @@ describe('SocialSignInSaga', () => {
       createSession.execute.mockImplementation(() => {
         callOrder.push('create-session');
       });
+      syncProfile.execute.mockImplementation(() => {
+        callOrder.push('sync-social-profile');
+      });
       publishEvents.execute.mockImplementation(() => {
         callOrder.push('publish-events');
       });
@@ -223,17 +233,22 @@ describe('SocialSignInSaga', () => {
         'resolve-social-user',
         'generate-tokens',
         'create-session',
+        'sync-social-profile',
         'publish-events',
       ]);
     });
   });
 
-  describe('DB commit happens before event publishing', () => {
-    it('should commit the transaction before firing any domain events', async () => {
+  describe('DB commit happens before profile sync and event publishing', () => {
+    it('should commit the transaction before syncing the social profile and firing domain events', async () => {
       const callOrder: string[] = [];
 
       uow.commit.mockImplementation(() => {
         callOrder.push('commit');
+        return Promise.resolve();
+      });
+      syncProfile.execute.mockImplementation(() => {
+        callOrder.push('sync-social-profile');
         return Promise.resolve();
       });
       publishEvents.execute.mockImplementation(() => {
@@ -244,8 +259,10 @@ describe('SocialSignInSaga', () => {
       await saga.run({ ...baseSagaContext });
 
       const commitIndex = callOrder.indexOf('commit');
+      const syncIndex = callOrder.indexOf('sync-social-profile');
       const publishIndex = callOrder.indexOf('publish-events');
       expect(commitIndex).toBeGreaterThanOrEqual(0);
+      expect(syncIndex).toBeGreaterThan(commitIndex);
       expect(publishIndex).toBeGreaterThan(commitIndex);
     });
   });

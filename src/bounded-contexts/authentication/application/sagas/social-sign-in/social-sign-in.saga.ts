@@ -12,6 +12,7 @@ import {
   ResolveSocialUserStep,
   GenerateSocialTokensStep,
   CreateSocialSessionStep,
+  SyncSocialProfileStep,
   PublishSocialSignInEventsStep,
 } from '@authentication/application/sagas/social-sign-in/steps';
 
@@ -23,8 +24,9 @@ import {
  *  2. generate-tokens      → GenerateSocialTokensStep
  *  3. create-session       → CreateSocialSessionStep
  *
- * After commit (fire-and-forget):
- *  4. publish-events       → PublishSocialSignInEventsStep (UserSignedInEvent)
+ * After commit (non-transactional — runs against committed data):
+ *  4. sync-social-profile  → SyncSocialProfileStep  (reads committed user/profile rows)
+ *  5. publish-events       → PublishSocialSignInEventsStep (UserSignedInEvent)
  */
 @Injectable()
 export class SocialSignInSaga extends Saga<SocialSignInSagaContext> {
@@ -36,6 +38,7 @@ export class SocialSignInSaga extends Saga<SocialSignInSagaContext> {
     private readonly resolveUser: ResolveSocialUserStep,
     private readonly generateTokens: GenerateSocialTokensStep,
     private readonly createSession: CreateSocialSessionStep,
+    private readonly syncProfile: SyncSocialProfileStep,
     private readonly publishEvents: PublishSocialSignInEventsStep,
   ) {
     super(uow);
@@ -46,6 +49,7 @@ export class SocialSignInSaga extends Saga<SocialSignInSagaContext> {
       { name: 'resolve-social-user', handler: this.resolveUser },
       { name: 'generate-tokens', handler: this.generateTokens },
       { name: 'create-session', handler: this.createSession },
+      { name: 'sync-social-profile', handler: this.syncProfile, transactional: false },
       { name: 'publish-events', handler: this.publishEvents, transactional: false },
     ];
   }

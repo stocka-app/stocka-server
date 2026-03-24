@@ -81,6 +81,7 @@ import {
   ResolveSocialUserStep,
   GenerateSocialTokensStep,
   CreateSocialSessionStep,
+  SyncSocialProfileStep,
   PublishSocialSignInEventsStep,
 } from '@authentication/application/sagas/social-sign-in/steps';
 import { RefreshSessionSaga } from '@authentication/application/sagas/refresh-session/refresh-session.saga';
@@ -240,6 +241,7 @@ const Controllers = [
     ResolveSocialUserStep,
     GenerateSocialTokensStep,
     CreateSocialSessionStep,
+    SyncSocialProfileStep,
     PublishSocialSignInEventsStep,
     RefreshSessionSaga,
     ValidateRefreshTokenStep,
