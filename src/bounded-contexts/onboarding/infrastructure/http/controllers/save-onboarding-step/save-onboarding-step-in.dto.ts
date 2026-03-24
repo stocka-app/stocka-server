@@ -2,7 +2,9 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsObject, IsString, IsOptional, IsNumber } from 'class-validator';
 
 export class SaveOnboardingStepInDto {
-  @ApiProperty({ description: 'Domain section name (consents, path, preferences, businessProfile, context)' })
+  @ApiProperty({
+    description: 'Domain section name (consents, path, preferences, businessProfile, context)',
+  })
   @IsString()
   section!: string;
 

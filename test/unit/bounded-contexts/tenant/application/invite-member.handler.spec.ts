@@ -60,9 +60,7 @@ describe('InviteMemberHandler', () => {
       getActionLimitChecks: jest.fn(),
       getAssignableRoles: jest
         .fn()
-        .mockImplementation((role: string) =>
-          Promise.resolve(ASSIGNABLE_ROLES[role] ?? []),
-        ),
+        .mockImplementation((role: string) => Promise.resolve(ASSIGNABLE_ROLES[role] ?? [])),
       getUserGrants: jest.fn(),
     };
 

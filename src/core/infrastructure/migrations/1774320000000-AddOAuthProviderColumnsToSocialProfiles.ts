@@ -23,23 +23,13 @@ export class AddOAuthProviderColumnsToSocialProfiles1774320000000 implements Mig
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "profiles"."social_profiles" DROP COLUMN "raw_data"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "profiles"."social_profiles" DROP COLUMN "job_title"`,
-    );
+    await queryRunner.query(`ALTER TABLE "profiles"."social_profiles" DROP COLUMN "raw_data"`);
+    await queryRunner.query(`ALTER TABLE "profiles"."social_profiles" DROP COLUMN "job_title"`);
     await queryRunner.query(
       `ALTER TABLE "profiles"."social_profiles" DROP COLUMN "email_verified"`,
     );
-    await queryRunner.query(
-      `ALTER TABLE "profiles"."social_profiles" DROP COLUMN "locale"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "profiles"."social_profiles" DROP COLUMN "family_name"`,
-    );
-    await queryRunner.query(
-      `ALTER TABLE "profiles"."social_profiles" DROP COLUMN "given_name"`,
-    );
+    await queryRunner.query(`ALTER TABLE "profiles"."social_profiles" DROP COLUMN "locale"`);
+    await queryRunner.query(`ALTER TABLE "profiles"."social_profiles" DROP COLUMN "family_name"`);
+    await queryRunner.query(`ALTER TABLE "profiles"."social_profiles" DROP COLUMN "given_name"`);
   }
 }

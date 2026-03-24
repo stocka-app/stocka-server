@@ -27,6 +27,34 @@ export class GetMeOutDto {
   displayName!: string | null;
 
   @ApiProperty({
+    example: 'Roberto',
+    description: 'Given name from OAuth provider social profile',
+    nullable: true,
+  })
+  givenName!: string | null;
+
+  @ApiProperty({
+    example: 'Medina',
+    description: 'Family name from OAuth provider social profile',
+    nullable: true,
+  })
+  familyName!: string | null;
+
+  @ApiProperty({
+    example: 'https://lh3.googleusercontent.com/...',
+    description: 'Avatar URL from OAuth provider',
+    nullable: true,
+  })
+  avatarUrl!: string | null;
+
+  @ApiProperty({
+    example: 'active',
+    description: 'User account status',
+    enum: ['pending_verification', 'active', 'email_verified_by_provider', 'archived', 'blocked'],
+  })
+  status!: string;
+
+  @ApiProperty({
     example: '2024-01-01T00:00:00.000Z',
     description: 'User creation date in ISO 8601 format',
   })

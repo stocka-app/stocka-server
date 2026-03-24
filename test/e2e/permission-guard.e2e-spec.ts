@@ -81,10 +81,10 @@ async function setTenantTier(
   tenantId: number,
   tier: string,
 ): Promise<void> {
-  await dataSource.query(
-    `UPDATE "tenants"."tenant_config" SET tier = $1 WHERE tenant_id = $2`,
-    [tier, tenantId],
-  );
+  await dataSource.query(`UPDATE "tenants"."tenant_config" SET tier = $1 WHERE tenant_id = $2`, [
+    tier,
+    tenantId,
+  ]);
 }
 
 async function setStorageCount(
@@ -125,7 +125,7 @@ async function unblockActionForTier(
 
 function clearRbacCache(rbacApp: INestApplication): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (rbacApp.get<any>(INJECTION_TOKENS.RBAC_POLICY_PORT)).cache.clear();
+  rbacApp.get<any>(INJECTION_TOKENS.RBAC_POLICY_PORT).cache.clear();
 }
 
 // ─── Spec ─────────────────────────────────────────────────────────────────────

@@ -34,6 +34,9 @@ export interface IUserFacade {
   existsByUsername(username: string): Promise<boolean>;
   existsByEmail(email: string): Promise<boolean>;
   findDisplayNameByUserUUID(userUUID: string): Promise<string | null>;
+  findSocialNameByUserUUID(
+    userUUID: string,
+  ): Promise<{ givenName: string | null; familyName: string | null; avatarUrl: string | null }>;
 
   // === Commands ===
   createUserWithCredentials(props: {

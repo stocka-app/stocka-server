@@ -108,9 +108,7 @@ function createMockRbacPolicyPort(): IRbacPolicyPort {
     getRoleActions: jest.fn((roleKey: string) =>
       Promise.resolve(ROLE_ACTIONS[roleKey] ?? new Set<string>()),
     ),
-    getActionTierRequirements: jest.fn(() =>
-      Promise.resolve(ACTION_TIER_REQUIREMENTS),
-    ),
+    getActionTierRequirements: jest.fn(() => Promise.resolve(ACTION_TIER_REQUIREMENTS)),
     getTierNumericLimits: jest.fn((tier: string) =>
       Promise.resolve(TIER_NUMERIC_LIMITS[tier] ?? {}),
     ),

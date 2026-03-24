@@ -80,7 +80,12 @@ describe('SaveOnboardingStepHandler', () => {
         sessionContract.save.mockImplementation((s) => Promise.resolve(s));
 
         const result = await handler.execute(
-          new SaveOnboardingStepCommand(USER_UUID, 'path', { path: 'JOIN', invitationCode: 'abc123' }, 0),
+          new SaveOnboardingStepCommand(
+            USER_UUID,
+            'path',
+            { path: 'JOIN', invitationCode: 'abc123' },
+            0,
+          ),
         );
 
         expect(result.isOk()).toBe(true);
@@ -101,12 +106,17 @@ describe('SaveOnboardingStepHandler', () => {
         sessionContract.save.mockImplementation((s) => Promise.resolve(s));
 
         const result = await handler.execute(
-          new SaveOnboardingStepCommand(USER_UUID, 'businessProfile', {
-            name: 'Mi Tienda',
-            businessType: 'retail',
-            country: 'MX',
-            timezone: 'America/Mexico_City',
-          }, 3),
+          new SaveOnboardingStepCommand(
+            USER_UUID,
+            'businessProfile',
+            {
+              name: 'Mi Tienda',
+              businessType: 'retail',
+              country: 'MX',
+              timezone: 'America/Mexico_City',
+            },
+            3,
+          ),
         );
 
         expect(result.isOk()).toBe(true);

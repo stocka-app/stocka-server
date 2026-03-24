@@ -55,8 +55,8 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
       `SELECT key FROM capabilities.catalog_actions WHERE is_active = true`,
     );
 
-    const overrides: Array<{ action_key: string; tier: string; enabled: boolean }> =
-      await this.dataSource.query(`
+    const overrides: Array<{ action_key: string; tier: string; enabled: boolean }> = await this
+      .dataSource.query(`
         SELECT ca.key as action_key, tao.tier, tao.enabled
         FROM tiers.tier_action_overrides tao
         JOIN capabilities.catalog_actions ca ON ca.id = tao.action_id

@@ -25,10 +25,9 @@ export class GetUserConsentsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async handle(@CurrentUser('uuid') uuid: string): Promise<GetUserConsentsOutDto> {
-    const consents = await this.queryBus.execute<
-      GetUserConsentsQuery,
-      GetUserConsentsQueryResult
-    >(new GetUserConsentsQuery(uuid));
+    const consents = await this.queryBus.execute<GetUserConsentsQuery, GetUserConsentsQueryResult>(
+      new GetUserConsentsQuery(uuid),
+    );
 
     return { consents };
   }

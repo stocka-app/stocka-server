@@ -80,9 +80,12 @@ describe('RoleHierarchyService', () => {
     });
 
     describe('When trying to assign OWNER, PARTNER, or MANAGER', () => {
-      it.each(['OWNER', 'PARTNER', 'MANAGER'])('Then it rejects assigning %s', async (targetRole) => {
-        await expect(service.canAssignRole('MANAGER', targetRole)).resolves.toBe(false);
-      });
+      it.each(['OWNER', 'PARTNER', 'MANAGER'])(
+        'Then it rejects assigning %s',
+        async (targetRole) => {
+          await expect(service.canAssignRole('MANAGER', targetRole)).resolves.toBe(false);
+        },
+      );
     });
   });
 
