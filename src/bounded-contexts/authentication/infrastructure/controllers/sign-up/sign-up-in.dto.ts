@@ -31,14 +31,18 @@ export class SignUpInDto {
   username!: string;
 
   @ApiProperty({
-    example: 'Password1',
-    description: 'Password (min 8 chars, at least 1 uppercase and 1 number)',
+    example: 'Password1!',
+    description:
+      'Password (min 10 chars, max 128 chars, at least 1 uppercase, 1 number, and 1 special character)',
     minLength: PASSWORD_MIN_LENGTH,
+    maxLength: 128,
   })
   @IsString()
-  @MinLength(PASSWORD_MIN_LENGTH, { message: 'Password must be at least 8 characters long' })
+  @MinLength(PASSWORD_MIN_LENGTH, { message: 'Password must be at least 10 characters long' })
+  @MaxLength(128, { message: 'Password must not exceed 128 characters' })
   @Matches(PASSWORD_STRENGTH_PATTERN, {
-    message: 'Password must contain at least one uppercase letter and one number',
+    message:
+      'Password must contain at least one uppercase letter, one number, and one special character',
   })
   password!: string;
 }
