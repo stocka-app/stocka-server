@@ -18,7 +18,9 @@ function buildMockFacade(): jest.Mocked<
     findUserByUUIDWithCredential: jest.fn(),
     findUsernameByUUID: jest.fn(),
     findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),
-    findSocialNameByUserUUID: jest.fn().mockResolvedValue({ givenName: null, familyName: null, avatarUrl: null }),
+    findSocialNameByUserUUID: jest
+      .fn()
+      .mockResolvedValue({ givenName: null, familyName: null, avatarUrl: null }),
   };
 }
 
@@ -98,7 +100,10 @@ describe('GetMeController', () => {
     describe('When handle is called', () => {
       it('Then it returns givenName and familyName in the response', async () => {
         const mockUser = { uuid: 'user-uuid-social', createdAt: new Date('2024-01-01') };
-        const mockCredential = { email: 'social@example.com', status: { toString: () => 'email_verified_by_provider' } };
+        const mockCredential = {
+          email: 'social@example.com',
+          status: { toString: () => 'email_verified_by_provider' },
+        };
 
         facade.findUserByUUIDWithCredential.mockResolvedValue({
           user: mockUser as never,
@@ -124,7 +129,10 @@ describe('GetMeController', () => {
     describe('When handle is called', () => {
       it('Then givenName and familyName are null in the response', async () => {
         const mockUser = { uuid: 'user-uuid-nosocial', createdAt: new Date('2024-01-01') };
-        const mockCredential = { email: 'nosocial@example.com', status: { toString: () => 'active' } };
+        const mockCredential = {
+          email: 'nosocial@example.com',
+          status: { toString: () => 'active' },
+        };
 
         facade.findUserByUUIDWithCredential.mockResolvedValue({
           user: mockUser as never,

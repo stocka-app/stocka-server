@@ -21,7 +21,7 @@ describe('Resend Verification Code (e2e)', () => {
     );
     await request(app.getHttpServer())
       .post('/api/authentication/sign-up')
-      .send({ email, username, password: 'SecurePass1' });
+      .send({ email, username, password: 'SecurePass1!' });
     return capturedCode;
   }
 

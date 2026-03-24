@@ -266,27 +266,33 @@ describe('Authentication domain value objects', () => {
 
   // ─── PasswordVO ──────────────────────────────────────────────────────────────
   describe('PasswordVO', () => {
-    describe('Given a valid password', () => {
+    describe('Given a valid password meeting all policy requirements', () => {
       it('Then it constructs without error', () => {
-        expect(() => new PasswordVO('Password1')).not.toThrow();
+        expect(() => new PasswordVO('StrongPass1!')).not.toThrow();
       });
     });
 
     describe('Given a password that is too short', () => {
       it('Then it throws InvalidPasswordException', () => {
-        expect(() => new PasswordVO('Pw1')).toThrow(InvalidPasswordException);
+        expect(() => new PasswordVO('Pw1!')).toThrow(InvalidPasswordException);
       });
     });
 
     describe('Given a password with no uppercase letter', () => {
       it('Then it throws InvalidPasswordException', () => {
-        expect(() => new PasswordVO('password1234')).toThrow(InvalidPasswordException);
+        expect(() => new PasswordVO('password1234!')).toThrow(InvalidPasswordException);
       });
     });
 
     describe('Given a password with no digit', () => {
       it('Then it throws InvalidPasswordException', () => {
-        expect(() => new PasswordVO('PasswordOnly')).toThrow(InvalidPasswordException);
+        expect(() => new PasswordVO('PasswordOnly!')).toThrow(InvalidPasswordException);
+      });
+    });
+
+    describe('Given a password with no special character', () => {
+      it('Then it throws InvalidPasswordException', () => {
+        expect(() => new PasswordVO('StrongPass1234')).toThrow(InvalidPasswordException);
       });
     });
   });

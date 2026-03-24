@@ -16,7 +16,7 @@ describe('Refresh Session (e2e)', () => {
   ): Promise<{ cookie: string; refreshToken: string }> {
     const signUpRes = await request(app.getHttpServer())
       .post('/api/authentication/sign-up')
-      .send({ email, username, password: 'SecurePass1' });
+      .send({ email, username, password: 'SecurePass1!' });
 
     const setCookieHeader = signUpRes.headers['set-cookie'] as string | string[];
     const cookies = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader ?? ''];

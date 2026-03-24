@@ -55,7 +55,7 @@ describe('ArchiveUserSessionsStep', () => {
       it('Then it archives all sessions for the user', async () => {
         const ctx: ResetPasswordSagaContext = {
           token: 'tok',
-          newPassword: 'NewPass1',
+          newPassword: 'NewPass1!',
           resetToken: buildValidResetToken(),
         };
         await step.execute(ctx);
@@ -67,7 +67,7 @@ describe('ArchiveUserSessionsStep', () => {
   describe('Given a context without resetToken', () => {
     describe('When execute() is called', () => {
       it('Then it throws an invariant violation error', async () => {
-        const ctx: ResetPasswordSagaContext = { token: 'tok', newPassword: 'NewPass1' };
+        const ctx: ResetPasswordSagaContext = { token: 'tok', newPassword: 'NewPass1!' };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.resetToken not set');
       });
     });
@@ -91,7 +91,7 @@ describe('HashNewPasswordStep', () => {
       it('Then it hashes the password and sets ctx.newPasswordHash', async () => {
         const ctx: ResetPasswordSagaContext = {
           token: 'tok',
-          newPassword: 'NewSecurePass1',
+          newPassword: 'NewSecurePass1!',
         };
         await step.execute(ctx);
         expect(ctx.newPasswordHash).toBeDefined();
@@ -131,7 +131,7 @@ describe('MarkTokenUsedStep', () => {
         const resetToken = buildValidResetToken();
         const ctx: ResetPasswordSagaContext = {
           token: 'tok',
-          newPassword: 'NewPass1',
+          newPassword: 'NewPass1!',
           resetToken,
         };
         await step.execute(ctx);
@@ -144,7 +144,7 @@ describe('MarkTokenUsedStep', () => {
   describe('Given a context without resetToken', () => {
     describe('When execute() is called', () => {
       it('Then it throws an invariant violation error', async () => {
-        const ctx: ResetPasswordSagaContext = { token: 'tok', newPassword: 'NewPass1' };
+        const ctx: ResetPasswordSagaContext = { token: 'tok', newPassword: 'NewPass1!' };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.resetToken not set');
       });
     });
@@ -178,7 +178,7 @@ describe('PublishResetPasswordEventsStep', () => {
         const resetToken = buildValidResetToken();
         const ctx: ResetPasswordSagaContext = {
           token: 'tok',
-          newPassword: 'NewPass1',
+          newPassword: 'NewPass1!',
           resetToken,
           newPasswordHash: 'hashed-password',
         };
@@ -206,7 +206,7 @@ describe('PublishResetPasswordEventsStep', () => {
       it('Then it throws an invariant violation error', () => {
         const ctx: ResetPasswordSagaContext = {
           token: 'tok',
-          newPassword: 'NewPass1',
+          newPassword: 'NewPass1!',
           resetToken: buildValidResetToken(),
         };
         expect(() => step.execute(ctx)).toThrow('ctx.newPasswordHash not set');
@@ -245,7 +245,7 @@ describe('ValidateResetTokenStep', () => {
       it('Then it sets resetToken on the context', async () => {
         const ctx: ResetPasswordSagaContext = {
           token: 'valid-raw-token',
-          newPassword: 'StrongPass1',
+          newPassword: 'StrongPass1!',
         };
         await step.execute(ctx);
         expect(ctx.resetToken).toBeDefined();
@@ -261,7 +261,7 @@ describe('ValidateResetTokenStep', () => {
 
     describe('When execute() is called', () => {
       it('Then it throws TokenExpiredException', async () => {
-        const ctx: ResetPasswordSagaContext = { token: 'bad-token', newPassword: 'StrongPass1' };
+        const ctx: ResetPasswordSagaContext = { token: 'bad-token', newPassword: 'StrongPass1!' };
         await expect(step.execute(ctx)).rejects.toThrow(TokenExpiredException);
       });
     });

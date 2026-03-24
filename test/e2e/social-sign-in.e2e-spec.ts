@@ -123,7 +123,7 @@ describe('Social Sign In (e2e)', () => {
         await request(app.getHttpServer()).post('/api/authentication/sign-up').send({
           email: 'manual.then.oauth@example.com',
           username: 'manualthen',
-          password: 'SecurePass1',
+          password: 'SecurePass1!',
         });
 
         const result = await commandBus.execute(

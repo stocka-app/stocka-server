@@ -4,6 +4,7 @@ import {
   PASSWORD_MIN_LENGTH,
   PASSWORD_UPPERCASE_PATTERN,
   PASSWORD_DIGIT_PATTERN,
+  PASSWORD_SPECIAL_CHAR_PATTERN,
 } from '@common/constants/validation.constants';
 
 export class PasswordVO extends StringVO {
@@ -25,6 +26,10 @@ export class PasswordVO extends StringVO {
 
     if (!PASSWORD_DIGIT_PATTERN.test(this.value)) {
       throw new InvalidPasswordException('Password must contain at least one number');
+    }
+
+    if (!PASSWORD_SPECIAL_CHAR_PATTERN.test(this.value)) {
+      throw new InvalidPasswordException('Password must contain at least one special character');
     }
   }
 }
