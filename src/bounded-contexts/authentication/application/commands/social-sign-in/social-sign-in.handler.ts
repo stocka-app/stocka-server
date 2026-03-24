@@ -13,6 +13,13 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
       displayName: command.displayName,
       provider: command.provider,
       providerId: command.providerId,
+      givenName: command.givenName,
+      familyName: command.familyName,
+      avatarUrl: command.avatarUrl,
+      locale: command.locale,
+      emailVerified: command.emailVerified,
+      jobTitle: command.jobTitle,
+      rawData: command.rawData,
     });
 
     if (result.isErr()) throw result.error;

@@ -9,6 +9,13 @@ export interface SocialProfile {
   displayName: string;
   provider: string;
   providerId: string;
+  givenName: string | null;
+  familyName: string | null;
+  avatarUrl: string | null;
+  locale: string | null;
+  emailVerified: boolean;
+  jobTitle: string | null;
+  rawData: Record<string, unknown>;
 }
 
 @Injectable()
@@ -44,11 +51,19 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done: VerifyCallback,
   ): void {
     const { id, emails, displayName } = profile;
+    const json = profile._json as Record<string, unknown>;
     const user: SocialProfile = {
       email: emails?.[0]?.value || '',
       displayName: displayName || '',
       provider: 'google',
       providerId: id,
+      givenName: profile.name?.givenName ?? null,
+      familyName: profile.name?.familyName ?? null,
+      avatarUrl: profile.photos?.[0]?.value ?? null,
+      locale: (json?.['locale'] as string | undefined) ?? null,
+      emailVerified: (json?.['email_verified'] as boolean | undefined) ?? false,
+      jobTitle: null,
+      rawData: json ?? {},
     };
     done(null, user);
   }

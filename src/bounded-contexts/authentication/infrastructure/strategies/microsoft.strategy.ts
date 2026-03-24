@@ -8,10 +8,16 @@ import { PopupStateStore } from '@authentication/infrastructure/helpers/popup-st
 interface MicrosoftProfile {
   id: string;
   displayName: string;
+  name?: { givenName?: string; familyName?: string };
   emails?: Array<{ value: string; type?: string }>;
   _json?: {
     mail?: string;
     userPrincipalName?: string;
+    givenName?: string;
+    surname?: string;
+    preferredLanguage?: string;
+    jobTitle?: string;
+    [key: string]: unknown;
   };
 }
 
@@ -51,11 +57,19 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
     const { id, displayName } = profile;
     const email =
       profile.emails?.[0]?.value || profile._json?.mail || profile._json?.userPrincipalName || '';
+    const json = (profile._json as Record<string, unknown>) ?? {};
     const user: SocialProfile = {
       email,
       displayName: displayName || '',
       provider: 'microsoft',
       providerId: id,
+      givenName: profile._json?.givenName ?? null,
+      familyName: profile._json?.surname ?? null,
+      avatarUrl: null,
+      locale: profile._json?.preferredLanguage ?? null,
+      emailVerified: true,
+      jobTitle: profile._json?.jobTitle ?? null,
+      rawData: json,
     };
     done(null, user);
   }

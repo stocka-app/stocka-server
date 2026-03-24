@@ -23,6 +23,24 @@ export class SocialProfileEntity extends BaseEntity {
   @Column({ name: 'provider_profile_url', type: 'varchar', length: 500, nullable: true })
   providerProfileUrl!: string | null;
 
+  @Column({ name: 'given_name', type: 'varchar', length: 100, nullable: true })
+  givenName!: string | null;
+
+  @Column({ name: 'family_name', type: 'varchar', length: 100, nullable: true })
+  familyName!: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  locale!: string | null;
+
+  @Column({ name: 'email_verified', type: 'boolean', nullable: true })
+  emailVerified!: boolean | null;
+
+  @Column({ name: 'job_title', type: 'varchar', length: 200, nullable: true })
+  jobTitle!: string | null;
+
+  @Column({ name: 'raw_data', type: 'jsonb', nullable: true })
+  rawData!: Record<string, unknown> | null;
+
   @Column({ name: 'synced_at', type: 'timestamptz', default: () => 'now()' })
   syncedAt!: Date;
 

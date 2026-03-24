@@ -13,10 +13,13 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     if (linked) {
       ctx.user = linked.user;
       ctx.accountId = linked.social.accountId;
+      ctx.socialAccountUUID = linked.social.uuid;
       // Fetch credential for token generation
       const credResult = await this.mediator.user.findUserByEmail(ctx.email);
       if (credResult) ctx.credential = credResult.credential;
       ctx.path = 'existing-provider';
+
+      await this.upsertSocialProfile(ctx, linked.social.uuid);
       return;
     }
 
@@ -32,7 +35,10 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       ctx.user = existingByEmail.user;
       ctx.credential = existingByEmail.credential;
       ctx.accountId = newSocial.accountId;
+      ctx.socialAccountUUID = newSocial.uuid;
       ctx.path = 'linked-provider';
+
+      await this.upsertSocialProfile(ctx, newSocial.uuid);
       return;
     }
 
@@ -44,11 +50,42 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       provider: ctx.provider,
       providerId: ctx.providerId,
       displayName: ctx.displayName,
+      avatarUrl: ctx.avatarUrl,
+      locale: this.normalizeLocale(ctx.locale),
     });
     ctx.user = result.user;
     ctx.credential = result.credential;
     ctx.accountId = result.social.accountId;
+    ctx.socialAccountUUID = result.social.uuid;
     ctx.path = 'new-user';
+
+    await this.upsertSocialProfile(ctx, result.social.uuid);
+  }
+
+  private async upsertSocialProfile(
+    ctx: SocialSignInSagaContext,
+    socialAccountUUID: string,
+  ): Promise<void> {
+    if (!ctx.user) return;
+    await this.mediator.user.upsertSocialProfile({
+      userUUID: ctx.user.uuid,
+      socialAccountUUID,
+      provider: ctx.provider,
+      providerDisplayName: ctx.displayName,
+      providerAvatarUrl: ctx.avatarUrl,
+      givenName: ctx.givenName,
+      familyName: ctx.familyName,
+      locale: ctx.locale,
+      emailVerified: ctx.emailVerified,
+      jobTitle: ctx.jobTitle,
+      rawData: ctx.rawData,
+    });
+  }
+
+  private normalizeLocale(raw: string | null | undefined): string {
+    if (!raw) return 'es';
+    const lang = raw.split('-')[0].toLowerCase();
+    return ['en', 'es'].includes(lang) ? lang : 'es';
   }
 
   private async generateUniqueUsername(displayName: string): Promise<string> {

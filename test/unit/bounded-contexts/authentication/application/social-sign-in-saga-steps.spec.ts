@@ -44,6 +44,13 @@ describe('CreateSocialSessionStep', () => {
           displayName: 'Test User',
           provider: 'google',
           providerId: 'google-id-123',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
           refreshToken: 'social-refresh-token',
           accountId: 10,
@@ -62,6 +69,13 @@ describe('CreateSocialSessionStep', () => {
           displayName: 'Test',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           refreshToken: 'tok',
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
@@ -77,6 +91,13 @@ describe('CreateSocialSessionStep', () => {
           displayName: 'Test',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.refreshToken not set');
@@ -92,6 +113,13 @@ describe('CreateSocialSessionStep', () => {
           displayName: 'Test',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
           refreshToken: 'tok',
         };
@@ -146,6 +174,13 @@ describe('GenerateSocialTokensStep', () => {
           displayName: 'Test User',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
           credential: MOCK_CREDENTIAL as unknown as SocialSignInSagaContext['credential'],
         };
@@ -165,6 +200,13 @@ describe('GenerateSocialTokensStep', () => {
           displayName: 'Test',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
       });
@@ -179,6 +221,13 @@ describe('GenerateSocialTokensStep', () => {
           displayName: 'Test',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.credential not set');
@@ -213,6 +262,13 @@ describe('GenerateSocialTokensStep', () => {
           displayName: 'Test User',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
           credential: MOCK_CREDENTIAL as unknown as SocialSignInSagaContext['credential'],
         };
@@ -250,6 +306,13 @@ describe('PublishSocialSignInEventsStep', () => {
           displayName: 'Test',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
           user: MOCK_USER as unknown as SocialSignInSagaContext['user'],
         };
         await step.execute(ctx);
@@ -268,6 +331,13 @@ describe('PublishSocialSignInEventsStep', () => {
           displayName: 'Test',
           provider: 'google',
           providerId: 'gid',
+          givenName: null,
+          familyName: null,
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
       });
@@ -285,6 +355,7 @@ describe('ResolveSocialUserStep', () => {
       linkSocialAccount: jest.Mock;
       createUserFromOAuth: jest.Mock;
       existsByUsername: jest.Mock;
+      upsertSocialProfile: jest.Mock;
     };
   };
 
@@ -293,9 +364,16 @@ describe('ResolveSocialUserStep', () => {
     displayName: 'Google User',
     provider: 'google',
     providerId: 'google-id-001',
+    givenName: null,
+    familyName: null,
+    avatarUrl: null,
+    locale: null,
+    emailVerified: false,
+    jobTitle: null,
+    rawData: {},
   };
 
-  const MOCK_SOCIAL = { accountId: 20 };
+  const MOCK_SOCIAL = { accountId: 20, uuid: 'social-uuid-001' };
   const MOCK_CREDENTIAL = { email: 'user@test.com', id: 5 };
   const MOCK_USER_WITH_SOCIAL = { user: MOCK_USER, social: MOCK_SOCIAL };
   const MOCK_USER_WITH_CREDENTIAL = { user: MOCK_USER, credential: MOCK_CREDENTIAL };
@@ -313,6 +391,7 @@ describe('ResolveSocialUserStep', () => {
         linkSocialAccount: jest.fn().mockResolvedValue(MOCK_SOCIAL),
         createUserFromOAuth: jest.fn().mockResolvedValue(MOCK_OAUTH_RESULT),
         existsByUsername: jest.fn().mockResolvedValue(false),
+        upsertSocialProfile: jest.fn().mockResolvedValue(undefined),
       },
     };
 
@@ -437,7 +516,7 @@ describe('ResolveSocialUserStep', () => {
 
         const ctx: SocialSignInSagaContext = {
           ...BASE_CTX,
-          displayName: '!!!', // sanitizes to '' → falls back to 'user'
+          displayName: '!!!',
         };
         await step.execute(ctx);
 

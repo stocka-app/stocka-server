@@ -5,12 +5,15 @@ import { IProfileContract } from '@user/profile/domain/contracts/profile.contrac
 import { ProfileAggregate } from '@user/profile/domain/profile.aggregate';
 import { PersonalProfileModel } from '@user/profile/domain/models/personal-profile.model';
 import { CommercialProfileModel } from '@user/profile/domain/models/commercial-profile.model';
+import { SocialProfileModel } from '@user/profile/domain/models/social-profile.model';
 import { ProfileEntity } from '@user/profile/infrastructure/entities/profile.entity';
 import { PersonalProfileEntity } from '@user/profile/infrastructure/entities/personal-profile.entity';
 import { CommercialProfileEntity } from '@user/profile/infrastructure/entities/commercial-profile.entity';
+import { SocialProfileEntity } from '@user/profile/infrastructure/entities/social-profile.entity';
 import { ProfileMapper } from '@user/profile/infrastructure/mappers/profile.mapper';
 import { PersonalProfileMapper } from '@user/profile/infrastructure/mappers/personal-profile.mapper';
 import { CommercialProfileMapper } from '@user/profile/infrastructure/mappers/commercial-profile.mapper';
+import { SocialProfileMapper } from '@user/profile/infrastructure/mappers/social-profile.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -23,6 +26,8 @@ export class TypeOrmProfileRepository implements IProfileContract {
     private readonly personalRepo: Repository<PersonalProfileEntity>,
     @InjectRepository(CommercialProfileEntity)
     private readonly commercialRepo: Repository<CommercialProfileEntity>,
+    @InjectRepository(SocialProfileEntity)
+    private readonly socialProfileRepo: Repository<SocialProfileEntity>,
     @Inject(INJECTION_TOKENS.UNIT_OF_WORK)
     private readonly uow: IUnitOfWork,
   ) {}
@@ -80,5 +85,43 @@ export class TypeOrmProfileRepository implements IProfileContract {
       : this.commercialRepo;
     const savedEntity = await repo.save(entityData);
     return CommercialProfileMapper.toDomain(savedEntity as CommercialProfileEntity);
+  }
+
+  /* istanbul ignore next */
+  async upsertSocialProfile(model: SocialProfileModel): Promise<SocialProfileModel> {
+    const repo = this.uow.isActive()
+      ? (this.uow.getManager() as EntityManager).getRepository(SocialProfileEntity)
+      : this.socialProfileRepo;
+
+    const existing = await repo.findOne({
+      where: { profileId: model.profileId, provider: model.provider },
+    });
+
+    if (existing) {
+      existing.providerDisplayName = model.providerDisplayName;
+      existing.providerAvatarUrl = model.providerAvatarUrl;
+      existing.givenName = model.givenName;
+      existing.familyName = model.familyName;
+      existing.locale = model.locale;
+      existing.emailVerified = model.emailVerified;
+      existing.jobTitle = model.jobTitle;
+      existing.rawData = model.rawData;
+      existing.syncedAt = new Date();
+      const savedEntity = await repo.save(existing);
+      return SocialProfileMapper.toDomain(savedEntity as SocialProfileEntity);
+    }
+
+    const entityData = SocialProfileMapper.toEntity(model);
+    const savedEntity = await repo.save(entityData);
+    return SocialProfileMapper.toDomain(savedEntity as SocialProfileEntity);
+  }
+
+  /* istanbul ignore next */
+  async findSocialProfileByProfileAndProvider(
+    profileId: number,
+    provider: string,
+  ): Promise<SocialProfileModel | null> {
+    const entity = await this.socialProfileRepo.findOne({ where: { profileId, provider } });
+    return entity ? SocialProfileMapper.toDomain(entity) : null;
   }
 }

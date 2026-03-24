@@ -26,11 +26,19 @@ export class FacebookStrategy extends PassportStrategy(Strategy, 'facebook') {
     done: (error: Error | null, user?: SocialProfile) => void,
   ): void {
     const { id, emails, displayName, name } = profile;
+    const json = (profile._json as Record<string, unknown>) ?? {};
     const user: SocialProfile = {
       email: emails?.[0]?.value || '',
       displayName: displayName || `${name?.givenName || ''} ${name?.familyName || ''}`.trim(),
       provider: 'facebook',
       providerId: id,
+      givenName: name?.givenName ?? null,
+      familyName: name?.familyName ?? null,
+      avatarUrl: null,
+      locale: null,
+      emailVerified: false,
+      jobTitle: null,
+      rawData: json,
     };
     done(null, user);
   }

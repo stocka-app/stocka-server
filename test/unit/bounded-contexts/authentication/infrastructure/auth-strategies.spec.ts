@@ -79,6 +79,13 @@ describe('FacebookStrategy', () => {
           displayName: 'Facebook User',
           provider: 'facebook',
           providerId: 'fb-123',
+          givenName: 'Facebook',
+          familyName: 'User',
+          avatarUrl: null,
+          locale: null,
+          emailVerified: false,
+          jobTitle: null,
+          rawData: {},
         });
       });
     });
@@ -159,6 +166,13 @@ describe('AppleStrategy', () => {
           displayName: 'Jane Smith',
           provider: 'apple',
           providerId: 'apple-001',
+          givenName: 'Jane',
+          familyName: 'Smith',
+          avatarUrl: null,
+          locale: null,
+          emailVerified: true,
+          jobTitle: null,
+          rawData: {},
         });
       });
     });
@@ -225,6 +239,13 @@ describe('GoogleStrategy', () => {
         displayName: 'Google User',
         provider: 'google',
         providerId: 'google-123',
+        givenName: null,
+        familyName: null,
+        avatarUrl: null,
+        locale: null,
+        emailVerified: false,
+        jobTitle: null,
+        rawData: {},
       });
     });
   });

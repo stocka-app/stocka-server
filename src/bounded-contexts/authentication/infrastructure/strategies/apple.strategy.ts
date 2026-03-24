@@ -45,6 +45,13 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
       displayName,
       provider: 'apple',
       providerId: profile.id,
+      givenName: profile.name?.firstName ?? null,
+      familyName: profile.name?.lastName ?? null,
+      avatarUrl: null,
+      locale: null,
+      emailVerified: true,
+      jobTitle: null,
+      rawData: {},
     };
     done(null, user);
   }

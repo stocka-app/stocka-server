@@ -9,11 +9,19 @@ export interface SocialSignInSagaContext {
   readonly displayName: string;
   readonly provider: string;
   readonly providerId: string;
+  readonly givenName: string | null;
+  readonly familyName: string | null;
+  readonly avatarUrl: string | null;
+  readonly locale: string | null;
+  readonly emailVerified: boolean;
+  readonly jobTitle: string | null;
+  readonly rawData: Record<string, unknown>;
 
   // Computed by steps during execution
   user?: UserAggregate;
   credential?: CredentialAccountModel;
   accountId?: number;
+  socialAccountUUID?: string;
   path?: SocialSignInPath;
   accessToken?: string;
   refreshToken?: string;

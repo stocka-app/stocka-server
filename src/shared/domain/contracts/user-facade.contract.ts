@@ -50,6 +50,8 @@ export interface IUserFacade {
     providerId: string;
     providerEmail?: string;
     displayName?: string | null;
+    avatarUrl?: string | null;
+    locale?: string | null;
   }): Promise<{
     user: UserAggregate;
     credential: CredentialAccountModel;
@@ -64,6 +66,20 @@ export interface IUserFacade {
       providerEmail?: string;
     },
   ): Promise<SocialAccountModel>;
+
+  upsertSocialProfile(props: {
+    userUUID: string;
+    socialAccountUUID: string;
+    provider: string;
+    providerDisplayName: string | null;
+    providerAvatarUrl: string | null;
+    givenName: string | null;
+    familyName: string | null;
+    locale: string | null;
+    emailVerified: boolean;
+    jobTitle: string | null;
+    rawData: Record<string, unknown>;
+  }): Promise<void>;
 
   // === CredentialAccount operations ===
   verifyEmail(credentialAccountId: number): Promise<void>;

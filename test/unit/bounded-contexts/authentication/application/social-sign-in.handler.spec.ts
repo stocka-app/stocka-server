@@ -18,6 +18,13 @@ describe('Social sign-in handler — OAuth provider sign-in (EC-002)', () => {
     'Ana Torres',
     'google',
     'google-uid-999',
+    'Ana',
+    'Torres',
+    null,
+    null,
+    true,
+    null,
+    {},
   );
 
   const sagaOutput = {
@@ -50,6 +57,13 @@ describe('Social sign-in handler — OAuth provider sign-in (EC-002)', () => {
           displayName: 'Ana Torres',
           provider: 'google',
           providerId: 'google-uid-999',
+          givenName: 'Ana',
+          familyName: 'Torres',
+          avatarUrl: null,
+          locale: null,
+          emailVerified: true,
+          jobTitle: null,
+          rawData: {},
         });
       });
 

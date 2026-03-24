@@ -13,6 +13,7 @@ import { CredentialAccountModel } from '@user/account/domain/models/credential-a
 import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
 import { ProfileAggregate } from '@user/profile/domain/profile.aggregate';
 import { PersonalProfileModel } from '@user/profile/domain/models/personal-profile.model';
+import { SocialProfileModel } from '@user/profile/domain/models/social-profile.model';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
@@ -187,6 +188,8 @@ export class UserFacade implements IUserFacade {
     providerId: string;
     providerEmail?: string;
     displayName?: string | null;
+    avatarUrl?: string | null;
+    locale?: string | null;
   }): Promise<{
     user: UserAggregate;
     credential: CredentialAccountModel;
@@ -229,6 +232,7 @@ export class UserFacade implements IUserFacade {
       profileId,
       username: props.username,
       displayName: props.displayName,
+      locale: props.locale ?? undefined,
     });
     await this.profileContract.persistPersonalProfile(personalProfile);
 
@@ -282,5 +286,47 @@ export class UserFacade implements IUserFacade {
     }
     credential.updatePasswordHash(hash);
     await this.credentialAccountContract.persist(credential);
+  }
+
+  async upsertSocialProfile(props: {
+    userUUID: string;
+    socialAccountUUID: string;
+    provider: string;
+    providerDisplayName: string | null;
+    providerAvatarUrl: string | null;
+    givenName: string | null;
+    familyName: string | null;
+    locale: string | null;
+    emailVerified: boolean;
+    jobTitle: string | null;
+    rawData: Record<string, unknown>;
+  }): Promise<void> {
+    const user = await this.userContract.findByUUID(props.userUUID);
+    if (!user || user.id === undefined) {
+      throw new Error(`UserFacade.upsertSocialProfile: user not found uuid=${props.userUUID}`);
+    }
+
+    const profile = await this.profileContract.findByUserId(user.id);
+    if (!profile || profile.id === undefined) {
+      throw new Error(
+        `UserFacade.upsertSocialProfile: profile not found for userId=${user.id}`,
+      );
+    }
+
+    const model = SocialProfileModel.create({
+      profileId: profile.id,
+      socialAccountUUID: props.socialAccountUUID,
+      provider: props.provider,
+      providerDisplayName: props.providerDisplayName,
+      providerAvatarUrl: props.providerAvatarUrl,
+      givenName: props.givenName,
+      familyName: props.familyName,
+      locale: props.locale,
+      emailVerified: props.emailVerified,
+      jobTitle: props.jobTitle,
+      rawData: props.rawData,
+    });
+
+    await this.profileContract.upsertSocialProfile(model);
   }
 }

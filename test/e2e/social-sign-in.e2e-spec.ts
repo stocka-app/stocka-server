@@ -37,6 +37,13 @@ describe('Social Sign In (e2e)', () => {
             'Google User',
             'google',
             'google-new-uid-001',
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            {},
           ),
         );
 
@@ -84,7 +91,14 @@ describe('Social Sign In (e2e)', () => {
             'newgoogle@example.com',
             'Google User',
             'google',
-            'google-new-uid-001', // same providerId as before
+            'google-new-uid-001',
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            {},
           ),
         );
 
@@ -118,6 +132,13 @@ describe('Social Sign In (e2e)', () => {
             'Manual Then OAuth',
             'google',
             'google-link-uid-002',
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            {},
           ),
         );
 
@@ -153,6 +174,13 @@ describe('Social Sign In (e2e)', () => {
               'Rollback Social',
               'google',
               'google-rollback-uid-003',
+              null,
+              null,
+              null,
+              null,
+              false,
+              null,
+              {},
             ),
           ),
         ).rejects.toThrow('Session insert failed');

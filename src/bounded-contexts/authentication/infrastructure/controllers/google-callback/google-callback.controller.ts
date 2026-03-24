@@ -34,6 +34,13 @@ export class GoogleCallbackController {
         profile.displayName,
         profile.provider,
         profile.providerId,
+        profile.givenName,
+        profile.familyName,
+        profile.avatarUrl,
+        profile.locale,
+        profile.emailVerified,
+        profile.jobTitle,
+        profile.rawData,
       ),
     );
 

@@ -31,6 +31,13 @@ describe('SocialSignInSaga', () => {
     displayName: 'Ana Torres',
     provider: 'google',
     providerId: 'google-uid-999',
+    givenName: 'Ana',
+    familyName: 'Torres',
+    avatarUrl: null,
+    locale: null,
+    emailVerified: true,
+    jobTitle: null,
+    rawData: {},
   };
 
   beforeEach(async () => {
