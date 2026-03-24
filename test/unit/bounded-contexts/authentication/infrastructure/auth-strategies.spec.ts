@@ -214,6 +214,7 @@ describe('GoogleStrategy', () => {
         GOOGLE_CLIENT_ID: 'google-client-id',
         GOOGLE_CLIENT_SECRET: 'google-secret',
         GOOGLE_CALLBACK_URL: 'http://localhost:3001/api/authentication/google/callback',
+        OAUTH_STATE_SECRET: 'test-oauth-secret-must-be-32-chars!!',
       }),
     );
   });
@@ -285,6 +286,7 @@ describe('MicrosoftStrategy', () => {
         MICROSOFT_CLIENT_ID: 'ms-client-id',
         MICROSOFT_CLIENT_SECRET: 'ms-secret',
         MICROSOFT_CALLBACK_URL: 'http://localhost:3001/api/authentication/microsoft/callback',
+        OAUTH_STATE_SECRET: 'test-oauth-secret-must-be-32-chars!!',
       }),
     );
 

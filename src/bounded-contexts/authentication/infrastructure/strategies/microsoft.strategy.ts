@@ -37,7 +37,7 @@ export class MicrosoftStrategy extends PassportStrategy(Strategy, 'microsoft') {
       callbackURL: configService.getOrThrow<string>('MICROSOFT_CALLBACK_URL'),
       tenant: configService.get<string>('MICROSOFT_TENANT_ID', 'common'),
       scope: ['user.read', 'openid', 'profile', 'email'],
-      store: new PopupStateStore(),
+      store: new PopupStateStore(configService.getOrThrow<string>('OAUTH_STATE_SECRET')),
     } as unknown as ConstructorParameters<typeof Strategy>[0]);
   }
 
