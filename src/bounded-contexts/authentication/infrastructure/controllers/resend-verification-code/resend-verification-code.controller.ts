@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Req, Headers, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { ResendVerificationCodeCommand } from '@authentication/application/commands/resend-verification-code/resend-verification-code.command';
 import { ResendVerificationCodeCommandResult } from '@authentication/application/types/authentication-result.types';
@@ -14,6 +15,7 @@ import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-m
 export class ResendVerificationCodeController {
   constructor(private readonly commandBus: CommandBus) {}
 
+  @Throttle({ short: { ttl: 1000, limit: 1 }, medium: { ttl: 60000, limit: 3 } })
   @Post('resend-verification-code')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resend email verification code' })
