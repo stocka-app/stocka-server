@@ -364,6 +364,25 @@ describe('MicrosoftStrategy', () => {
       expect(user.displayName).toBe('');
     });
   });
+
+  describe('When validate() receives a profile with no _json', () => {
+    it('Then rawData defaults to empty object and optional fields are null', async () => {
+      const profile = {
+        id: 'ms-006',
+        displayName: 'MS User',
+        emails: [{ value: 'user@ms.com' }],
+        _json: undefined,
+      };
+
+      const user = await collectValidateResult(strategy, 'at', 'rt', profile);
+
+      expect(user.rawData).toEqual({});
+      expect(user.givenName).toBeNull();
+      expect(user.familyName).toBeNull();
+      expect(user.locale).toBeNull();
+      expect(user.jobTitle).toBeNull();
+    });
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

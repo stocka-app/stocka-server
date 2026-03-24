@@ -134,7 +134,7 @@ describe('GenerateSocialTokensStep', () => {
   let step: GenerateSocialTokensStep;
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
-  let mediator: { tenant: { getActiveMembership: jest.Mock } };
+  let mediator: { tenant: { getActiveMembership: jest.Mock }; user: { findDisplayNameByUserUUID: jest.Mock } };
 
   beforeEach(async () => {
     jwtService = { signAsync: jest.fn().mockResolvedValue('signed-token') };
@@ -151,6 +151,9 @@ describe('GenerateSocialTokensStep', () => {
     mediator = {
       tenant: {
         getActiveMembership: jest.fn().mockResolvedValue(null),
+      },
+      user: {
+        findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),
       },
     };
 
@@ -524,6 +527,40 @@ describe('ResolveSocialUserStep', () => {
           expect.objectContaining({ username: 'user' }),
         );
         expect(ctx.path).toBe('new-user');
+      });
+    });
+  });
+
+  describe('Given Path C where locale includes a region tag (e.g. "es-MX")', () => {
+    describe('When execute() is called', () => {
+      it('Then normalizeLocale strips the region and passes the base language to createUserFromOAuth', async () => {
+        mediator.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediator.user.findUserByEmail.mockResolvedValue(null);
+        mediator.user.existsByUsername.mockResolvedValue(false);
+
+        const ctx: SocialSignInSagaContext = { ...BASE_CTX, locale: 'es-MX' };
+        await step.execute(ctx);
+
+        expect(mediator.user.createUserFromOAuth).toHaveBeenCalledWith(
+          expect.objectContaining({ locale: 'es' }),
+        );
+      });
+    });
+  });
+
+  describe('Given Path C where locale is an unsupported language (e.g. "fr-FR")', () => {
+    describe('When execute() is called', () => {
+      it('Then normalizeLocale falls back to "es"', async () => {
+        mediator.user.findUserBySocialProvider.mockResolvedValue(null);
+        mediator.user.findUserByEmail.mockResolvedValue(null);
+        mediator.user.existsByUsername.mockResolvedValue(false);
+
+        const ctx: SocialSignInSagaContext = { ...BASE_CTX, locale: 'fr-FR' };
+        await step.execute(ctx);
+
+        expect(mediator.user.createUserFromOAuth).toHaveBeenCalledWith(
+          expect.objectContaining({ locale: 'es' }),
+        );
       });
     });
   });

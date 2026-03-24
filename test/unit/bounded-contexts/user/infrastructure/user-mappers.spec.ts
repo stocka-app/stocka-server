@@ -399,3 +399,103 @@ describe('PersonalProfileMapper', () => {
     });
   });
 });
+
+// ─── SocialProfileMapper ──────────────────────────────────────────────────────
+
+import { SocialProfileMapper } from '@user/profile/infrastructure/mappers/social-profile.mapper';
+import { SocialProfileEntity } from '@user/profile/infrastructure/entities/social-profile.entity';
+
+function buildSocialProfileEntity(overrides?: Partial<SocialProfileEntity>): SocialProfileEntity {
+  const e = new SocialProfileEntity();
+  e.id = 1;
+  e.uuid = '550e8400-e29b-41d4-a716-446655440200';
+  e.profileId = 10;
+  e.socialAccountUUID = 'social-acc-uuid-001';
+  e.provider = 'google';
+  e.providerDisplayName = 'Roberto Medina';
+  e.providerAvatarUrl = 'https://example.com/avatar.jpg';
+  e.providerProfileUrl = null;
+  e.givenName = 'Roberto';
+  e.familyName = 'Medina';
+  e.locale = 'es';
+  e.emailVerified = true;
+  e.jobTitle = null;
+  e.rawData = { sub: 'google-sub-001' };
+  e.syncedAt = new Date('2024-06-01');
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-01-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
+describe('SocialProfileMapper', () => {
+  describe('Given a SocialProfileEntity', () => {
+    describe('When toDomain() is called', () => {
+      it('Then it returns a SocialProfileModel with all fields mapped', () => {
+        const entity = buildSocialProfileEntity();
+
+        const model = SocialProfileMapper.toDomain(entity);
+
+        expect(model.id).toBe(1);
+        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440200');
+        expect(model.profileId).toBe(10);
+        expect(model.socialAccountUUID).toBe('social-acc-uuid-001');
+        expect(model.provider).toBe('google');
+        expect(model.providerDisplayName).toBe('Roberto Medina');
+        expect(model.providerAvatarUrl).toBe('https://example.com/avatar.jpg');
+        expect(model.providerProfileUrl).toBeNull();
+        expect(model.givenName).toBe('Roberto');
+        expect(model.familyName).toBe('Medina');
+        expect(model.locale).toBe('es');
+        expect(model.emailVerified).toBe(true);
+        expect(model.jobTitle).toBeNull();
+        expect(model.rawData).toEqual({ sub: 'google-sub-001' });
+        expect(model.syncedAt).toEqual(new Date('2024-06-01'));
+      });
+    });
+
+    describe('When toDomain() is called with null emailVerified and rawData', () => {
+      it('Then it applies the null-safe defaults (false and {})', () => {
+        const entity = buildSocialProfileEntity({ emailVerified: null, rawData: null });
+
+        const model = SocialProfileMapper.toDomain(entity);
+
+        expect(model.emailVerified).toBe(false);
+        expect(model.rawData).toEqual({});
+      });
+    });
+  });
+
+  describe('Given a SocialProfileModel', () => {
+    describe('When toEntity() is called on a newly-created model (no id)', () => {
+      it('Then it returns a partial entity without id', () => {
+        const model = SocialProfileMapper.toDomain(buildSocialProfileEntity());
+
+        // Simulate a new model by calling create (id will be undefined)
+        const newModel = Object.create(model) as typeof model;
+
+        const entity = SocialProfileMapper.toEntity(newModel);
+
+        expect(entity.profileId).toBe(10);
+        expect(entity.socialAccountUUID).toBe('social-acc-uuid-001');
+        expect(entity.provider).toBe('google');
+        expect(entity.providerDisplayName).toBe('Roberto Medina');
+        expect(entity.givenName).toBe('Roberto');
+        expect(entity.familyName).toBe('Medina');
+        expect(entity.locale).toBe('es');
+        expect(entity.emailVerified).toBe(true);
+        expect(entity.rawData).toEqual({ sub: 'google-sub-001' });
+      });
+    });
+
+    describe('When toEntity() is called on a reconstituted model (with id)', () => {
+      it('Then the entity includes the id', () => {
+        const model = SocialProfileMapper.toDomain(buildSocialProfileEntity());
+
+        const entity = SocialProfileMapper.toEntity(model);
+
+        expect(entity.id).toBe(1);
+      });
+    });
+  });
+});

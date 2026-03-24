@@ -172,7 +172,7 @@ describe('GenerateSignInTokensStep', () => {
   let step: GenerateSignInTokensStep;
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
-  let mediator: { tenant: { getActiveMembership: jest.Mock } };
+  let mediator: { tenant: { getActiveMembership: jest.Mock }; user: { findDisplayNameByUserUUID: jest.Mock } };
 
   beforeEach(async () => {
     jwtService = { signAsync: jest.fn().mockResolvedValue('jwt-token') };
@@ -189,6 +189,9 @@ describe('GenerateSignInTokensStep', () => {
     mediator = {
       tenant: {
         getActiveMembership: jest.fn().mockResolvedValue(null),
+      },
+      user: {
+        findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),
       },
     };
 

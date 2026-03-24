@@ -83,6 +83,8 @@ describe('UserFacade', () => {
       persistProfile: jest.fn(),
       persistPersonalProfile: jest.fn(),
       persistCommercialProfile: jest.fn(),
+      upsertSocialProfile: jest.fn(),
+      findSocialProfileByProfileAndProvider: jest.fn(),
     } as unknown as jest.Mocked<IProfileContract>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -679,6 +681,102 @@ describe('UserFacade', () => {
         credentialAccountContract.findById.mockResolvedValue(null);
 
         await expect(facade.blockVerification(999, new Date())).resolves.toBeUndefined();
+      });
+    });
+  });
+
+  // ── findDisplayNameByUserUUID ────────────────────────────────────────────────
+
+  describe('Given findDisplayNameByUserUUID is called', () => {
+    describe('When the user and profile exist with a displayName', () => {
+      it('Then it returns the displayName string', async () => {
+        const user = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440010' });
+        userContract.findByUUID.mockResolvedValue(user);
+        (profileContract.findPersonalProfileByUserId as jest.Mock).mockResolvedValue({
+          displayName: 'Roberto Medina',
+        });
+
+        const result = await facade.findDisplayNameByUserUUID('550e8400-e29b-41d4-a716-446655440010');
+
+        expect(result).toBe('Roberto Medina');
+      });
+    });
+
+    describe('When the user does not exist', () => {
+      it('Then it returns null', async () => {
+        userContract.findByUUID.mockResolvedValue(null);
+
+        const result = await facade.findDisplayNameByUserUUID('ghost-uuid');
+
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the profile has no displayName', () => {
+      it('Then it returns null', async () => {
+        const user = UserMother.create({ id: 1, uuid: '550e8400-e29b-41d4-a716-446655440011' });
+        userContract.findByUUID.mockResolvedValue(user);
+        (profileContract.findPersonalProfileByUserId as jest.Mock).mockResolvedValue({
+          displayName: null,
+        });
+
+        const result = await facade.findDisplayNameByUserUUID('550e8400-e29b-41d4-a716-446655440011');
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  // ── upsertSocialProfile ──────────────────────────────────────────────────────
+
+  describe('Given upsertSocialProfile is called', () => {
+    const SOCIAL_PROPS = {
+      userUUID: '550e8400-e29b-41d4-a716-446655440020',
+      socialAccountUUID: 'social-acc-uuid-001',
+      provider: 'google',
+      providerDisplayName: 'Roberto Medina',
+      providerAvatarUrl: null,
+      givenName: 'Roberto',
+      familyName: 'Medina',
+      locale: 'es',
+      emailVerified: true,
+      jobTitle: null,
+      rawData: { sub: 'google-sub-001' },
+    };
+
+    describe('When the user and profile exist', () => {
+      it('Then it calls profileContract.upsertSocialProfile', async () => {
+        const user = UserMother.create({ id: 1, uuid: SOCIAL_PROPS.userUUID });
+        const profile = { id: 99 };
+        userContract.findByUUID.mockResolvedValue(user);
+        (profileContract.findByUserId as jest.Mock).mockResolvedValue(profile);
+        (profileContract.upsertSocialProfile as jest.Mock).mockResolvedValue(undefined);
+
+        await expect(facade.upsertSocialProfile(SOCIAL_PROPS)).resolves.toBeUndefined();
+
+        expect(profileContract.upsertSocialProfile).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('When the user is not found', () => {
+      it('Then it throws an error', async () => {
+        userContract.findByUUID.mockResolvedValue(null);
+
+        await expect(facade.upsertSocialProfile(SOCIAL_PROPS)).rejects.toThrow(
+          'UserFacade.upsertSocialProfile: user not found',
+        );
+      });
+    });
+
+    describe('When the profile is not found for the user', () => {
+      it('Then it throws an error', async () => {
+        const user = UserMother.create({ id: 1, uuid: SOCIAL_PROPS.userUUID });
+        userContract.findByUUID.mockResolvedValue(user);
+        (profileContract.findByUserId as jest.Mock).mockResolvedValue(null);
+
+        await expect(facade.upsertSocialProfile(SOCIAL_PROPS)).rejects.toThrow(
+          'UserFacade.upsertSocialProfile: profile not found',
+        );
       });
     });
   });

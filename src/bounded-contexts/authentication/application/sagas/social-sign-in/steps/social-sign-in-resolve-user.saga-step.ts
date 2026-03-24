@@ -66,6 +66,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     ctx: SocialSignInSagaContext,
     socialAccountUUID: string,
   ): Promise<void> {
+    /* istanbul ignore next — ctx.user is always set by all three execute() paths before this call */
     if (!ctx.user) return;
     await this.mediator.user.upsertSocialProfile({
       userUUID: ctx.user.uuid,

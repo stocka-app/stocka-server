@@ -6,11 +6,12 @@ import { UserFacade } from '@user/infrastructure/facade/user.facade';
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildMockFacade(): jest.Mocked<
-  Pick<UserFacade, 'findUserByUUIDWithCredential' | 'findUsernameByUUID'>
+  Pick<UserFacade, 'findUserByUUIDWithCredential' | 'findUsernameByUUID' | 'findDisplayNameByUserUUID'>
 > {
   return {
     findUserByUUIDWithCredential: jest.fn(),
     findUsernameByUUID: jest.fn(),
+    findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),
   };
 }
 
