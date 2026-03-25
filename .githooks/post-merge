@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$BRANCH" != "main" ]; then
+  exit 0
+fi
+
+LAST_TAG=$(git describe --tags --match="v*" --abbrev=0 2>/dev/null)
+if [ -z "$LAST_TAG" ]; then
+  COMMIT_COUNT=$(git rev-list --count HEAD)
+else
+  COMMIT_COUNT=$(git rev-list --count "${LAST_TAG}..HEAD")
+fi
+
+if [ "$COMMIT_COUNT" -eq 0 ]; then
+  exit 0
+fi
+
+echo ""
+echo "  📦  $COMMIT_COUNT new commit(s) on main — generating changelog..."
+echo ""
+
+RELEASE_IT_AUTO=1 npx release-it --ci --no-git.push 2>&1
+
+echo ""
+echo "  ✅  Changelog updated. Edit CHANGELOG.md and run 'git commit --amend --no-edit' to add your notes."
+echo ""
