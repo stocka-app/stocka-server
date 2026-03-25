@@ -3,6 +3,80 @@
 All notable changes to this project are documented here.
 
 
+## [0.4.0](https://github.com/stocka-app/stocka-server/compare/v0.3.0...v0.4.0) (2026-03-25)
+
+### ✨ Features
+
+* **auth:** [Sprint 1] fetch Microsoft profile photo from Graph API on OAuth login ([9940f4f](https://github.com/stocka-app/stocka-server/commit/9940f4f74b658aad559929adce55e097e48a1c9a))
+* **auth:** [STOC-192](https://austins-industries.atlassian.net/browse/STOC-192) — add OAuth popup callback support via cookie propagation ([d27b2d7](https://github.com/stocka-app/stocka-server/commit/d27b2d7cb07df241dd327eab6d30706c183b0327))
+* **auth:** [STOC-296](https://austins-industries.atlassian.net/browse/STOC-296) — implement HMAC-SHA256 OAuth state verification with TTL ([3a319d8](https://github.com/stocka-app/stocka-server/commit/3a319d8a71b3bd5d504433bb66278ecf8c060378))
+* **auth:** [STOC-297](https://austins-industries.atlassian.net/browse/STOC-297) — add rate limiting to sign-up and resend-verification-code endpoints ([31289f7](https://github.com/stocka-app/stocka-server/commit/31289f7eb088c91ef07c020efd56a7cd0f6c2209))
+* **auth:** [STOC-299](https://austins-industries.atlassian.net/browse/STOC-299) — strengthen password policy and parse CORS_ORIGIN as allow-list ([0752ee3](https://github.com/stocka-app/stocka-server/commit/0752ee345d99e18b088143eac5ad3677c9937a5f))
+* **common:** [STOC-258](https://austins-industries.atlassian.net/browse/STOC-258) — add @CurrentTenant and @CurrentMember decorators ([8c6255e](https://github.com/stocka-app/stocka-server/commit/8c6255ee991d70b8084ab0c7ea8eb50d6dcd33fa))
+* **common:** [STOC-258](https://austins-industries.atlassian.net/browse/STOC-258) — add TenantGuard and TenantStateGuard ([7c36f22](https://github.com/stocka-app/stocka-server/commit/7c36f222c9471761e7cd397b3047cafd3c153f54))
+* **env:** add OAUTH_STATE_SECRET validation and corresponding tests ([5089cbd](https://github.com/stocka-app/stocka-server/commit/5089cbd13c7050a4a146893c6a158db947d125d8))
+* **migration:** add initial domain schemas and tables for auth, identity, tenants, and storage ([dbffff2](https://github.com/stocka-app/stocka-server/commit/dbffff241b691e77951ca550c3e4e8dadf054d69))
+* **onboarding:** [STOC-259](https://austins-industries.atlassian.net/browse/STOC-259) — implement OnboardingBC — session persistence, CREATE and JOIN paths ([535a723](https://github.com/stocka-app/stocka-server/commit/535a7239f9327016432599d85b581a2e4bc3c844))
+* **rbac:** implement DB-driven RBAC with authz schema, catalog actions, and policy engine ([ceb59f9](https://github.com/stocka-app/stocka-server/commit/ceb59f9b8a7b751781e638c84ff55e596c757078))
+* **shared:** [STOC-259](https://austins-industries.atlassian.net/browse/STOC-259) — wire OnboardingModule in AppModule + extend domain-error-mapper ([fca8af8](https://github.com/stocka-app/stocka-server/commit/fca8af8abb13f4197a96cc04b56040886d739f75))
+* **storage:** [STOC-257](https://austins-industries.atlassian.net/browse/STOC-257) — implement Storage BC — Anchor Table pattern, 3 storage types, tier enforcement, CRUD endpoints ([d6f28a3](https://github.com/stocka-app/stocka-server/commit/d6f28a3c1d0363ef198266f2f4d6528e53d5b678))
+* **tenant:** [STOC-257](https://austins-industries.atlassian.net/browse/STOC-257) — add maxCustomRooms + maxStoreRooms to TenantConfig — storage tier limits ([acfc47e](https://github.com/stocka-app/stocka-server/commit/acfc47e7c8b3a81646c2b034adabc235f78ccb34))
+* **tenant:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — add invitation commands and queries ([20b489a](https://github.com/stocka-app/stocka-server/commit/20b489af147701cd85e4f631a84fb9911d9169bd))
+* **tenant:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — add invitation HTTP controllers and wire TenantModule ([818728f](https://github.com/stocka-app/stocka-server/commit/818728f005e269656df5bd2c54a4bf531a0a00c0))
+* **tenant:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — add TenantInvitationModel, entity, contract and role-hierarchy service ([3071b2d](https://github.com/stocka-app/stocka-server/commit/3071b2dfa811cf42bb98a89e963c1b316bd0092f))
+* **user:** [Sprint 1] expose givenName, familyName, avatarUrl from GET /users/me ([0167861](https://github.com/stocka-app/stocka-server/commit/0167861a1d20b8e1f2d8d1a7d443aa610975e06c))
+* **user:** [Sprint 1] implement OAuth provider profile extraction and social_profiles persistence ([32826d4](https://github.com/stocka-app/stocka-server/commit/32826d4385a9684f548b8c4b84d504c2419788d2))
+* **user:** [Sprint 1] persist and expose displayName from OAuth providers ([56f1327](https://github.com/stocka-app/stocka-server/commit/56f1327e7a562f4be42873c132e085e085e51ce6))
+* **user:** add consent management + fix get-me E2E route ([bd2d9af](https://github.com/stocka-app/stocka-server/commit/bd2d9af712d900c14ae99733a229c3a1c0145d24))
+
+### 🐛 Bug Fixes
+
+* **auth:** [STOC-192](https://austins-industries.atlassian.net/browse/STOC-192) — fix OAuth popup via state parameter instead of cookies ([00cabcf](https://github.com/stocka-app/stocka-server/commit/00cabcf71bbe8e8066c0000145e1ee06ea36c38b))
+* **auth:** [STOC-192](https://austins-industries.atlassian.net/browse/STOC-192) — fix OAuth popup: override COOP header to preserve window.opener ([1e02705](https://github.com/stocka-app/stocka-server/commit/1e0270548e909ea962f88481d325b3b178a1e8ac))
+* **auth:** [STOC-192](https://austins-industries.atlassian.net/browse/STOC-192) — fix OAuth popup: override Helmet CSP and correct fallback redirect path ([2d6c448](https://github.com/stocka-app/stocka-server/commit/2d6c448fb20d9f9018248a479acf1be7ea8bb867))
+* **auth:** [STOC-192](https://austins-industries.atlassian.net/browse/STOC-192) — fix OAuth popup: redirect to frontend callback for same-origin postMessage ([9dd1a16](https://github.com/stocka-app/stocka-server/commit/9dd1a166915ccccf7570904c26e638c0ac2d79fd))
+* **auth:** [STOC-298](https://austins-industries.atlassian.net/browse/STOC-298) — validation hardening, cookie secure flag, trust proxy, Swagger dev-only ([4848e3f](https://github.com/stocka-app/stocka-server/commit/4848e3f3d892fcdaacf9f3e638b34c3699f63248))
+* **auth:** replace getOrThrow with get+fallback in disabled OAuth strategies ([b62959c](https://github.com/stocka-app/stocka-server/commit/b62959c0d403715e68df626a4db976badec31bf6))
+* **infra:** fix cross-platform typeorm CLI and remove duplicate migration ([f88f11b](https://github.com/stocka-app/stocka-server/commit/f88f11b97513c2043dedad32b910f701aa5e3e71))
+* **tenant:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — fix e2e schema setup and istanbul ignore on unreachable guard branches ([2bd1739](https://github.com/stocka-app/stocka-server/commit/2bd17395ad09c4b63e43fe1c0d7029dca46395b1))
+* **user:** [Sprint 1] move upsertSocialProfile out of UoW transaction scope ([0f2a947](https://github.com/stocka-app/stocka-server/commit/0f2a94772b0b7beca7eb56c49f3a9cd553703979))
+* **user:** resolve avatar not displaying for social login users ([4f4d6e1](https://github.com/stocka-app/stocka-server/commit/4f4d6e198ca5f20984bd1617cb5a4df20a47ec0d))
+
+### 🔧 Refactoring
+
+* **common:** [STOC-258](https://austins-industries.atlassian.net/browse/STOC-258) — use cached membershipContext in PermissionGuard ([4d2b454](https://github.com/stocka-app/stocka-server/commit/4d2b45498ee4830ede29ca760a8374b657f56814))
+* **entities:** [STOC-290](https://austins-industries.atlassian.net/browse/STOC-290) — expand to 12 PostgreSQL schemas (authn, accounts, sessions, profiles, tiers, capabilities) ([926982e](https://github.com/stocka-app/stocka-server/commit/926982eb1646ee928b57ae3f5e51cc95ba3e83e2))
+* **infra:** [STOC-290](https://austins-industries.atlassian.net/browse/STOC-290) — assign PostgreSQL schema to all 30 TypeORM entities ([c9ee3e0](https://github.com/stocka-app/stocka-server/commit/c9ee3e099ab98a52ca1c6d2ed4f279ce9cf502a9))
+* **migrations:** [STOC-290](https://austins-industries.atlassian.net/browse/STOC-290) — consolidate all migrations into single schema-aware InitialSchema ([c42e6b4](https://github.com/stocka-app/stocka-server/commit/c42e6b46497f0b66e646b109a2149fe4fec2fcdd))
+* **migrations:** [STOC-290](https://austins-industries.atlassian.net/browse/STOC-290) — regenerate InitialSchema for 12-schema architecture ([fa0a79b](https://github.com/stocka-app/stocka-server/commit/fa0a79b7e361a584c6623ff6da901499d15a80fb))
+* **rbac:** extract seed data from migrations into dedicated seeds pipeline ([12b8d78](https://github.com/stocka-app/stocka-server/commit/12b8d78b202764aebc1c35d58e1eb714ed1c3d3b))
+* **test:** [STOC-290](https://austins-industries.atlassian.net/browse/STOC-290) — update e2e infra and specs for 12-schema architecture ([7543ca7](https://github.com/stocka-app/stocka-server/commit/7543ca7179377255b274b8b7edfedbc26cc444cc))
+* **test:** [STOC-290](https://austins-industries.atlassian.net/browse/STOC-290) — update e2e infra for domain schema isolation ([b8fc4ac](https://github.com/stocka-app/stocka-server/commit/b8fc4ac97073be791a100f8e8b06aef93eea1360))
+
+### 📚 Documentation
+
+* rewrite README in English with improved structure and badges ([3eb7861](https://github.com/stocka-app/stocka-server/commit/3eb78617303f46d111a56079e2ce2693e54e866f))
+
+### 🧹 Chores
+
+* **auth:** disable Facebook OAuth provider ([dc9635e](https://github.com/stocka-app/stocka-server/commit/dc9635efe4b8eab4c35373fa45fb9e9a3b34b392))
+* **onboarding:** [STOC-259](https://austins-industries.atlassian.net/browse/STOC-259) — add @onboarding/* path alias and injection tokens ([24d44f1](https://github.com/stocka-app/stocka-server/commit/24d44f12b9e6068875710b5c90551acfecb4ef43))
+* **release:** configure post-commit changelog hook ([c25ddd0](https://github.com/stocka-app/stocka-server/commit/c25ddd090723d061d32dd2448f9620c47a8ace6f))
+* **storage:** [STOC-257](https://austins-industries.atlassian.net/browse/STOC-257) — add @storage/* path alias and STORAGE_CONTRACT/TENANT_CAPABILITIES_PORT tokens ([7c02eaa](https://github.com/stocka-app/stocka-server/commit/7c02eaa1e373ad135b6150b08b87974e9bf66be3))
+
+### ✅ Tests
+
+* **auth:** [STOC-247](https://austins-industries.atlassian.net/browse/STOC-247) — add strategy unit tests covering disabled-provider instantiation and validate() logic ([391ecbc](https://github.com/stocka-app/stocka-server/commit/391ecbc43fce9950d7c92b5b712c1d12a107a369))
+* **common:** [STOC-258](https://austins-industries.atlassian.net/browse/STOC-258) — BDD unit tests — tenant guards, decorators, permission cache ([2c5abeb](https://github.com/stocka-app/stocka-server/commit/2c5abebae08c0c4c2015d2527df033a40c75ec45))
+* **onboarding:** [STOC-259](https://austins-industries.atlassian.net/browse/STOC-259) — BDD unit tests for OnboardingBC — 100% MERGED coverage ([e3dcf21](https://github.com/stocka-app/stocka-server/commit/e3dcf2107aa2737535e8c5ae2748dcf7e90aedd5))
+* **rbac:** [Sprint 1] add e2e and unit tests for RBAC policy engine and permission guard ([ececae0](https://github.com/stocka-app/stocka-server/commit/ececae09234c1000e5d11f9a177918ea6c4a9ed1))
+* **storage,tenant:** [STOC-257](https://austins-industries.atlassian.net/browse/STOC-257) — BDD unit tests for Storage BC and updated tenant/shared tests ([a637b65](https://github.com/stocka-app/stocka-server/commit/a637b657ab9bd88ca2b1ecb8e7d53e928a242c14))
+* **tenant:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — add invitation e2e suite covering all 7 tenant controllers ([3c1da5e](https://github.com/stocka-app/stocka-server/commit/3c1da5e4746dd474249429d58d5be217635c4e25))
+* **tenant:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — BDD unit tests — invitation flow, domain services, 100% MERGED coverage ([ee7efd1](https://github.com/stocka-app/stocka-server/commit/ee7efd1c2f5f2240a2f22192a7d19428d6be7338))
+* **tenant:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — cover DomainException path in AcceptInvitationHandler catch block ([a5d65ff](https://github.com/stocka-app/stocka-server/commit/a5d65ffcb8c042dff0bd4d1faa5e5cdbd3754d8d))
+* **user:** [Sprint 1] restore 100% unit coverage after OAuth profile extraction ([7fe1858](https://github.com/stocka-app/stocka-server/commit/7fe18585537d562f060c29156f2cf10d70ccc4df))
+* **user:** [STOC-260](https://austins-industries.atlassian.net/browse/STOC-260) — add unit tests for User BC domain models and mappers ([dfca5eb](https://github.com/stocka-app/stocka-server/commit/dfca5eb15cd2709672a50392c23f3ef9f7c6b037))
+
 ## [0.3.0](https://github.com/stocka-app/stocka-server/compare/v0.2.1...v0.3.0) (2026-03-19)
 
 ### ✨ Features
