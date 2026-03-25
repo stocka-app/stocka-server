@@ -56,6 +56,7 @@ class EnvironmentVariables {
 
   // OAuth
   @IsString()
+  @MinLength(32, { message: 'OAUTH_STATE_SECRET must be at least 32 characters' })
   OAUTH_STATE_SECRET!: string;
 
   // CORS

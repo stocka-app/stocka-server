@@ -50,6 +50,44 @@ describe('Environment validation — startup fail-fast', () => {
     });
   });
 
+  describe('Given the application is booting without JWT_ACCESS_SECRET configured', () => {
+    it('When the config validator runs, Then the server should refuse to start', () => {
+      const env = Object.fromEntries(
+        Object.entries(validEnvironment).filter(([k]) => k !== 'JWT_ACCESS_SECRET'),
+      );
+
+      expect(() => validate(env)).toThrow();
+    });
+  });
+
+  describe('Given the application is booting without JWT_REFRESH_SECRET configured', () => {
+    it('When the config validator runs, Then the server should refuse to start', () => {
+      const env = Object.fromEntries(
+        Object.entries(validEnvironment).filter(([k]) => k !== 'JWT_REFRESH_SECRET'),
+      );
+
+      expect(() => validate(env)).toThrow();
+    });
+  });
+
+  describe('Given JWT_ACCESS_SECRET is shorter than 32 characters', () => {
+    it('When the config validator runs, Then the server should refuse to start', () => {
+      expect(() => validate({ ...validEnvironment, JWT_ACCESS_SECRET: 'too-short' })).toThrow();
+    });
+  });
+
+  describe('Given JWT_REFRESH_SECRET is shorter than 32 characters', () => {
+    it('When the config validator runs, Then the server should refuse to start', () => {
+      expect(() => validate({ ...validEnvironment, JWT_REFRESH_SECRET: 'too-short' })).toThrow();
+    });
+  });
+
+  describe('Given OAUTH_STATE_SECRET is shorter than 32 characters', () => {
+    it('When the config validator runs, Then the server should refuse to start', () => {
+      expect(() => validate({ ...validEnvironment, OAUTH_STATE_SECRET: 'too-short' })).toThrow();
+    });
+  });
+
   describe('Given the application is booting with all required variables configured', () => {
     it('When the config validator runs, Then the server should start successfully', () => {
       expect(() => validate(validEnvironment)).not.toThrow();
