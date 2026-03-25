@@ -9,9 +9,10 @@ import {
 } from '@user/application/queries/get-user-consents/get-user-consents.query';
 
 @QueryHandler(GetUserConsentsQuery)
-export class GetUserConsentsHandler
-  implements IQueryHandler<GetUserConsentsQuery, GetUserConsentsQueryResult>
-{
+export class GetUserConsentsHandler implements IQueryHandler<
+  GetUserConsentsQuery,
+  GetUserConsentsQueryResult
+> {
   constructor(
     @InjectRepository(UserConsentEntity)
     private readonly consentRepository: Repository<UserConsentEntity>,
@@ -32,11 +33,13 @@ export class GetUserConsentsHandler
       [query.userUUID],
     );
 
-    return rows.map((row: Record<string, unknown>): UserConsentStatusDto => ({
-      consentType: row.consentType as string,
-      granted: row.granted as boolean,
-      documentVersion: row.documentVersion as string,
-      grantedAt: (row.grantedAt as Date).toISOString(),
-    }));
+    return rows.map(
+      (row: Record<string, unknown>): UserConsentStatusDto => ({
+        consentType: row.consentType as string,
+        granted: row.granted as boolean,
+        documentVersion: row.documentVersion as string,
+        grantedAt: (row.grantedAt as Date).toISOString(),
+      }),
+    );
   }
 }

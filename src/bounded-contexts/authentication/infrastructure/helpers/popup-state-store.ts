@@ -1,11 +1,13 @@
-import { randomBytes } from 'crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { Request } from 'express';
 
 const POPUP_MODE_QUERY_VALUE = 'popup';
 const POPUP_STATE_PREFIX = 'popup:';
+const STATE_TTL_MS = 10 * 60 * 1000;
 
 /**
- * OAuth state store that encodes the popup mode flag in the OAuth state parameter.
+ * OAuth state store that encodes the popup mode flag and a HMAC-SHA256 signature
+ * in the OAuth state parameter.
  *
  * Cookies are unreliable for popup mode detection: SameSite policies and
  * browser security restrictions can block cookie delivery during cross-origin
@@ -14,28 +16,62 @@ const POPUP_STATE_PREFIX = 'popup:';
  * the correct mechanism for passing context through the redirect chain.
  *
  * State format:
- *   - Popup mode:    `popup:<16-byte-hex>`   e.g. "popup:a1b2c3..."
- *   - Normal mode:   `<16-byte-hex>`          e.g. "a1b2c3..."
+ *   - Popup mode:    `popup:<16-byte-hex>:<timestamp>.<hmac-sha256-sig>`
+ *   - Normal mode:   `<16-byte-hex>:<timestamp>.<hmac-sha256-sig>`
  *
- * Note: This store does not implement server-side CSRF state verification.
- * CSRF protection is provided by Passport's built-in mechanisms (session-based
- * state stores) when sessions are enabled. For stateless OAuth flows, the
- * provider's own PKCE / nonce mechanisms provide the needed protection.
+ * The HMAC signature over the payload (everything before the final dot) ensures
+ * that the state cannot be tampered with. A 10-minute TTL prevents replay attacks.
  */
 export class PopupStateStore {
+  constructor(private readonly secret: string) {}
+
   store(req: Request, callback: (err: Error | null, state: string) => void): void {
     const isPopup = (req.query['mode'] as string) === POPUP_MODE_QUERY_VALUE;
-    const randomPart = randomBytes(16).toString('hex');
-    const state = isPopup ? `${POPUP_STATE_PREFIX}${randomPart}` : randomPart;
-    callback(null, state);
+    const nonce = randomBytes(16).toString('hex');
+    const timestamp = Date.now().toString();
+    const payload = isPopup
+      ? `${POPUP_STATE_PREFIX}${nonce}:${timestamp}`
+      : `${nonce}:${timestamp}`;
+    const sig = this.sign(payload);
+    callback(null, `${payload}.${sig}`);
   }
 
   verify(
     _req: Request,
-    _state: string,
+    state: string,
     callback: (err: Error | null, ok: boolean, state?: unknown) => void,
   ): void {
+    const lastDot = state.lastIndexOf('.');
+    if (lastDot === -1) {
+      callback(null, false);
+      return;
+    }
+
+    const payload = state.slice(0, lastDot);
+    const receivedSig = state.slice(lastDot + 1);
+    const expectedSig = this.sign(payload);
+
+    const receivedBuf = Buffer.from(receivedSig, 'hex');
+    const expectedBuf = Buffer.from(expectedSig, 'hex');
+
+    if (receivedBuf.length !== expectedBuf.length || !timingSafeEqual(receivedBuf, expectedBuf)) {
+      callback(null, false);
+      return;
+    }
+
+    const parts = payload.split(':');
+    const ts = parseInt(parts[parts.length - 1], 10);
+
+    if (isNaN(ts) || Date.now() - ts > STATE_TTL_MS) {
+      callback(null, false);
+      return;
+    }
+
     callback(null, true);
+  }
+
+  private sign(payload: string): string {
+    return createHmac('sha256', this.secret).update(payload).digest('hex');
   }
 }
 

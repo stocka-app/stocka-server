@@ -100,10 +100,7 @@ describe('TypeOrmRbacPolicyAdapter', () => {
         // Query 1: COALESCE query (result unused by the logic)
         mockQuery.mockResolvedValueOnce([]);
         // Query 2: allActions
-        mockQuery.mockResolvedValueOnce([
-          { key: 'PRODUCT_READ' },
-          { key: 'STORAGE_READ' },
-        ]);
+        mockQuery.mockResolvedValueOnce([{ key: 'PRODUCT_READ' }, { key: 'STORAGE_READ' }]);
         // Query 3: overrides (empty — no overrides)
         mockQuery.mockResolvedValueOnce([]);
         // Query 4: tierRows
@@ -168,9 +165,7 @@ describe('TypeOrmRbacPolicyAdapter', () => {
   describe('Given the adapter needs numeric limits for a tier', () => {
     describe('When the tier exists in the DB', () => {
       it('Then it returns the mapped limits using the correct field names', async () => {
-        mockQuery.mockResolvedValueOnce([
-          { max_products: 1000, max_users: 5, max_warehouses: 3 },
-        ]);
+        mockQuery.mockResolvedValueOnce([{ max_products: 1000, max_users: 5, max_warehouses: 3 }]);
 
         const result = await adapter.getTierNumericLimits('STARTER');
 
@@ -206,9 +201,7 @@ describe('TypeOrmRbacPolicyAdapter', () => {
 
     describe('When getTierNumericLimits is called a second time for the same tier', () => {
       it('Then it returns the cached result without querying the DB again', async () => {
-        mockQuery.mockResolvedValueOnce([
-          { max_products: 100, max_users: 1, max_warehouses: 0 },
-        ]);
+        mockQuery.mockResolvedValueOnce([{ max_products: 100, max_users: 1, max_warehouses: 0 }]);
 
         const first = await adapter.getTierNumericLimits('FREE');
 

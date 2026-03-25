@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNumber, IsOptional, IsString, validateSync } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, MinLength, validateSync } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -41,9 +41,11 @@ class EnvironmentVariables {
 
   // JWT
   @IsString()
+  @MinLength(32, { message: 'JWT_ACCESS_SECRET must be at least 32 characters' })
   JWT_ACCESS_SECRET!: string;
 
   @IsString()
+  @MinLength(32, { message: 'JWT_REFRESH_SECRET must be at least 32 characters' })
   JWT_REFRESH_SECRET!: string;
 
   @IsString()
@@ -51,6 +53,10 @@ class EnvironmentVariables {
 
   @IsString()
   JWT_REFRESH_EXPIRATION!: string;
+
+  // OAuth
+  @IsString()
+  OAUTH_STATE_SECRET!: string;
 
   // CORS
   @IsString()

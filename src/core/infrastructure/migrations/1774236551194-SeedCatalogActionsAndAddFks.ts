@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class SeedCatalogActionsAndAddFks1774236551194
-  implements MigrationInterface
-{
+export class SeedCatalogActionsAndAddFks1774236551194 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Seed data (modules, catalog_actions) lives in seeds/
 

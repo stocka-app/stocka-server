@@ -50,7 +50,9 @@ export class GoogleCallbackController {
     const state = req.query['state'] as string | undefined;
 
     if (isPopupState(state)) {
-      res.redirect(`${frontendUrl}/authentication/callback?accessToken=${result.accessToken}&popup=true`);
+      res.redirect(
+        `${frontendUrl}/authentication/callback?accessToken=${result.accessToken}&popup=true`,
+      );
     } else {
       res.redirect(`${frontendUrl}/authentication/callback?accessToken=${result.accessToken}`);
     }

@@ -22,7 +22,7 @@ describe('Reset Password (e2e)', () => {
   ): Promise<{ plainToken: string }> {
     await request(app.getHttpServer())
       .post('/api/authentication/sign-up')
-      .send({ email, username, password: 'SecurePass1' });
+      .send({ email, username, password: 'SecurePass1!' });
 
     let capturedResetLink = '';
     emailProvider.sendPasswordResetEmail.mockImplementationOnce(
@@ -69,7 +69,7 @@ describe('Reset Password (e2e)', () => {
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
-          .send({ token: plainToken, newPassword: 'NewSecurePass1' });
+          .send({ token: plainToken, newPassword: 'NewSecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.message).toBe('Password has been reset successfully');
@@ -84,7 +84,7 @@ describe('Reset Password (e2e)', () => {
 
         await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
-          .send({ token: plainToken, newPassword: 'NewSecurePass1' });
+          .send({ token: plainToken, newPassword: 'NewSecurePass1!' });
 
         const [tokenRow] = await dataSource.query(
           `SELECT used_at FROM "authn"."password_reset_tokens" WHERE token_hash = $1`,
@@ -101,7 +101,7 @@ describe('Reset Password (e2e)', () => {
         // Sign in to create an additional session
         await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ emailOrUsername: email, password: 'SecurePass1' });
+          .send({ emailOrUsername: email, password: 'SecurePass1!' });
 
         const [account] = await dataSource.query(
           `SELECT a.id FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = LOWER($1)`,
@@ -116,7 +116,7 @@ describe('Reset Password (e2e)', () => {
 
         await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
-          .send({ token: plainToken, newPassword: 'NewSecurePass1' });
+          .send({ token: plainToken, newPassword: 'NewSecurePass1!' });
 
         const activeAfter = await dataSource.query(
           `SELECT COUNT(*) as count FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
@@ -137,7 +137,7 @@ describe('Reset Password (e2e)', () => {
       it('Then they receive a 401 Unauthorized', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
-          .send({ token: 'completely-invalid-token', newPassword: 'NewSecurePass1' });
+          .send({ token: 'completely-invalid-token', newPassword: 'NewSecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
       });
@@ -151,11 +151,11 @@ describe('Reset Password (e2e)', () => {
 
         await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
-          .send({ token: plainToken, newPassword: 'NewSecurePass1' });
+          .send({ token: plainToken, newPassword: 'NewSecurePass1!' });
 
         const secondAttempt = await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
-          .send({ token: plainToken, newPassword: 'AnotherNewPass1' });
+          .send({ token: plainToken, newPassword: 'AnotherNewPass1!' });
 
         expect(secondAttempt.status).toBe(HttpStatus.UNAUTHORIZED);
       });
@@ -198,7 +198,7 @@ describe('Reset Password (e2e)', () => {
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/reset-password')
-          .send({ token: plainToken, newPassword: 'NewSecurePass1' });
+          .send({ token: plainToken, newPassword: 'NewSecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 

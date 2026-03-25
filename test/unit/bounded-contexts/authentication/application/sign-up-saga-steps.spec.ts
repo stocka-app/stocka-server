@@ -60,7 +60,7 @@ describe('ValidateSignUpStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'new@test.com',
           username: 'newuser',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await expect(step.execute(ctx)).resolves.not.toThrow();
@@ -78,7 +78,7 @@ describe('ValidateSignUpStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'existing@test.com',
           username: 'newuser',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await expect(step.execute(ctx)).rejects.toThrow(EmailAlreadyExistsException);
@@ -96,7 +96,7 @@ describe('ValidateSignUpStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'unique@test.com',
           username: 'takenuser',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await expect(step.execute(ctx)).rejects.toThrow(UsernameAlreadyExistsException);
@@ -146,7 +146,7 @@ describe('PrepareCredentialsStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await step.execute(ctx);
@@ -161,7 +161,7 @@ describe('PrepareCredentialsStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await expect(step.compensate(ctx)).resolves.not.toThrow();
@@ -197,7 +197,7 @@ describe('RegisterUserStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           passwordHash: 'bcrypt-hash',
         };
@@ -218,7 +218,7 @@ describe('RegisterUserStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.passwordHash not set');
@@ -231,7 +231,7 @@ describe('RegisterUserStep', () => {
       const ctx: SignUpSagaContext = {
         email: 'u@t.com',
         username: 'user',
-        password: 'StrongPass1',
+        password: 'StrongPass1!',
         lang: 'es',
       };
       await expect(step.compensate(ctx)).resolves.not.toThrow();
@@ -275,7 +275,7 @@ describe('GenerateTokensStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -293,7 +293,7 @@ describe('GenerateTokensStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
@@ -307,7 +307,7 @@ describe('GenerateTokensStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
         };
@@ -340,7 +340,7 @@ describe('GenerateTokensStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -382,7 +382,7 @@ describe('CreateSessionStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -400,7 +400,7 @@ describe('CreateSessionStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           refreshToken: 'tok',
         };
@@ -415,7 +415,7 @@ describe('CreateSessionStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -431,7 +431,7 @@ describe('CreateSessionStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           refreshToken: 'tok',
@@ -475,7 +475,7 @@ describe('CreateVerificationTokenStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -493,7 +493,7 @@ describe('CreateVerificationTokenStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           verificationCode: 'ABC123',
         };
@@ -508,7 +508,7 @@ describe('CreateVerificationTokenStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -540,7 +540,7 @@ describe('PublishSignUpEventsStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -557,7 +557,7 @@ describe('PublishSignUpEventsStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
         };
         await expect(step.execute(ctx)).rejects.toThrow('ctx.user not set');
@@ -571,7 +571,7 @@ describe('PublishSignUpEventsStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
         };
@@ -607,7 +607,7 @@ describe('SendVerificationEmailStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,
@@ -631,7 +631,7 @@ describe('SendVerificationEmailStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           verificationCode: 'ABC123',
         };
@@ -646,7 +646,7 @@ describe('SendVerificationEmailStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           verificationCode: 'ABC123',
@@ -662,7 +662,7 @@ describe('SendVerificationEmailStep', () => {
         const ctx: SignUpSagaContext = {
           email: 'u@t.com',
           username: 'user',
-          password: 'StrongPass1',
+          password: 'StrongPass1!',
           lang: 'es',
           user: MOCK_USER,
           credential: MOCK_CREDENTIAL,

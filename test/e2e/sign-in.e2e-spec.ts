@@ -11,7 +11,7 @@ describe('Sign In (e2e)', () => {
 
   // Helper for rollback tests — uses HTTP so it runs through UoW/saga.
   // Safe since UnitOfWorkIsolationMiddleware isolates ALS per request.
-  async function signUp(email: string, username: string, password = 'SecurePass1'): Promise<void> {
+  async function signUp(email: string, username: string, password = 'SecurePass1!'): Promise<void> {
     await request(app.getHttpServer())
       .post('/api/authentication/sign-up')
       .send({ email, username, password });
@@ -31,7 +31,7 @@ describe('Sign In (e2e)', () => {
     // Sign-in requires: status='active', email_verified_at set, and known password.
     await request(app.getHttpServer())
       .post('/api/authentication/sign-up')
-      .send({ email: 'signin@example.com', username: 'signinuser', password: 'SecurePass1' });
+      .send({ email: 'signin@example.com', username: 'signinuser', password: 'SecurePass1!' });
     await dataSource.query(
       `UPDATE "accounts"."credential_accounts" SET status = 'active', email_verified_at = NOW() WHERE LOWER(email) = 'signin@example.com'`,
     );
@@ -54,7 +54,7 @@ describe('Sign In (e2e)', () => {
       it('Then they receive a 200 with their profile, access token, and emailVerificationRequired flag', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1' });
+          .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.accessToken).toBeDefined();
@@ -70,7 +70,7 @@ describe('Sign In (e2e)', () => {
       it('Then the response includes an HttpOnly refresh_token cookie', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1' });
+          .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.OK);
 
@@ -95,7 +95,7 @@ describe('Sign In (e2e)', () => {
 
         await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1' });
+          .send({ emailOrUsername: 'signin@example.com', password: 'SecurePass1!' });
 
         const after = await dataSource.query(
           `SELECT COUNT(*) as count FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
@@ -110,7 +110,7 @@ describe('Sign In (e2e)', () => {
       it('Then they receive a 200 — username-based login is supported', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ emailOrUsername: 'signinuser', password: 'SecurePass1' });
+          .send({ emailOrUsername: 'signinuser', password: 'SecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.accessToken).toBeDefined();
@@ -141,7 +141,7 @@ describe('Sign In (e2e)', () => {
       it('Then they receive a 401 Unauthorized with INVALID_CREDENTIALS error code', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ emailOrUsername: 'ghost@example.com', password: 'SecurePass1' });
+          .send({ emailOrUsername: 'ghost@example.com', password: 'SecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
         expect(res.body.error).toBe('INVALID_CREDENTIALS');
@@ -154,7 +154,7 @@ describe('Sign In (e2e)', () => {
       it('Then they receive a 400 Bad Request', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ password: 'SecurePass1' });
+          .send({ password: 'SecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
       });
@@ -196,7 +196,7 @@ describe('Sign In (e2e)', () => {
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-in')
-          .send({ emailOrUsername: email, password: 'SecurePass1' });
+          .send({ emailOrUsername: email, password: 'SecurePass1!' });
 
         expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
 

@@ -48,7 +48,7 @@ describe('Sign Up (e2e)', () => {
       it('Then they receive a 201 with their profile, access token, and emailSent=true', async () => {
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'new@example.com', username: 'newuser', password: 'SecurePass1' });
+          .send({ email: 'new@example.com', username: 'newuser', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.CREATED);
         expect(response.body.user.email).toBe('new@example.com');
@@ -62,7 +62,7 @@ describe('Sign Up (e2e)', () => {
       it('Then a refresh token cookie is set as HttpOnly in the response', async () => {
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'cookie@example.com', username: 'cookieuser', password: 'SecurePass1' });
+          .send({ email: 'cookie@example.com', username: 'cookieuser', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.CREATED);
         const setCookieHeader = response.headers['set-cookie'] as string[] | string | undefined;
@@ -77,7 +77,7 @@ describe('Sign Up (e2e)', () => {
       it('Then a verification email is sent to the registered address', async () => {
         await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'verify@example.com', username: 'verifyuser', password: 'SecurePass1' });
+          .send({ email: 'verify@example.com', username: 'verifyuser', password: 'SecurePass1!' });
 
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledTimes(1);
         expect(emailProvider.sendVerificationEmail).toHaveBeenCalledWith(
@@ -103,7 +103,7 @@ describe('Sign Up (e2e)', () => {
 
         await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'order@example.com', username: 'orderuser', password: 'SecurePass1' });
+          .send({ email: 'order@example.com', username: 'orderuser', password: 'SecurePass1!' });
 
         expect(callOrder).not.toContain('email-before-commit');
         expect(userExistsAtEmailTime).toBe(true);
@@ -121,7 +121,7 @@ describe('Sign Up (e2e)', () => {
           .send({
             email: 'localfirst@example.com',
             username: 'localfirstuser',
-            password: 'SecurePass1',
+            password: 'SecurePass1!',
           });
 
         expect(response.status).toBe(HttpStatus.CREATED);
@@ -149,7 +149,7 @@ describe('Sign Up (e2e)', () => {
           .send({
             email: 'rollback@example.com',
             username: 'rollbackuser',
-            password: 'SecurePass1',
+            password: 'SecurePass1!',
           });
 
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -176,7 +176,7 @@ describe('Sign Up (e2e)', () => {
           .send({
             email: 'deeproll@example.com',
             username: 'deeprolluser',
-            password: 'SecurePass1',
+            password: 'SecurePass1!',
           });
 
         expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -202,11 +202,11 @@ describe('Sign Up (e2e)', () => {
       it('Then they receive a 409 Conflict with EMAIL_ALREADY_EXISTS error code', async () => {
         await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'taken@example.com', username: 'firstuser', password: 'SecurePass1' });
+          .send({ email: 'taken@example.com', username: 'firstuser', password: 'SecurePass1!' });
 
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'taken@example.com', username: 'otherusernm', password: 'SecurePass1' });
+          .send({ email: 'taken@example.com', username: 'otherusernm', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.CONFLICT);
         expect(response.body.error).toBe('EMAIL_ALREADY_EXISTS');
@@ -219,11 +219,11 @@ describe('Sign Up (e2e)', () => {
       it('Then they receive a 409 Conflict with USERNAME_ALREADY_EXISTS error code', async () => {
         await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'first@example.com', username: 'takenuser', password: 'SecurePass1' });
+          .send({ email: 'first@example.com', username: 'takenuser', password: 'SecurePass1!' });
 
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'second@example.com', username: 'takenuser', password: 'SecurePass1' });
+          .send({ email: 'second@example.com', username: 'takenuser', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.CONFLICT);
         expect(response.body.error).toBe('USERNAME_ALREADY_EXISTS');
@@ -264,7 +264,7 @@ describe('Sign Up (e2e)', () => {
       it('Then they receive a 400 Bad Request', async () => {
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ username: 'nomail', password: 'SecurePass1' });
+          .send({ username: 'nomail', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       });
@@ -274,7 +274,7 @@ describe('Sign Up (e2e)', () => {
       it('Then they receive a 400 Bad Request', async () => {
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'nouser@example.com', password: 'SecurePass1' });
+          .send({ email: 'nouser@example.com', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       });
@@ -296,7 +296,7 @@ describe('Sign Up (e2e)', () => {
       it('Then they receive a 400 Bad Request', async () => {
         const response = await request(app.getHttpServer())
           .post('/api/authentication/sign-up')
-          .send({ email: 'not-an-email', username: 'bademail', password: 'SecurePass1' });
+          .send({ email: 'not-an-email', username: 'bademail', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.BAD_REQUEST);
       });

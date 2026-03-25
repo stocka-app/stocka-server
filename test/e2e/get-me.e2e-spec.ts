@@ -14,7 +14,7 @@ describe('Get Me (e2e)', () => {
   async function signUpAndGetToken(email: string, username: string): Promise<string> {
     const res = await request(app.getHttpServer())
       .post('/api/authentication/sign-up')
-      .send({ email, username, password: 'SecurePass1' });
+      .send({ email, username, password: 'SecurePass1!' });
     return res.body.accessToken as string;
   }
 

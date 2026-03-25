@@ -17,7 +17,7 @@ export class SocialProfileEntity extends BaseEntity {
   @Column({ name: 'provider_display_name', type: 'varchar', length: 150, nullable: true })
   providerDisplayName!: string | null;
 
-  @Column({ name: 'provider_avatar_url', type: 'varchar', length: 500, nullable: true })
+  @Column({ name: 'provider_avatar_url', type: 'text', nullable: true })
   providerAvatarUrl!: string | null;
 
   @Column({ name: 'provider_profile_url', type: 'varchar', length: 500, nullable: true })

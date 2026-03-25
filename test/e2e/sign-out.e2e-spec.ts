@@ -14,7 +14,7 @@ describe('Sign Out (e2e)', () => {
   async function signUpAndGetCookie(email: string, username: string): Promise<string> {
     const res = await request(app.getHttpServer())
       .post('/api/authentication/sign-up')
-      .send({ email, username, password: 'SecurePass1' });
+      .send({ email, username, password: 'SecurePass1!' });
     const setCookieHeader = res.headers['set-cookie'] as string | string[];
     const cookies = Array.isArray(setCookieHeader) ? setCookieHeader : [setCookieHeader ?? ''];
     return cookies.find((c) => c.startsWith('refresh_token=')) ?? '';

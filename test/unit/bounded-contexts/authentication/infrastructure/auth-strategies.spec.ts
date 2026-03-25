@@ -214,6 +214,7 @@ describe('GoogleStrategy', () => {
         GOOGLE_CLIENT_ID: 'google-client-id',
         GOOGLE_CLIENT_SECRET: 'google-secret',
         GOOGLE_CALLBACK_URL: 'http://localhost:3001/api/authentication/google/callback',
+        OAUTH_STATE_SECRET: 'test-oauth-secret-must-be-32-chars!!',
       }),
     );
   });
@@ -285,8 +286,19 @@ describe('MicrosoftStrategy', () => {
         MICROSOFT_CLIENT_ID: 'ms-client-id',
         MICROSOFT_CLIENT_SECRET: 'ms-secret',
         MICROSOFT_CALLBACK_URL: 'http://localhost:3001/api/authentication/microsoft/callback',
+        OAUTH_STATE_SECRET: 'test-oauth-secret-must-be-32-chars!!',
       }),
     );
+
+    // Default: Graph photo endpoint returns a successful response with image bytes
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: jest.fn().mockResolvedValue(Buffer.from('fake-image-bytes')),
+    } as unknown as Response);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('When authorizationParams() is called', () => {
@@ -295,10 +307,76 @@ describe('MicrosoftStrategy', () => {
     });
   });
 
+  describe('Given the user has a profile photo in Microsoft', () => {
+    describe('When validate() is called', () => {
+      it('Then avatarUrl is a base64 data URI from the Graph API photo', async () => {
+        const profile = {
+          id: 'ms-001',
+          displayName: 'MS User',
+          emails: [{ value: 'user@microsoft.com' }],
+          _json: {},
+        };
+
+        const user = await collectValidateResult(strategy, 'at', 'rt', profile);
+
+        expect(user.avatarUrl).toMatch(/^data:image\/jpeg;base64,/);
+        expect(global.fetch).toHaveBeenCalledWith(
+          'https://graph.microsoft.com/v1.0/me/photos/96x96/$value',
+          { headers: { Authorization: 'Bearer at' } },
+        );
+      });
+    });
+  });
+
+  describe('Given the user has no profile photo in Microsoft (Graph returns 404)', () => {
+    beforeEach(() => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+      } as unknown as Response);
+    });
+
+    describe('When validate() is called', () => {
+      it('Then avatarUrl is null', async () => {
+        const profile = {
+          id: 'ms-002',
+          displayName: 'MS User',
+          emails: [{ value: 'user@microsoft.com' }],
+          _json: {},
+        };
+
+        const user = await collectValidateResult(strategy, 'at', 'rt', profile);
+
+        expect(user.avatarUrl).toBeNull();
+      });
+    });
+  });
+
+  describe('Given the Graph API call throws a network error', () => {
+    beforeEach(() => {
+      global.fetch = jest.fn().mockRejectedValue(new Error('network timeout'));
+    });
+
+    describe('When validate() is called', () => {
+      it('Then avatarUrl is null and the error is swallowed', async () => {
+        const profile = {
+          id: 'ms-003',
+          displayName: 'MS User',
+          emails: [{ value: 'user@microsoft.com' }],
+          _json: {},
+        };
+
+        const user = await collectValidateResult(strategy, 'at', 'rt', profile);
+
+        expect(user.avatarUrl).toBeNull();
+      });
+    });
+  });
+
   describe('When validate() receives a profile with the emails array', () => {
     it('Then email is taken from emails[0].value', async () => {
       const profile = {
-        id: 'ms-001',
+        id: 'ms-010',
         displayName: 'MS User',
         emails: [{ value: 'user@microsoft.com' }],
         _json: {},
@@ -313,7 +391,7 @@ describe('MicrosoftStrategy', () => {
   describe('When validate() receives a profile without emails but with _json.mail', () => {
     it('Then email is taken from _json.mail', async () => {
       const profile = {
-        id: 'ms-002',
+        id: 'ms-011',
         displayName: 'MS User',
         emails: undefined,
         _json: { mail: 'ms@company.com' },
@@ -328,7 +406,7 @@ describe('MicrosoftStrategy', () => {
   describe('When validate() receives a profile with only _json.userPrincipalName', () => {
     it('Then email is taken from userPrincipalName', async () => {
       const profile = {
-        id: 'ms-003',
+        id: 'ms-012',
         displayName: 'MS User',
         emails: undefined,
         _json: { userPrincipalName: 'upn@tenant.onmicrosoft.com' },
@@ -342,7 +420,7 @@ describe('MicrosoftStrategy', () => {
 
   describe('When validate() receives a profile with no email source', () => {
     it('Then email defaults to empty string', async () => {
-      const profile = { id: 'ms-004', displayName: 'MS User', emails: undefined, _json: {} };
+      const profile = { id: 'ms-013', displayName: 'MS User', emails: undefined, _json: {} };
 
       const user = await collectValidateResult(strategy, 'at', 'rt', profile);
 
@@ -353,7 +431,7 @@ describe('MicrosoftStrategy', () => {
   describe('When validate() receives a profile with no displayName', () => {
     it('Then displayName defaults to empty string', async () => {
       const profile = {
-        id: 'ms-005',
+        id: 'ms-014',
         displayName: '',
         emails: [{ value: 'user@ms.com' }],
         _json: {},
@@ -368,7 +446,7 @@ describe('MicrosoftStrategy', () => {
   describe('When validate() receives a profile with no _json', () => {
     it('Then rawData defaults to empty object and optional fields are null', async () => {
       const profile = {
-        id: 'ms-006',
+        id: 'ms-015',
         displayName: 'MS User',
         emails: [{ value: 'user@ms.com' }],
         _json: undefined,

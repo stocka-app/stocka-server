@@ -1,4 +1,6 @@
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
+import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -14,7 +16,8 @@ import { TransformInterceptor } from '@shared/infrastructure/interceptors/transf
 import { setupSwagger } from '@core/config/swagger/swagger.config';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const logger = new Logger('Bootstrap');
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
 
   // Global prefix
@@ -26,9 +29,16 @@ async function bootstrap(): Promise<void> {
   // Cookie parser (required for httpOnly cookie refresh token)
   app.use(cookieParser());
 
-  // CORS
+  // Trust first proxy hop — required for correct IP resolution behind load balancers / reverse proxies
+  app.set('trust proxy', 1);
+
+  // CORS — supports comma-separated origins for multi-environment deployments
+  const rawOrigins = configService
+    .getOrThrow<string>('CORS_ORIGIN')
+    .split(',')
+    .map((o) => o.trim());
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN'),
+    origin: rawOrigins.length === 1 ? rawOrigins[0] : rawOrigins,
     credentials: true,
   });
 
@@ -49,19 +59,20 @@ async function bootstrap(): Promise<void> {
     new TransformInterceptor(),
   );
 
-  // Swagger (only in non-production)
-  if (configService.get<string>('NODE_ENV') !== 'production') {
+  // Swagger (development only)
+  if (configService.get<string>('NODE_ENV') === 'development') {
     setupSwagger(app);
   }
 
   const port = configService.get<number>('PORT', APP_CONSTANTS.DEFAULT_PORT);
   await app.listen(port);
 
-  console.log(`Application is running on: http://localhost:${port}/${APP_CONSTANTS.API_PREFIX}`);
-  console.log(`Swagger docs available at: http://localhost:${port}/docs`);
+  logger.log(`Application is running on: http://localhost:${port}/${APP_CONSTANTS.API_PREFIX}`);
+  logger.log(`Swagger docs available at: http://localhost:${port}/docs`);
 }
 
-bootstrap().catch((err) => {
-  console.error('Error starting application:', err);
+bootstrap().catch((err: unknown) => {
+  const logger = new Logger('Bootstrap');
+  logger.error('Error starting application:', err);
   process.exit(1);
 });

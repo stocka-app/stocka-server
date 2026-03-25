@@ -161,7 +161,8 @@ export class SocialProfileModel extends BaseModel {
     jobTitle?: string | null;
     rawData?: Record<string, unknown>;
   }): void {
-    if (props.providerDisplayName !== undefined) this._providerDisplayName = props.providerDisplayName;
+    if (props.providerDisplayName !== undefined)
+      this._providerDisplayName = props.providerDisplayName;
     if (props.providerAvatarUrl !== undefined) this._providerAvatarUrl = props.providerAvatarUrl;
     if (props.givenName !== undefined) this._givenName = props.givenName;
     if (props.familyName !== undefined) this._familyName = props.familyName;

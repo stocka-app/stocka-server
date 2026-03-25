@@ -110,9 +110,7 @@ describe('RecordUserConsentsHandler', () => {
 
     describe('When ipAddress and userAgent are null', () => {
       it('Then rows have null ipAddress and userAgent', async () => {
-        await handler.execute(
-          new RecordUserConsentsCommand(USER_UUID, CONSENTS, null, null),
-        );
+        await handler.execute(new RecordUserConsentsCommand(USER_UUID, CONSENTS, null, null));
 
         const savedRows = consentRepository.save.mock.calls[0][0] as UserConsentEntity[];
         for (const row of savedRows) {
@@ -136,9 +134,7 @@ describe('RecordUserConsentsHandler', () => {
         const error = result._unsafeUnwrapErr();
         expect(error.errorCode).toBe('CONSENT_PERSISTENCE_ERROR');
         expect(error.message).toBe('Failed to persist user consents');
-        expect(error.details).toEqual([
-          { field: 'consents', message: 'connection refused' },
-        ]);
+        expect(error.details).toEqual([{ field: 'consents', message: 'connection refused' }]);
       });
     });
   });

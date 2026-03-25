@@ -181,6 +181,22 @@ export class UserFacade implements IUserFacade {
     return profile?.displayName ?? null;
   }
 
+  async findSocialNameByUserUUID(
+    userUUID: string,
+  ): Promise<{ givenName: string | null; familyName: string | null; avatarUrl: string | null }> {
+    const nullResult = { givenName: null, familyName: null, avatarUrl: null };
+    const user = await this.userContract.findByUUID(userUUID);
+    if (!user || user.id === undefined) return nullResult;
+    const profile = await this.profileContract.findByUserId(user.id);
+    if (!profile || profile.id === undefined) return nullResult;
+    const social = await this.profileContract.findFirstSocialProfileByProfileId(profile.id);
+    return {
+      givenName: social?.givenName ?? null,
+      familyName: social?.familyName ?? null,
+      avatarUrl: social?.providerAvatarUrl ?? null,
+    };
+  }
+
   async createUserFromOAuth(props: {
     email: string;
     username: string;
@@ -308,9 +324,7 @@ export class UserFacade implements IUserFacade {
 
     const profile = await this.profileContract.findByUserId(user.id);
     if (!profile || profile.id === undefined) {
-      throw new Error(
-        `UserFacade.upsertSocialProfile: profile not found for userId=${user.id}`,
-      );
+      throw new Error(`UserFacade.upsertSocialProfile: profile not found for userId=${user.id}`);
     }
 
     const model = SocialProfileModel.create({

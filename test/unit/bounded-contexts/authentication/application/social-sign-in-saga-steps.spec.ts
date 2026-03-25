@@ -135,7 +135,10 @@ describe('GenerateSocialTokensStep', () => {
   let step: GenerateSocialTokensStep;
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
-  let mediator: { tenant: { getActiveMembership: jest.Mock }; user: { findDisplayNameByUserUUID: jest.Mock } };
+  let mediator: {
+    tenant: { getActiveMembership: jest.Mock };
+    user: { findDisplayNameByUserUUID: jest.Mock };
+  };
 
   beforeEach(async () => {
     jwtService = { signAsync: jest.fn().mockResolvedValue('signed-token') };

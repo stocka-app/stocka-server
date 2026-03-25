@@ -146,7 +146,7 @@ async function bootstrap(): Promise<PermissionGuardWorkerApp> {
   // even for correctly authenticated users. The middleware mirrors what
   // JwtAuthenticationGuard does, but at the Express middleware layer (before guards).
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'] as string | undefined;
+    const authHeader = req.headers['authorization'];
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.slice(7);
       try {

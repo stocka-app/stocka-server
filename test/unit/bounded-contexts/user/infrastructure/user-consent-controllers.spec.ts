@@ -77,9 +77,9 @@ describe('RecordUserConsentsController', () => {
       it('Then it throws the domain exception', async () => {
         commandBus.execute.mockResolvedValue(err(new TestDomainException()));
 
-        await expect(
-          controller.handle(DTO, USER as any, mockRequest),
-        ).rejects.toThrow(TestDomainException);
+        await expect(controller.handle(DTO, USER as any, mockRequest)).rejects.toThrow(
+          TestDomainException,
+        );
       });
     });
 

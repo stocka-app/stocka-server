@@ -98,7 +98,12 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
       timezone?: string;
     } | null;
 
-    if (!businessProfile?.name || !businessProfile.businessType || !businessProfile.country || !businessProfile.timezone) {
+    if (
+      !businessProfile?.name ||
+      !businessProfile.businessType ||
+      !businessProfile.country ||
+      !businessProfile.timezone
+    ) {
       return err(new OnboardingIncompleteError('businessProfile section'));
     }
 

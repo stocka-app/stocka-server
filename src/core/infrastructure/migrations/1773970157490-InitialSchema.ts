@@ -1,168 +1,349 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class InitialSchema1773970157490 implements MigrationInterface {
-    name = 'InitialSchema1773970157490'
+  name = 'InitialSchema1773970157490';
 
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        // ── Schema bootstrap (TypeORM cannot generate these) ─────────────────────
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "authn"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "authz"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "identity"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "accounts"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "sessions"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "profiles"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "tenants"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "tiers"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "capabilities"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "storage"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "onboarding"`);
-        await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "shared"`);
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // ── Schema bootstrap (TypeORM cannot generate these) ─────────────────────
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "authn"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "authz"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "identity"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "accounts"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "sessions"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "profiles"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "tenants"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "tiers"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "capabilities"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "storage"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "onboarding"`);
+    await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "shared"`);
 
-        await queryRunner.query(`CREATE TABLE "shared"."process_state" ("id" uuid NOT NULL, "process_name" character varying(100) NOT NULL, "correlation_id" character varying(255) NOT NULL, "status" character varying(20) NOT NULL DEFAULT 'started', "current_step" character varying(100) NOT NULL, "data" jsonb NOT NULL DEFAULT '{}', "error_message" text, "started_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "completed_at" TIMESTAMP WITH TIME ZONE, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_49696cec8b2f82b090c79b5f18a" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_process_state_process_name" ON "shared"."process_state" ("process_name") `);
-        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_process_state_correlation_id" ON "shared"."process_state" ("correlation_id") `);
-        await queryRunner.query(`CREATE INDEX "IDX_process_state_status" ON "shared"."process_state" ("status") `);
-        await queryRunner.query(`CREATE TABLE "tiers"."tier_plans" ("tier" character varying(20) NOT NULL, "name" character varying(100) NOT NULL, "max_products" integer, "max_users" integer, "max_warehouses" integer DEFAULT '0', "policy_version" TIMESTAMP WITH TIME ZONE NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_0813f6d3eedfb107638262c97ec" PRIMARY KEY ("tier"))`);
-        await queryRunner.query(`CREATE TABLE "capabilities"."modules" ("id" SERIAL NOT NULL, "key" character varying(100) NOT NULL, "name" character varying(200) NOT NULL, "is_active" boolean NOT NULL DEFAULT true, CONSTRAINT "UQ_a57f2b3bd9ebb022212e634f601" UNIQUE ("key"), CONSTRAINT "PK_7dbefd488bd96c5bf31f0ce0c95" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "tiers"."tier_module_policies" ("tier" character varying(20) NOT NULL, "module_id" integer NOT NULL, "enabled" boolean NOT NULL DEFAULT true, "config" jsonb, CONSTRAINT "PK_882c813e0e6675a6261f311b480" PRIMARY KEY ("tier", "module_id"))`);
-        await queryRunner.query(`CREATE TABLE "capabilities"."catalog_actions" ("id" SERIAL NOT NULL, "module_id" integer NOT NULL, "key" character varying(100) NOT NULL, "name" character varying(200) NOT NULL, "action_type" character varying(50) NOT NULL, "is_active" boolean NOT NULL DEFAULT true, CONSTRAINT "UQ_a40fd4a57b8ecef7aa6373a7c17" UNIQUE ("key"), CONSTRAINT "PK_7179056fb9c1c945abb0b7ba465" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "tiers"."tier_action_overrides" ("tier" character varying(20) NOT NULL, "action_id" integer NOT NULL, "enabled" boolean NOT NULL, "config" jsonb, CONSTRAINT "PK_ae9205636c13a60474abf8741a4" PRIMARY KEY ("tier", "action_id"))`);
-        await queryRunner.query(`CREATE TABLE "tenants"."tenants" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "name" character varying(150) NOT NULL, "slug" character varying(100) NOT NULL, "business_type" character varying(50) NOT NULL, "country" character(2) NOT NULL DEFAULT 'MX', "timezone" character varying(60) NOT NULL DEFAULT 'America/Mexico_City', "status" character varying(20) NOT NULL DEFAULT 'active', "owner_user_id" integer NOT NULL, CONSTRAINT "UQ_30223f2eb10f4a2684508232082" UNIQUE ("uuid"), CONSTRAINT "UQ_2310ecc5cb8be427097154b18fc" UNIQUE ("slug"), CONSTRAINT "PK_53be67a04681c66b87ee27c9321" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_2310ecc5cb8be427097154b18f" ON "tenants"."tenants" ("slug") `);
-        await queryRunner.query(`CREATE INDEX "IDX_c59559e7872bc9726adef4669f" ON "tenants"."tenants" ("status") `);
-        await queryRunner.query(`CREATE TABLE "tenants"."tenant_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_id" integer NOT NULL, "giro" character varying(100), "phone" character varying(30), "contact_email" character varying(255), "website" character varying(500), "address_line1" character varying(200), "city" character varying(100), "state" character varying(100), "postal_code" character varying(20), "logo_url" character varying(500), CONSTRAINT "UQ_1880d41048cc5c34ca8549613fc" UNIQUE ("uuid"), CONSTRAINT "UQ_7755f200fd5c61591cecffa98d0" UNIQUE ("tenant_id"), CONSTRAINT "PK_2a7607ec8fe2028dc77670f64c8" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "tenants"."tenant_members" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_id" integer NOT NULL, "user_id" integer NOT NULL, "user_uuid" uuid NOT NULL, "role" character varying(30) NOT NULL, "status" character varying(20) NOT NULL DEFAULT 'active', "invited_by" integer, "joined_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_8bfd454bc70570e52bc1c5fee53" UNIQUE ("uuid"), CONSTRAINT "PK_f698fea03ae8f690b936971aa99" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_ffba0c9ecd4fd98550b3300ae6" ON "tenants"."tenant_members" ("tenant_id") `);
-        await queryRunner.query(`CREATE INDEX "IDX_45aa4b00b2400b1852516f2bdc" ON "tenants"."tenant_members" ("status") `);
-        await queryRunner.query(`CREATE TABLE "tenants"."tenant_invitations" ("id" character varying(36) NOT NULL, "tenant_id" integer NOT NULL, "tenant_uuid" uuid NOT NULL, "tenant_name" character varying(150) NOT NULL, "invited_by" integer NOT NULL, "email" character varying(255) NOT NULL, "role" character varying(30) NOT NULL, "token" character varying(128) NOT NULL, "accepted_at" TIMESTAMP WITH TIME ZONE, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_79964092dc2230851858fa1ab78" UNIQUE ("token"), CONSTRAINT "PK_830d0f78b435fdcf23b84cc28da" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_79964092dc2230851858fa1ab7" ON "tenants"."tenant_invitations" ("token") `);
-        await queryRunner.query(`CREATE TABLE "tenants"."tenant_config" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_id" integer NOT NULL, "tier" character varying(20) NOT NULL DEFAULT 'FREE', "max_warehouses" integer NOT NULL DEFAULT '0', "max_custom_rooms" integer NOT NULL DEFAULT '1', "max_store_rooms" integer NOT NULL DEFAULT '1', "max_users" integer NOT NULL DEFAULT '1', "max_products" integer NOT NULL DEFAULT '100', "notifications_enabled" boolean NOT NULL DEFAULT true, "product_count" integer NOT NULL DEFAULT '0', "storage_count" integer NOT NULL DEFAULT '0', "member_count" integer NOT NULL DEFAULT '1', "capabilities" jsonb, "capabilities_built_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_aae7459f25c3269f7b733ac9233" UNIQUE ("uuid"), CONSTRAINT "UQ_2e83f909a8863ad737ad6744767" UNIQUE ("tenant_id"), CONSTRAINT "PK_1739ef7722e16d9cfe91c38d34a" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "storage"."custom_rooms" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "storage_id" integer NOT NULL, "room_type" character varying(50) NOT NULL, "address" text, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_5044c1b5de736d3716925e47ab7" UNIQUE ("uuid"), CONSTRAINT "REL_40378daf9a41d68b830692b461" UNIQUE ("storage_id"), CONSTRAINT "PK_05dd4c836aa9ba8b07bae68e343" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "storage"."warehouses" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "storage_id" integer NOT NULL, "address" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_1a748afc0aeaf683e7d7e85bc76" UNIQUE ("uuid"), CONSTRAINT "REL_4de20480cbb78ccae6e1771a34" UNIQUE ("storage_id"), CONSTRAINT "PK_56ae21ee2432b2270b48867e4be" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "storage"."storages" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_uuid" uuid NOT NULL, "type" character varying(20) NOT NULL, "name" character varying(100) NOT NULL, CONSTRAINT "UQ_18f1b0b880b705e932a97b26dce" UNIQUE ("uuid"), CONSTRAINT "PK_2f2d2fae6dc214f7f3ec52189ce" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "idx_storages_tenant_uuid" ON "storage"."storages" ("tenant_uuid") `);
-        await queryRunner.query(`CREATE TABLE "storage"."store_rooms" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "storage_id" integer NOT NULL, "address" text, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_9c11dbdef1c81563c51459cbd76" UNIQUE ("uuid"), CONSTRAINT "REL_063eba9e418df9266e5f2f9b58" UNIQUE ("storage_id"), CONSTRAINT "PK_7f106eea364b328913735ae1516" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "onboarding"."onboarding_sessions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_uuid" character varying(36) NOT NULL, "path" character varying(10), "current_step" integer NOT NULL DEFAULT '0', "step_data" jsonb NOT NULL DEFAULT '{}', "invitation_code" character varying(128), "status" character varying(20) NOT NULL DEFAULT 'IN_PROGRESS', "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_212b8fe81dc401ca897d1753214" UNIQUE ("user_uuid"), CONSTRAINT "PK_9553e455cbfe1aeebc6f43ae379" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_212b8fe81dc401ca897d175321" ON "onboarding"."onboarding_sessions" ("user_uuid") `);
-        await queryRunner.query(`CREATE TABLE "authn"."verification_attempts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "user_uuid" character varying(36), "email" character varying(255), "ip_address" inet NOT NULL, "user_agent" text, "code_entered" character varying(10), "success" boolean NOT NULL DEFAULT false, "verification_type" character varying(30) NOT NULL DEFAULT 'email_verification', "attempted_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), CONSTRAINT "UQ_64c5c9651a733221f41f8bb1e5b" UNIQUE ("uuid"), CONSTRAINT "PK_2cc0cabfe71231719a23cfcdaf8" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_e6470df66c7cac761f40efe6db" ON "authn"."verification_attempts" ("user_uuid") `);
-        await queryRunner.query(`CREATE INDEX "IDX_dd2cbbbc127b69ce5637c22270" ON "authn"."verification_attempts" ("email") `);
-        await queryRunner.query(`CREATE INDEX "IDX_43c10501c713ab675b9aea3d21" ON "authn"."verification_attempts" ("ip_address") `);
-        await queryRunner.query(`CREATE INDEX "IDX_0e65969a2dc1f558d77daacb85" ON "authn"."verification_attempts" ("attempted_at") `);
-        await queryRunner.query(`CREATE TABLE "accounts"."social_accounts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "account_id" integer NOT NULL, "provider" character varying(20) NOT NULL, "provider_id" character varying(255) NOT NULL, "provider_email" character varying(255), "linked_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_2ee04e5974c7a8a47f484fcb51e" UNIQUE ("uuid"), CONSTRAINT "PK_e9e58d2d8e9fafa20af914d9750" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_411c2df970da88bd9e8c6a51ee" ON "accounts"."social_accounts" ("account_id", "provider") `);
-        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_244e28edb736d5184e50dff200" ON "accounts"."social_accounts" ("provider", "provider_id") `);
-        await queryRunner.query(`CREATE TABLE "accounts"."accounts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "user_id" integer NOT NULL, CONSTRAINT "UQ_45705ce5c594e0b9f6158a43370" UNIQUE ("uuid"), CONSTRAINT "UQ_3000dad1da61b29953f07476324" UNIQUE ("user_id"), CONSTRAINT "PK_5a7a02c20412299d198e097a8fe" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "accounts"."credential_accounts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "account_id" integer NOT NULL, "email" character varying(255) NOT NULL, "password_hash" character varying(255), "status" character varying(30) NOT NULL DEFAULT 'pending_verification', "email_verified_at" TIMESTAMP WITH TIME ZONE, "verification_blocked_until" TIMESTAMP WITH TIME ZONE, "created_with" character varying(20) NOT NULL DEFAULT 'email', CONSTRAINT "UQ_a8f0e784232e9f7bf0404c68a6c" UNIQUE ("uuid"), CONSTRAINT "UQ_ee3e3e2575dc7b27974bb860877" UNIQUE ("account_id"), CONSTRAINT "UQ_b9811916c3ba1b19722487fb753" UNIQUE ("email"), CONSTRAINT "PK_a9bb8db088f56ccc2ee6519ab2d" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_8a13d1aee5c999536747a967a8" ON "accounts"."credential_accounts" ("status") `);
-        await queryRunner.query(`CREATE INDEX "IDX_dfbe65d48344a6c60eae7e453e" ON "accounts"."credential_accounts" ("created_with") `);
-        await queryRunner.query(`CREATE TABLE "authn"."password_reset_tokens" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "credential_account_id" integer NOT NULL, "token_hash" character varying(128) NOT NULL, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "used_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_573c6c232c2b7d66202cbf49d87" UNIQUE ("uuid"), CONSTRAINT "PK_d16bebd73e844c48bca50ff8d3d" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_91185d86d5d7557b19abbb2868" ON "authn"."password_reset_tokens" ("token_hash") `);
-        await queryRunner.query(`CREATE TABLE "authn"."email_verification_tokens" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "credential_account_id" integer NOT NULL, "code_hash" character varying(128) NOT NULL, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "used_at" TIMESTAMP WITH TIME ZONE, "resend_count" integer NOT NULL DEFAULT '0', "last_resent_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_dbdc8cf587cd11e5895bcfa666e" UNIQUE ("uuid"), CONSTRAINT "PK_417a095bbed21c2369a6a01ab9a" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_d633df78199521854b2b914614" ON "authn"."email_verification_tokens" ("credential_account_id") `);
-        await queryRunner.query(`CREATE TABLE "profiles"."personal_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "profile_id" integer NOT NULL, "username" character varying(30) NOT NULL, "display_name" character varying(100), "avatar_url" character varying(500), "locale" character varying(10) NOT NULL DEFAULT 'es', "timezone" character varying(60) NOT NULL DEFAULT 'America/Mexico_City', CONSTRAINT "UQ_16c62fe4e00455ff6e37f48b5cd" UNIQUE ("uuid"), CONSTRAINT "UQ_62a9258f166a0897dac03ba7939" UNIQUE ("profile_id"), CONSTRAINT "UQ_f16c5e27515a42d51e2e2e7250c" UNIQUE ("username"), CONSTRAINT "PK_b990508b9f08b03b0c652c678a8" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "profiles"."commercial_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "profile_id" integer NOT NULL, "full_name" character varying(150), "phone" character varying(30), "country_code" character(2) DEFAULT 'MX', "tax_id" character varying(50), CONSTRAINT "UQ_329472a52d6fe6b45108b837ce7" UNIQUE ("uuid"), CONSTRAINT "UQ_d86aad2568685f1e00dfbdf725f" UNIQUE ("profile_id"), CONSTRAINT "PK_e59a3233dc065eba6fc836150f2" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "profiles"."profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "user_id" integer NOT NULL, CONSTRAINT "UQ_2c0c7196c89bdcc9b04f29f3fe6" UNIQUE ("uuid"), CONSTRAINT "UQ_9e432b7df0d182f8d292902d1a2" UNIQUE ("user_id"), CONSTRAINT "PK_8e520eb4da7dc01d0e190447c8e" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "profiles"."social_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "profile_id" integer NOT NULL, "social_account_uuid" uuid NOT NULL, "provider" character varying(20) NOT NULL, "provider_display_name" character varying(150), "provider_avatar_url" character varying(500), "provider_profile_url" character varying(500), "synced_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_282f7dd61b0e19f5b7ba6daa0b4" UNIQUE ("uuid"), CONSTRAINT "PK_b07773de7651b6e0d11719b971a" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_3634c5718c2a4673810a51a3a8" ON "profiles"."social_profiles" ("profile_id", "provider") `);
-        await queryRunner.query(`CREATE TABLE "identity"."users" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_951b8f1dfc94ac1d0301a14b7e1" UNIQUE ("uuid"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "sessions"."credential_sessions" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "session_id" integer NOT NULL, "credential_account_id" integer NOT NULL, CONSTRAINT "UQ_014305dace58ed83bc842bd34e9" UNIQUE ("uuid"), CONSTRAINT "UQ_6a946ad04ec3cc5074589b42201" UNIQUE ("session_id"), CONSTRAINT "PK_6b0ef8f6520469266cdf81804ad" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "sessions"."sessions" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "account_id" integer NOT NULL, "token_hash" character varying(128) NOT NULL, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT "UQ_faf29798ea59ac7f07b1be6f79b" UNIQUE ("uuid"), CONSTRAINT "UQ_abaa9e068cdd390bc5210f79884" UNIQUE ("token_hash"), CONSTRAINT "PK_3238ef96f18b355b671619111bc" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "sessions"."social_sessions" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "session_id" integer NOT NULL, "social_account_id" integer NOT NULL, "provider" character varying(20) NOT NULL, CONSTRAINT "UQ_6bec07f4de6dd88bf5d120620fc" UNIQUE ("uuid"), CONSTRAINT "UQ_045cff00bfa4267c978693cc82e" UNIQUE ("session_id"), CONSTRAINT "PK_cccb4ab82a7cdd7ec0b6efeed83" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_module_policies" ADD CONSTRAINT "FK_fa76a4805611c6f268402b34912" FOREIGN KEY ("tier") REFERENCES "tiers"."tier_plans"("tier") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_module_policies" ADD CONSTRAINT "FK_a952412d1cdc3d220fee8b03d34" FOREIGN KEY ("module_id") REFERENCES "capabilities"."modules"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "capabilities"."catalog_actions" ADD CONSTRAINT "FK_1e4be5a3331df45396fb46c4842" FOREIGN KEY ("module_id") REFERENCES "capabilities"."modules"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_action_overrides" ADD CONSTRAINT "FK_3a4489f8b914fa4cba26f319b83" FOREIGN KEY ("tier") REFERENCES "tiers"."tier_plans"("tier") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_action_overrides" ADD CONSTRAINT "FK_40f04fbc4405be1a0f0eff497c7" FOREIGN KEY ("action_id") REFERENCES "capabilities"."catalog_actions"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "storage"."custom_rooms" ADD CONSTRAINT "FK_40378daf9a41d68b830692b4616" FOREIGN KEY ("storage_id") REFERENCES "storage"."storages"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "storage"."warehouses" ADD CONSTRAINT "FK_4de20480cbb78ccae6e1771a34d" FOREIGN KEY ("storage_id") REFERENCES "storage"."storages"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "storage"."store_rooms" ADD CONSTRAINT "FK_063eba9e418df9266e5f2f9b58d" FOREIGN KEY ("storage_id") REFERENCES "storage"."storages"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "accounts"."social_accounts" ADD CONSTRAINT "FK_ae1e94e34fe10586fda04a99a94" FOREIGN KEY ("account_id") REFERENCES "accounts"."accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "accounts"."credential_accounts" ADD CONSTRAINT "FK_ee3e3e2575dc7b27974bb860877" FOREIGN KEY ("account_id") REFERENCES "accounts"."accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "authn"."password_reset_tokens" ADD CONSTRAINT "FK_2a12933c8e4769b3d1cd2c8c45c" FOREIGN KEY ("credential_account_id") REFERENCES "accounts"."credential_accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "authn"."email_verification_tokens" ADD CONSTRAINT "FK_d633df78199521854b2b9146146" FOREIGN KEY ("credential_account_id") REFERENCES "accounts"."credential_accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "profiles"."personal_profiles" ADD CONSTRAINT "FK_62a9258f166a0897dac03ba7939" FOREIGN KEY ("profile_id") REFERENCES "profiles"."profiles"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "profiles"."commercial_profiles" ADD CONSTRAINT "FK_d86aad2568685f1e00dfbdf725f" FOREIGN KEY ("profile_id") REFERENCES "profiles"."profiles"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "profiles"."social_profiles" ADD CONSTRAINT "FK_707a4cfedae4e94f5e46143ba13" FOREIGN KEY ("profile_id") REFERENCES "profiles"."profiles"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "sessions"."credential_sessions" ADD CONSTRAINT "FK_6a946ad04ec3cc5074589b42201" FOREIGN KEY ("session_id") REFERENCES "sessions"."sessions"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "sessions"."credential_sessions" ADD CONSTRAINT "FK_2c1b9ebe4027c6f543db4f6b3af" FOREIGN KEY ("credential_account_id") REFERENCES "accounts"."credential_accounts"("id") ON DELETE RESTRICT ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "sessions"."sessions" ADD CONSTRAINT "FK_da0cf19646ff5c6e3c0284468e5" FOREIGN KEY ("account_id") REFERENCES "accounts"."accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "sessions"."social_sessions" ADD CONSTRAINT "FK_045cff00bfa4267c978693cc82e" FOREIGN KEY ("session_id") REFERENCES "sessions"."sessions"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "sessions"."social_sessions" ADD CONSTRAINT "FK_2f210ed328eaac49e362252f7f0" FOREIGN KEY ("social_account_id") REFERENCES "accounts"."social_accounts"("id") ON DELETE RESTRICT ON UPDATE NO ACTION`);
-    }
+    await queryRunner.query(
+      `CREATE TABLE "shared"."process_state" ("id" uuid NOT NULL, "process_name" character varying(100) NOT NULL, "correlation_id" character varying(255) NOT NULL, "status" character varying(20) NOT NULL DEFAULT 'started', "current_step" character varying(100) NOT NULL, "data" jsonb NOT NULL DEFAULT '{}', "error_message" text, "started_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "completed_at" TIMESTAMP WITH TIME ZONE, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_49696cec8b2f82b090c79b5f18a" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_process_state_process_name" ON "shared"."process_state" ("process_name") `,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_process_state_correlation_id" ON "shared"."process_state" ("correlation_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_process_state_status" ON "shared"."process_state" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tiers"."tier_plans" ("tier" character varying(20) NOT NULL, "name" character varying(100) NOT NULL, "max_products" integer, "max_users" integer, "max_warehouses" integer DEFAULT '0', "policy_version" TIMESTAMP WITH TIME ZONE NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "PK_0813f6d3eedfb107638262c97ec" PRIMARY KEY ("tier"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "capabilities"."modules" ("id" SERIAL NOT NULL, "key" character varying(100) NOT NULL, "name" character varying(200) NOT NULL, "is_active" boolean NOT NULL DEFAULT true, CONSTRAINT "UQ_a57f2b3bd9ebb022212e634f601" UNIQUE ("key"), CONSTRAINT "PK_7dbefd488bd96c5bf31f0ce0c95" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tiers"."tier_module_policies" ("tier" character varying(20) NOT NULL, "module_id" integer NOT NULL, "enabled" boolean NOT NULL DEFAULT true, "config" jsonb, CONSTRAINT "PK_882c813e0e6675a6261f311b480" PRIMARY KEY ("tier", "module_id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "capabilities"."catalog_actions" ("id" SERIAL NOT NULL, "module_id" integer NOT NULL, "key" character varying(100) NOT NULL, "name" character varying(200) NOT NULL, "action_type" character varying(50) NOT NULL, "is_active" boolean NOT NULL DEFAULT true, CONSTRAINT "UQ_a40fd4a57b8ecef7aa6373a7c17" UNIQUE ("key"), CONSTRAINT "PK_7179056fb9c1c945abb0b7ba465" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tiers"."tier_action_overrides" ("tier" character varying(20) NOT NULL, "action_id" integer NOT NULL, "enabled" boolean NOT NULL, "config" jsonb, CONSTRAINT "PK_ae9205636c13a60474abf8741a4" PRIMARY KEY ("tier", "action_id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tenants"."tenants" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "name" character varying(150) NOT NULL, "slug" character varying(100) NOT NULL, "business_type" character varying(50) NOT NULL, "country" character(2) NOT NULL DEFAULT 'MX', "timezone" character varying(60) NOT NULL DEFAULT 'America/Mexico_City', "status" character varying(20) NOT NULL DEFAULT 'active', "owner_user_id" integer NOT NULL, CONSTRAINT "UQ_30223f2eb10f4a2684508232082" UNIQUE ("uuid"), CONSTRAINT "UQ_2310ecc5cb8be427097154b18fc" UNIQUE ("slug"), CONSTRAINT "PK_53be67a04681c66b87ee27c9321" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_2310ecc5cb8be427097154b18f" ON "tenants"."tenants" ("slug") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_c59559e7872bc9726adef4669f" ON "tenants"."tenants" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tenants"."tenant_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_id" integer NOT NULL, "giro" character varying(100), "phone" character varying(30), "contact_email" character varying(255), "website" character varying(500), "address_line1" character varying(200), "city" character varying(100), "state" character varying(100), "postal_code" character varying(20), "logo_url" character varying(500), CONSTRAINT "UQ_1880d41048cc5c34ca8549613fc" UNIQUE ("uuid"), CONSTRAINT "UQ_7755f200fd5c61591cecffa98d0" UNIQUE ("tenant_id"), CONSTRAINT "PK_2a7607ec8fe2028dc77670f64c8" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tenants"."tenant_members" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_id" integer NOT NULL, "user_id" integer NOT NULL, "user_uuid" uuid NOT NULL, "role" character varying(30) NOT NULL, "status" character varying(20) NOT NULL DEFAULT 'active', "invited_by" integer, "joined_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_8bfd454bc70570e52bc1c5fee53" UNIQUE ("uuid"), CONSTRAINT "PK_f698fea03ae8f690b936971aa99" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_ffba0c9ecd4fd98550b3300ae6" ON "tenants"."tenant_members" ("tenant_id") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_45aa4b00b2400b1852516f2bdc" ON "tenants"."tenant_members" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tenants"."tenant_invitations" ("id" character varying(36) NOT NULL, "tenant_id" integer NOT NULL, "tenant_uuid" uuid NOT NULL, "tenant_name" character varying(150) NOT NULL, "invited_by" integer NOT NULL, "email" character varying(255) NOT NULL, "role" character varying(30) NOT NULL, "token" character varying(128) NOT NULL, "accepted_at" TIMESTAMP WITH TIME ZONE, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_79964092dc2230851858fa1ab78" UNIQUE ("token"), CONSTRAINT "PK_830d0f78b435fdcf23b84cc28da" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_79964092dc2230851858fa1ab7" ON "tenants"."tenant_invitations" ("token") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "tenants"."tenant_config" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_id" integer NOT NULL, "tier" character varying(20) NOT NULL DEFAULT 'FREE', "max_warehouses" integer NOT NULL DEFAULT '0', "max_custom_rooms" integer NOT NULL DEFAULT '1', "max_store_rooms" integer NOT NULL DEFAULT '1', "max_users" integer NOT NULL DEFAULT '1', "max_products" integer NOT NULL DEFAULT '100', "notifications_enabled" boolean NOT NULL DEFAULT true, "product_count" integer NOT NULL DEFAULT '0', "storage_count" integer NOT NULL DEFAULT '0', "member_count" integer NOT NULL DEFAULT '1', "capabilities" jsonb, "capabilities_built_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_aae7459f25c3269f7b733ac9233" UNIQUE ("uuid"), CONSTRAINT "UQ_2e83f909a8863ad737ad6744767" UNIQUE ("tenant_id"), CONSTRAINT "PK_1739ef7722e16d9cfe91c38d34a" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "storage"."custom_rooms" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "storage_id" integer NOT NULL, "room_type" character varying(50) NOT NULL, "address" text, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_5044c1b5de736d3716925e47ab7" UNIQUE ("uuid"), CONSTRAINT "REL_40378daf9a41d68b830692b461" UNIQUE ("storage_id"), CONSTRAINT "PK_05dd4c836aa9ba8b07bae68e343" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "storage"."warehouses" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "storage_id" integer NOT NULL, "address" text NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_1a748afc0aeaf683e7d7e85bc76" UNIQUE ("uuid"), CONSTRAINT "REL_4de20480cbb78ccae6e1771a34" UNIQUE ("storage_id"), CONSTRAINT "PK_56ae21ee2432b2270b48867e4be" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "storage"."storages" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "tenant_uuid" uuid NOT NULL, "type" character varying(20) NOT NULL, "name" character varying(100) NOT NULL, CONSTRAINT "UQ_18f1b0b880b705e932a97b26dce" UNIQUE ("uuid"), CONSTRAINT "PK_2f2d2fae6dc214f7f3ec52189ce" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "idx_storages_tenant_uuid" ON "storage"."storages" ("tenant_uuid") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "storage"."store_rooms" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "storage_id" integer NOT NULL, "address" text, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_9c11dbdef1c81563c51459cbd76" UNIQUE ("uuid"), CONSTRAINT "REL_063eba9e418df9266e5f2f9b58" UNIQUE ("storage_id"), CONSTRAINT "PK_7f106eea364b328913735ae1516" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "onboarding"."onboarding_sessions" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_uuid" character varying(36) NOT NULL, "path" character varying(10), "current_step" integer NOT NULL DEFAULT '0', "step_data" jsonb NOT NULL DEFAULT '{}', "invitation_code" character varying(128), "status" character varying(20) NOT NULL DEFAULT 'IN_PROGRESS', "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_212b8fe81dc401ca897d1753214" UNIQUE ("user_uuid"), CONSTRAINT "PK_9553e455cbfe1aeebc6f43ae379" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_212b8fe81dc401ca897d175321" ON "onboarding"."onboarding_sessions" ("user_uuid") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "authn"."verification_attempts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "user_uuid" character varying(36), "email" character varying(255), "ip_address" inet NOT NULL, "user_agent" text, "code_entered" character varying(10), "success" boolean NOT NULL DEFAULT false, "verification_type" character varying(30) NOT NULL DEFAULT 'email_verification', "attempted_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(), CONSTRAINT "UQ_64c5c9651a733221f41f8bb1e5b" UNIQUE ("uuid"), CONSTRAINT "PK_2cc0cabfe71231719a23cfcdaf8" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_e6470df66c7cac761f40efe6db" ON "authn"."verification_attempts" ("user_uuid") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_dd2cbbbc127b69ce5637c22270" ON "authn"."verification_attempts" ("email") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_43c10501c713ab675b9aea3d21" ON "authn"."verification_attempts" ("ip_address") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_0e65969a2dc1f558d77daacb85" ON "authn"."verification_attempts" ("attempted_at") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "accounts"."social_accounts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "account_id" integer NOT NULL, "provider" character varying(20) NOT NULL, "provider_id" character varying(255) NOT NULL, "provider_email" character varying(255), "linked_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_2ee04e5974c7a8a47f484fcb51e" UNIQUE ("uuid"), CONSTRAINT "PK_e9e58d2d8e9fafa20af914d9750" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_411c2df970da88bd9e8c6a51ee" ON "accounts"."social_accounts" ("account_id", "provider") `,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_244e28edb736d5184e50dff200" ON "accounts"."social_accounts" ("provider", "provider_id") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "accounts"."accounts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "user_id" integer NOT NULL, CONSTRAINT "UQ_45705ce5c594e0b9f6158a43370" UNIQUE ("uuid"), CONSTRAINT "UQ_3000dad1da61b29953f07476324" UNIQUE ("user_id"), CONSTRAINT "PK_5a7a02c20412299d198e097a8fe" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "accounts"."credential_accounts" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "account_id" integer NOT NULL, "email" character varying(255) NOT NULL, "password_hash" character varying(255), "status" character varying(30) NOT NULL DEFAULT 'pending_verification', "email_verified_at" TIMESTAMP WITH TIME ZONE, "verification_blocked_until" TIMESTAMP WITH TIME ZONE, "created_with" character varying(20) NOT NULL DEFAULT 'email', CONSTRAINT "UQ_a8f0e784232e9f7bf0404c68a6c" UNIQUE ("uuid"), CONSTRAINT "UQ_ee3e3e2575dc7b27974bb860877" UNIQUE ("account_id"), CONSTRAINT "UQ_b9811916c3ba1b19722487fb753" UNIQUE ("email"), CONSTRAINT "PK_a9bb8db088f56ccc2ee6519ab2d" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_8a13d1aee5c999536747a967a8" ON "accounts"."credential_accounts" ("status") `,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_dfbe65d48344a6c60eae7e453e" ON "accounts"."credential_accounts" ("created_with") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "authn"."password_reset_tokens" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "credential_account_id" integer NOT NULL, "token_hash" character varying(128) NOT NULL, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "used_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_573c6c232c2b7d66202cbf49d87" UNIQUE ("uuid"), CONSTRAINT "PK_d16bebd73e844c48bca50ff8d3d" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_91185d86d5d7557b19abbb2868" ON "authn"."password_reset_tokens" ("token_hash") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "authn"."email_verification_tokens" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "credential_account_id" integer NOT NULL, "code_hash" character varying(128) NOT NULL, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, "used_at" TIMESTAMP WITH TIME ZONE, "resend_count" integer NOT NULL DEFAULT '0', "last_resent_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_dbdc8cf587cd11e5895bcfa666e" UNIQUE ("uuid"), CONSTRAINT "PK_417a095bbed21c2369a6a01ab9a" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX "IDX_d633df78199521854b2b914614" ON "authn"."email_verification_tokens" ("credential_account_id") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "profiles"."personal_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "profile_id" integer NOT NULL, "username" character varying(30) NOT NULL, "display_name" character varying(100), "avatar_url" character varying(500), "locale" character varying(10) NOT NULL DEFAULT 'es', "timezone" character varying(60) NOT NULL DEFAULT 'America/Mexico_City', CONSTRAINT "UQ_16c62fe4e00455ff6e37f48b5cd" UNIQUE ("uuid"), CONSTRAINT "UQ_62a9258f166a0897dac03ba7939" UNIQUE ("profile_id"), CONSTRAINT "UQ_f16c5e27515a42d51e2e2e7250c" UNIQUE ("username"), CONSTRAINT "PK_b990508b9f08b03b0c652c678a8" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "profiles"."commercial_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "profile_id" integer NOT NULL, "full_name" character varying(150), "phone" character varying(30), "country_code" character(2) DEFAULT 'MX', "tax_id" character varying(50), CONSTRAINT "UQ_329472a52d6fe6b45108b837ce7" UNIQUE ("uuid"), CONSTRAINT "UQ_d86aad2568685f1e00dfbdf725f" UNIQUE ("profile_id"), CONSTRAINT "PK_e59a3233dc065eba6fc836150f2" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "profiles"."profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "user_id" integer NOT NULL, CONSTRAINT "UQ_2c0c7196c89bdcc9b04f29f3fe6" UNIQUE ("uuid"), CONSTRAINT "UQ_9e432b7df0d182f8d292902d1a2" UNIQUE ("user_id"), CONSTRAINT "PK_8e520eb4da7dc01d0e190447c8e" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "profiles"."social_profiles" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "profile_id" integer NOT NULL, "social_account_uuid" uuid NOT NULL, "provider" character varying(20) NOT NULL, "provider_display_name" character varying(150), "provider_avatar_url" character varying(500), "provider_profile_url" character varying(500), "synced_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), CONSTRAINT "UQ_282f7dd61b0e19f5b7ba6daa0b4" UNIQUE ("uuid"), CONSTRAINT "PK_b07773de7651b6e0d11719b971a" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE UNIQUE INDEX "IDX_3634c5718c2a4673810a51a3a8" ON "profiles"."social_profiles" ("profile_id", "provider") `,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "identity"."users" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, CONSTRAINT "UQ_951b8f1dfc94ac1d0301a14b7e1" UNIQUE ("uuid"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "sessions"."credential_sessions" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "session_id" integer NOT NULL, "credential_account_id" integer NOT NULL, CONSTRAINT "UQ_014305dace58ed83bc842bd34e9" UNIQUE ("uuid"), CONSTRAINT "UQ_6a946ad04ec3cc5074589b42201" UNIQUE ("session_id"), CONSTRAINT "PK_6b0ef8f6520469266cdf81804ad" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "sessions"."sessions" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "account_id" integer NOT NULL, "token_hash" character varying(128) NOT NULL, "expires_at" TIMESTAMP WITH TIME ZONE NOT NULL, CONSTRAINT "UQ_faf29798ea59ac7f07b1be6f79b" UNIQUE ("uuid"), CONSTRAINT "UQ_abaa9e068cdd390bc5210f79884" UNIQUE ("token_hash"), CONSTRAINT "PK_3238ef96f18b355b671619111bc" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TABLE "sessions"."social_sessions" ("id" SERIAL NOT NULL, "uuid" uuid NOT NULL, "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "archived_at" TIMESTAMP WITH TIME ZONE, "session_id" integer NOT NULL, "social_account_id" integer NOT NULL, "provider" character varying(20) NOT NULL, CONSTRAINT "UQ_6bec07f4de6dd88bf5d120620fc" UNIQUE ("uuid"), CONSTRAINT "UQ_045cff00bfa4267c978693cc82e" UNIQUE ("session_id"), CONSTRAINT "PK_cccb4ab82a7cdd7ec0b6efeed83" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_module_policies" ADD CONSTRAINT "FK_fa76a4805611c6f268402b34912" FOREIGN KEY ("tier") REFERENCES "tiers"."tier_plans"("tier") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_module_policies" ADD CONSTRAINT "FK_a952412d1cdc3d220fee8b03d34" FOREIGN KEY ("module_id") REFERENCES "capabilities"."modules"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "capabilities"."catalog_actions" ADD CONSTRAINT "FK_1e4be5a3331df45396fb46c4842" FOREIGN KEY ("module_id") REFERENCES "capabilities"."modules"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_action_overrides" ADD CONSTRAINT "FK_3a4489f8b914fa4cba26f319b83" FOREIGN KEY ("tier") REFERENCES "tiers"."tier_plans"("tier") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_action_overrides" ADD CONSTRAINT "FK_40f04fbc4405be1a0f0eff497c7" FOREIGN KEY ("action_id") REFERENCES "capabilities"."catalog_actions"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "storage"."custom_rooms" ADD CONSTRAINT "FK_40378daf9a41d68b830692b4616" FOREIGN KEY ("storage_id") REFERENCES "storage"."storages"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "storage"."warehouses" ADD CONSTRAINT "FK_4de20480cbb78ccae6e1771a34d" FOREIGN KEY ("storage_id") REFERENCES "storage"."storages"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "storage"."store_rooms" ADD CONSTRAINT "FK_063eba9e418df9266e5f2f9b58d" FOREIGN KEY ("storage_id") REFERENCES "storage"."storages"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "accounts"."social_accounts" ADD CONSTRAINT "FK_ae1e94e34fe10586fda04a99a94" FOREIGN KEY ("account_id") REFERENCES "accounts"."accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "accounts"."credential_accounts" ADD CONSTRAINT "FK_ee3e3e2575dc7b27974bb860877" FOREIGN KEY ("account_id") REFERENCES "accounts"."accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "authn"."password_reset_tokens" ADD CONSTRAINT "FK_2a12933c8e4769b3d1cd2c8c45c" FOREIGN KEY ("credential_account_id") REFERENCES "accounts"."credential_accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "authn"."email_verification_tokens" ADD CONSTRAINT "FK_d633df78199521854b2b9146146" FOREIGN KEY ("credential_account_id") REFERENCES "accounts"."credential_accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "profiles"."personal_profiles" ADD CONSTRAINT "FK_62a9258f166a0897dac03ba7939" FOREIGN KEY ("profile_id") REFERENCES "profiles"."profiles"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "profiles"."commercial_profiles" ADD CONSTRAINT "FK_d86aad2568685f1e00dfbdf725f" FOREIGN KEY ("profile_id") REFERENCES "profiles"."profiles"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "profiles"."social_profiles" ADD CONSTRAINT "FK_707a4cfedae4e94f5e46143ba13" FOREIGN KEY ("profile_id") REFERENCES "profiles"."profiles"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."credential_sessions" ADD CONSTRAINT "FK_6a946ad04ec3cc5074589b42201" FOREIGN KEY ("session_id") REFERENCES "sessions"."sessions"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."credential_sessions" ADD CONSTRAINT "FK_2c1b9ebe4027c6f543db4f6b3af" FOREIGN KEY ("credential_account_id") REFERENCES "accounts"."credential_accounts"("id") ON DELETE RESTRICT ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."sessions" ADD CONSTRAINT "FK_da0cf19646ff5c6e3c0284468e5" FOREIGN KEY ("account_id") REFERENCES "accounts"."accounts"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."social_sessions" ADD CONSTRAINT "FK_045cff00bfa4267c978693cc82e" FOREIGN KEY ("session_id") REFERENCES "sessions"."sessions"("id") ON DELETE CASCADE ON UPDATE NO ACTION`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."social_sessions" ADD CONSTRAINT "FK_2f210ed328eaac49e362252f7f0" FOREIGN KEY ("social_account_id") REFERENCES "accounts"."social_accounts"("id") ON DELETE RESTRICT ON UPDATE NO ACTION`,
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`ALTER TABLE "sessions"."social_sessions" DROP CONSTRAINT "FK_2f210ed328eaac49e362252f7f0"`);
-        await queryRunner.query(`ALTER TABLE "sessions"."social_sessions" DROP CONSTRAINT "FK_045cff00bfa4267c978693cc82e"`);
-        await queryRunner.query(`ALTER TABLE "sessions"."sessions" DROP CONSTRAINT "FK_da0cf19646ff5c6e3c0284468e5"`);
-        await queryRunner.query(`ALTER TABLE "sessions"."credential_sessions" DROP CONSTRAINT "FK_2c1b9ebe4027c6f543db4f6b3af"`);
-        await queryRunner.query(`ALTER TABLE "sessions"."credential_sessions" DROP CONSTRAINT "FK_6a946ad04ec3cc5074589b42201"`);
-        await queryRunner.query(`ALTER TABLE "profiles"."social_profiles" DROP CONSTRAINT "FK_707a4cfedae4e94f5e46143ba13"`);
-        await queryRunner.query(`ALTER TABLE "profiles"."commercial_profiles" DROP CONSTRAINT "FK_d86aad2568685f1e00dfbdf725f"`);
-        await queryRunner.query(`ALTER TABLE "profiles"."personal_profiles" DROP CONSTRAINT "FK_62a9258f166a0897dac03ba7939"`);
-        await queryRunner.query(`ALTER TABLE "authn"."email_verification_tokens" DROP CONSTRAINT "FK_d633df78199521854b2b9146146"`);
-        await queryRunner.query(`ALTER TABLE "authn"."password_reset_tokens" DROP CONSTRAINT "FK_2a12933c8e4769b3d1cd2c8c45c"`);
-        await queryRunner.query(`ALTER TABLE "accounts"."credential_accounts" DROP CONSTRAINT "FK_ee3e3e2575dc7b27974bb860877"`);
-        await queryRunner.query(`ALTER TABLE "accounts"."social_accounts" DROP CONSTRAINT "FK_ae1e94e34fe10586fda04a99a94"`);
-        await queryRunner.query(`ALTER TABLE "storage"."store_rooms" DROP CONSTRAINT "FK_063eba9e418df9266e5f2f9b58d"`);
-        await queryRunner.query(`ALTER TABLE "storage"."warehouses" DROP CONSTRAINT "FK_4de20480cbb78ccae6e1771a34d"`);
-        await queryRunner.query(`ALTER TABLE "storage"."custom_rooms" DROP CONSTRAINT "FK_40378daf9a41d68b830692b4616"`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_action_overrides" DROP CONSTRAINT "FK_40f04fbc4405be1a0f0eff497c7"`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_action_overrides" DROP CONSTRAINT "FK_3a4489f8b914fa4cba26f319b83"`);
-        await queryRunner.query(`ALTER TABLE "capabilities"."catalog_actions" DROP CONSTRAINT "FK_1e4be5a3331df45396fb46c4842"`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_module_policies" DROP CONSTRAINT "FK_a952412d1cdc3d220fee8b03d34"`);
-        await queryRunner.query(`ALTER TABLE "tiers"."tier_module_policies" DROP CONSTRAINT "FK_fa76a4805611c6f268402b34912"`);
-        await queryRunner.query(`DROP TABLE "sessions"."social_sessions"`);
-        await queryRunner.query(`DROP TABLE "sessions"."sessions"`);
-        await queryRunner.query(`DROP TABLE "sessions"."credential_sessions"`);
-        await queryRunner.query(`DROP TABLE "identity"."users"`);
-        await queryRunner.query(`DROP INDEX "profiles"."IDX_3634c5718c2a4673810a51a3a8"`);
-        await queryRunner.query(`DROP TABLE "profiles"."social_profiles"`);
-        await queryRunner.query(`DROP TABLE "profiles"."profiles"`);
-        await queryRunner.query(`DROP TABLE "profiles"."commercial_profiles"`);
-        await queryRunner.query(`DROP TABLE "profiles"."personal_profiles"`);
-        await queryRunner.query(`DROP INDEX "authn"."IDX_d633df78199521854b2b914614"`);
-        await queryRunner.query(`DROP TABLE "authn"."email_verification_tokens"`);
-        await queryRunner.query(`DROP INDEX "authn"."IDX_91185d86d5d7557b19abbb2868"`);
-        await queryRunner.query(`DROP TABLE "authn"."password_reset_tokens"`);
-        await queryRunner.query(`DROP INDEX "accounts"."IDX_dfbe65d48344a6c60eae7e453e"`);
-        await queryRunner.query(`DROP INDEX "accounts"."IDX_8a13d1aee5c999536747a967a8"`);
-        await queryRunner.query(`DROP TABLE "accounts"."credential_accounts"`);
-        await queryRunner.query(`DROP TABLE "accounts"."accounts"`);
-        await queryRunner.query(`DROP INDEX "accounts"."IDX_244e28edb736d5184e50dff200"`);
-        await queryRunner.query(`DROP INDEX "accounts"."IDX_411c2df970da88bd9e8c6a51ee"`);
-        await queryRunner.query(`DROP TABLE "accounts"."social_accounts"`);
-        await queryRunner.query(`DROP INDEX "authn"."IDX_0e65969a2dc1f558d77daacb85"`);
-        await queryRunner.query(`DROP INDEX "authn"."IDX_43c10501c713ab675b9aea3d21"`);
-        await queryRunner.query(`DROP INDEX "authn"."IDX_dd2cbbbc127b69ce5637c22270"`);
-        await queryRunner.query(`DROP INDEX "authn"."IDX_e6470df66c7cac761f40efe6db"`);
-        await queryRunner.query(`DROP TABLE "authn"."verification_attempts"`);
-        await queryRunner.query(`DROP INDEX "onboarding"."IDX_212b8fe81dc401ca897d175321"`);
-        await queryRunner.query(`DROP TABLE "onboarding"."onboarding_sessions"`);
-        await queryRunner.query(`DROP TABLE "storage"."store_rooms"`);
-        await queryRunner.query(`DROP INDEX "storage"."idx_storages_tenant_uuid"`);
-        await queryRunner.query(`DROP TABLE "storage"."storages"`);
-        await queryRunner.query(`DROP TABLE "storage"."warehouses"`);
-        await queryRunner.query(`DROP TABLE "storage"."custom_rooms"`);
-        await queryRunner.query(`DROP TABLE "tenants"."tenant_config"`);
-        await queryRunner.query(`DROP INDEX "tenants"."IDX_79964092dc2230851858fa1ab7"`);
-        await queryRunner.query(`DROP TABLE "tenants"."tenant_invitations"`);
-        await queryRunner.query(`DROP INDEX "tenants"."IDX_45aa4b00b2400b1852516f2bdc"`);
-        await queryRunner.query(`DROP INDEX "tenants"."IDX_ffba0c9ecd4fd98550b3300ae6"`);
-        await queryRunner.query(`DROP TABLE "tenants"."tenant_members"`);
-        await queryRunner.query(`DROP TABLE "tenants"."tenant_profiles"`);
-        await queryRunner.query(`DROP INDEX "tenants"."IDX_c59559e7872bc9726adef4669f"`);
-        await queryRunner.query(`DROP INDEX "tenants"."IDX_2310ecc5cb8be427097154b18f"`);
-        await queryRunner.query(`DROP TABLE "tenants"."tenants"`);
-        await queryRunner.query(`DROP TABLE "tiers"."tier_action_overrides"`);
-        await queryRunner.query(`DROP TABLE "capabilities"."catalog_actions"`);
-        await queryRunner.query(`DROP TABLE "tiers"."tier_module_policies"`);
-        await queryRunner.query(`DROP TABLE "capabilities"."modules"`);
-        await queryRunner.query(`DROP TABLE "tiers"."tier_plans"`);
-        await queryRunner.query(`DROP INDEX "shared"."IDX_process_state_status"`);
-        await queryRunner.query(`DROP INDEX "shared"."IDX_process_state_correlation_id"`);
-        await queryRunner.query(`DROP INDEX "shared"."IDX_process_state_process_name"`);
-        await queryRunner.query(`DROP TABLE "shared"."process_state"`);
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."social_sessions" DROP CONSTRAINT "FK_2f210ed328eaac49e362252f7f0"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."social_sessions" DROP CONSTRAINT "FK_045cff00bfa4267c978693cc82e"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."sessions" DROP CONSTRAINT "FK_da0cf19646ff5c6e3c0284468e5"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."credential_sessions" DROP CONSTRAINT "FK_2c1b9ebe4027c6f543db4f6b3af"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "sessions"."credential_sessions" DROP CONSTRAINT "FK_6a946ad04ec3cc5074589b42201"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "profiles"."social_profiles" DROP CONSTRAINT "FK_707a4cfedae4e94f5e46143ba13"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "profiles"."commercial_profiles" DROP CONSTRAINT "FK_d86aad2568685f1e00dfbdf725f"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "profiles"."personal_profiles" DROP CONSTRAINT "FK_62a9258f166a0897dac03ba7939"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "authn"."email_verification_tokens" DROP CONSTRAINT "FK_d633df78199521854b2b9146146"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "authn"."password_reset_tokens" DROP CONSTRAINT "FK_2a12933c8e4769b3d1cd2c8c45c"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "accounts"."credential_accounts" DROP CONSTRAINT "FK_ee3e3e2575dc7b27974bb860877"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "accounts"."social_accounts" DROP CONSTRAINT "FK_ae1e94e34fe10586fda04a99a94"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "storage"."store_rooms" DROP CONSTRAINT "FK_063eba9e418df9266e5f2f9b58d"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "storage"."warehouses" DROP CONSTRAINT "FK_4de20480cbb78ccae6e1771a34d"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "storage"."custom_rooms" DROP CONSTRAINT "FK_40378daf9a41d68b830692b4616"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_action_overrides" DROP CONSTRAINT "FK_40f04fbc4405be1a0f0eff497c7"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_action_overrides" DROP CONSTRAINT "FK_3a4489f8b914fa4cba26f319b83"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "capabilities"."catalog_actions" DROP CONSTRAINT "FK_1e4be5a3331df45396fb46c4842"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_module_policies" DROP CONSTRAINT "FK_a952412d1cdc3d220fee8b03d34"`,
+    );
+    await queryRunner.query(
+      `ALTER TABLE "tiers"."tier_module_policies" DROP CONSTRAINT "FK_fa76a4805611c6f268402b34912"`,
+    );
+    await queryRunner.query(`DROP TABLE "sessions"."social_sessions"`);
+    await queryRunner.query(`DROP TABLE "sessions"."sessions"`);
+    await queryRunner.query(`DROP TABLE "sessions"."credential_sessions"`);
+    await queryRunner.query(`DROP TABLE "identity"."users"`);
+    await queryRunner.query(`DROP INDEX "profiles"."IDX_3634c5718c2a4673810a51a3a8"`);
+    await queryRunner.query(`DROP TABLE "profiles"."social_profiles"`);
+    await queryRunner.query(`DROP TABLE "profiles"."profiles"`);
+    await queryRunner.query(`DROP TABLE "profiles"."commercial_profiles"`);
+    await queryRunner.query(`DROP TABLE "profiles"."personal_profiles"`);
+    await queryRunner.query(`DROP INDEX "authn"."IDX_d633df78199521854b2b914614"`);
+    await queryRunner.query(`DROP TABLE "authn"."email_verification_tokens"`);
+    await queryRunner.query(`DROP INDEX "authn"."IDX_91185d86d5d7557b19abbb2868"`);
+    await queryRunner.query(`DROP TABLE "authn"."password_reset_tokens"`);
+    await queryRunner.query(`DROP INDEX "accounts"."IDX_dfbe65d48344a6c60eae7e453e"`);
+    await queryRunner.query(`DROP INDEX "accounts"."IDX_8a13d1aee5c999536747a967a8"`);
+    await queryRunner.query(`DROP TABLE "accounts"."credential_accounts"`);
+    await queryRunner.query(`DROP TABLE "accounts"."accounts"`);
+    await queryRunner.query(`DROP INDEX "accounts"."IDX_244e28edb736d5184e50dff200"`);
+    await queryRunner.query(`DROP INDEX "accounts"."IDX_411c2df970da88bd9e8c6a51ee"`);
+    await queryRunner.query(`DROP TABLE "accounts"."social_accounts"`);
+    await queryRunner.query(`DROP INDEX "authn"."IDX_0e65969a2dc1f558d77daacb85"`);
+    await queryRunner.query(`DROP INDEX "authn"."IDX_43c10501c713ab675b9aea3d21"`);
+    await queryRunner.query(`DROP INDEX "authn"."IDX_dd2cbbbc127b69ce5637c22270"`);
+    await queryRunner.query(`DROP INDEX "authn"."IDX_e6470df66c7cac761f40efe6db"`);
+    await queryRunner.query(`DROP TABLE "authn"."verification_attempts"`);
+    await queryRunner.query(`DROP INDEX "onboarding"."IDX_212b8fe81dc401ca897d175321"`);
+    await queryRunner.query(`DROP TABLE "onboarding"."onboarding_sessions"`);
+    await queryRunner.query(`DROP TABLE "storage"."store_rooms"`);
+    await queryRunner.query(`DROP INDEX "storage"."idx_storages_tenant_uuid"`);
+    await queryRunner.query(`DROP TABLE "storage"."storages"`);
+    await queryRunner.query(`DROP TABLE "storage"."warehouses"`);
+    await queryRunner.query(`DROP TABLE "storage"."custom_rooms"`);
+    await queryRunner.query(`DROP TABLE "tenants"."tenant_config"`);
+    await queryRunner.query(`DROP INDEX "tenants"."IDX_79964092dc2230851858fa1ab7"`);
+    await queryRunner.query(`DROP TABLE "tenants"."tenant_invitations"`);
+    await queryRunner.query(`DROP INDEX "tenants"."IDX_45aa4b00b2400b1852516f2bdc"`);
+    await queryRunner.query(`DROP INDEX "tenants"."IDX_ffba0c9ecd4fd98550b3300ae6"`);
+    await queryRunner.query(`DROP TABLE "tenants"."tenant_members"`);
+    await queryRunner.query(`DROP TABLE "tenants"."tenant_profiles"`);
+    await queryRunner.query(`DROP INDEX "tenants"."IDX_c59559e7872bc9726adef4669f"`);
+    await queryRunner.query(`DROP INDEX "tenants"."IDX_2310ecc5cb8be427097154b18f"`);
+    await queryRunner.query(`DROP TABLE "tenants"."tenants"`);
+    await queryRunner.query(`DROP TABLE "tiers"."tier_action_overrides"`);
+    await queryRunner.query(`DROP TABLE "capabilities"."catalog_actions"`);
+    await queryRunner.query(`DROP TABLE "tiers"."tier_module_policies"`);
+    await queryRunner.query(`DROP TABLE "capabilities"."modules"`);
+    await queryRunner.query(`DROP TABLE "tiers"."tier_plans"`);
+    await queryRunner.query(`DROP INDEX "shared"."IDX_process_state_status"`);
+    await queryRunner.query(`DROP INDEX "shared"."IDX_process_state_correlation_id"`);
+    await queryRunner.query(`DROP INDEX "shared"."IDX_process_state_process_name"`);
+    await queryRunner.query(`DROP TABLE "shared"."process_state"`);
+  }
 }

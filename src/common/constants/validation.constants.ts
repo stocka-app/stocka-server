@@ -7,11 +7,14 @@
 
 // ── Password ────────────────────────────────────────────────────────
 
-export const PASSWORD_MIN_LENGTH = 8;
+export const PASSWORD_MIN_LENGTH = 10;
 export const PASSWORD_UPPERCASE_PATTERN = /[A-Z]/;
 export const PASSWORD_DIGIT_PATTERN = /\d/;
-/** Combined password strength check: at least 1 uppercase + 1 digit. */
-export const PASSWORD_STRENGTH_PATTERN = /^(?=.*[A-Z])(?=.*\d)/;
+/** At least one special character from the standard ASCII symbol set. */
+export const PASSWORD_SPECIAL_CHAR_PATTERN = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/;
+/** Combined password strength check: at least 1 uppercase + 1 digit + 1 special character. */
+export const PASSWORD_STRENGTH_PATTERN =
+  /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])/;
 
 // ── Username ────────────────────────────────────────────────────────
 

@@ -108,7 +108,7 @@ export class TypeOrmProfileRepository implements IProfileContract {
       existing.rawData = model.rawData;
       existing.syncedAt = new Date();
       const savedEntity = await repo.save(existing);
-      return SocialProfileMapper.toDomain(savedEntity as SocialProfileEntity);
+      return SocialProfileMapper.toDomain(savedEntity);
     }
 
     const entityData = SocialProfileMapper.toEntity(model);
@@ -122,6 +122,12 @@ export class TypeOrmProfileRepository implements IProfileContract {
     provider: string,
   ): Promise<SocialProfileModel | null> {
     const entity = await this.socialProfileRepo.findOne({ where: { profileId, provider } });
+    return entity ? SocialProfileMapper.toDomain(entity) : null;
+  }
+
+  /* istanbul ignore next */
+  async findFirstSocialProfileByProfileId(profileId: number): Promise<SocialProfileModel | null> {
+    const entity = await this.socialProfileRepo.findOne({ where: { profileId } });
     return entity ? SocialProfileMapper.toDomain(entity) : null;
   }
 }

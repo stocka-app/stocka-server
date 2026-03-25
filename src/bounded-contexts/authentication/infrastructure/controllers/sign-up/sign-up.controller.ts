@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Req, Res } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { SignUpCommand } from '@authentication/application/commands/sign-up/sign-up.command';
 import { SignUpCommandResult } from '@authentication/application/types/authentication-result.types';
@@ -13,12 +14,31 @@ import { extractLocale } from '@shared/infrastructure/i18n/locale.helper';
 import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { RateLimit } from '@common/decorators/rate-limit.decorator';
 
 @ApiTags('Authentication')
 @Controller('authentication')
 export class SignUpController {
   constructor(private readonly commandBus: CommandBus) {}
 
+  @Throttle({
+    short: { ttl: 1000, limit: 2 },
+    medium: { ttl: 60000, limit: 5 },
+  })
+  @RateLimit({
+    type: 'sign_up',
+    maxAttemptsByIp: 10,
+    maxAttemptsByIdentifier: 3,
+    identifierSource: 'body.email',
+    trackFailedAttempts: false,
+    progressiveBlock: {
+      thresholds: [
+        { attempts: 5, blockMinutes: 10 },
+        { attempts: 8, blockMinutes: 60 },
+      ],
+    },
+    failureErrorCodes: [],
+  })
   @Post('sign-up')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
