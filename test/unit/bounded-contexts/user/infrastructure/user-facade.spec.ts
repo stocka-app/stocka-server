@@ -862,4 +862,29 @@ describe('UserFacade', () => {
       });
     });
   });
+
+  describe('Given the user exists with no social profile but a personal profile with an avatar', () => {
+    describe('When findSocialNameByUserUUID is called', () => {
+      it('Then it returns the personal profile avatar as fallback for avatarUrl', async () => {
+        const uuid = '550e8400-e29b-41d4-a716-446655440033';
+        const user = UserMother.create({ id: 1, uuid });
+        const profile = { id: 99 };
+
+        userContract.findByUUID.mockResolvedValue(user);
+        (profileContract.findByUserId as jest.Mock).mockResolvedValue(profile);
+        (profileContract.findFirstSocialProfileByProfileId as jest.Mock).mockResolvedValue(null);
+        (profileContract.findPersonalProfileByUserId as jest.Mock).mockResolvedValue({
+          avatarUrl: 'https://example.com/personal-avatar.jpg',
+        });
+
+        const result = await facade.findSocialNameByUserUUID(uuid);
+
+        expect(result).toEqual({
+          givenName: null,
+          familyName: null,
+          avatarUrl: 'https://example.com/personal-avatar.jpg',
+        });
+      });
+    });
+  });
 });

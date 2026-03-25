@@ -189,11 +189,14 @@ export class UserFacade implements IUserFacade {
     if (!user || user.id === undefined) return nullResult;
     const profile = await this.profileContract.findByUserId(user.id);
     if (!profile || profile.id === undefined) return nullResult;
-    const social = await this.profileContract.findFirstSocialProfileByProfileId(profile.id);
+    const [social, personalProfile] = await Promise.all([
+      this.profileContract.findFirstSocialProfileByProfileId(profile.id),
+      this.profileContract.findPersonalProfileByUserId(user.id),
+    ]);
     return {
       givenName: social?.givenName ?? null,
       familyName: social?.familyName ?? null,
-      avatarUrl: social?.providerAvatarUrl ?? null,
+      avatarUrl: social?.providerAvatarUrl ?? personalProfile?.avatarUrl ?? null,
     };
   }
 
