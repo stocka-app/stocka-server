@@ -9,6 +9,8 @@ export class TierPlanMapper {
       maxProducts: entity.maxProducts,
       maxUsers: entity.maxUsers,
       maxWarehouses: entity.maxWarehouses,
+      maxCustomRooms: entity.maxCustomRooms,
+      maxStoreRooms: entity.maxStoreRooms,
       policyVersion: entity.policyVersion,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,

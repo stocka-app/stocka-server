@@ -5,6 +5,8 @@ export interface TierPlanLimits {
   maxProducts: number | null;
   maxUsers: number | null;
   maxWarehouses: number | null;
+  maxCustomRooms: number;
+  maxStoreRooms: number;
 }
 
 export interface ModulePolicy {
