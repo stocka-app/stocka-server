@@ -10,6 +10,8 @@ const makeTierPlanEntity = (tier: string): TierPlanEntity =>
     maxProducts: tier === 'FREE' ? 100 : 1000,
     maxUsers: tier === 'FREE' ? 1 : 5,
     maxWarehouses: tier === 'FREE' ? 0 : 3,
+    maxCustomRooms: tier === 'FREE' ? 1 : 3,
+    maxStoreRooms: tier === 'FREE' ? 1 : 3,
     policyVersion: new Date('2026-01-01'),
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
@@ -39,6 +41,8 @@ describe('TypeOrmTierPlanRepository', () => {
         expect(model?.tier).toBe('FREE');
         expect(model?.maxProducts).toBe(100);
         expect(model?.maxWarehouses).toBe(0);
+        expect(model?.maxCustomRooms).toBe(1);
+        expect(model?.maxStoreRooms).toBe(1);
       });
     });
   });

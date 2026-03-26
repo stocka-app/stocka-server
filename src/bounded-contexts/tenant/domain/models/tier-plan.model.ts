@@ -6,6 +6,8 @@ export interface TierPlanReconstituteProps {
   maxProducts: number | null;
   maxUsers: number | null;
   maxWarehouses: number | null;
+  maxCustomRooms: number;
+  maxStoreRooms: number;
   policyVersion: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -17,6 +19,8 @@ export class TierPlanModel {
   private readonly _maxProducts: number | null;
   private readonly _maxUsers: number | null;
   private readonly _maxWarehouses: number | null;
+  private readonly _maxCustomRooms: number;
+  private readonly _maxStoreRooms: number;
   private readonly _policyVersion: Date;
   private readonly _createdAt: Date;
   private readonly _updatedAt: Date;
@@ -27,6 +31,8 @@ export class TierPlanModel {
     maxProducts: number | null;
     maxUsers: number | null;
     maxWarehouses: number | null;
+    maxCustomRooms: number;
+    maxStoreRooms: number;
     policyVersion: Date;
     createdAt: Date;
     updatedAt: Date;
@@ -36,6 +42,8 @@ export class TierPlanModel {
     this._maxProducts = props.maxProducts;
     this._maxUsers = props.maxUsers;
     this._maxWarehouses = props.maxWarehouses;
+    this._maxCustomRooms = props.maxCustomRooms;
+    this._maxStoreRooms = props.maxStoreRooms;
     this._policyVersion = props.policyVersion;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
@@ -53,6 +61,8 @@ export class TierPlanModel {
       maxProducts: props.maxProducts,
       maxUsers: props.maxUsers,
       maxWarehouses: props.maxWarehouses,
+      maxCustomRooms: props.maxCustomRooms,
+      maxStoreRooms: props.maxStoreRooms,
       policyVersion: props.policyVersion,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
@@ -79,6 +89,14 @@ export class TierPlanModel {
     return this._maxWarehouses;
   }
 
+  get maxCustomRooms(): number {
+    return this._maxCustomRooms;
+  }
+
+  get maxStoreRooms(): number {
+    return this._maxStoreRooms;
+  }
+
   get policyVersion(): Date {
     return this._policyVersion;
   }
@@ -101,5 +119,13 @@ export class TierPlanModel {
 
   isUnlimitedWarehouses(): boolean {
     return this._maxWarehouses === null;
+  }
+
+  isUnlimitedCustomRooms(): boolean {
+    return this._maxCustomRooms === -1;
+  }
+
+  isUnlimitedStoreRooms(): boolean {
+    return this._maxStoreRooms === -1;
   }
 }
