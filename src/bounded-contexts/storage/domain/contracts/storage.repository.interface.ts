@@ -1,9 +1,15 @@
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
+
+export interface StorageFilters {
+  status?: StorageStatus;
+  type?: StorageType;
+}
 
 export interface IStorageRepository {
   findByUUID(uuid: string, tenantUUID: string): Promise<StorageAggregate | null>;
-  findAllActive(tenantUUID: string): Promise<StorageAggregate[]>;
+  findAll(tenantUUID: string, filters?: StorageFilters): Promise<StorageAggregate[]>;
   countActiveByType(tenantUUID: string, type: StorageType): Promise<number>;
   existsActiveName(tenantUUID: string, name: string): Promise<boolean>;
   save(storage: StorageAggregate): Promise<StorageAggregate>;

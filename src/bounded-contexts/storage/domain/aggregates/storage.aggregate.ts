@@ -1,4 +1,5 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StoreRoomModel } from '@storage/domain/models/store-room.model';
@@ -159,6 +160,11 @@ export class StorageAggregate extends AggregateRoot {
 
   get tenantUUID(): string {
     return this._tenantUUID;
+  }
+
+  get status(): StorageStatus {
+    if (this._archivedAt !== null) return StorageStatus.ARCHIVED;
+    return StorageStatus.ACTIVE;
   }
 
   get type(): StorageType {

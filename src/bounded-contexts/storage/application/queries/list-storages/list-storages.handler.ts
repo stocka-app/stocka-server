@@ -13,6 +13,6 @@ export class ListStoragesHandler implements IQueryHandler<ListStoragesQuery> {
   ) {}
 
   async execute(query: ListStoragesQuery): Promise<StorageAggregate[]> {
-    return this.storageRepository.findAllActive(query.tenantUUID);
+    return this.storageRepository.findAll(query.tenantUUID, query.filters);
   }
 }
