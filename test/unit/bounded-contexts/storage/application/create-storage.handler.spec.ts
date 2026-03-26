@@ -77,6 +77,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.WAREHOUSE,
           'Second Warehouse',
+          undefined,
           '999 Industrial Blvd',
           undefined,
         );
@@ -98,6 +99,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.WAREHOUSE,
           'My Warehouse',
+          undefined,
           '123 Industrial Ave',
           undefined,
         );
@@ -120,6 +122,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.CUSTOM_ROOM,
           'Extra Room',
+          undefined,
           undefined,
           'Office',
         );
@@ -144,6 +147,7 @@ describe('CreateStorageHandler', () => {
           'Extra Store',
           undefined,
           undefined,
+          undefined,
         );
 
         const result = await handler.execute(command);
@@ -165,6 +169,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.CUSTOM_ROOM,
           'Duplicate Name',
+          undefined,
           undefined,
           'Office',
         );
@@ -191,6 +196,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.CUSTOM_ROOM,
           'New Room',
+          undefined,
           '123 Main St',
           'Office',
         );
@@ -221,6 +227,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.STORE_ROOM,
           'Main Bodega',
+          undefined,
           '456 Ave',
           undefined,
         );
@@ -249,6 +256,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.WAREHOUSE,
           'Central Warehouse',
+          undefined,
           '789 Industrial Blvd',
           undefined,
         );
@@ -280,6 +288,7 @@ describe('CreateStorageHandler', () => {
           TENANT_UUID,
           StorageType.CUSTOM_ROOM,
           'Default Room',
+          undefined,
           undefined,
           undefined,
         );

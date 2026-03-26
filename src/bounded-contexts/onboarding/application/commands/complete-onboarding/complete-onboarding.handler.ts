@@ -141,6 +141,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
           StorageType.CUSTOM_ROOM,
           storageName,
           undefined,
+          undefined,
           'General',
         ),
       );

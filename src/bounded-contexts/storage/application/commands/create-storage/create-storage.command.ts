@@ -5,6 +5,7 @@ export class CreateStorageCommand {
     public readonly tenantUUID: string,
     public readonly type: StorageType,
     public readonly name: string,
+    public readonly description: string | undefined,
     public readonly address: string | undefined,
     public readonly roomType: string | undefined,
   ) {}

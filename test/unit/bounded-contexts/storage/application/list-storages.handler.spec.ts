@@ -18,6 +18,7 @@ describe('ListStoragesHandler', () => {
       tenantUUID: TENANT_UUID,
       type: overrides.type ?? StorageType.CUSTOM_ROOM,
       name: 'Test Storage',
+      description: null,
       customRoom: null,
       storeRoom: null,
       warehouse: null,

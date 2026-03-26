@@ -22,6 +22,7 @@ describe('UpdateStorageHandler', () => {
       tenantUUID: TENANT_UUID,
       type: StorageType.CUSTOM_ROOM,
       name: 'Old Name',
+      description: null,
       customRoom: null,
       storeRoom: null,
       warehouse: null,

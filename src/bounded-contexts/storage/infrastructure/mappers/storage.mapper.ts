@@ -13,6 +13,7 @@ export class StorageMapper {
       tenantUUID: entity.tenantUUID,
       type: entity.type as StorageType,
       name: entity.name,
+      description: entity.description,
       customRoom: entity.customRoom ? CustomRoomMapper.toDomain(entity.customRoom) : null,
       storeRoom: entity.storeRoom ? StoreRoomMapper.toDomain(entity.storeRoom) : null,
       warehouse: entity.warehouse ? WarehouseMapper.toDomain(entity.warehouse) : null,
@@ -28,6 +29,7 @@ export class StorageMapper {
       tenantUUID: aggregate.tenantUUID,
       type: aggregate.type,
       name: aggregate.name,
+      description: aggregate.description,
       archivedAt: aggregate.archivedAt,
     };
 
