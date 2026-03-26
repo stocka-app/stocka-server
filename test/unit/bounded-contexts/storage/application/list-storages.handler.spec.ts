@@ -73,7 +73,25 @@ describe('ListStoragesHandler', () => {
     });
   });
 
-  // ── H-L1: status=FROZEN → only frozen storages ─────────────────────────────
+  // ── H-L2 (STOC-326): status=ACTIVE → only active storages ─────────────────
+
+  describe('Given a tenant with active and archived storages', () => {
+    describe('When the list query is executed with status=ACTIVE', () => {
+      it('Then it returns only active storages', async () => {
+        const activeStorage = makeStorage();
+        storageRepository.findAll.mockResolvedValue([activeStorage]);
+
+        const query = new ListStoragesQuery(TENANT_UUID, { status: StorageStatus.ACTIVE });
+        const result = await handler.execute(query);
+
+        expect(result).toHaveLength(1);
+        expect(result[0].status).toBe(StorageStatus.ACTIVE);
+        expect(storageRepository.findAll).toHaveBeenCalledWith(TENANT_UUID, { status: StorageStatus.ACTIVE });
+      });
+    });
+  });
+
+  // ── H-L1 (STOC-324): status=FROZEN → only frozen storages ──────────────────
 
   describe('Given the tenant has frozen storages', () => {
     describe('When the list query is executed with status=FROZEN', () => {
