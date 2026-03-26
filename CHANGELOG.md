@@ -3,6 +3,31 @@
 All notable changes to this project are documented here.
 
 
+## [0.7.0](https://github.com/stocka-app/stocka-server/compare/v0.6.0...v0.7.0) (2026-03-26)
+
+### ✨ Features
+
+* **auth:** [STOC-401](https://austins-industries.atlassian.net/browse/STOC-401) — embed tierLimits in JWT + add GET /api/tenants/me/capabilities ([c35bcb2](https://github.com/stocka-app/stocka-server/commit/c35bcb251f2d16e70a3f48a289a57af74983dc31))
+* **storage:** [STOC-401](https://austins-industries.atlassian.net/browse/STOC-401) — add frozenAt to StorageAggregate + migration for FROZEN status support ([184a7cb](https://github.com/stocka-app/stocka-server/commit/184a7cb44ce88ec69e4f4cd9581c0f4f4932f6fe))
+* **storage:** [STOC-409](https://austins-industries.atlassian.net/browse/STOC-409) — add description field to Storage BC ([68124c0](https://github.com/stocka-app/stocka-server/commit/68124c0d4f6a1f661cc5baa89afc0177aeb6a940))
+* **storage:** [STOC-413](https://austins-industries.atlassian.net/browse/STOC-413) — add server-side pagination, search, and sort to GET /api/storages ([d901149](https://github.com/stocka-app/stocka-server/commit/d9011496788ce4942b0d5e44a979d8a8f92a890c))
+
+### 🐛 Bug Fixes
+
+* **storage:** [STOC-402](https://austins-industries.atlassian.net/browse/STOC-402) — fix PermissionGuard returns 401 NOT_AUTHENTICATED instead of 403 ([1617c26](https://github.com/stocka-app/stocka-server/commit/1617c26d563f6649b2ca6a403ffa5f506d49852c))
+
+### 🔧 Refactoring
+
+* **storage:** [STOC-410](https://austins-industries.atlassian.net/browse/STOC-410) — move StorageFilters from domain to application layer ([3565836](https://github.com/stocka-app/stocka-server/commit/3565836473fa4c04c90fbc5a26a2087ce0ace23e))
+
+### 📚 Documentation
+
+* **storage:** [STOC-412](https://austins-industries.atlassian.net/browse/STOC-412) — add JSDoc to setTenantToStarter e2e helper ([ede923e](https://github.com/stocka-app/stocka-server/commit/ede923e5c69ad735fd519787f3bfc548d62dacd2))
+
+### 🧹 Chores
+
+* reformat AddDescriptionToStorage migration (prettier) + add regen-changelog script ([a76754f](https://github.com/stocka-app/stocka-server/commit/a76754f2d8dcff2016d18d64202e51124afdf001))
+
 ## [0.6.0](https://github.com/stocka-app/stocka-server/compare/v0.5.0...v0.6.0) (2026-03-26)
 
 ### ✨ Features
