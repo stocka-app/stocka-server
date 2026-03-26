@@ -22,6 +22,7 @@ export interface StorageAggregateReconstituteProps extends AggregateRootProps {
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Date | null;
+  frozenAt: Date | null;
 }
 
 export class StorageAggregate extends AggregateRoot {
@@ -32,6 +33,7 @@ export class StorageAggregate extends AggregateRoot {
   private readonly _customRoom: CustomRoomModel | null;
   private readonly _storeRoom: StoreRoomModel | null;
   private readonly _warehouse: WarehouseModel | null;
+  private _frozenAt: Date | null;
 
   private constructor(
     props: AggregateRootProps & {
@@ -42,6 +44,7 @@ export class StorageAggregate extends AggregateRoot {
       customRoom: CustomRoomModel | null;
       storeRoom: StoreRoomModel | null;
       warehouse: WarehouseModel | null;
+      frozenAt?: Date | null;
     },
   ) {
     super(props);
@@ -52,6 +55,7 @@ export class StorageAggregate extends AggregateRoot {
     this._customRoom = props.customRoom;
     this._storeRoom = props.storeRoom;
     this._warehouse = props.warehouse;
+    this._frozenAt = props.frozenAt ?? null;
   }
 
   static createCustomRoom(props: {
@@ -159,6 +163,7 @@ export class StorageAggregate extends AggregateRoot {
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
+      frozenAt: props.frozenAt,
       tenantUUID: props.tenantUUID,
       type: props.type,
       name: props.name,
@@ -175,7 +180,16 @@ export class StorageAggregate extends AggregateRoot {
 
   get status(): StorageStatus {
     if (this._archivedAt !== null) return StorageStatus.ARCHIVED;
+    if (this._frozenAt !== null) return StorageStatus.FROZEN;
     return StorageStatus.ACTIVE;
+  }
+
+  get frozenAt(): Date | null {
+    return this._frozenAt;
+  }
+
+  isFrozen(): boolean {
+    return this._frozenAt !== null && this._archivedAt === null;
   }
 
   get type(): StorageType {

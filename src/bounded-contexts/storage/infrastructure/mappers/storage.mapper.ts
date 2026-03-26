@@ -20,6 +20,7 @@ export class StorageMapper {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       archivedAt: entity.archivedAt,
+      frozenAt: entity.frozenAt,
     });
   }
 
@@ -31,6 +32,7 @@ export class StorageMapper {
       name: aggregate.name,
       description: aggregate.description,
       archivedAt: aggregate.archivedAt,
+      frozenAt: aggregate.frozenAt,
     };
 
     /* istanbul ignore next */

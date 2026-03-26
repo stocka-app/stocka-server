@@ -252,6 +252,7 @@ describe('StorageAggregate', () => {
           createdAt: now,
           updatedAt: now,
           archivedAt: null,
+          frozenAt: null,
         });
 
         expect(aggregate.id).toBe(42);
@@ -260,6 +261,61 @@ describe('StorageAggregate', () => {
         expect(aggregate.type).toBe(StorageType.CUSTOM_ROOM);
         expect(aggregate.name).toBe('Restored Room');
         expect(aggregate.isArchived()).toBe(false);
+        expect(aggregate.isFrozen()).toBe(false);
+        expect(aggregate.status).toBe('ACTIVE');
+      });
+    });
+  });
+
+  describe('Given a storage reconstituted with frozenAt set', () => {
+    describe('When status is read', () => {
+      it('Then status is FROZEN and isFrozen is true', () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: 5,
+          uuid: '019538a0-0000-7000-8000-000000000055',
+          tenantUUID: TENANT_UUID,
+          type: StorageType.CUSTOM_ROOM,
+          name: 'Frozen Room',
+          description: null,
+          customRoom: null,
+          storeRoom: null,
+          warehouse: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          archivedAt: null,
+          frozenAt: new Date(),
+        });
+
+        expect(aggregate.status).toBe('FROZEN');
+        expect(aggregate.isFrozen()).toBe(true);
+        expect(aggregate.isArchived()).toBe(false);
+        expect(aggregate.frozenAt).toBeInstanceOf(Date);
+      });
+    });
+  });
+
+  describe('Given a storage that is both archived and frozen', () => {
+    describe('When status is read', () => {
+      it('Then ARCHIVED takes precedence over FROZEN', () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: 6,
+          uuid: '019538a0-0000-7000-8000-000000000056',
+          tenantUUID: TENANT_UUID,
+          type: StorageType.CUSTOM_ROOM,
+          name: 'Archived Frozen',
+          description: null,
+          customRoom: null,
+          storeRoom: null,
+          warehouse: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          archivedAt: new Date(),
+          frozenAt: new Date(),
+        });
+
+        expect(aggregate.status).toBe('ARCHIVED');
+        expect(aggregate.isArchived()).toBe(true);
+        expect(aggregate.isFrozen()).toBe(false);
       });
     });
   });
@@ -280,6 +336,7 @@ describe('StorageAggregate', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           archivedAt: null,
+          frozenAt: null,
         });
 
         expect(aggregate.address).toBeNull();

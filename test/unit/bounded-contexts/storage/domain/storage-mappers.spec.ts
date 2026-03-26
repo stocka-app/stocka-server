@@ -147,6 +147,7 @@ describe('StorageMapper', () => {
           type: 'CUSTOM_ROOM',
           name: 'Office',
           archivedAt: null,
+          frozenAt: null,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
           customRoom: {
@@ -184,6 +185,7 @@ describe('StorageMapper', () => {
           type: 'STORE_ROOM',
           name: 'Bodega',
           archivedAt: null,
+          frozenAt: null,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
           customRoom: null,
@@ -216,6 +218,7 @@ describe('StorageMapper', () => {
           type: 'WAREHOUSE',
           name: 'Central WH',
           archivedAt: null,
+          frozenAt: null,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
           customRoom: null,
@@ -234,6 +237,34 @@ describe('StorageMapper', () => {
         expect(aggregate.type).toBe(StorageType.WAREHOUSE);
         expect(aggregate.warehouse).not.toBeNull();
         expect(aggregate.warehouse?.address).toBe('789 Industrial');
+      });
+    });
+  });
+
+  describe('Given a StorageEntity with frozenAt set', () => {
+    describe('When toDomain is called', () => {
+      it('Then the aggregate status is FROZEN and frozenAt is mapped', () => {
+        const frozenDate = new Date('2024-06-01');
+        const entity = {
+          id: 4,
+          uuid: '019538a0-0000-7000-8000-000000000080',
+          tenantUUID: '019538a0-0000-7000-8000-000000000001',
+          type: 'CUSTOM_ROOM',
+          name: 'Frozen Room',
+          description: null,
+          archivedAt: null,
+          frozenAt: frozenDate,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+          customRoom: null,
+          storeRoom: null,
+          warehouse: null,
+        } as unknown as StorageEntity;
+
+        const aggregate = StorageMapper.toDomain(entity);
+        expect(aggregate.status).toBe('FROZEN');
+        expect(aggregate.frozenAt).toEqual(frozenDate);
+        expect(aggregate.isFrozen()).toBe(true);
       });
     });
   });
