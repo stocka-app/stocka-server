@@ -55,8 +55,17 @@ async function completeOnboarding(
     });
 }
 
+/**
+ * Upgrades a tenant to STARTER tier AND sets all capacity limits to STARTER values.
+ *
+ * Use this helper instead of `setTenantTier()` whenever a test needs to create storages
+ * that require STARTER+ type limits (e.g. warehouses, custom rooms, store rooms). Unlike
+ * `setTenantTier()`, which only updates the tier column, this function also sets
+ * max_warehouses / max_custom_rooms / max_store_rooms / max_users — matching the actual
+ * values written by the onboarding flow. Without these capacity columns, the
+ * CreateStorageHandler will reject the request even if the tier field says STARTER.
+ */
 async function setTenantToStarter(dataSource: DataSource, tenantName: string): Promise<void> {
-  // Upgrade tier and set STARTER limits so the CreateStorageHandler allows warehouses
   await dataSource.query(
     `UPDATE "tenants"."tenant_config" tc
      SET tier = 'STARTER',
