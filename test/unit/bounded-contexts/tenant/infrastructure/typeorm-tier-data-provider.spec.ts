@@ -134,6 +134,8 @@ describe('TypeOrmTierDataProvider', () => {
           maxProducts: 1000,
           maxUsers: 5,
           maxWarehouses: 3,
+          maxCustomRooms: 3,
+          maxStoreRooms: 3,
         } as TierPlanEntity);
 
         const limits = await provider.getTierPlanLimits(TierEnum.STARTER);
@@ -142,6 +144,8 @@ describe('TypeOrmTierDataProvider', () => {
         expect(limits?.maxProducts).toBe(1000);
         expect(limits?.maxUsers).toBe(5);
         expect(limits?.maxWarehouses).toBe(3);
+        expect(limits?.maxCustomRooms).toBe(3);
+        expect(limits?.maxStoreRooms).toBe(3);
       });
     });
   });

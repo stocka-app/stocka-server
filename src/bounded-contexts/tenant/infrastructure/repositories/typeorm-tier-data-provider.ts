@@ -60,6 +60,8 @@ export class TypeOrmTierDataProvider implements ITierDataProvider {
       maxProducts: plan.maxProducts,
       maxUsers: plan.maxUsers,
       maxWarehouses: plan.maxWarehouses,
+      maxCustomRooms: plan.maxCustomRooms,
+      maxStoreRooms: plan.maxStoreRooms,
     };
   }
 
