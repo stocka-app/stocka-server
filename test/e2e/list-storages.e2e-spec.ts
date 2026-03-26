@@ -91,11 +91,7 @@ async function createStorage(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function archiveStorage(
-  app: INestApplication,
-  token: string,
-  uuid: string,
-): Promise<void> {
+async function archiveStorage(app: INestApplication, token: string, uuid: string): Promise<void> {
   await request(app.getHttpServer())
     .delete(`/api/storages/${uuid}`)
     .set('Authorization', `Bearer ${token}`);
@@ -172,16 +168,19 @@ describe('List Storages — GET /api/storages (e2e)', () => {
 
   describe('Given a tenant with one active warehouse and one archived custom room', () => {
     describe('When GET /api/storages is called without filters', () => {
-      it('Then it returns all storages regardless of status', async () => {
+      it('Then it returns all storages with pagination metadata', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages')
           .set('Authorization', `Bearer ${ownerAToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(Array.isArray(res.body)).toBe(true);
-        expect(res.body).toHaveLength(2);
+        expect(Array.isArray(res.body.items)).toBe(true);
+        expect(res.body.items).toHaveLength(2);
+        expect(res.body.total).toBe(2);
+        expect(res.body.page).toBe(1);
+        expect(res.body.totalPages).toBe(1);
 
-        const uuids: string[] = res.body.map((s: { uuid: string }) => s.uuid);
+        const uuids: string[] = res.body.items.map((s: { uuid: string }) => s.uuid);
         expect(uuids).toContain(warehouseUUID);
         expect(uuids).toContain(customRoomUUID);
       });
@@ -192,13 +191,16 @@ describe('List Storages — GET /api/storages (e2e)', () => {
 
   describe('Given the tenant has no frozen storages', () => {
     describe('When GET /api/storages?status=FROZEN is called', () => {
-      it('Then it returns an empty array', async () => {
+      it('Then it returns an empty page', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages?status=FROZEN')
           .set('Authorization', `Bearer ${ownerAToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual([]);
+        expect(res.body.items).toEqual([]);
+        expect(res.body.total).toBe(0);
+        expect(res.body.page).toBe(1);
+        expect(res.body.totalPages).toBe(0);
       });
     });
   });
@@ -213,11 +215,12 @@ describe('List Storages — GET /api/storages (e2e)', () => {
           .set('Authorization', `Bearer ${ownerAToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toHaveLength(1);
-        expect(res.body[0].uuid).toBe(warehouseUUID);
-        expect(res.body[0].type).toBe('WAREHOUSE');
-        expect(res.body[0].status).toBe('ACTIVE');
-        expect(res.body[0].archivedAt).toBeNull();
+        expect(res.body.items).toHaveLength(1);
+        expect(res.body.total).toBe(1);
+        expect(res.body.items[0].uuid).toBe(warehouseUUID);
+        expect(res.body.items[0].type).toBe('WAREHOUSE');
+        expect(res.body.items[0].status).toBe('ACTIVE');
+        expect(res.body.items[0].archivedAt).toBeNull();
       });
     });
   });
@@ -232,9 +235,9 @@ describe('List Storages — GET /api/storages (e2e)', () => {
           .set('Authorization', `Bearer ${ownerAToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toHaveLength(1);
+        expect(res.body.items).toHaveLength(1);
 
-        const storage = res.body[0];
+        const storage = res.body.items[0];
         expect(storage).toMatchObject({
           uuid: warehouseUUID,
           status: 'ACTIVE',
@@ -265,8 +268,8 @@ describe('List Storages — GET /api/storages (e2e)', () => {
         expect(resA.status).toBe(HttpStatus.OK);
         expect(resB.status).toBe(HttpStatus.OK);
 
-        const uuidsA: string[] = resA.body.map((s: { uuid: string }) => s.uuid);
-        const uuidsB: string[] = resB.body.map((s: { uuid: string }) => s.uuid);
+        const uuidsA: string[] = resA.body.items.map((s: { uuid: string }) => s.uuid);
+        const uuidsB: string[] = resB.body.items.map((s: { uuid: string }) => s.uuid);
 
         // Tenant A's storages are only their own
         expect(uuidsA).toContain(warehouseUUID);
@@ -289,6 +292,25 @@ describe('List Storages — GET /api/storages (e2e)', () => {
           .set('Authorization', `Bearer ${ownerAToken}`);
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+    });
+  });
+
+  // ── E2E-L4: pagination + search ──────────────────────────────────────────
+
+  describe('Given a tenant with multiple storages and a search term', () => {
+    describe('When GET /api/storages?search=Almacén&limit=1&page=1 is called', () => {
+      it('Then it returns the matching storage with pagination metadata', async () => {
+        const res = await request(app.getHttpServer())
+          .get('/api/storages?search=Almac%C3%A9n&limit=1&page=1')
+          .set('Authorization', `Bearer ${ownerAToken}`);
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.items).toHaveLength(1);
+        expect(res.body.items[0].name).toBe('Almacén Central');
+        expect(res.body.total).toBeGreaterThanOrEqual(1);
+        expect(res.body.page).toBe(1);
+        expect(res.body.limit).toBe(1);
       });
     });
   });
