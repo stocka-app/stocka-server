@@ -205,10 +205,10 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
 
   describe('Given GET /api/storages (STORAGE_READ action, FREE tier threshold)', () => {
     describe('When an unauthenticated client calls the endpoint', () => {
-      it('Then PermissionGuard blocks with 403 NOT_AUTHENTICATED before any auth guard runs', async () => {
+      it('Then PermissionGuard blocks with 401 NOT_AUTHENTICATED before any auth guard runs', async () => {
         const res = await request(app.getHttpServer()).get('/api/storages');
 
-        expect(res.status).toBe(HttpStatus.FORBIDDEN);
+        expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
         expect(res.body.error).toBe('NOT_AUTHENTICATED');
       });
     });

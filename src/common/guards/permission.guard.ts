@@ -44,7 +44,7 @@ export class PermissionGuard implements CanActivate {
     const user = request.user as JwtPayload | undefined;
 
     if (!user) {
-      throw new HttpException({ error: 'NOT_AUTHENTICATED' }, HttpStatus.FORBIDDEN);
+      throw new HttpException({ error: 'NOT_AUTHENTICATED' }, HttpStatus.UNAUTHORIZED);
     }
 
     const membershipContext =
