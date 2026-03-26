@@ -43,6 +43,7 @@ import { CancelInvitationController } from '@tenant/infrastructure/http/controll
 import { AcceptInvitationController } from '@tenant/infrastructure/http/controllers/accept-invitation/accept-invitation.controller';
 import { GetInvitationByTokenController } from '@tenant/infrastructure/http/controllers/get-invitation-by-token/get-invitation-by-token.controller';
 import { RbacController } from '@tenant/infrastructure/http/controllers/rbac/rbac.controller';
+import { GetTenantCapabilitiesController } from '@tenant/infrastructure/http/controllers/get-tenant-capabilities/get-tenant-capabilities.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
@@ -80,6 +81,7 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     AcceptInvitationController,
     GetInvitationByTokenController,
     RbacController,
+    GetTenantCapabilitiesController,
   ],
   providers: [
     { provide: INJECTION_TOKENS.TENANT_CONTRACT, useClass: TypeOrmTenantRepository },

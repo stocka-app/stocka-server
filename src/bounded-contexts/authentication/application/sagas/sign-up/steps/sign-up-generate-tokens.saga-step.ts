@@ -25,6 +25,7 @@ export class GenerateTokensStep implements ISagaStepHandler<SignUpSagaContext> {
       tenantId: null,
       role: null,
       displayName: null,
+      tierLimits: null,
     };
 
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||

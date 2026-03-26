@@ -19,6 +19,9 @@ export class StorageEntity extends BaseEntity {
   @Column({ type: 'text', nullable: true, default: null })
   description!: string | null;
 
+  @Column({ name: 'frozen_at', type: 'timestamptz', nullable: true, default: null })
+  frozenAt!: Date | null;
+
   @OneToOne(() => CustomRoomEntity, (cr) => cr.storage, { cascade: true, eager: true })
   customRoom!: CustomRoomEntity | null;
 

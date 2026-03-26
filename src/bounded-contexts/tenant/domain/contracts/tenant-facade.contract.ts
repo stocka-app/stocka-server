@@ -19,8 +19,16 @@ export interface TenantMembershipContext {
   };
 }
 
+export interface TierLimits {
+  tier: string;
+  maxCustomRooms: number;
+  maxStoreRooms: number;
+  maxWarehouses: number;
+}
+
 export interface ITenantFacade {
   getActiveMembership(userUUID: string): Promise<{ tenantUUID: string; role: string } | null>;
   getMembershipContext(userUUID: string): Promise<TenantMembershipContext | null>;
+  getTierLimits(userUUID: string): Promise<TierLimits | null>;
   createTenantForUser(props: CreateTenantFacadeProps): Promise<{ tenantUUID: string }>;
 }

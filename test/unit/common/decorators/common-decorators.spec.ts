@@ -126,6 +126,7 @@ describe('CurrentUser decorator', () => {
     email: 'user@test.com',
     tenantId: null,
     role: null,
+    tierLimits: null,
   };
 
   describe('Given a request with a valid user in the JWT payload', () => {

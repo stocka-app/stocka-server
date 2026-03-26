@@ -22,6 +22,7 @@ export class GenerateSignInTokensStep implements ISagaStepHandler<SignInSagaCont
       throw new Error('GenerateSignInTokensStep: ctx.credential not set by prior step');
 
     const membership = await this.mediator.tenant.getActiveMembership(ctx.user.uuid);
+    const tierLimits = await this.mediator.tenant.getTierLimits(ctx.user.uuid);
     const displayName = await this.mediator.user.findDisplayNameByUserUUID(ctx.user.uuid);
 
     const payload = {
@@ -30,6 +31,7 @@ export class GenerateSignInTokensStep implements ISagaStepHandler<SignInSagaCont
       tenantId: membership?.tenantUUID ?? null,
       role: membership?.role ?? null,
       displayName,
+      tierLimits: tierLimits ?? null,
     };
 
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||

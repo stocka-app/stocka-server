@@ -152,7 +152,7 @@ describe('GenerateRefreshTokensStep', () => {
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
   let mediator: {
-    tenant: { getActiveMembership: jest.Mock };
+    tenant: { getActiveMembership: jest.Mock; getTierLimits: jest.Mock };
     user: { findDisplayNameByUserUUID: jest.Mock };
   };
 
@@ -177,6 +177,7 @@ describe('GenerateRefreshTokensStep', () => {
     mediator = {
       tenant: {
         getActiveMembership: jest.fn().mockResolvedValue(null),
+        getTierLimits: jest.fn().mockResolvedValue(null),
       },
       user: {
         findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),

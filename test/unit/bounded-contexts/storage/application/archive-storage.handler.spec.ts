@@ -67,6 +67,7 @@ describe('ArchiveStorageHandler', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           archivedAt: new Date(),
+          frozenAt: null,
         });
 
         storageRepository.findByUUID.mockResolvedValue(archivedStorage);
@@ -96,6 +97,7 @@ describe('ArchiveStorageHandler', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           archivedAt: null,
+          frozenAt: null,
         });
 
         storageRepository.findByUUID.mockResolvedValue(activeStorage);

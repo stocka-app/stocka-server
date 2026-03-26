@@ -481,6 +481,12 @@ describe('JwtStrategy', () => {
         email: 'user@stocka.app',
         tenantId: '019d07d4-0000-721d-0000-000000000000',
         role: 'OWNER',
+        tierLimits: {
+          tier: 'STARTER',
+          maxCustomRooms: 3,
+          maxStoreRooms: 3,
+          maxWarehouses: 1,
+        },
         iat: 1000,
         exp: 2000,
       };
@@ -492,6 +498,7 @@ describe('JwtStrategy', () => {
         email: payload.email,
         tenantId: payload.tenantId,
         role: payload.role,
+        tierLimits: payload.tierLimits,
       });
     });
   });
@@ -503,6 +510,7 @@ describe('JwtStrategy', () => {
         email: 'user@stocka.app',
         tenantId: null,
         role: null,
+        tierLimits: null,
         iat: 1000,
         exp: 2000,
       };
@@ -511,6 +519,7 @@ describe('JwtStrategy', () => {
 
       expect(result.tenantId).toBeNull();
       expect(result.role).toBeNull();
+      expect(result.tierLimits).toBeNull();
     });
   });
 });
