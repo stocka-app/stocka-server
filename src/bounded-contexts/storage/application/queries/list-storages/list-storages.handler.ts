@@ -1,8 +1,10 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.interface';
-import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import {
+  IStorageRepository,
+  StoragePage,
+} from '@storage/domain/contracts/storage.repository.interface';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @QueryHandler(ListStoragesQuery)
@@ -12,7 +14,13 @@ export class ListStoragesHandler implements IQueryHandler<ListStoragesQuery> {
     private readonly storageRepository: IStorageRepository,
   ) {}
 
-  async execute(query: ListStoragesQuery): Promise<StorageAggregate[]> {
-    return this.storageRepository.findAll(query.tenantUUID, query.filters);
+  async execute(query: ListStoragesQuery): Promise<StoragePage> {
+    return this.storageRepository.findAll(
+      query.tenantUUID,
+      query.filters,
+      query.pagination,
+      query.search,
+      query.sortOrder,
+    );
   }
 }

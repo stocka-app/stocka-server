@@ -6,9 +6,17 @@ export interface StorageFilters {
   type?: StorageType;
 }
 
+export interface StoragePagination {
+  page: number;
+  limit: number;
+}
+
 export class ListStoragesQuery {
   constructor(
     public readonly tenantUUID: string,
     public readonly filters?: StorageFilters,
+    public readonly pagination: StoragePagination = { page: 1, limit: 50 },
+    public readonly search?: string,
+    public readonly sortOrder: 'ASC' | 'DESC' = 'ASC',
   ) {}
 }

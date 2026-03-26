@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.interface';
+import { IStorageRepository, StoragePage } from '@storage/domain/contracts/storage.repository.interface';
 import { StorageFilters } from '@storage/application/queries/list-storages/list-storages.query';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
@@ -38,31 +38,42 @@ export class TypeOrmStorageRepository implements IStorageRepository {
     return entity ? StorageMapper.toDomain(entity) : null;
   }
 
-  async findAll(tenantUUID: string, filters?: StorageFilters): Promise<StorageAggregate[]> {
-    if (filters?.status === StorageStatus.FROZEN) {
-      return [];
-    }
-
+  async findAll(
+    tenantUUID: string,
+    filters?: StorageFilters,
+    pagination: { page: number; limit: number } = { page: 1, limit: 50 },
+    search?: string,
+    sortOrder: 'ASC' | 'DESC' = 'ASC',
+  ): Promise<StoragePage> {
     const qb = this.repository
       .createQueryBuilder('s')
       .leftJoinAndSelect('s.customRoom', 'customRoom')
       .leftJoinAndSelect('s.storeRoom', 'storeRoom')
       .leftJoinAndSelect('s.warehouse', 'warehouse')
       .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
-      .orderBy('s.created_at', 'ASC');
+      .orderBy('s.name', sortOrder);
 
     if (filters?.type) {
       qb.andWhere('s.type = :type', { type: filters.type });
     }
 
     if (filters?.status === StorageStatus.ACTIVE) {
-      qb.andWhere('s.archived_at IS NULL');
+      qb.andWhere('s.archived_at IS NULL').andWhere('s.frozen_at IS NULL');
     } else if (filters?.status === StorageStatus.ARCHIVED) {
       qb.andWhere('s.archived_at IS NOT NULL');
+    } else if (filters?.status === StorageStatus.FROZEN) {
+      qb.andWhere('s.frozen_at IS NOT NULL').andWhere('s.archived_at IS NULL');
     }
 
-    const entities = await qb.getMany();
-    return entities.map((e) => StorageMapper.toDomain(e));
+    if (search) {
+      qb.andWhere('s.name ILIKE :search', { search: `%${search}%` });
+    }
+
+    const skip = (pagination.page - 1) * pagination.limit;
+    qb.skip(skip).take(pagination.limit);
+
+    const [entities, total] = await qb.getManyAndCount();
+    return { items: entities.map((e) => StorageMapper.toDomain(e)), total };
   }
 
   async countActiveByType(tenantUUID: string, type: StorageType): Promise<number> {
