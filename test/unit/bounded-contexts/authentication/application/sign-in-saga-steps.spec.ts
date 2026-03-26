@@ -173,7 +173,7 @@ describe('GenerateSignInTokensStep', () => {
   let jwtService: jest.Mocked<Pick<JwtService, 'signAsync'>>;
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
   let mediator: {
-    tenant: { getActiveMembership: jest.Mock };
+    tenant: { getActiveMembership: jest.Mock; getTierLimits: jest.Mock };
     user: { findDisplayNameByUserUUID: jest.Mock };
   };
 
@@ -192,6 +192,7 @@ describe('GenerateSignInTokensStep', () => {
     mediator = {
       tenant: {
         getActiveMembership: jest.fn().mockResolvedValue(null),
+        getTierLimits: jest.fn().mockResolvedValue(null),
       },
       user: {
         findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),
@@ -291,6 +292,12 @@ describe('GenerateSignInTokensStep', () => {
         tenantUUID: 'tenant-uuid-001',
         role: 'OWNER',
       });
+      mediator.tenant.getTierLimits.mockResolvedValue({
+        tier: 'STARTER',
+        maxCustomRooms: 3,
+        maxStoreRooms: 3,
+        maxWarehouses: 1,
+      });
     });
 
     describe('When execute() is called', () => {
@@ -312,12 +319,34 @@ describe('GenerateSignInTokensStep', () => {
           expect.any(Object),
         );
       });
+
+      it('Then the JWT payload includes tierLimits from the tenant config', async () => {
+        const ctx: SignInSagaContext = {
+          emailOrUsername: 'test@example.com',
+          password: 'Password1',
+          user: MOCK_USER,
+          credential: MOCK_CREDENTIAL,
+        };
+        await step.execute(ctx);
+        expect(jwtService.signAsync).toHaveBeenCalledWith(
+          expect.objectContaining({
+            tierLimits: {
+              tier: 'STARTER',
+              maxCustomRooms: 3,
+              maxStoreRooms: 3,
+              maxWarehouses: 1,
+            },
+          }),
+          expect.any(Object),
+        );
+      });
     });
   });
 
   describe('Given a user who does not belong to any tenant', () => {
     beforeEach(() => {
       mediator.tenant.getActiveMembership.mockResolvedValue(null);
+      mediator.tenant.getTierLimits.mockResolvedValue(null);
     });
 
     describe('When execute() is called', () => {
@@ -335,6 +364,7 @@ describe('GenerateSignInTokensStep', () => {
             email: MOCK_CREDENTIAL.email,
             tenantId: null,
             role: null,
+            tierLimits: null,
           }),
           expect.any(Object),
         );

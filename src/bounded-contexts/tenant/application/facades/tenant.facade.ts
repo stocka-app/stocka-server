@@ -4,6 +4,7 @@ import {
   ITenantFacade,
   CreateTenantFacadeProps,
   TenantMembershipContext,
+  TierLimits,
 } from '@tenant/domain/contracts/tenant-facade.contract';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
@@ -56,6 +57,24 @@ export class TenantFacade implements ITenantFacade {
         memberCount: config.memberCount,
         productCount: config.productCount,
       },
+    };
+  }
+
+  async getTierLimits(userUUID: string): Promise<TierLimits | null> {
+    const member = await this.memberContract.findActiveByUserUUID(userUUID);
+    if (!member || !member.isActive()) return null;
+
+    const tenant = await this.tenantContract.findById(member.tenantId);
+    if (!tenant) return null;
+
+    const config = await this.configContract.findByTenantId(member.tenantId);
+    if (!config) return null;
+
+    return {
+      tier: config.tier.toString(),
+      maxCustomRooms: config.maxCustomRooms,
+      maxStoreRooms: config.maxStoreRooms,
+      maxWarehouses: config.maxWarehouses,
     };
   }
 

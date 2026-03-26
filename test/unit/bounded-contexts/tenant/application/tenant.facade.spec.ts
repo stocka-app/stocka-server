@@ -300,6 +300,97 @@ describe('TenantFacade', () => {
     });
   });
 
+  describe('getTierLimits', () => {
+    describe('Given the user has an active membership, tenant, and config', () => {
+      beforeEach(() => {
+        memberContract.findActiveByUserUUID.mockResolvedValue(ACTIVE_MEMBER);
+        tenantContract.findById.mockResolvedValue(PERSISTED_TENANT);
+        configContract.findByTenantId.mockResolvedValue(TENANT_CONFIG);
+      });
+
+      describe('When getTierLimits is called', () => {
+        it('Then it returns the tier limits from the tenant config', async () => {
+          const result = await facade.getTierLimits(USER_UUID);
+          expect(result).toEqual({
+            tier: 'STARTER',
+            maxCustomRooms: 3,
+            maxStoreRooms: 3,
+            maxWarehouses: 3,
+          });
+        });
+      });
+    });
+
+    describe('Given the user has no active membership', () => {
+      beforeEach(() => {
+        memberContract.findActiveByUserUUID.mockResolvedValue(null);
+      });
+
+      describe('When getTierLimits is called', () => {
+        it('Then it returns null', async () => {
+          const result = await facade.getTierLimits(USER_UUID);
+          expect(result).toBeNull();
+        });
+      });
+    });
+
+    describe('Given the user has a membership but the tenant does not exist', () => {
+      beforeEach(() => {
+        memberContract.findActiveByUserUUID.mockResolvedValue(ACTIVE_MEMBER);
+        tenantContract.findById.mockResolvedValue(null);
+      });
+
+      describe('When getTierLimits is called', () => {
+        it('Then it returns null', async () => {
+          const result = await facade.getTierLimits(USER_UUID);
+          expect(result).toBeNull();
+        });
+      });
+    });
+
+    describe('Given the user has a membership and tenant but no config', () => {
+      beforeEach(() => {
+        memberContract.findActiveByUserUUID.mockResolvedValue(ACTIVE_MEMBER);
+        tenantContract.findById.mockResolvedValue(PERSISTED_TENANT);
+        configContract.findByTenantId.mockResolvedValue(null);
+      });
+
+      describe('When getTierLimits is called', () => {
+        it('Then it returns null', async () => {
+          const result = await facade.getTierLimits(USER_UUID);
+          expect(result).toBeNull();
+        });
+      });
+    });
+
+    describe('Given the user has a pending (non-active) membership', () => {
+      beforeEach(() => {
+        const pendingMember = TenantMemberModel.reconstitute({
+          id: 2,
+          uuid: '550e8400-e29b-41d4-a716-446655440002',
+          tenantId: 1,
+          userId: 42,
+          userUUID: USER_UUID,
+          role: 'OWNER',
+          status: 'pending',
+          invitedBy: null,
+          joinedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          archivedAt: null,
+        });
+        memberContract.findActiveByUserUUID.mockResolvedValue(pendingMember);
+      });
+
+      describe('When getTierLimits is called', () => {
+        it('Then it returns null because the member is not active', async () => {
+          const result = await facade.getTierLimits(USER_UUID);
+          expect(result).toBeNull();
+        });
+      });
+    });
+  });
+
   describe('createTenantForUser', () => {
     describe('Given the command bus returns a successful result', () => {
       beforeEach(() => {

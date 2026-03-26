@@ -12,6 +12,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 const NULL_TENANT_FACADE: ITenantFacade = {
   getActiveMembership: async (): Promise<null> => null,
   getMembershipContext: async (): Promise<null> => null,
+  getTierLimits: async (): Promise<null> => null,
   createTenantForUser: async (): Promise<never> => {
     throw new Error('TenantFacade not available in this context');
   },
