@@ -15,6 +15,7 @@ export interface StorageAggregateReconstituteProps extends AggregateRootProps {
   tenantUUID: string;
   type: StorageType;
   name: string;
+  description: string | null;
   customRoom: CustomRoomModel | null;
   storeRoom: StoreRoomModel | null;
   warehouse: WarehouseModel | null;
@@ -27,6 +28,7 @@ export class StorageAggregate extends AggregateRoot {
   private readonly _tenantUUID: string;
   private readonly _type: StorageType;
   private _name: string;
+  private _description: string | null;
   private readonly _customRoom: CustomRoomModel | null;
   private readonly _storeRoom: StoreRoomModel | null;
   private readonly _warehouse: WarehouseModel | null;
@@ -36,6 +38,7 @@ export class StorageAggregate extends AggregateRoot {
       tenantUUID: string;
       type: StorageType;
       name: string;
+      description: string | null;
       customRoom: CustomRoomModel | null;
       storeRoom: StoreRoomModel | null;
       warehouse: WarehouseModel | null;
@@ -45,6 +48,7 @@ export class StorageAggregate extends AggregateRoot {
     this._tenantUUID = props.tenantUUID;
     this._type = props.type;
     this._name = props.name;
+    this._description = props.description;
     this._customRoom = props.customRoom;
     this._storeRoom = props.storeRoom;
     this._warehouse = props.warehouse;
@@ -53,6 +57,7 @@ export class StorageAggregate extends AggregateRoot {
   static createCustomRoom(props: {
     tenantUUID: string;
     name: string;
+    description?: string;
     roomType: string;
     address?: string;
   }): StorageAggregate {
@@ -70,6 +75,7 @@ export class StorageAggregate extends AggregateRoot {
       tenantUUID: props.tenantUUID,
       type: StorageType.CUSTOM_ROOM,
       name: props.name,
+      description: props.description ?? null,
       customRoom,
       storeRoom: null,
       warehouse: null,
@@ -85,6 +91,7 @@ export class StorageAggregate extends AggregateRoot {
   static createStoreRoom(props: {
     tenantUUID: string;
     name: string;
+    description?: string;
     address?: string;
   }): StorageAggregate {
     const storageUUID = uuidV7();
@@ -100,6 +107,7 @@ export class StorageAggregate extends AggregateRoot {
       tenantUUID: props.tenantUUID,
       type: StorageType.STORE_ROOM,
       name: props.name,
+      description: props.description ?? null,
       customRoom: null,
       storeRoom,
       warehouse: null,
@@ -115,6 +123,7 @@ export class StorageAggregate extends AggregateRoot {
   static createWarehouse(props: {
     tenantUUID: string;
     name: string;
+    description?: string;
     address: string;
   }): StorageAggregate {
     const storageUUID = uuidV7();
@@ -130,6 +139,7 @@ export class StorageAggregate extends AggregateRoot {
       tenantUUID: props.tenantUUID,
       type: StorageType.WAREHOUSE,
       name: props.name,
+      description: props.description ?? null,
       customRoom: null,
       storeRoom: null,
       warehouse: warehouseModel,
@@ -152,6 +162,7 @@ export class StorageAggregate extends AggregateRoot {
       tenantUUID: props.tenantUUID,
       type: props.type,
       name: props.name,
+      description: props.description,
       customRoom: props.customRoom,
       storeRoom: props.storeRoom,
       warehouse: props.warehouse,
@@ -173,6 +184,10 @@ export class StorageAggregate extends AggregateRoot {
 
   get name(): string {
     return this._name;
+  }
+
+  get description(): string | null {
+    return this._description;
   }
 
   get customRoom(): CustomRoomModel | null {

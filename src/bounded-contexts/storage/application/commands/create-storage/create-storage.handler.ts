@@ -107,6 +107,7 @@ export class CreateStorageHandler implements ICommandHandler<CreateStorageComman
         return StorageAggregate.createCustomRoom({
           tenantUUID: command.tenantUUID,
           name: command.name,
+          description: command.description,
           roomType: command.roomType ?? 'General',
           address: command.address,
         });
@@ -114,12 +115,14 @@ export class CreateStorageHandler implements ICommandHandler<CreateStorageComman
         return StorageAggregate.createStoreRoom({
           tenantUUID: command.tenantUUID,
           name: command.name,
+          description: command.description,
           address: command.address,
         });
       case StorageType.WAREHOUSE:
         return StorageAggregate.createWarehouse({
           tenantUUID: command.tenantUUID,
           name: command.name,
+          description: command.description,
           address: command.address as string,
         });
     }

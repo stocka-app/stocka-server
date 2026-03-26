@@ -1,10 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
-import {
-  IStorageRepository,
-  StorageFilters,
-} from '@storage/domain/contracts/storage.repository.interface';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.interface';
+import { StorageFilters } from '@storage/application/queries/list-storages/list-storages.query';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';

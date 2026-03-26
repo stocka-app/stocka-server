@@ -190,7 +190,7 @@ describe('PermissionGuard', () => {
     });
 
     describe('When the request has no user in the JWT payload', () => {
-      it('Then it rejects with 403 NOT_AUTHENTICATED', async () => {
+      it('Then it rejects with 401 NOT_AUTHENTICATED', async () => {
         const context = buildContext(undefined);
         try {
           await guard.canActivate(context);
@@ -198,7 +198,7 @@ describe('PermissionGuard', () => {
         } catch (e) {
           expect(e).toBeInstanceOf(HttpException);
           const httpError = e as HttpException;
-          expect(httpError.getStatus()).toBe(HttpStatus.FORBIDDEN);
+          expect(httpError.getStatus()).toBe(HttpStatus.UNAUTHORIZED);
           const body = httpError.getResponse() as Record<string, unknown>;
           expect(body['error']).toBe('NOT_AUTHENTICATED');
         }

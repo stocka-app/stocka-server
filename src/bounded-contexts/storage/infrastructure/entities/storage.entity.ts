@@ -16,6 +16,9 @@ export class StorageEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 100 })
   name!: string;
 
+  @Column({ type: 'text', nullable: true, default: null })
+  description!: string | null;
+
   @OneToOne(() => CustomRoomEntity, (cr) => cr.storage, { cascade: true, eager: true })
   customRoom!: CustomRoomEntity | null;
 

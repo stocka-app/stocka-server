@@ -5,8 +5,10 @@ import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jw
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { RequireAction } from '@common/decorators/require-action.decorator';
 import { SystemAction } from '@shared/domain/policy/actions-catalog';
-import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
-import { StorageFilters } from '@storage/domain/contracts/storage.repository.interface';
+import {
+  ListStoragesQuery,
+  StorageFilters,
+} from '@storage/application/queries/list-storages/list-storages.query';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { ListStoragesInDto } from '@storage/infrastructure/http/controllers/list-storages/list-storages-in.dto';
 import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';

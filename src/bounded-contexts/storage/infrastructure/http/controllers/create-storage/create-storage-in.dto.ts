@@ -13,6 +13,12 @@ export class CreateStorageInDto {
   @MaxLength(100)
   name!: string;
 
+  @ApiPropertyOptional({ description: 'Storage description', maxLength: 500 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  description?: string;
+
   @ApiPropertyOptional({ description: 'Address (required for WAREHOUSE)', maxLength: 200 })
   @IsOptional()
   @IsString()

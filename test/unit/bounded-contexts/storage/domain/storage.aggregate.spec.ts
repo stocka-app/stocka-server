@@ -30,6 +30,10 @@ describe('StorageAggregate', () => {
         expect(aggregate.tenantUUID).toBe(TENANT_UUID);
       });
 
+      it('Then description defaults to null when not provided', () => {
+        expect(aggregate.description).toBeNull();
+      });
+
       it('Then the customRoom sub-model is populated', () => {
         expect(aggregate.customRoom).not.toBeNull();
         expect(aggregate.customRoom?.roomType).toBe('Office');
@@ -70,6 +74,18 @@ describe('StorageAggregate', () => {
         });
         expect(aggregate.customRoom?.address).toBeNull();
         expect(aggregate.address).toBeNull();
+      });
+    });
+
+    describe('When createCustomRoom is called with a description', () => {
+      it('Then description is stored on the aggregate', () => {
+        const aggregate = StorageAggregate.createCustomRoom({
+          tenantUUID: TENANT_UUID,
+          name: 'Described Room',
+          roomType: 'Office',
+          description: 'Main office space for the team',
+        });
+        expect(aggregate.description).toBe('Main office space for the team');
       });
     });
   });
@@ -223,6 +239,7 @@ describe('StorageAggregate', () => {
           tenantUUID: TENANT_UUID,
           type: StorageType.CUSTOM_ROOM,
           name: 'Restored Room',
+          description: null,
           customRoom: {
             uuid: '019538a0-0000-7000-8000-000000000098',
             roomType: 'Office',
@@ -256,6 +273,7 @@ describe('StorageAggregate', () => {
           tenantUUID: TENANT_UUID,
           type: StorageType.CUSTOM_ROOM,
           name: 'Empty',
+          description: null,
           customRoom: null,
           storeRoom: null,
           warehouse: null,

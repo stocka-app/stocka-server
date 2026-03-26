@@ -30,6 +30,7 @@ export class CreateStorageController {
       user.tenantId as string,
       dto.type,
       dto.name,
+      dto.description,
       dto.address,
       dto.roomType,
     );

@@ -15,6 +15,9 @@ export class StorageOutDto {
   @ApiProperty({ description: 'Storage name' })
   name!: string;
 
+  @ApiPropertyOptional({ description: 'Storage description' })
+  description!: string | null;
+
   @ApiPropertyOptional({ description: 'Address' })
   address!: string | null;
 
@@ -36,6 +39,7 @@ export class StorageOutDto {
     dto.status = aggregate.status;
     dto.type = aggregate.type;
     dto.name = aggregate.name;
+    dto.description = aggregate.description;
     dto.address = aggregate.address;
     dto.roomType = aggregate.customRoom?.roomType ?? null;
     dto.createdAt = aggregate.createdAt;
