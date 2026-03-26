@@ -29,7 +29,7 @@ describe('CreateStorageHandler', () => {
   beforeEach(() => {
     storageRepository = {
       findByUUID: jest.fn(),
-      findAllActive: jest.fn(),
+      findAll: jest.fn(),
       countActiveByType: jest.fn(),
       existsActiveName: jest.fn(),
       save: jest.fn(),
