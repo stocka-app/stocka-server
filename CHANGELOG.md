@@ -3,6 +3,18 @@
 All notable changes to this project are documented here.
 
 
+## [0.6.0](https://github.com/stocka-app/stocka-server/compare/v0.5.0...v0.6.0) (2026-03-26)
+
+### ✨ Features
+
+* **storage:** [STOC-324](https://austins-industries.atlassian.net/browse/STOC-324) — extend ListStoragesHandler and IStorageRepository with status/type filters ([7c3a2b9](https://github.com/stocka-app/stocka-server/commit/7c3a2b93cb8b5f807e35aadc93408792c12bc43a))
+* **storage:** [STOC-325](https://austins-industries.atlassian.net/browse/STOC-325) — add query params and status field to list-storages endpoint ([8c63b5e](https://github.com/stocka-app/stocka-server/commit/8c63b5e961805c914fe094689d7d01d8027222b0))
+
+### ✅ Tests
+
+* **storage:** [STOC-326](https://austins-industries.atlassian.net/browse/STOC-326) — add H-L2 scenario — status=ACTIVE filter returns only active storages ([3f130bc](https://github.com/stocka-app/stocka-server/commit/3f130bcbf0ea3b6a1b498193188b210607c27728))
+* **storage:** [STOC-327](https://austins-industries.atlassian.net/browse/STOC-327) — E2E tests — GET /storages with status/type filters (E2E-L1/L2/L3) ([7770b17](https://github.com/stocka-app/stocka-server/commit/7770b17003f1ad27647ccb682810853ee9d1670f))
+
 ## [0.5.0](https://github.com/stocka-app/stocka-server/compare/v0.4.0...v0.5.0) (2026-03-26)
 
 ### ✨ Features
