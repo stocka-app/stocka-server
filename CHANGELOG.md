@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 
 
+## [0.5.0](https://github.com/stocka-app/stocka-server/compare/v0.4.0...v0.5.0) (2026-03-26)
+
+### ✨ Features
+
+* **tenant:** [STOC-399](https://austins-industries.atlassian.net/browse/STOC-399) — add maxCustomRooms and maxStoreRooms to TierPlanModel and mapper ([5fdc3ff](https://github.com/stocka-app/stocka-server/commit/5fdc3ff6206de486244f59e6bc756ae17e0258f9))
+* **tenant:** [STOC-399](https://austins-industries.atlassian.net/browse/STOC-399) — extend TierPlanLimits contract with maxCustomRooms and maxStoreRooms ([d5f4225](https://github.com/stocka-app/stocka-server/commit/d5f42253f38e75288b4ae41661f3b588fda7436b))
+
+### 🧹 Chores
+
+* **release:** [skip ci] backfill historical releases v0.3.1/v0.3.2 with correct dates ([e64a169](https://github.com/stocka-app/stocka-server/commit/e64a169812ad3c77df41a8c3f0d06f0ec2927cf3))
+
 ## [0.4.0](https://github.com/stocka-app/stocka-server/compare/v0.3.2...v0.4.0) (2026-03-25)
 
 ### ✨ Features
