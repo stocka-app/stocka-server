@@ -19,6 +19,7 @@ import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { RateLimitGuard } from '@common/guards/rate-limit.guard';
 import { PermissionGuard } from '@common/guards/permission.guard';
+import { JwtOptionalGuard } from '@common/guards/jwt-optional.guard';
 import { RateLimitInterceptor } from '@common/interceptors/rate-limit.interceptor';
 import { AppController } from '@core/infrastructure/app.controller';
 import { HealthModule } from '@core/infrastructure/health/health.module';
@@ -69,6 +70,14 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     {
       provide: APP_GUARD,
       useClass: RateLimitGuard,
+    },
+    // JwtOptionalGuard runs before PermissionGuard so that request.user is populated
+    // for any request carrying a valid Bearer token. It never throws — missing or
+    // invalid tokens are silently ignored; per-route enforcement is handled by
+    // PermissionGuard (@RequireAction) and local @UseGuards(JwtAuthenticationGuard).
+    {
+      provide: APP_GUARD,
+      useClass: JwtOptionalGuard,
     },
     {
       provide: APP_GUARD,
