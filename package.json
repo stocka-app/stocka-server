@@ -1,6 +1,6 @@
 {
   "name": "stocka-server",
-  "version": "0.7.0",
+  "version": "0.10.0",
   "description": "Stocka inventory management system API",
   "author": "",
   "private": true,
