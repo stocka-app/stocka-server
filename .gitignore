@@ -15,3 +15,4 @@ npm-debug.log*
 /.nyc_output
 .eslint-cache
 CLAUDE.md
+.claude/
