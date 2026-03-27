@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 
 
+## [0.8.0](https://github.com/stocka-app/stocka-server/compare/v0.7.0...v0.8.0) (2026-03-27)
+
+### ✨ Features
+
+* **rate-limit:** bypass rate limiting in E2E mode for test suite flexibility ([b94a6ff](https://github.com/stocka-app/stocka-server/commit/b94a6ff125adb9be10559aa3972eea3b209338d2))
+
 ## [0.7.0](https://github.com/stocka-app/stocka-server/compare/v0.6.0...v0.7.0) (2026-03-26)
 
 ### ✨ Features
