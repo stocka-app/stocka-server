@@ -84,6 +84,9 @@ export interface IUserFacade {
     rawData: Record<string, unknown>;
   }): Promise<void>;
 
+  // === Profile operations ===
+  updateLocale(userUUID: string, locale: string): Promise<void>;
+
   // === CredentialAccount operations ===
   verifyEmail(credentialAccountId: number): Promise<void>;
   blockVerification(credentialAccountId: number, until: Date): Promise<void>;

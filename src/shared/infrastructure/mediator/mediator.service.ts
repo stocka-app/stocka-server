@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { IUserFacade } from '@shared/domain/contracts/user-facade.contract';
 import { ITenantFacade } from '@tenant/domain/contracts/tenant-facade.contract';
+import { IOnboardingFacade } from '@onboarding/domain/contracts/onboarding-facade.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 /**
@@ -9,6 +10,10 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
  * NestJS context (e.g. isolated e2e worker apps that only boot Auth + User modules).
  * All read operations return null (no tenant) instead of crashing.
  */
+const NULL_ONBOARDING_FACADE: IOnboardingFacade = {
+  getOnboardingStatus: async (): Promise<null> => null,
+};
+
 const NULL_TENANT_FACADE: ITenantFacade = {
   getActiveMembership: async (): Promise<null> => null,
   getMembershipContext: async (): Promise<null> => null,
@@ -22,6 +27,7 @@ const NULL_TENANT_FACADE: ITenantFacade = {
 export class MediatorService implements OnModuleInit {
   private _userFacade: IUserFacade | undefined;
   private _tenantFacade: ITenantFacade | undefined;
+  private _onboardingFacade: IOnboardingFacade | undefined;
   private _initialized = false;
 
   constructor(private readonly moduleRef: ModuleRef) {}
@@ -38,6 +44,13 @@ export class MediatorService implements OnModuleInit {
     } catch {
       this._tenantFacade = undefined;
     }
+    try {
+      this._onboardingFacade = this.moduleRef.get<IOnboardingFacade>(INJECTION_TOKENS.ONBOARDING_FACADE, {
+        strict: false,
+      });
+    } catch {
+      this._onboardingFacade = undefined;
+    }
   }
 
   get user(): IUserFacade {
@@ -52,5 +65,12 @@ export class MediatorService implements OnModuleInit {
       throw new Error('MediatorService not initialized — onModuleInit has not run');
     }
     return this._tenantFacade ?? NULL_TENANT_FACADE;
+  }
+
+  get onboarding(): IOnboardingFacade {
+    if (!this._initialized) {
+      throw new Error('MediatorService not initialized — onModuleInit has not run');
+    }
+    return this._onboardingFacade ?? NULL_ONBOARDING_FACADE;
   }
 }

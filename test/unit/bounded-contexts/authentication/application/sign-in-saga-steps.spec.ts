@@ -174,7 +174,8 @@ describe('GenerateSignInTokensStep', () => {
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
   let mediator: {
     tenant: { getActiveMembership: jest.Mock; getTierLimits: jest.Mock };
-    user: { findDisplayNameByUserUUID: jest.Mock };
+    user: { findDisplayNameByUserUUID: jest.Mock; findSocialNameByUserUUID: jest.Mock };
+    onboarding: { getOnboardingStatus: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -196,6 +197,10 @@ describe('GenerateSignInTokensStep', () => {
       },
       user: {
         findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),
+        findSocialNameByUserUUID: jest.fn().mockResolvedValue({ givenName: null, familyName: null, avatarUrl: null }),
+      },
+      onboarding: {
+        getOnboardingStatus: jest.fn().mockResolvedValue(null),
       },
     };
 

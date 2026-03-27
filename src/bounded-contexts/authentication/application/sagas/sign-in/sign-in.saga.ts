@@ -67,6 +67,10 @@ export class SignInSaga extends Saga<SignInSagaContext> {
         accessToken: ctx.accessToken,
         refreshToken: ctx.refreshToken,
         emailVerificationRequired: false,
+        givenName: ctx.givenName ?? null,
+        familyName: ctx.familyName ?? null,
+        avatarUrl: ctx.avatarUrl ?? null,
+        onboardingStatus: ctx.onboardingStatus ?? null,
       });
     } catch (error) {
       if (error instanceof DomainException) return err(error);

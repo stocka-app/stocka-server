@@ -21,9 +21,13 @@ export class GenerateSignInTokensStep implements ISagaStepHandler<SignInSagaCont
     if (!ctx.credential)
       throw new Error('GenerateSignInTokensStep: ctx.credential not set by prior step');
 
-    const membership = await this.mediator.tenant.getActiveMembership(ctx.user.uuid);
-    const tierLimits = await this.mediator.tenant.getTierLimits(ctx.user.uuid);
-    const displayName = await this.mediator.user.findDisplayNameByUserUUID(ctx.user.uuid);
+    const [membership, tierLimits, displayName, socialName, onboardingStatus] = await Promise.all([
+      this.mediator.tenant.getActiveMembership(ctx.user.uuid),
+      this.mediator.tenant.getTierLimits(ctx.user.uuid),
+      this.mediator.user.findDisplayNameByUserUUID(ctx.user.uuid),
+      this.mediator.user.findSocialNameByUserUUID(ctx.user.uuid),
+      this.mediator.onboarding.getOnboardingStatus(ctx.user.uuid),
+    ]);
 
     const payload = {
       sub: ctx.user.uuid,
@@ -51,5 +55,11 @@ export class GenerateSignInTokensStep implements ISagaStepHandler<SignInSagaCont
 
     ctx.accessToken = await this.jwtService.signAsync(payload, accessOptions);
     ctx.refreshToken = await this.jwtService.signAsync(payload, refreshOptions);
+
+    // Enrichment data for the response (avoids extra getMe + onboarding/status calls)
+    ctx.givenName = socialName.givenName;
+    ctx.familyName = socialName.familyName;
+    ctx.avatarUrl = socialName.avatarUrl;
+    ctx.onboardingStatus = onboardingStatus;
   }
 }

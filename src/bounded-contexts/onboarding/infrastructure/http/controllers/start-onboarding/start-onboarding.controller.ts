@@ -27,6 +27,7 @@ export class StartOnboardingController {
         status: session.status,
         currentStep: session.currentStep,
         path: session.path,
+        stepData: session.stepData,
       }),
       (error) => {
         throw error;

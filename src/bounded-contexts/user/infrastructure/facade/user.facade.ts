@@ -276,6 +276,17 @@ export class UserFacade implements IUserFacade {
     return this.socialAccountContract.persist(socialModel);
   }
 
+  // === Profile operations ===
+
+  async updateLocale(userUUID: string, locale: string): Promise<void> {
+    const user = await this.userContract.findByUUID(userUUID);
+    if (!user || user.id === undefined) return;
+    const profile = await this.profileContract.findPersonalProfileByUserId(user.id);
+    if (!profile) return;
+    profile.updateLocale(locale);
+    await this.profileContract.persistPersonalProfile(profile);
+  }
+
   // === CredentialAccount operations ===
 
   async verifyEmail(credentialAccountId: number): Promise<void> {

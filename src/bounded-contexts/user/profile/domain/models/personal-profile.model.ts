@@ -88,4 +88,9 @@ export class PersonalProfileModel extends BaseModel {
   get timezone(): string {
     return this._timezone;
   }
+
+  updateLocale(locale: string): void {
+    this._locale = locale;
+    this.touch();
+  }
 }

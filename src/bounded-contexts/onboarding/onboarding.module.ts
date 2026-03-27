@@ -11,6 +11,7 @@ import { StartOnboardingController } from '@onboarding/infrastructure/http/contr
 import { SaveOnboardingStepController } from '@onboarding/infrastructure/http/controllers/save-onboarding-step/save-onboarding-step.controller';
 import { CompleteOnboardingController } from '@onboarding/infrastructure/http/controllers/complete-onboarding/complete-onboarding.controller';
 import { GetOnboardingStatusController } from '@onboarding/infrastructure/http/controllers/get-onboarding-status/get-onboarding-status.controller';
+import { OnboardingFacade } from '@onboarding/application/facades/onboarding.facade';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { TenantModule } from '@tenant/tenant.module';
@@ -34,10 +35,16 @@ import { TenantModule } from '@tenant/tenant.module';
       useClass: TypeOrmOnboardingSessionRepository,
     },
     TypeOrmOnboardingSessionRepository,
+    OnboardingFacade,
+    { provide: INJECTION_TOKENS.ONBOARDING_FACADE, useExisting: OnboardingFacade },
     StartOnboardingHandler,
     SaveOnboardingStepHandler,
     CompleteOnboardingHandler,
     GetOnboardingStatusHandler,
+  ],
+  exports: [
+    INJECTION_TOKENS.ONBOARDING_FACADE,
+    OnboardingFacade,
   ],
 })
 export class OnboardingModule {}

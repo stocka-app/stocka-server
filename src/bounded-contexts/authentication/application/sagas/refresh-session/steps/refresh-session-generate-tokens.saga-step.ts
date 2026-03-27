@@ -19,9 +19,14 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
     if (!ctx.user) throw new Error('GenerateRefreshTokensStep: ctx.user not set by prior step');
     if (!ctx.email) throw new Error('GenerateRefreshTokensStep: ctx.email not set by prior step');
 
-    const membership = await this.mediator.tenant.getActiveMembership(ctx.user.uuid);
-    const tierLimits = await this.mediator.tenant.getTierLimits(ctx.user.uuid);
-    const displayName = await this.mediator.user.findDisplayNameByUserUUID(ctx.user.uuid);
+    const [membership, tierLimits, displayName, socialName, onboardingStatus, username] = await Promise.all([
+      this.mediator.tenant.getActiveMembership(ctx.user.uuid),
+      this.mediator.tenant.getTierLimits(ctx.user.uuid),
+      this.mediator.user.findDisplayNameByUserUUID(ctx.user.uuid),
+      this.mediator.user.findSocialNameByUserUUID(ctx.user.uuid),
+      this.mediator.onboarding.getOnboardingStatus(ctx.user.uuid),
+      this.mediator.user.findUsernameByUUID(ctx.user.uuid),
+    ]);
 
     const payload = {
       sub: ctx.user.uuid,
@@ -49,5 +54,12 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
 
     ctx.accessToken = await this.jwtService.signAsync(payload, accessOptions);
     ctx.newRefreshToken = await this.jwtService.signAsync(payload, refreshOptions);
+
+    // Enrichment data for the response
+    ctx.username = username ?? undefined;
+    ctx.givenName = socialName.givenName;
+    ctx.familyName = socialName.familyName;
+    ctx.avatarUrl = socialName.avatarUrl;
+    ctx.onboardingStatus = onboardingStatus;
   }
 }

@@ -70,6 +70,11 @@ export class RefreshSessionSaga extends Saga<RefreshSessionSagaContext> {
       return ok({
         accessToken: ctx.accessToken,
         refreshToken: ctx.newRefreshToken,
+        username: ctx.username ?? null,
+        givenName: ctx.givenName ?? null,
+        familyName: ctx.familyName ?? null,
+        avatarUrl: ctx.avatarUrl ?? null,
+        onboardingStatus: ctx.onboardingStatus ?? null,
       });
     } catch (error) {
       if (error instanceof DomainException) return err(error);

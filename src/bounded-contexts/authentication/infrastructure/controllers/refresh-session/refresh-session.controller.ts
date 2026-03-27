@@ -45,7 +45,14 @@ export class RefreshSessionController {
     return result.match(
       (data) => {
         setRefreshCookie(res, data.refreshToken);
-        return { accessToken: data.accessToken };
+        return {
+          accessToken: data.accessToken,
+          username: data.username,
+          givenName: data.givenName,
+          familyName: data.familyName,
+          avatarUrl: data.avatarUrl,
+          onboardingStatus: data.onboardingStatus,
+        };
       },
       (error) => {
         throw mapDomainErrorToHttp(error);

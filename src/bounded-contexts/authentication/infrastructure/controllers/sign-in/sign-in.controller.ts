@@ -7,8 +7,7 @@ import { RateLimit } from '@common/decorators/rate-limit.decorator';
 import { SignInCommand } from '@authentication/application/commands/sign-in/sign-in.command';
 import { SignInCommandResult } from '@authentication/application/types/authentication-result.types';
 import { SignInInDto } from '@authentication/infrastructure/controllers/sign-in/sign-in-in.dto';
-import { SignInOutDto } from '@authentication/infrastructure/controllers/sign-in/sign-in-out.dto';
-import { UserOutDto } from '@authentication/infrastructure/controllers/sign-up/sign-up-out.dto';
+import { SignInOutDto, SignInUserOutDto } from '@authentication/infrastructure/controllers/sign-in/sign-in-out.dto';
 import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 
@@ -60,17 +59,21 @@ export class SignInController {
       (data) => {
         setRefreshCookie(res, data.refreshToken);
 
-        const userOut: UserOutDto = {
+        const userOut: SignInUserOutDto = {
           id: data.user.uuid,
           email: data.credential.email,
           username: data.username,
           createdAt: data.user.createdAt.toISOString(),
+          givenName: data.givenName,
+          familyName: data.familyName,
+          avatarUrl: data.avatarUrl,
         };
 
         return {
           user: userOut,
           accessToken: data.accessToken,
           emailVerificationRequired: data.emailVerificationRequired,
+          onboardingStatus: data.onboardingStatus,
         };
       },
       (error) => {

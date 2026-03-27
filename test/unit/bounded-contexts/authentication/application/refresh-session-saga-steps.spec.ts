@@ -153,7 +153,8 @@ describe('GenerateRefreshTokensStep', () => {
   let configService: { get: jest.Mock; getOrThrow: jest.Mock };
   let mediator: {
     tenant: { getActiveMembership: jest.Mock; getTierLimits: jest.Mock };
-    user: { findDisplayNameByUserUUID: jest.Mock };
+    user: { findDisplayNameByUserUUID: jest.Mock; findSocialNameByUserUUID: jest.Mock; findUsernameByUUID: jest.Mock };
+    onboarding: { getOnboardingStatus: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -181,6 +182,11 @@ describe('GenerateRefreshTokensStep', () => {
       },
       user: {
         findDisplayNameByUserUUID: jest.fn().mockResolvedValue(null),
+        findSocialNameByUserUUID: jest.fn().mockResolvedValue({ givenName: null, familyName: null, avatarUrl: null }),
+        findUsernameByUUID: jest.fn().mockResolvedValue('testuser'),
+      },
+      onboarding: {
+        getOnboardingStatus: jest.fn().mockResolvedValue(null),
       },
     };
 

@@ -2,6 +2,7 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result } from '@shared/domain/result';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';
 
 export interface AuthTokens {
   accessToken: string;
@@ -16,6 +17,10 @@ export interface AuthenticationResult extends AuthTokens {
 export interface SignInResult extends AuthenticationResult {
   username: string;
   emailVerificationRequired: boolean;
+  givenName: string | null;
+  familyName: string | null;
+  avatarUrl: string | null;
+  onboardingStatus: OnboardingStatus | null;
 }
 
 export interface SignUpResult extends AuthenticationResult {
@@ -36,7 +41,13 @@ export interface ResendVerificationCodeResult {
   remainingResends?: number;
 }
 
-export type RefreshSessionResult = AuthTokens;
+export interface RefreshSessionResult extends AuthTokens {
+  username: string | null;
+  givenName: string | null;
+  familyName: string | null;
+  avatarUrl: string | null;
+  onboardingStatus: OnboardingStatus | null;
+}
 export type SocialSignInResult = AuthenticationResult;
 
 export interface ResetPasswordResult {
