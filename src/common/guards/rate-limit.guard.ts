@@ -42,6 +42,11 @@ export class RateLimitGuard implements CanActivate {
 
     if (!config || process.env.E2E_MODE === 'true') return true;
 
+    // In E2E mode, bypass all custom rate limiting so test suites can register many
+    // users without hitting progressive blocks. @Throttle is already skipped via the
+    // skipIf option in ThrottlerModule.forRoot (app.module.ts).
+    if (process.env.E2E_MODE === 'true') return true;
+
     const request = context.switchToHttp().getRequest<Request>();
     const ip = this.extractIp(request);
 
