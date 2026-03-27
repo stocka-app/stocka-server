@@ -242,7 +242,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
           .set('Authorization', `Bearer ${viewerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(Array.isArray(res.body)).toBe(true);
+        expect(Array.isArray(res.body.items)).toBe(true);
       });
     });
 
@@ -253,7 +253,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
           .set('Authorization', `Bearer ${ownerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(Array.isArray(res.body)).toBe(true);
+        expect(Array.isArray(res.body.items)).toBe(true);
       });
     });
   });
