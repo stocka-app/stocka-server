@@ -57,6 +57,9 @@ export class RateLimitInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest<Request>();
     const config: RateLimitConfig | undefined = request.__rateLimitConfig;
 
+    // Skip tracking in E2E mode
+    if (process.env.E2E_MODE === 'true') return;
+
     // No rate limit config or not tracking → just re-throw
     if (!config?.trackFailedAttempts) {
       return;

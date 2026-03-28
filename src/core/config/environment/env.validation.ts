@@ -155,6 +155,11 @@ class EnvironmentVariables {
   @IsNumber()
   @IsOptional()
   VERIFICATION_CODE_EXPIRATION_MINUTES?: number;
+
+  // E2E testing mode — disables rate limiting and progressive blocking
+  @IsString()
+  @IsOptional()
+  E2E_MODE?: string;
 }
 
 export function validate(config: Record<string, unknown>): EnvironmentVariables {

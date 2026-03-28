@@ -40,7 +40,7 @@ export class RateLimitGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (!config) return true;
+    if (!config || process.env.E2E_MODE === 'true') return true;
 
     const request = context.switchToHttp().getRequest<Request>();
     const ip = this.extractIp(request);
