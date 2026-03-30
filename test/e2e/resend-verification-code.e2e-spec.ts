@@ -3,7 +3,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
+import { getWorkerApp, truncateWorkerTables, resetEmailMock } from '@test/worker-app';
 
 describe('Resend Verification Code (e2e)', () => {
   let app: INestApplication;
@@ -39,11 +39,7 @@ describe('Resend Verification Code (e2e)', () => {
   });
 
   beforeEach(async () => {
-    jest.resetAllMocks();
-    emailProvider.sendEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendVerificationEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendWelcomeEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
+    resetEmailMock();
 
     if (dataSource?.isInitialized) {
       await dataSource.query('DELETE FROM "authn"."verification_attempts"');
@@ -123,6 +119,90 @@ describe('Resend Verification Code (e2e)', () => {
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
         expect(res.body.error).toBe('USER_ALREADY_VERIFIED');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — cooldown active
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user who just received a resent verification code', () => {
+    describe('When they immediately request another resend (within cooldown)', () => {
+      it('Then they receive a 429 with RESEND_COOLDOWN_ACTIVE error code', async () => {
+        await signUpAndCaptureCode('cooldown@example.com', 'cooldownuser');
+
+        // Simulate a prior resend: set resend_count=1 (cooldown=60s) and last_resent_at=NOW
+        await dataSource.query(
+          `UPDATE "authn"."email_verification_tokens"
+           SET resend_count = 1, last_resent_at = NOW()
+           WHERE credential_account_id = (
+             SELECT ca.id FROM "accounts"."credential_accounts" ca WHERE LOWER(ca.email) = 'cooldown@example.com'
+           )`,
+        );
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/resend-verification-code')
+          .send({ email: 'cooldown@example.com' });
+
+        expect(res.status).toBe(HttpStatus.TOO_MANY_REQUESTS);
+        expect(res.body.error).toBe('RESEND_COOLDOWN_ACTIVE');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — max resends exceeded
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user who has exhausted all resend attempts', () => {
+    describe('When they request another resend after max resends', () => {
+      it('Then they receive a 429 with MAX_RESENDS_EXCEEDED error code', async () => {
+        await signUpAndCaptureCode('maxresend@example.com', 'maxresenduser');
+
+        // Set resend_count to the maximum and last_resent_at to a past time (past cooldown)
+        await dataSource.query(
+          `UPDATE "authn"."email_verification_tokens"
+           SET resend_count = 5, last_resent_at = NOW() - INTERVAL '10 minutes'
+           WHERE credential_account_id = (
+             SELECT ca.id FROM "accounts"."credential_accounts" ca WHERE LOWER(ca.email) = 'maxresend@example.com'
+           )`,
+        );
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/resend-verification-code')
+          .send({ email: 'maxresend@example.com' });
+
+        expect(res.status).toBe(HttpStatus.TOO_MANY_REQUESTS);
+        expect(res.body.error).toBe('MAX_RESENDS_EXCEEDED');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — successful resend with existing token (past cooldown)
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user with a pending verification who waited past the cooldown', () => {
+    describe('When they request a resend', () => {
+      it('Then they receive a 200 with the updated code info', async () => {
+        await signUpAndCaptureCode('resend.past@example.com', 'resendpastuser');
+
+        // Set last_resent_at to a past time to bypass cooldown
+        await dataSource.query(
+          `UPDATE "authn"."email_verification_tokens"
+           SET last_resent_at = NOW() - INTERVAL '10 minutes'
+           WHERE credential_account_id = (
+             SELECT ca.id FROM "accounts"."credential_accounts" ca WHERE LOWER(ca.email) = 'resend.past@example.com'
+           )`,
+        );
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/resend-verification-code')
+          .send({ email: 'resend.past@example.com' });
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.success).toBe(true);
       });
     });
   });

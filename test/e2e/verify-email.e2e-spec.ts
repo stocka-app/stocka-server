@@ -3,7 +3,7 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
+import { getWorkerApp, truncateWorkerTables, resetEmailMock } from '@test/worker-app';
 
 describe('Verify Email (e2e)', () => {
   let app: INestApplication;
@@ -39,11 +39,7 @@ describe('Verify Email (e2e)', () => {
   });
 
   beforeEach(async () => {
-    jest.resetAllMocks();
-    emailProvider.sendEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendVerificationEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendWelcomeEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
+    resetEmailMock();
 
     if (dataSource?.isInitialized) {
       await dataSource.query('DELETE FROM "authn"."verification_attempts"');
@@ -110,6 +106,88 @@ describe('Verify Email (e2e)', () => {
           .send({ email: 'ghost@example.com', code: 'ABC123' });
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — already verified user
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user who has already verified their email', () => {
+    describe('When they attempt to verify again', () => {
+      it('Then they receive a 400 with USER_ALREADY_VERIFIED error code', async () => {
+        const code = await signUpAndCaptureCode('alreadyverified@example.com', 'alreadyverified');
+
+        // Verify the first time
+        await request(app.getHttpServer())
+          .post('/api/authentication/verify-email')
+          .send({ email: 'alreadyverified@example.com', code });
+
+        // Wait for event propagation
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Second attempt should fail
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/verify-email')
+          .send({ email: 'alreadyverified@example.com', code });
+
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+        expect(res.body.error).toBe('USER_ALREADY_VERIFIED');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — expired verification token (token not found because expired)
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user whose verification token has expired', () => {
+    describe('When they submit the code after expiration', () => {
+      it('Then they receive a 400 — the expired token is filtered out by the active query', async () => {
+        const code = await signUpAndCaptureCode('expired@example.com', 'expireduser');
+
+        // Manually expire the token — findActiveByCredentialAccountId will return null
+        await dataSource.query(
+          `UPDATE "authn"."email_verification_tokens" SET expires_at = NOW() - INTERVAL '1 hour'
+           WHERE credential_account_id = (
+             SELECT ca.id FROM "accounts"."credential_accounts" ca WHERE LOWER(ca.email) = 'expired@example.com'
+           )`,
+        );
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/verify-email')
+          .send({ email: 'expired@example.com', code });
+
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+        expect(res.body.error).toBe('INVALID_VERIFICATION_CODE');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — no active token (token deleted or used)
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user whose verification token was deleted', () => {
+    describe('When they submit a code with no active token in the database', () => {
+      it('Then they receive a 400 with INVALID_VERIFICATION_CODE error code', async () => {
+        await signUpAndCaptureCode('notoken@example.com', 'notokenuser');
+
+        // Delete the token
+        await dataSource.query(
+          `DELETE FROM "authn"."email_verification_tokens"
+           WHERE credential_account_id = (
+             SELECT ca.id FROM "accounts"."credential_accounts" ca WHERE LOWER(ca.email) = 'notoken@example.com'
+           )`,
+        );
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/verify-email')
+          .send({ email: 'notoken@example.com', code: 'ABC123' });
+
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+        expect(res.body.error).toBe('INVALID_VERIFICATION_CODE');
       });
     });
   });

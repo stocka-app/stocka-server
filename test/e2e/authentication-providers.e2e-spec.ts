@@ -11,6 +11,7 @@ describe('Authentication Providers (e2e)', () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateWorkerTables(dataSource);
   });
 
   afterAll(async () => {

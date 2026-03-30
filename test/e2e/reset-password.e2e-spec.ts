@@ -1,7 +1,11 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { MarkTokenUsedStep } from '@authentication/application/sagas/reset-password/steps';
+import {
+  MarkTokenUsedStep,
+  ArchiveUserSessionsStep,
+  PublishResetPasswordEventsStep,
+} from '@authentication/application/sagas/reset-password/steps';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
@@ -11,6 +15,8 @@ describe('Reset Password (e2e)', () => {
   let dataSource: DataSource;
   let emailProvider: jest.Mocked<IEmailProviderContract>;
   let markTokenUsedStep: MarkTokenUsedStep;
+  let archiveUserSessionsStep: ArchiveUserSessionsStep;
+  let publishResetPasswordEventsStep: PublishResetPasswordEventsStep;
 
   /**
    * Signs up a user, then requests a forgot-password to create a reset token.
@@ -48,10 +54,13 @@ describe('Reset Password (e2e)', () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateWorkerTables(dataSource);
     emailProvider = app.get<jest.Mocked<IEmailProviderContract>>(
       INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
     );
     markTokenUsedStep = app.get(MarkTokenUsedStep);
+    archiveUserSessionsStep = app.get(ArchiveUserSessionsStep);
+    publishResetPasswordEventsStep = app.get(PublishResetPasswordEventsStep);
   });
 
   afterAll(async () => {
@@ -209,6 +218,73 @@ describe('Reset Password (e2e)', () => {
         );
 
         expect(tokenRow.used_at).toBeNull();
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Rollback — archive sessions fails → token NOT marked as used (different step)
+  // ---------------------------------------------------------------------------
+
+  describe('Given the session archiving step fails (ArchiveUserSessionsStep)', () => {
+    describe('When the database rejects the session archive after the token is marked as used', () => {
+      it('Then the transaction is rolled back and the token remains valid', async () => {
+        const { plainToken } = await setupUserWithResetToken(
+          'rollback.archive@example.com',
+          'rollbackarchive',
+        );
+
+        const { AuthenticationDomainService } =
+          await import('@authentication/domain/services/authentication-domain.service');
+        const tokenHash = AuthenticationDomainService.hashToken(plainToken);
+
+        const spy = jest
+          .spyOn(archiveUserSessionsStep, 'execute')
+          .mockRejectedValueOnce(new Error('Archive sessions failed mid-transaction'));
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/reset-password')
+          .send({ token: plainToken, newPassword: 'NewSecurePass1!' });
+
+        expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        // Token must still be valid (used_at should be NULL — rollback succeeded)
+        const [tokenRow] = await dataSource.query(
+          `SELECT used_at FROM "authn"."password_reset_tokens" WHERE token_hash = $1`,
+          [tokenHash],
+        );
+
+        expect(tokenRow.used_at).toBeNull();
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Non-transactional step failure — publish events is fire-and-forget
+  // ---------------------------------------------------------------------------
+
+  describe('Given the publish-events step fails after reset password commit', () => {
+    describe('When PublishResetPasswordEventsStep throws', () => {
+      it('Then the saga still succeeds — non-transactional steps are fire-and-forget', async () => {
+        const { plainToken } = await setupUserWithResetToken(
+          'rollback.pub@example.com',
+          'rollbackpub',
+        );
+
+        const spy = jest
+          .spyOn(publishResetPasswordEventsStep, 'execute')
+          .mockRejectedValueOnce(new Error('EventBus failure'));
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/reset-password')
+          .send({ token: plainToken, newPassword: 'NewSecurePass1!' });
+
+        // Saga completes despite publish failure
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.message).toBe('Password has been reset successfully');
+
         spy.mockRestore();
       });
     });

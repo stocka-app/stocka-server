@@ -119,6 +119,7 @@ describe('List Storages — GET /api/storages (e2e)', () => {
     const workerApp = await getStorageWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateStorageWorkerTables(dataSource);
 
     // ── Tenant A setup ──────────────────────────────────────────────────────
     await signUp(app, dataSource, OWNER_A_EMAIL, OWNER_A_USERNAME);

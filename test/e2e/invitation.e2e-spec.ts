@@ -56,6 +56,7 @@ describe('Invitation flow (e2e)', () => {
     const workerApp = await getTenantWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateTenantWorkerTables(dataSource);
 
     // Register and verify both users
     await signUp(app, dataSource, OWNER_EMAIL, OWNER_USERNAME);
@@ -332,6 +333,274 @@ describe('Invitation flow (e2e)', () => {
           .set('Authorization', `Bearer ${ownerToken}`);
 
         expect(res.status).toBe(HttpStatus.NOT_FOUND);
+      });
+    });
+  });
+
+  // ── 9. Accept invitation — expired token ──────────────────────────────────
+
+  describe('Given an invitee trying to accept an expired invitation', () => {
+    let expiredInvitationToken: string;
+
+    beforeAll(async () => {
+      const expEmail = 'invitee.expired.accept@example.com';
+      const expUsername = 'inviteeexpiredaccept';
+
+      // Create invitation and then expire it
+      const createRes = await request(app.getHttpServer())
+        .post('/api/tenant/me/invitations')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ email: expEmail, role: 'VIEWER' });
+
+      const expInvId = (createRes.body as { id: string }).id;
+
+      const rows = await dataSource.query<{ token: string }[]>(
+        `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
+        [expInvId],
+      );
+      expiredInvitationToken = rows[0].token;
+
+      // Force-expire
+      await dataSource.query(
+        `UPDATE "tenants"."tenant_invitations"
+         SET expires_at = NOW() - INTERVAL '1 day'
+         WHERE token = $1`,
+        [expiredInvitationToken],
+      );
+
+      await signUp(app, dataSource, expEmail, expUsername);
+    });
+
+    describe('When they try to accept the expired invitation', () => {
+      it('Then it returns 410 Gone', async () => {
+        const expToken = await signIn(app, 'invitee.expired.accept@example.com');
+        const res = await request(app.getHttpServer())
+          .post(`/api/tenant/invitations/${expiredInvitationToken}/accept`)
+          .set('Authorization', `Bearer ${expToken}`);
+
+        expect(res.status).toBe(HttpStatus.GONE);
+      });
+    });
+  });
+
+  // ── 10. Accept invitation — email mismatch ────────────────────────────────
+
+  describe('Given a user trying to accept an invitation meant for someone else', () => {
+    let mismatchInvToken: string;
+
+    beforeAll(async () => {
+      const targetEmail = 'invitee.mismatch.target@example.com';
+      const wrongEmail = 'invitee.mismatch.wrong@example.com';
+      const wrongUsername = 'inviteemismatchwrong';
+
+      const createRes = await request(app.getHttpServer())
+        .post('/api/tenant/me/invitations')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ email: targetEmail, role: 'VIEWER' });
+
+      const mismatchId = (createRes.body as { id: string }).id;
+
+      const rows = await dataSource.query<{ token: string }[]>(
+        `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
+        [mismatchId],
+      );
+      mismatchInvToken = rows[0].token;
+
+      await signUp(app, dataSource, wrongEmail, wrongUsername);
+    });
+
+    describe('When the wrong user tries to accept', () => {
+      it('Then it returns 403 Forbidden (INVITATION_EMAIL_MISMATCH)', async () => {
+        const wrongToken = await signIn(app, 'invitee.mismatch.wrong@example.com');
+        const res = await request(app.getHttpServer())
+          .post(`/api/tenant/invitations/${mismatchInvToken}/accept`)
+          .set('Authorization', `Bearer ${wrongToken}`);
+
+        expect(res.status).toBe(HttpStatus.FORBIDDEN);
+        expect(res.body.error).toBe('INVITATION_EMAIL_MISMATCH');
+      });
+    });
+  });
+
+  // ── 11. Accept invitation — non-existent token ────────────────────────────
+
+  describe('Given a user trying to accept a non-existent invitation token', () => {
+    describe('When they call accept with a bogus token', () => {
+      it('Then it returns 404 Not Found', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/api/tenant/invitations/nonexistenttoken999/accept')
+          .set('Authorization', `Bearer ${inviteeToken}`);
+
+        expect(res.status).toBe(HttpStatus.NOT_FOUND);
+      });
+    });
+  });
+
+  // ── 12. Cancel invitation — already accepted ──────────────────────────────
+
+  describe('Given an owner trying to cancel an already-accepted invitation', () => {
+    describe('When they try to cancel the already-accepted invitation', () => {
+      it('Then it returns 409 Conflict (INVITATION_ALREADY_USED)', async () => {
+        // The invitation from the main flow was already accepted
+        const res = await request(app.getHttpServer())
+          .delete(`/api/tenant/me/invitations/${invitationId}`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        expect(res.status).toBe(HttpStatus.CONFLICT);
+      });
+    });
+  });
+
+  // ── 13. Preview invitation — expired token ────────────────────────────────
+
+  describe('Given an expired invitation token', () => {
+    let expiredPreviewToken: string;
+
+    beforeAll(async () => {
+      const previewExpEmail = 'preview.expired@example.com';
+
+      const createRes = await request(app.getHttpServer())
+        .post('/api/tenant/me/invitations')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ email: previewExpEmail, role: 'VIEWER' });
+
+      const previewId = (createRes.body as { id: string }).id;
+
+      const rows = await dataSource.query<{ token: string }[]>(
+        `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
+        [previewId],
+      );
+      expiredPreviewToken = rows[0].token;
+
+      await dataSource.query(
+        `UPDATE "tenants"."tenant_invitations"
+         SET expires_at = NOW() - INTERVAL '1 day'
+         WHERE token = $1`,
+        [expiredPreviewToken],
+      );
+    });
+
+    describe('When the expired token is previewed via GET', () => {
+      it('Then it returns 410 Gone (INVITATION_EXPIRED)', async () => {
+        const res = await request(app.getHttpServer()).get(
+          `/api/tenant/invitations/${expiredPreviewToken}`,
+        );
+
+        expect(res.status).toBe(HttpStatus.GONE);
+      });
+    });
+  });
+
+  // ── 14. Preview invitation — already accepted token ───────────────────────
+
+  describe('Given an already-accepted invitation token', () => {
+    describe('When the accepted token is previewed via GET', () => {
+      it('Then it returns 409 Conflict (INVITATION_ALREADY_USED)', async () => {
+        // Use the already-accepted invitationToken from the main flow
+        if (!invitationToken) {
+          const rows = await dataSource.query<{ token: string }[]>(
+            `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
+            [invitationId],
+          );
+          invitationToken = rows[0].token;
+        }
+
+        const res = await request(app.getHttpServer()).get(
+          `/api/tenant/invitations/${invitationToken}`,
+        );
+
+        expect(res.status).toBe(HttpStatus.CONFLICT);
+      });
+    });
+  });
+
+  // ── 15. Member already exists ─────────────────────────────────────────────
+
+  describe('Given an invitee who already belongs to the tenant', () => {
+    let memberInvToken: string;
+
+    beforeAll(async () => {
+      // The invitee from the main flow is already a member of this tenant.
+      // Create a new invitation for a different email, then change it via DB
+      // to point to the invitee's email, so the accept handler sees "member already exists".
+      const memberTestEmail = 'member.alreadyexists@example.com';
+      const createRes = await request(app.getHttpServer())
+        .post('/api/tenant/me/invitations')
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ email: memberTestEmail, role: 'VIEWER' });
+
+      const memberId = (createRes.body as { id: string }).id;
+
+      const rows = await dataSource.query<{ token: string }[]>(
+        `SELECT token FROM "tenants"."tenant_invitations" WHERE id = $1`,
+        [memberId],
+      );
+      memberInvToken = rows[0].token;
+
+      // Override the invitation email to match the invitee who's already a member
+      await dataSource.query(
+        `UPDATE "tenants"."tenant_invitations"
+         SET email = $1
+         WHERE token = $2`,
+        [INVITEE_EMAIL, memberInvToken],
+      );
+    });
+
+    describe('When the already-a-member user tries to accept the invitation', () => {
+      it('Then it returns 409 Conflict (MEMBER_ALREADY_EXISTS)', async () => {
+        // Re-sign-in the invitee to get a fresh token
+        const freshInviteeToken = await signIn(app, INVITEE_EMAIL);
+        const res = await request(app.getHttpServer())
+          .post(`/api/tenant/invitations/${memberInvToken}/accept`)
+          .set('Authorization', `Bearer ${freshInviteeToken}`);
+
+        expect(res.status).toBe(HttpStatus.CONFLICT);
+        expect(res.body.error).toBe('MEMBER_ALREADY_EXISTS');
+      });
+    });
+  });
+
+  // ── 16. Invite with insufficient role permissions ─────────────────────────
+
+  describe('Given a VIEWER trying to invite a member', () => {
+    let viewerToken: string;
+
+    beforeAll(async () => {
+      const VIEWER_EMAIL = 'inv.viewer@example.com';
+      const VIEWER_USERNAME = 'invviewere2e';
+
+      await signUp(app, dataSource, VIEWER_EMAIL, VIEWER_USERNAME);
+
+      // Insert VIEWER member directly
+      const tenantRows: Array<{ id: number }> = await dataSource.query(
+        `SELECT id FROM "tenants"."tenants" WHERE name = 'Test Business e2e' LIMIT 1`,
+      );
+      const tenantId = tenantRows[0].id;
+
+      const userRows: Array<{ id: number; uuid: string }> = await dataSource.query(
+        `SELECT u.id, u.uuid FROM "identity"."users" u
+         JOIN "accounts"."credential_accounts" ca ON ca.account_id = u.id
+         WHERE LOWER(ca.email) = LOWER($1) LIMIT 1`,
+        [VIEWER_EMAIL],
+      );
+
+      await dataSource.query(
+        `INSERT INTO "tenants"."tenant_members" (uuid, tenant_id, user_id, user_uuid, role, status)
+         VALUES (gen_random_uuid(), $1, $2, $3, 'VIEWER', 'active')`,
+        [tenantId, userRows[0].id, userRows[0].uuid],
+      );
+
+      viewerToken = await signIn(app, VIEWER_EMAIL);
+    });
+
+    describe('When a VIEWER tries to invite someone as VIEWER', () => {
+      it('Then it returns 403 because VIEWERs cannot invite (InsufficientPermissionsError)', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/api/tenant/me/invitations')
+          .set('Authorization', `Bearer ${viewerToken}`)
+          .send({ email: 'viewer.target@example.com', role: 'VIEWER' });
+
+        expect(res.status).toBe(HttpStatus.FORBIDDEN);
       });
     });
   });

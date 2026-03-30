@@ -1,14 +1,11 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
+import { getWorkerApp, truncateWorkerTables, resetEmailMock } from '@test/worker-app';
 
 describe('Get Me (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
-  let emailProvider: jest.Mocked<IEmailProviderContract>;
 
   // Helper: sign up a user and return their access token
   async function signUpAndGetToken(email: string, username: string): Promise<string> {
@@ -22,9 +19,6 @@ describe('Get Me (e2e)', () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
-    emailProvider = app.get<jest.Mocked<IEmailProviderContract>>(
-      INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
-    );
   });
 
   afterAll(async () => {
@@ -32,11 +26,7 @@ describe('Get Me (e2e)', () => {
   });
 
   beforeEach(async () => {
-    jest.resetAllMocks();
-    emailProvider.sendEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendVerificationEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendWelcomeEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
+    resetEmailMock();
 
     if (dataSource?.isInitialized) {
       await truncateWorkerTables(dataSource);

@@ -110,4 +110,69 @@ describe('GET /api/tenants/me/capabilities (e2e)', () => {
       expect(typeof res.body.maxStoreRooms).toBe('number');
     });
   });
+
+  describe('Given an authenticated user with an active tenant on STARTER tier', () => {
+    it('Then the endpoint returns 200 with STARTER tier limits', async () => {
+      const STARTER_EMAIL = 'capabilities.starter@example.com';
+      const STARTER_USERNAME = 'capsstartere2e';
+
+      await signUp(app, dataSource, STARTER_EMAIL, STARTER_USERNAME);
+      const tempToken = await signIn(app, STARTER_EMAIL);
+      await completeOnboarding(app, tempToken);
+
+      // Upgrade to STARTER
+      await dataSource.query(
+        `UPDATE "tenants"."tenant_config" tc
+         SET tier = 'STARTER',
+             max_warehouses = 3,
+             max_custom_rooms = 5,
+             max_store_rooms = 5,
+             max_users = 10
+         FROM "tenants"."tenant_members" tm
+           JOIN "identity"."users" u ON u.id = tm.user_id
+           JOIN "accounts"."credential_accounts" ca ON ca.account_id = u.id
+         WHERE tm.tenant_id = tc.tenant_id
+           AND tm.role = 'OWNER'
+           AND tm.archived_at IS NULL
+           AND LOWER(ca.email) = LOWER($1)`,
+        [STARTER_EMAIL],
+      );
+
+      const token = await signIn(app, STARTER_EMAIL);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/tenants/me/capabilities')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res.status).toBe(HttpStatus.OK);
+      expect(res.body.tier).toBe('STARTER');
+      expect(res.body.maxWarehouses).toBe(3);
+      expect(res.body.maxCustomRooms).toBe(5);
+      expect(res.body.maxStoreRooms).toBe(5);
+    });
+  });
+
+  describe('Given an authenticated user calling capabilities twice', () => {
+    it('Then both calls return 200 (exercises the facade twice)', async () => {
+      const CACHE_EMAIL = 'capabilities.cache@example.com';
+      const CACHE_USERNAME = 'capscachee2e';
+
+      await signUp(app, dataSource, CACHE_EMAIL, CACHE_USERNAME);
+      const tempToken = await signIn(app, CACHE_EMAIL);
+      await completeOnboarding(app, tempToken);
+      const token = await signIn(app, CACHE_EMAIL);
+
+      const res1 = await request(app.getHttpServer())
+        .get('/api/tenants/me/capabilities')
+        .set('Authorization', `Bearer ${token}`);
+
+      const res2 = await request(app.getHttpServer())
+        .get('/api/tenants/me/capabilities')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(res1.status).toBe(HttpStatus.OK);
+      expect(res2.status).toBe(HttpStatus.OK);
+      expect(res1.body.tier).toBe(res2.body.tier);
+    });
+  });
 });

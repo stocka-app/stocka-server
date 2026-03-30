@@ -53,6 +53,7 @@ describe('RBAC endpoints (e2e)', () => {
     const workerApp = await getTenantWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateTenantWorkerTables(dataSource);
 
     await signUp(app, dataSource, OWNER_EMAIL, OWNER_USERNAME);
     await signUp(app, dataSource, NO_TENANT_EMAIL, NO_TENANT_USERNAME);
@@ -301,18 +302,20 @@ describe('RBAC endpoints (e2e)', () => {
     });
 
     describe('When they request their effective permissions', () => {
-      it('Then it returns 200 with PARTNER role and 16 specific actions', async () => {
+      it('Then it returns 200 with PARTNER role and 18 specific actions', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/rbac/my-permissions')
           .set('Authorization', `Bearer ${partnerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.role).toBe('PARTNER');
-        expect(res.body.actions).toHaveLength(16);
+        expect(res.body.actions).toHaveLength(18);
         expect(res.body.actions).toContain('STORAGE_CREATE');
         expect(res.body.actions).toContain('STORAGE_READ');
         expect(res.body.actions).toContain('STORAGE_UPDATE');
         expect(res.body.actions).toContain('STORAGE_DELETE');
+        expect(res.body.actions).toContain('STORAGE_FREEZE');
+        expect(res.body.actions).toContain('STORAGE_ARCHIVE');
         expect(res.body.actions).toContain('MEMBER_INVITE');
         expect(res.body.actions).toContain('MEMBER_READ');
         expect(res.body.actions).toContain('MEMBER_UPDATE_ROLE');
@@ -364,18 +367,20 @@ describe('RBAC endpoints (e2e)', () => {
     });
 
     describe('When they request their effective permissions', () => {
-      it('Then it returns 200 with MANAGER role and 14 specific actions', async () => {
+      it('Then it returns 200 with MANAGER role and 16 specific actions', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/rbac/my-permissions')
           .set('Authorization', `Bearer ${managerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.role).toBe('MANAGER');
-        expect(res.body.actions).toHaveLength(14);
+        expect(res.body.actions).toHaveLength(16);
         expect(res.body.actions).toContain('STORAGE_CREATE');
         expect(res.body.actions).toContain('STORAGE_READ');
         expect(res.body.actions).toContain('STORAGE_UPDATE');
         expect(res.body.actions).toContain('STORAGE_DELETE');
+        expect(res.body.actions).toContain('STORAGE_FREEZE');
+        expect(res.body.actions).toContain('STORAGE_ARCHIVE');
         expect(res.body.actions).toContain('MEMBER_INVITE');
         expect(res.body.actions).toContain('MEMBER_READ');
         expect(res.body.actions).toContain('PRODUCT_CREATE');

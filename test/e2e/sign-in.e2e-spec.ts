@@ -1,13 +1,21 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { CreateSignInSessionStep } from '@authentication/application/sagas/sign-in/steps';
-import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
+import {
+  CreateSignInSessionStep,
+  GenerateSignInTokensStep,
+  PublishSignInEventsStep,
+  ValidateCredentialsStep,
+} from '@authentication/application/sagas/sign-in/steps';
+import { getWorkerApp, truncateWorkerTables, resetEmailMock } from '@test/worker-app';
 
 describe('Sign In (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
   let createSignInSessionStep: CreateSignInSessionStep;
+  let generateSignInTokensStep: GenerateSignInTokensStep;
+  let publishSignInEventsStep: PublishSignInEventsStep;
+  let validateCredentialsStep: ValidateCredentialsStep;
 
   // Helper for rollback tests — uses HTTP so it runs through UoW/saga.
   // Safe since UnitOfWorkIsolationMiddleware isolates ALS per request.
@@ -25,7 +33,11 @@ describe('Sign In (e2e)', () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateWorkerTables(dataSource);
     createSignInSessionStep = app.get(CreateSignInSessionStep);
+    generateSignInTokensStep = app.get(GenerateSignInTokensStep);
+    publishSignInEventsStep = app.get(PublishSignInEventsStep);
+    validateCredentialsStep = app.get(ValidateCredentialsStep);
 
     // Seed base verified user via HTTP sign-up, then activate via SQL.
     // Sign-in requires: status='active', email_verified_at set, and known password.
@@ -42,7 +54,7 @@ describe('Sign In (e2e)', () => {
   });
 
   beforeEach(() => {
-    jest.resetAllMocks();
+    resetEmailMock();
   });
 
   // ---------------------------------------------------------------------------
@@ -207,6 +219,116 @@ describe('Sign In (e2e)', () => {
 
         expect(parseInt(after[0].count)).toBe(parseInt(before[0].count));
         spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Rollback — token generation fails → no session, no partial state
+  // ---------------------------------------------------------------------------
+
+  describe('Given a DB failure during token generation', () => {
+    describe('When GenerateSignInTokensStep fails after credentials were validated', () => {
+      it('Then the sign-in fails with 500 and no session is created', async () => {
+        const email = 'rollback.gentokens@example.com';
+        await signUp(email, 'rollbackgentokens');
+
+        const spy = jest
+          .spyOn(generateSignInTokensStep, 'execute')
+          .mockRejectedValueOnce(new Error('Token generation failure'));
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/sign-in')
+          .send({ emailOrUsername: email, password: 'SecurePass1!' });
+
+        expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Non-transactional step failure — publish events is fire-and-forget
+  // ---------------------------------------------------------------------------
+
+  describe('Given the publish-events step fails after commit', () => {
+    describe('When PublishSignInEventsStep throws', () => {
+      it('Then the saga still succeeds — non-transactional steps are fire-and-forget', async () => {
+        const email = 'rollback.pubevents@example.com';
+        await signUp(email, 'rollbackpubevents');
+
+        const spy = jest
+          .spyOn(publishSignInEventsStep, 'execute')
+          .mockRejectedValueOnce(new Error('EventBus publish failure'));
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/sign-in')
+          .send({ emailOrUsername: email, password: 'SecurePass1!' });
+
+        // Saga completes despite publish failure
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.accessToken).toBeDefined();
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — deactivated account
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user whose account has been archived (deactivated)', () => {
+    describe('When they attempt to sign in', () => {
+      it('Then they receive a 401 Unauthorized with ACCOUNT_DEACTIVATED error code', async () => {
+        const email = 'deactivated@example.com';
+        await signUp(email, 'deactivateduser');
+
+        // Archive the user to simulate deactivation
+        await dataSource.query(
+          `UPDATE "identity"."users" SET archived_at = NOW()
+           WHERE uuid = (
+             SELECT u.uuid FROM "identity"."users" u
+             JOIN "accounts"."accounts" a ON a.user_id = u.id
+             JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id
+             WHERE LOWER(ca.email) = LOWER($1)
+           )`,
+          [email],
+        );
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/sign-in')
+          .send({ emailOrUsername: email, password: 'SecurePass1!' });
+
+        expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
+        expect(res.body.error).toBe('ACCOUNT_DEACTIVATED');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — pending email verification
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user who has not verified their email yet', () => {
+    describe('When they attempt to sign in', () => {
+      it('Then they receive a 403 Forbidden with EMAIL_NOT_VERIFIED error code', async () => {
+        // Sign up WITHOUT activating the account (no SQL update)
+        await request(app.getHttpServer())
+          .post('/api/authentication/sign-up')
+          .send({
+            email: 'unverified@example.com',
+            username: 'unverifieduser',
+            password: 'SecurePass1!',
+          });
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/sign-in')
+          .send({ emailOrUsername: 'unverified@example.com', password: 'SecurePass1!' });
+
+        expect(res.status).toBe(HttpStatus.FORBIDDEN);
+        expect(res.body.error).toBe('EMAIL_NOT_VERIFIED');
       });
     });
   });

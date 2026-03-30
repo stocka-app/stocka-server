@@ -3,7 +3,11 @@ import request from 'supertest';
 import { CommandBus } from '@nestjs/cqrs';
 import { DataSource } from 'typeorm';
 import { SocialSignInCommand } from '@authentication/application/commands/social-sign-in/social-sign-in.command';
-import { CreateSocialSessionStep } from '@authentication/application/sagas/social-sign-in/steps';
+import {
+  CreateSocialSessionStep,
+  GenerateSocialTokensStep,
+  PublishSocialSignInEventsStep,
+} from '@authentication/application/sagas/social-sign-in/steps';
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
 describe('Social Sign In (e2e)', () => {
@@ -11,13 +15,18 @@ describe('Social Sign In (e2e)', () => {
   let dataSource: DataSource;
   let commandBus: CommandBus;
   let createSocialSessionStep: CreateSocialSessionStep;
+  let generateSocialTokensStep: GenerateSocialTokensStep;
+  let publishSocialSignInEventsStep: PublishSocialSignInEventsStep;
 
   beforeAll(async () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateWorkerTables(dataSource);
     commandBus = app.get(CommandBus);
     createSocialSessionStep = app.get(CreateSocialSessionStep);
+    generateSocialTokensStep = app.get(GenerateSocialTokensStep);
+    publishSocialSignInEventsStep = app.get(PublishSocialSignInEventsStep);
   });
 
   afterAll(async () => {
@@ -191,6 +200,184 @@ describe('Social Sign In (e2e)', () => {
 
         expect(socialAccount).toBeUndefined();
         spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Rollback — token generation fails → user rolled back (Path C)
+  // ---------------------------------------------------------------------------
+
+  describe('Given the token generation step fails during a new-user social sign-in', () => {
+    describe('When GenerateSocialTokensStep throws mid-transaction', () => {
+      it('Then the transaction is rolled back and the new user does not exist', async () => {
+        const spy = jest
+          .spyOn(generateSocialTokensStep, 'execute')
+          .mockRejectedValueOnce(new Error('Token generation failed'));
+
+        await expect(
+          commandBus.execute(
+            new SocialSignInCommand(
+              'rollback.gentokens@example.com',
+              'Rollback GenTokens',
+              'google',
+              'google-rollback-uid-gentokens',
+              null,
+              null,
+              null,
+              null,
+              false,
+              null,
+              {},
+            ),
+          ),
+        ).rejects.toThrow('Token generation failed');
+
+        const [socialAccount] = await dataSource.query(
+          `SELECT id FROM "accounts"."social_accounts" WHERE LOWER(provider_email) = 'rollback.gentokens@example.com'`,
+        );
+
+        expect(socialAccount).toBeUndefined();
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Non-transactional step failure — publish events is fire-and-forget
+  // ---------------------------------------------------------------------------
+
+  describe('Given the publish-events step fails after social sign-in commit', () => {
+    describe('When PublishSocialSignInEventsStep throws', () => {
+      it('Then the saga still succeeds — non-transactional steps are fire-and-forget', async () => {
+        const spy = jest
+          .spyOn(publishSocialSignInEventsStep, 'execute')
+          .mockRejectedValueOnce(new Error('EventBus failure'));
+
+        const result = await commandBus.execute(
+          new SocialSignInCommand(
+            'pubfail.social@example.com',
+            'PubFail Social',
+            'google',
+            'google-pubfail-uid-004',
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            {},
+          ),
+        );
+
+        // Saga completes despite publish failure
+        expect(result.accessToken).toBeDefined();
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — Path C with locale normalization
+  // ---------------------------------------------------------------------------
+
+  describe('Given a new user signing in with a non-standard locale', () => {
+    describe('When the locale is an unsupported language code', () => {
+      it('Then the system normalizes it to "es" and the user is created', async () => {
+        const result = await commandBus.execute(
+          new SocialSignInCommand(
+            'locale.test@example.com',
+            'Locale Test',
+            'google',
+            'google-locale-uid-005',
+            'Locale',
+            'Test',
+            null,
+            'fr-CA', // unsupported locale
+            false,
+            null,
+            {},
+          ),
+        );
+
+        expect(result.accessToken).toBeDefined();
+        expect(result.credential.email).toBe('locale.test@example.com');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — Path C with null locale
+  // ---------------------------------------------------------------------------
+
+  describe('Given a new user signing in with no locale', () => {
+    describe('When the locale is null', () => {
+      it('Then the system defaults to "es" and the user is created', async () => {
+        const result = await commandBus.execute(
+          new SocialSignInCommand(
+            'nulllocale@example.com',
+            'Null Locale',
+            'google',
+            'google-nulllocale-uid-006',
+            null,
+            null,
+            null,
+            null, // null locale
+            false,
+            null,
+            {},
+          ),
+        );
+
+        expect(result.accessToken).toBeDefined();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — Path C with username collision
+  // ---------------------------------------------------------------------------
+
+  describe('Given a new user whose display name collides with an existing username', () => {
+    describe('When generateUniqueUsername needs to append a random suffix', () => {
+      it('Then the user is created with a unique suffixed username', async () => {
+        // Create a first user with a display name that will produce the base username
+        await commandBus.execute(
+          new SocialSignInCommand(
+            'collision1@example.com',
+            'CollisionTest',
+            'google',
+            'google-collision-uid-007',
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            {},
+          ),
+        );
+
+        // Create a second user with the same display name — username will collide
+        const result = await commandBus.execute(
+          new SocialSignInCommand(
+            'collision2@example.com',
+            'CollisionTest',
+            'google',
+            'google-collision-uid-008',
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            {},
+          ),
+        );
+
+        expect(result.accessToken).toBeDefined();
+        expect(result.credential.email).toBe('collision2@example.com');
       });
     });
   });

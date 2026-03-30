@@ -1,9 +1,7 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
+import { getWorkerApp, truncateWorkerTables, resetEmailMock } from '@test/worker-app';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -23,15 +21,11 @@ async function signUpAndGetToken(
 describe('User Consents (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
-  let emailProvider: jest.Mocked<IEmailProviderContract>;
 
   beforeAll(async () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
-    emailProvider = app.get<jest.Mocked<IEmailProviderContract>>(
-      INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
-    );
   });
 
   afterAll(async () => {
@@ -39,11 +33,7 @@ describe('User Consents (e2e)', () => {
   });
 
   beforeEach(async () => {
-    jest.resetAllMocks();
-    emailProvider.sendEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendVerificationEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendWelcomeEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
+    resetEmailMock();
 
     if (dataSource?.isInitialized) {
       await truncateWorkerTables(dataSource);
@@ -155,6 +145,43 @@ describe('User Consents (e2e)', () => {
         const res = await request(app.getHttpServer()).get('/api/users/me/consents');
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
+      });
+    });
+  });
+
+  // ── POST /api/users/me/consents — overwrite existing consents ──────────
+
+  describe('Given an authenticated user who already recorded consents', () => {
+    describe('When they submit updated consents (marketing changed)', () => {
+      it('Then it returns 201 and the new consent values are persisted', async () => {
+        const token = await signUpAndGetToken(app, 'consent6@example.com', 'consentuser6');
+
+        // Record initial consents
+        await request(app.getHttpServer())
+          .post('/api/users/me/consents')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ terms: true, marketing: false, analytics: false });
+
+        // Update consents
+        const res = await request(app.getHttpServer())
+          .post('/api/users/me/consents')
+          .set('Authorization', `Bearer ${token}`)
+          .send({ terms: true, marketing: true, analytics: true });
+
+        expect(res.status).toBe(HttpStatus.CREATED);
+        expect(res.body.recorded).toBe(true);
+
+        // Verify the latest entries
+        const getRes = await request(app.getHttpServer())
+          .get('/api/users/me/consents')
+          .set('Authorization', `Bearer ${token}`);
+
+        expect(getRes.status).toBe(HttpStatus.OK);
+        const consents = getRes.body.consents as Array<{
+          consentType: string;
+          granted: boolean;
+        }>;
+        expect(consents.length).toBeGreaterThan(0);
       });
     });
   });

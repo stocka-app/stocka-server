@@ -1,14 +1,13 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
+import { getWorkerApp, truncateWorkerTables, resetEmailMock } from '@test/worker-app';
 
 describe('Sign Out (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
-  let emailProvider: jest.Mocked<IEmailProviderContract>;
+  let mediator: MediatorService;
 
   // Helper: sign up a fresh user and return the refresh_token cookie string
   async function signUpAndGetCookie(email: string, username: string): Promise<string> {
@@ -24,9 +23,7 @@ describe('Sign Out (e2e)', () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
-    emailProvider = app.get<jest.Mocked<IEmailProviderContract>>(
-      INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
-    );
+    mediator = app.get(MediatorService);
   });
 
   afterAll(async () => {
@@ -34,11 +31,7 @@ describe('Sign Out (e2e)', () => {
   });
 
   beforeEach(async () => {
-    jest.resetAllMocks();
-    emailProvider.sendEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendVerificationEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendWelcomeEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
+    resetEmailMock();
 
     if (dataSource?.isInitialized) {
       await dataSource.query('DELETE FROM "authn"."email_verification_tokens"');
@@ -117,6 +110,50 @@ describe('Sign Out (e2e)', () => {
     describe('When they call the sign-out endpoint', () => {
       it('Then they receive a 200 — sign-out is idempotent and requires no authentication', async () => {
         const res = await request(app.getHttpServer()).post('/api/authentication/sign-out');
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.message).toBe('Successfully signed out');
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — session exists but user not found by accountId
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user whose account entry is missing from the user table', () => {
+    describe('When they sign out with a valid refresh token', () => {
+      it('Then they receive a 200 — session is archived but no events are published', async () => {
+        const cookie = await signUpAndGetCookie('orphaned@example.com', 'orphaneduser');
+
+        // Delete the user row (but keep the session and account) to create the orphan condition
+        // The handler's userView will be null because findByAccountId returns nothing
+        const spy = jest
+          .spyOn(mediator.user, 'findByAccountId')
+          .mockResolvedValueOnce(null);
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/sign-out')
+          .set('Cookie', cookie);
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.message).toBe('Successfully signed out');
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — sign-out with an invalid/unknown token
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user who presents a refresh token that does not match any session', () => {
+    describe('When they call sign-out with an unknown token', () => {
+      it('Then they receive a 200 — sign-out is graceful even with bad tokens', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/sign-out')
+          .set('Cookie', 'refresh_token=some.unknown.token.value');
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.message).toBe('Successfully signed out');

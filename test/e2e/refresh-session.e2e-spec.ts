@@ -1,13 +1,19 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { CreateNewSessionStep } from '@authentication/application/sagas/refresh-session/steps';
+import {
+  CreateNewSessionStep,
+  GenerateRefreshTokensStep,
+  ArchiveOldSessionStep,
+} from '@authentication/application/sagas/refresh-session/steps';
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
 describe('Refresh Session (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
   let createNewSessionStep: CreateNewSessionStep;
+  let generateRefreshTokensStep: GenerateRefreshTokensStep;
+  let archiveOldSessionStep: ArchiveOldSessionStep;
 
   // Helper: sign up a user and return the refresh token cookie
   async function signUpAndGetCookie(
@@ -30,7 +36,10 @@ describe('Refresh Session (e2e)', () => {
     const workerApp = await getWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncateWorkerTables(dataSource);
     createNewSessionStep = app.get(CreateNewSessionStep);
+    generateRefreshTokensStep = app.get(GenerateRefreshTokensStep);
+    archiveOldSessionStep = app.get(ArchiveOldSessionStep);
   });
 
   afterAll(async () => {
@@ -180,6 +189,103 @@ describe('Refresh Session (e2e)', () => {
 
         expect(sessionCheck.archived_at).toBeNull();
         spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Rollback — token generation fails → old session NOT archived
+  // ---------------------------------------------------------------------------
+
+  describe('Given the token generation step fails after the old session is archived', () => {
+    describe('When GenerateRefreshTokensStep throws mid-transaction', () => {
+      it('Then the transaction is rolled back and the original session remains active', async () => {
+        const { cookie } = await signUpAndGetCookie(
+          'rollback.gentokens@example.com',
+          'rollbackgenref',
+        );
+
+        const [account] = await dataSource.query(
+          `SELECT a.id FROM "accounts"."accounts" a JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id WHERE LOWER(ca.email) = 'rollback.gentokens@example.com'`,
+        );
+        const [originalSession] = await dataSource.query(
+          `SELECT uuid FROM "sessions"."sessions" WHERE account_id = $1 AND archived_at IS NULL`,
+          [account.id],
+        );
+
+        const spy = jest
+          .spyOn(generateRefreshTokensStep, 'execute')
+          .mockRejectedValueOnce(new Error('JWT signing failure during refresh'));
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/refresh-session')
+          .set('Cookie', cookie);
+
+        expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        // Original session must still be active (archive rolled back)
+        const [sessionCheck] = await dataSource.query(
+          `SELECT archived_at FROM "sessions"."sessions" WHERE uuid = $1`,
+          [originalSession.uuid],
+        );
+
+        expect(sessionCheck.archived_at).toBeNull();
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Rollback — archive step fails → saga error catch
+  // ---------------------------------------------------------------------------
+
+  describe('Given the archive-old-session step fails', () => {
+    describe('When ArchiveOldSessionStep throws', () => {
+      it('Then the saga catches the error and the response is 500', async () => {
+        const { cookie } = await signUpAndGetCookie(
+          'rollback.archive@example.com',
+          'rollbackarchref',
+        );
+
+        const spy = jest
+          .spyOn(archiveOldSessionStep, 'execute')
+          .mockRejectedValueOnce(new Error('Archive session DB error'));
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/refresh-session')
+          .set('Cookie', cookie);
+
+        expect(res.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Branch coverage — reusing a consumed refresh token
+  // ---------------------------------------------------------------------------
+
+  describe('Given a customer who already used their refresh token', () => {
+    describe('When they try to use the same refresh token a second time', () => {
+      it('Then they receive a 401 Unauthorized because the old session is archived', async () => {
+        const { cookie } = await signUpAndGetCookie(
+          'reuse.refresh@example.com',
+          'reuserefuser',
+        );
+
+        // First refresh succeeds and archives the old session
+        const first = await request(app.getHttpServer())
+          .post('/api/authentication/refresh-session')
+          .set('Cookie', cookie);
+        expect(first.status).toBe(HttpStatus.CREATED);
+
+        // Second refresh with the same (now-archived) token should fail
+        const second = await request(app.getHttpServer())
+          .post('/api/authentication/refresh-session')
+          .set('Cookie', cookie);
+
+        expect(second.status).toBe(HttpStatus.UNAUTHORIZED);
       });
     });
   });

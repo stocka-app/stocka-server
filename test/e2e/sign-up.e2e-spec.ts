@@ -4,10 +4,13 @@ import { DataSource } from 'typeorm';
 import {
   CreateSessionStep,
   CreateVerificationTokenStep,
+  GenerateTokensStep,
+  PublishSignUpEventsStep,
+  SendVerificationEmailStep,
 } from '@authentication/application/sagas/sign-up/steps';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { getWorkerApp, truncateWorkerTables, emailProviderMock } from '@test/worker-app';
+import { getWorkerApp, truncateWorkerTables, resetEmailMock } from '@test/worker-app';
 
 describe('Sign Up (e2e)', () => {
   let app: INestApplication;
@@ -15,6 +18,9 @@ describe('Sign Up (e2e)', () => {
   let emailProvider: jest.Mocked<IEmailProviderContract>;
   let createSessionStep: CreateSessionStep;
   let createVerificationTokenStep: CreateVerificationTokenStep;
+  let generateTokensStep: GenerateTokensStep;
+  let publishEventsStep: PublishSignUpEventsStep;
+  let sendVerificationEmailStep: SendVerificationEmailStep;
 
   beforeAll(async () => {
     const workerApp = await getWorkerApp();
@@ -25,6 +31,9 @@ describe('Sign Up (e2e)', () => {
     );
     createSessionStep = app.get(CreateSessionStep);
     createVerificationTokenStep = app.get(CreateVerificationTokenStep);
+    generateTokensStep = app.get(GenerateTokensStep);
+    publishEventsStep = app.get(PublishSignUpEventsStep);
+    sendVerificationEmailStep = app.get(SendVerificationEmailStep);
   });
 
   afterAll(async () => {
@@ -32,11 +41,7 @@ describe('Sign Up (e2e)', () => {
   });
 
   beforeEach(async () => {
-    jest.resetAllMocks();
-    emailProvider.sendEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendVerificationEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendWelcomeEmail.mockResolvedValue({ id: 'mock-id', success: true });
-    emailProvider.sendPasswordResetEmail.mockResolvedValue({ id: 'mock-id', success: true });
+    resetEmailMock();
 
     if (dataSource?.isInitialized) {
       await truncateWorkerTables(dataSource);
@@ -299,6 +304,95 @@ describe('Sign Up (e2e)', () => {
           .send({ email: 'not-an-email', username: 'bademail', password: 'SecurePass1!' });
 
         expect(response.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Rollback — token generation fails → user rolled back
+  // ---------------------------------------------------------------------------
+
+  describe('Given a DB failure during token generation', () => {
+    describe('When the GenerateTokensStep fails after the user was registered', () => {
+      it('Then the entire transaction is rolled back and the user does not exist', async () => {
+        const spy = jest
+          .spyOn(generateTokensStep, 'execute')
+          .mockRejectedValueOnce(new Error('JWT signing failure'));
+
+        const response = await request(app.getHttpServer())
+          .post('/api/authentication/sign-up')
+          .send({
+            email: 'rollback.tokens@example.com',
+            username: 'rollbacktokens',
+            password: 'SecurePass1!',
+          });
+
+        expect(response.status).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        const [user] = await dataSource.query(
+          `SELECT ca.id FROM "accounts"."credential_accounts" ca WHERE LOWER(ca.email) = 'rollback.tokens@example.com'`,
+        );
+        expect(user).toBeUndefined();
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Non-transactional step failure — publish events is fire-and-forget
+  // ---------------------------------------------------------------------------
+
+  describe('Given the publish-events step fails after commit', () => {
+    describe('When PublishSignUpEventsStep throws', () => {
+      it('Then the saga still succeeds — non-transactional steps are fire-and-forget', async () => {
+        const spy = jest
+          .spyOn(publishEventsStep, 'execute')
+          .mockRejectedValueOnce(new Error('EventBus failure'));
+
+        const response = await request(app.getHttpServer())
+          .post('/api/authentication/sign-up')
+          .send({
+            email: 'pubfail@example.com',
+            username: 'pubfailuser',
+            password: 'SecurePass1!',
+          });
+
+        // Saga completes despite publish failure (fire-and-forget)
+        expect(response.status).toBe(HttpStatus.CREATED);
+        expect(response.body.user.email).toBe('pubfail@example.com');
+
+        spy.mockRestore();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Non-transactional step failure — send verification email is fire-and-forget
+  // ---------------------------------------------------------------------------
+
+  describe('Given the SendVerificationEmailStep fails with a precondition error', () => {
+    describe('When the step throws because of a transient error', () => {
+      it('Then the saga still succeeds with emailSent=false — non-transactional steps are fire-and-forget', async () => {
+        const spy = jest
+          .spyOn(sendVerificationEmailStep, 'execute')
+          .mockRejectedValueOnce(
+            new Error('SendVerificationEmailStep: ctx.credential not set by prior step'),
+          );
+
+        const response = await request(app.getHttpServer())
+          .post('/api/authentication/sign-up')
+          .send({
+            email: 'sendfail@example.com',
+            username: 'sendfailuser',
+            password: 'SecurePass1!',
+          });
+
+        // Saga completes despite send failure (fire-and-forget)
+        expect(response.status).toBe(HttpStatus.CREATED);
+        expect(response.body.accessToken).toBeDefined();
+
+        spy.mockRestore();
       });
     });
   });

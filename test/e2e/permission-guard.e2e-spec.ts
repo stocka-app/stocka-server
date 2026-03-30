@@ -158,6 +158,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
     const workerApp = await getPermissionGuardWorkerApp();
     app = workerApp.app;
     dataSource = workerApp.dataSource;
+    await truncatePermissionGuardWorkerTables(dataSource);
 
     // Register all test users
     await Promise.all([
