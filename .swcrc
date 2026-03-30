@@ -1,0 +1,36 @@
+{
+  "$schema": "https://swc.rs/schema.json",
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "decorators": true,
+      "dynamicImport": true
+    },
+    "transform": {
+      "legacyDecorator": true,
+      "decoratorMetadata": true,
+      "useDefineForClassFields": false
+    },
+    "target": "es2022",
+    "loose": true,
+    "keepClassNames": true,
+    "externalHelpers": false,
+    "baseUrl": ".",
+    "paths": {
+      "@authentication/*": ["src/bounded-contexts/authentication/*"],
+      "@user/*": ["src/bounded-contexts/user/*"],
+      "@shared/*": ["src/shared/*"],
+      "@common/*": ["src/common/*"],
+      "@core/*": ["src/core/*"],
+      "@test/*": ["test/*"],
+      "@tenant/*": ["src/bounded-contexts/tenant/*"],
+      "@test-mockup/*": ["test/__mocks__/*"],
+      "@storage/*": ["src/bounded-contexts/storage/*"],
+      "@onboarding/*": ["src/bounded-contexts/onboarding/*"]
+    }
+  },
+  "module": {
+    "type": "commonjs",
+    "lazy": true
+  }
+}
