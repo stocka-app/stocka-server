@@ -143,9 +143,15 @@ export async function getTenantWorkerApp(): Promise<TenantWorkerApp> {
  */
 export function resetTenantEmailMock(): void {
   tenantEmailProviderMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  tenantEmailProviderMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  tenantEmailProviderMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  tenantEmailProviderMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  tenantEmailProviderMock.sendVerificationEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  tenantEmailProviderMock.sendWelcomeEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  tenantEmailProviderMock.sendPasswordResetEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
 }
 
 export async function truncateTenantWorkerTables(dataSource: DataSource): Promise<void> {

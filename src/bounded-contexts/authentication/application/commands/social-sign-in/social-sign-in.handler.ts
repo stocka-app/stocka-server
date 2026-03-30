@@ -1,13 +1,14 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { SocialSignInCommand } from '@authentication/application/commands/social-sign-in/social-sign-in.command';
-import { SocialSignInResult } from '@authentication/application/types/authentication-result.types';
+import { SocialSignInCommandResult } from '@authentication/application/types/authentication-result.types';
 import { SocialSignInSaga } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga';
+import { ok } from '@shared/domain/result';
 
 @CommandHandler(SocialSignInCommand)
 export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand> {
   constructor(private readonly saga: SocialSignInSaga) {}
 
-  async execute(command: SocialSignInCommand): Promise<SocialSignInResult> {
+  async execute(command: SocialSignInCommand): Promise<SocialSignInCommandResult> {
     const result = await this.saga.execute({
       email: command.email,
       displayName: command.displayName,
@@ -22,9 +23,9 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
       rawData: command.rawData,
     });
 
-    if (result.isErr()) throw result.error;
+    if (result.isErr()) return result;
 
     const { user, credential, accessToken, refreshToken } = result.value;
-    return { user, credential, accessToken, refreshToken };
+    return ok({ user, credential, accessToken, refreshToken });
   }
 }

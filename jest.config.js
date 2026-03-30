@@ -25,4 +25,12 @@ module.exports = {
     '^uuid$': require.resolve('uuid'),
   },
   transformIgnorePatterns: ['[/\\\\]node_modules[/\\\\](?!uuid[/\\\\])'],
+  coverageThreshold: {
+    global: {
+      statements: 100,
+      branches: 100,
+      functions: 100,
+      lines: 100,
+    },
+  },
 };

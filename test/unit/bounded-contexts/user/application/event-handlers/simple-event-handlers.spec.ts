@@ -22,12 +22,8 @@ describe('UserCreatedEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('user-uuid-1'),
-        );
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('john_doe'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('user-uuid-1'));
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('john_doe'));
       });
     });
   });
@@ -50,9 +46,7 @@ describe('UserPasswordUpdatedEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('user-uuid-2'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('user-uuid-2'));
       });
     });
   });
@@ -68,23 +62,15 @@ describe('UserCreatedFromSocialEventHandler', () => {
   });
 
   describe('Given a UserCreatedFromSocialEvent', () => {
-    const event = new UserCreatedFromSocialEvent(
-      'user-uuid-3',
-      'social@example.com',
-      'google',
-    );
+    const event = new UserCreatedFromSocialEvent('user-uuid-3', 'social@example.com', 'google');
 
     describe('When handle is called', () => {
       it('Then it logs the social creation with UUID, email, and provider', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('user-uuid-3'),
-        );
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('google'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('user-uuid-3'));
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('google'));
       });
     });
   });

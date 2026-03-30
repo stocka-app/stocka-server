@@ -46,7 +46,7 @@ export class PasswordResetRequestedEventHandler implements IEventHandler<Passwor
       this.logger.log(`Password reset email sent: emailId=${result.id}`);
     } catch (error) {
       this.logger.error(
-        `Failed to send password reset email after retries: ${error instanceof Error ? error.message : error}`,
+        `Failed to send password reset email after retries: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

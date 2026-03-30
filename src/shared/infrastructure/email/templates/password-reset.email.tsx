@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { EmailLayout } from './components/email-layout';
+import { EmailLayout } from '@shared/infrastructure/email/templates/components/email-layout';
 import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 
 interface PasswordResetEmailProps {

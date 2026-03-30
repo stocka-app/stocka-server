@@ -30,12 +30,8 @@ describe('SessionCreatedEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('session-uuid-abc'),
-        );
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('accountId=42'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('session-uuid-abc'));
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('accountId=42'));
       });
     });
   });
@@ -58,9 +54,7 @@ describe('PasswordResetCompletedEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('credentialAccountId=99'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('credentialAccountId=99'));
       });
     });
   });
@@ -83,9 +77,7 @@ describe('SessionArchivedEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('session-uuid-xyz'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('session-uuid-xyz'));
       });
     });
   });
@@ -108,12 +100,8 @@ describe('SessionRefreshedEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('old-session-uuid'),
-        );
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('new-session-uuid'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('old-session-uuid'));
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('new-session-uuid'));
       });
     });
   });
@@ -136,9 +124,7 @@ describe('UserSignedInEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('user-uuid-signin'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('user-uuid-signin'));
       });
     });
   });
@@ -161,9 +147,7 @@ describe('UserSignedOutEventHandler', () => {
         handler.handle(event);
 
         expect(logSpy).toHaveBeenCalledTimes(1);
-        expect(logSpy).toHaveBeenCalledWith(
-          expect.stringContaining('user-uuid-signout'),
-        );
+        expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('user-uuid-signout'));
       });
     });
   });
@@ -192,12 +176,8 @@ describe('UserVerificationBlockedEventHandler', () => {
         handler.handle(event);
 
         expect(warnSpy).toHaveBeenCalledTimes(1);
-        expect(warnSpy).toHaveBeenCalledWith(
-          expect.stringContaining('user-uuid-1'),
-        );
-        expect(warnSpy).toHaveBeenCalledWith(
-          expect.stringContaining('too_many_attempts'),
-        );
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('user-uuid-1'));
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('too_many_attempts'));
       });
     });
   });

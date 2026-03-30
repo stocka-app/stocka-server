@@ -42,9 +42,6 @@ import { TenantModule } from '@tenant/tenant.module';
     CompleteOnboardingHandler,
     GetOnboardingStatusHandler,
   ],
-  exports: [
-    INJECTION_TOKENS.ONBOARDING_FACADE,
-    OnboardingFacade,
-  ],
+  exports: [INJECTION_TOKENS.ONBOARDING_FACADE, OnboardingFacade],
 })
 export class OnboardingModule {}

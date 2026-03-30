@@ -37,7 +37,13 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
     }
 
     // Get active verification token
-    const token = await this.tokenContract.findActiveByCredentialAccountId(credential.id!);
+    const credentialId = credential.id;
+    if (credentialId === undefined || credentialId === null) {
+      return err(new InvalidVerificationCodeException());
+    }
+
+    const token = await this.tokenContract.findActiveByCredentialAccountId(credentialId);
+
     if (!token) {
       return err(new InvalidVerificationCodeException());
     }

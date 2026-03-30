@@ -42,7 +42,9 @@ import { GetInvitationsController } from '@tenant/infrastructure/http/controller
 import { CancelInvitationController } from '@tenant/infrastructure/http/controllers/cancel-invitation/cancel-invitation.controller';
 import { AcceptInvitationController } from '@tenant/infrastructure/http/controllers/accept-invitation/accept-invitation.controller';
 import { GetInvitationByTokenController } from '@tenant/infrastructure/http/controllers/get-invitation-by-token/get-invitation-by-token.controller';
-import { RbacController } from '@tenant/infrastructure/http/controllers/rbac/rbac.controller';
+import { GetMyPermissionsController } from '@tenant/infrastructure/http/controllers/get-my-permissions/get-my-permissions.controller';
+import { GetRolesController } from '@tenant/infrastructure/http/controllers/get-roles/get-roles.controller';
+import { GetAssignableRolesController } from '@tenant/infrastructure/http/controllers/get-assignable-roles/get-assignable-roles.controller';
 import { GetTenantCapabilitiesController } from '@tenant/infrastructure/http/controllers/get-tenant-capabilities/get-tenant-capabilities.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
@@ -80,7 +82,9 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     CancelInvitationController,
     AcceptInvitationController,
     GetInvitationByTokenController,
-    RbacController,
+    GetMyPermissionsController,
+    GetRolesController,
+    GetAssignableRolesController,
     GetTenantCapabilitiesController,
   ],
   providers: [

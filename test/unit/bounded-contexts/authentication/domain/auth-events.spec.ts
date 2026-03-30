@@ -11,18 +11,11 @@ import { VerificationCodeResentEvent } from '@authentication/domain/events/verif
 describe('Authentication domain events', () => {
   describe('Given UserSignedInEvent', () => {
     describe('When constructed with a user UUID', () => {
-      it('Then it holds the UUID and a default occurredOn', () => {
+      it('Then it holds the UUID and a default occurredOn from DomainEvent', () => {
         const event = new UserSignedInEvent('user-uuid-signin');
         expect(event.userUUID).toBe('user-uuid-signin');
         expect(event.occurredOn).toBeInstanceOf(Date);
-      });
-    });
-
-    describe('When constructed with an explicit date', () => {
-      it('Then it uses the provided date', () => {
-        const date = new Date('2024-05-15');
-        const event = new UserSignedInEvent('uuid', date);
-        expect(event.occurredOn).toBe(date);
+        expect(event.eventName).toBe('UserSignedInEvent');
       });
     });
   });
@@ -41,69 +34,41 @@ describe('Authentication domain events', () => {
         expect(event.ipAddress).toBe('192.168.1.1');
         expect(event.failedAttempts).toBe(3);
         expect(event.occurredOn).toBeInstanceOf(Date);
-      });
-    });
-
-    describe('When constructed with a custom occurredOn date', () => {
-      it('Then it uses the provided date', () => {
-        const date = new Date('2024-01-01T00:00:00Z');
-        const event = new EmailVerificationFailedEvent('uuid', 'e@e.com', '1.1.1.1', 1, date);
-        expect(event.occurredOn).toBe(date);
+        expect(event.eventName).toBe('EmailVerificationFailedEvent');
       });
     });
   });
 
   describe('Given SessionArchivedEvent', () => {
     describe('When constructed with a session UUID', () => {
-      it('Then it holds the UUID and a default occurredOn', () => {
+      it('Then it holds the UUID and a default occurredOn from DomainEvent', () => {
         const event = new SessionArchivedEvent('session-uuid-abc');
         expect(event.sessionUUID).toBe('session-uuid-abc');
         expect(event.occurredOn).toBeInstanceOf(Date);
-      });
-    });
-
-    describe('When constructed with an explicit date', () => {
-      it('Then it uses the provided date', () => {
-        const date = new Date('2024-06-01');
-        const event = new SessionArchivedEvent('session-uuid', date);
-        expect(event.occurredOn).toBe(date);
+        expect(event.eventName).toBe('SessionArchivedEvent');
       });
     });
   });
 
   describe('Given SessionRefreshedEvent', () => {
     describe('When constructed with old and new session UUIDs', () => {
-      it('Then it holds both UUIDs and a default occurredOn', () => {
+      it('Then it holds both UUIDs and a default occurredOn from DomainEvent', () => {
         const event = new SessionRefreshedEvent('old-uuid', 'new-uuid');
         expect(event.oldSessionUUID).toBe('old-uuid');
         expect(event.newSessionUUID).toBe('new-uuid');
         expect(event.occurredOn).toBeInstanceOf(Date);
-      });
-    });
-
-    describe('When constructed with an explicit date', () => {
-      it('Then it uses the provided date', () => {
-        const date = new Date('2024-06-15');
-        const event = new SessionRefreshedEvent('old', 'new', date);
-        expect(event.occurredOn).toBe(date);
+        expect(event.eventName).toBe('SessionRefreshedEvent');
       });
     });
   });
 
   describe('Given UserSignedOutEvent', () => {
     describe('When constructed with a user UUID', () => {
-      it('Then it holds the UUID and a default occurredOn', () => {
+      it('Then it holds the UUID and a default occurredOn from DomainEvent', () => {
         const event = new UserSignedOutEvent('user-uuid-xyz');
         expect(event.userUUID).toBe('user-uuid-xyz');
         expect(event.occurredOn).toBeInstanceOf(Date);
-      });
-    });
-
-    describe('When constructed with an explicit date', () => {
-      it('Then it uses the provided date', () => {
-        const date = new Date('2024-03-01');
-        const event = new UserSignedOutEvent('uuid', date);
-        expect(event.occurredOn).toBe(date);
+        expect(event.eventName).toBe('UserSignedOutEvent');
       });
     });
   });

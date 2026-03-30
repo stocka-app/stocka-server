@@ -269,10 +269,7 @@ describe('Refresh Session (e2e)', () => {
   describe('Given a customer who already used their refresh token', () => {
     describe('When they try to use the same refresh token a second time', () => {
       it('Then they receive a 401 Unauthorized because the old session is archived', async () => {
-        const { cookie } = await signUpAndGetCookie(
-          'reuse.refresh@example.com',
-          'reuserefuser',
-        );
+        const { cookie } = await signUpAndGetCookie('reuse.refresh@example.com', 'reuserefuser');
 
         // First refresh succeeds and archives the old session
         const first = await request(app.getHttpServer())

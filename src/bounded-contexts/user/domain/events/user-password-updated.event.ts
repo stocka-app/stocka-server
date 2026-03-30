@@ -1,8 +1,7 @@
-import { IEvent } from '@nestjs/cqrs';
+import { DomainEvent } from '@shared/domain/base/domain-event';
 
-export class UserPasswordUpdatedEvent implements IEvent {
-  constructor(
-    public readonly userUUID: string,
-    public readonly occurredOn: Date = new Date(),
-  ) {}
+export class UserPasswordUpdatedEvent extends DomainEvent {
+  constructor(public readonly userUUID: string) {
+    super();
+  }
 }

@@ -165,9 +165,15 @@ export async function getWorkerApp(): Promise<WorkerApp> {
  */
 export function resetEmailMock(): void {
   emailProviderMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  emailProviderMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  emailProviderMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  emailProviderMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  emailProviderMock.sendVerificationEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  emailProviderMock.sendWelcomeEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  emailProviderMock.sendPasswordResetEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
 }
 
 export async function truncateWorkerTables(dataSource: DataSource): Promise<void> {

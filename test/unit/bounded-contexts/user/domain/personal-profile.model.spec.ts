@@ -108,9 +108,7 @@ describe('PersonalProfileModel', () => {
         model.updateLocale('fr');
 
         expect(model.locale).toBe('fr');
-        expect(model.updatedAt.getTime()).toBeGreaterThanOrEqual(
-          originalUpdatedAt.getTime(),
-        );
+        expect(model.updatedAt.getTime()).toBeGreaterThanOrEqual(originalUpdatedAt.getTime());
       });
     });
   });

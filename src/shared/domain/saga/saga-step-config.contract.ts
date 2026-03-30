@@ -1,4 +1,4 @@
-import { ISagaStepHandler } from '@shared/domain/saga/saga-step-handler.interface';
+import { ISagaStepHandler } from '@shared/domain/saga/saga-step-handler.contract';
 import { RetryOptions } from '@shared/domain/utils/with-retry';
 
 /**

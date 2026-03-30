@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'dist/**', 'node_modules/**'],
+    ignores: ['eslint.config.mjs', 'dist/**', 'node_modules/**', 'test/**/*.js'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -52,6 +52,9 @@ export default tseslint.config(
         },
       ],
 
+      // One class per file (relaxed for DTOs, VOs, errors, adapters via overrides below)
+      'max-classes-per-file': ['error', 1],
+
       // Prettier
       'prettier/prettier': ['error', { endOfLine: 'auto' }],
     },
@@ -62,12 +65,40 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/unbound-method': 'off',
+      'max-classes-per-file': 'off',
+    },
+  },
+  // Relaxed max-classes for DTOs, VOs, domain errors, and adapters (colocated by design)
+  {
+    files: [
+      'src/**/*.dto.ts',
+      'src/**/*.vo.ts',
+      'src/**/value-objects/**/*.ts',
+      'src/**/*-errors.ts',
+      'src/**/*-error.ts',
+      'src/**/*.adapter.ts',
+    ],
+    rules: {
+      'max-classes-per-file': 'off',
+    },
+  },
+  // Relaxed rules for email templates (TSX — inline i18n arrow fns)
+  {
+    files: ['src/**/email/templates/**/*.tsx'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
     },
   },
   // Restrict relative imports in all files

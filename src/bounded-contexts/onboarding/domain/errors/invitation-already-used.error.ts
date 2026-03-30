@@ -1,7 +1,1 @@
-import { BusinessLogicException } from '@shared/domain/exceptions/business-logic.exception';
-
-export class InvitationAlreadyUsedError extends BusinessLogicException {
-  constructor() {
-    super('Invitation has already been used', 'INVITATION_ALREADY_USED');
-  }
-}
+export { InvitationAlreadyUsedError } from '@shared/domain/errors/invitation/invitation-already-used.error';

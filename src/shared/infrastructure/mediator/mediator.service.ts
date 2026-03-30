@@ -11,16 +11,15 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
  * All read operations return null (no tenant) instead of crashing.
  */
 const NULL_ONBOARDING_FACADE: IOnboardingFacade = {
-  getOnboardingStatus: async (): Promise<null> => null,
+  getOnboardingStatus: (): Promise<null> => Promise.resolve(null),
 };
 
 const NULL_TENANT_FACADE: ITenantFacade = {
-  getActiveMembership: async (): Promise<null> => null,
-  getMembershipContext: async (): Promise<null> => null,
-  getTierLimits: async (): Promise<null> => null,
-  createTenantForUser: async (): Promise<never> => {
-    throw new Error('TenantFacade not available in this context');
-  },
+  getActiveMembership: (): Promise<null> => Promise.resolve(null),
+  getMembershipContext: (): Promise<null> => Promise.resolve(null),
+  getTierLimits: (): Promise<null> => Promise.resolve(null),
+  createTenantForUser: (): Promise<never> =>
+    Promise.reject(new Error('TenantFacade not available in this context')),
 };
 
 @Injectable()
@@ -45,9 +44,12 @@ export class MediatorService implements OnModuleInit {
       this._tenantFacade = undefined;
     }
     try {
-      this._onboardingFacade = this.moduleRef.get<IOnboardingFacade>(INJECTION_TOKENS.ONBOARDING_FACADE, {
-        strict: false,
-      });
+      this._onboardingFacade = this.moduleRef.get<IOnboardingFacade>(
+        INJECTION_TOKENS.ONBOARDING_FACADE,
+        {
+          strict: false,
+        },
+      );
     } catch {
       this._onboardingFacade = undefined;
     }

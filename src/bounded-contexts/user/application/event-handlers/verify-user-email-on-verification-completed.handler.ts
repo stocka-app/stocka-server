@@ -21,12 +21,18 @@ export class VerifyUserEmailOnVerificationCompletedHandler implements IEventHand
       return;
     }
 
+    const credentialId = result.credential.id;
+    if (credentialId === undefined || credentialId === null) {
+      this.logger.warn(`Credential has no id for email verification: uuid=${event.userUUID}`);
+      return;
+    }
+
     try {
-      await this.mediator.user.verifyEmail(result.credential.id!);
+      await this.mediator.user.verifyEmail(credentialId);
       this.logger.log(`Email verified via event: uuid=${event.userUUID}`);
     } catch (error) {
       this.logger.warn(
-        `Failed to verify email via event: uuid=${event.userUUID}: ${error instanceof Error ? error.message : error}`,
+        `Failed to verify email via event: uuid=${event.userUUID}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

@@ -1,10 +1,11 @@
-import { IEvent } from '@nestjs/cqrs';
+import { DomainEvent } from '@shared/domain/base/domain-event';
 
-export class UserCreatedEvent implements IEvent {
+export class UserCreatedEvent extends DomainEvent {
   constructor(
     public readonly userUUID: string,
     public readonly email: string,
     public readonly username: string,
-    public readonly occurredOn: Date = new Date(),
-  ) {}
+  ) {
+    super();
+  }
 }

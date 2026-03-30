@@ -7,7 +7,10 @@ import { RateLimit } from '@common/decorators/rate-limit.decorator';
 import { SignInCommand } from '@authentication/application/commands/sign-in/sign-in.command';
 import { SignInCommandResult } from '@authentication/application/types/authentication-result.types';
 import { SignInInDto } from '@authentication/infrastructure/controllers/sign-in/sign-in-in.dto';
-import { SignInOutDto, SignInUserOutDto } from '@authentication/infrastructure/controllers/sign-in/sign-in-out.dto';
+import {
+  SignInOutDto,
+  SignInUserOutDto,
+} from '@authentication/infrastructure/controllers/sign-in/sign-in-out.dto';
 import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 

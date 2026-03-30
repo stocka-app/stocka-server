@@ -2,8 +2,10 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { CancelInvitationCommand } from '@tenant/application/commands/cancel-invitation/cancel-invitation.command';
 import { ITenantInvitationContract } from '@tenant/domain/contracts/tenant-invitation.contract';
-import { InvitationNotFoundError } from '@onboarding/domain/errors/invitation-not-found.error';
-import { InvitationAlreadyUsedError } from '@onboarding/domain/errors/invitation-already-used.error';
+import {
+  InvitationNotFoundError,
+  InvitationAlreadyUsedError,
+} from '@shared/domain/errors/invitation';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';

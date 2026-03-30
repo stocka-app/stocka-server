@@ -36,7 +36,7 @@ export class VerificationCodeResentEventHandler implements IEventHandler<Verific
       this.logger.log(`Verification email resent successfully: emailId=${result.id}`);
     } catch (error) {
       this.logger.error(
-        `Failed to resend verification email after retries: ${error instanceof Error ? error.message : error}`,
+        `Failed to resend verification email after retries: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

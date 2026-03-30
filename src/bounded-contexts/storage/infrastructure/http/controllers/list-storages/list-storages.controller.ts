@@ -9,7 +9,7 @@ import {
   ListStoragesQuery,
   StorageFilters,
 } from '@storage/application/queries/list-storages/list-storages.query';
-import { StoragePage } from '@storage/domain/contracts/storage.repository.interface';
+import { StoragePage } from '@storage/domain/contracts/storage.repository.contract';
 import { ListStoragesInDto } from '@storage/infrastructure/http/controllers/list-storages/list-storages-in.dto';
 import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';
 import { StoragePageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-page.out.dto';
@@ -23,7 +23,9 @@ export class ListStoragesController {
 
   @Get()
   @RequireAction(SystemAction.STORAGE_READ)
-  @ApiOperation({ summary: 'List storages for the tenant with optional filters, pagination, search and sort' })
+  @ApiOperation({
+    summary: 'List storages for the tenant with optional filters, pagination, search and sort',
+  })
   @ApiResponse({ status: 200, description: 'Paginated list of storages', type: StoragePageOutDto })
   async handle(
     @Query() queryDto: ListStoragesInDto,

@@ -4,7 +4,7 @@ import { ListStoragesQuery } from '@storage/application/queries/list-storages/li
 import {
   IStorageRepository,
   StoragePage,
-} from '@storage/domain/contracts/storage.repository.interface';
+} from '@storage/domain/contracts/storage.repository.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @QueryHandler(ListStoragesQuery)

@@ -145,7 +145,11 @@ describe('RateLimitInterceptor', () => {
       process.env.E2E_MODE = 'true';
 
       try {
-        const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+        const context = createMockExecutionContext(
+          signInRateLimitConfig,
+          '192.168.1.1',
+          'test@example.com',
+        );
         const error = new InvalidCredentialsException();
         const callHandler = createMockCallHandler(undefined, error);
 

@@ -146,7 +146,6 @@ function buildCtxWithHttp(): ExecutionContext {
 }
 
 function buildOAuthGuardTests(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   GuardClass: new (...args: any[]) => any,
   providerName: string,
   configKey: string,

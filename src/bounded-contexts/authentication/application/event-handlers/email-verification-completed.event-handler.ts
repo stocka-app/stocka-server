@@ -27,7 +27,7 @@ export class EmailVerificationCompletedEventHandler implements IEventHandler<Ema
       }
     } catch (error) {
       this.logger.error(
-        `Failed to send welcome email: ${error instanceof Error ? error.message : error}`,
+        `Failed to send welcome email: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

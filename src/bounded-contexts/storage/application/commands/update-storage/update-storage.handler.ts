@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { UpdateStorageCommand } from '@storage/application/commands/update-storage/update-storage.command';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.interface';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';

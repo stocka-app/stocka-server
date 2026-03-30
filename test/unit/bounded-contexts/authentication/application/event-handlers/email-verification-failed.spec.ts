@@ -24,20 +24,13 @@ describe('EmailVerificationFailedEventHandler', () => {
         handler.handle(event);
 
         expect(warnSpy).toHaveBeenCalledTimes(1);
-        expect(warnSpy).toHaveBeenCalledWith(
-          expect.stringContaining('failedAttempts=3'),
-        );
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('failedAttempts=3'));
       });
     });
   });
 
   describe('Given an event with failedAttempts = 5', () => {
-    const event = new EmailVerificationFailedEvent(
-      'user-uuid',
-      'test@example.com',
-      '10.0.0.1',
-      5,
-    );
+    const event = new EmailVerificationFailedEvent('user-uuid', 'test@example.com', '10.0.0.1', 5);
 
     describe('When handle is called', () => {
       it('Then it logs both the standard warning AND the suspicious activity warning', () => {
@@ -52,21 +45,14 @@ describe('EmailVerificationFailedEventHandler', () => {
   });
 
   describe('Given an event with failedAttempts > 5', () => {
-    const event = new EmailVerificationFailedEvent(
-      'user-uuid',
-      'test@example.com',
-      '10.0.0.1',
-      10,
-    );
+    const event = new EmailVerificationFailedEvent('user-uuid', 'test@example.com', '10.0.0.1', 10);
 
     describe('When handle is called', () => {
       it('Then it logs the suspicious activity warning with the correct count', () => {
         handler.handle(event);
 
         expect(warnSpy).toHaveBeenCalledTimes(2);
-        expect(warnSpy).toHaveBeenCalledWith(
-          expect.stringContaining('failedAttempts=10'),
-        );
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('failedAttempts=10'));
       });
     });
   });

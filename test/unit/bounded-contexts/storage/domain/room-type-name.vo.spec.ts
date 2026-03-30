@@ -31,17 +31,13 @@ describe('RoomTypeNameVO', () => {
   describe('Given an empty room type name', () => {
     describe('When create is called with an empty string', () => {
       it('Then it throws an error', () => {
-        expect(() => RoomTypeNameVO.create('')).toThrow(
-          'Room type name cannot be empty',
-        );
+        expect(() => RoomTypeNameVO.create('')).toThrow('Room type name cannot be empty');
       });
     });
 
     describe('When create is called with whitespace only', () => {
       it('Then it throws an error because trimmed value is empty', () => {
-        expect(() => RoomTypeNameVO.create('   ')).toThrow(
-          'Room type name cannot be empty',
-        );
+        expect(() => RoomTypeNameVO.create('   ')).toThrow('Room type name cannot be empty');
       });
     });
   });

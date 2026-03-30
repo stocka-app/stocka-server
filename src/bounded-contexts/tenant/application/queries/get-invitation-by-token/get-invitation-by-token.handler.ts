@@ -5,9 +5,11 @@ import {
   GetInvitationByTokenResult,
 } from '@tenant/application/queries/get-invitation-by-token/get-invitation-by-token.query';
 import { ITenantInvitationContract } from '@tenant/domain/contracts/tenant-invitation.contract';
-import { InvitationNotFoundError } from '@onboarding/domain/errors/invitation-not-found.error';
-import { InvitationExpiredError } from '@onboarding/domain/errors/invitation-expired.error';
-import { InvitationAlreadyUsedError } from '@onboarding/domain/errors/invitation-already-used.error';
+import {
+  InvitationNotFoundError,
+  InvitationExpiredError,
+  InvitationAlreadyUsedError,
+} from '@shared/domain/errors/invitation';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { ok, err } from '@shared/domain/result';
 

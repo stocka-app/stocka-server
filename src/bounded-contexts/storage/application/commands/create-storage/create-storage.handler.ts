@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { CreateStorageCommand } from '@storage/application/commands/create-storage/create-storage.command';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.interface';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
