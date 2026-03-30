@@ -23,7 +23,9 @@ export class ListStoragesController {
 
   @Get()
   @RequireAction(SystemAction.STORAGE_READ)
-  @ApiOperation({ summary: 'List storages for the tenant with optional filters, pagination, search and sort' })
+  @ApiOperation({
+    summary: 'List storages for the tenant with optional filters, pagination, search and sort',
+  })
   @ApiResponse({ status: 200, description: 'Paginated list of storages', type: StoragePageOutDto })
   async handle(
     @Query() queryDto: ListStoragesInDto,

@@ -21,12 +21,18 @@ export class BlockVerificationOnRateLimitHandler implements IEventHandler<UserVe
       return;
     }
 
+    const credentialId = result.credential.id;
+    if (credentialId === undefined || credentialId === null) {
+      this.logger.warn(`Credential has no id for verification block: uuid=${event.userUUID}`);
+      return;
+    }
+
     try {
-      await this.mediator.user.blockVerification(result.credential.id!, event.blockedUntil);
+      await this.mediator.user.blockVerification(credentialId, event.blockedUntil);
       this.logger.log(`Verification blocked via event: uuid=${event.userUUID}`);
     } catch (error) {
       this.logger.warn(
-        `Failed to block verification via event: uuid=${event.userUUID}: ${error instanceof Error ? error.message : error}`,
+        `Failed to block verification via event: uuid=${event.userUUID}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

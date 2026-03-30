@@ -315,13 +315,11 @@ describe('Sign In (e2e)', () => {
     describe('When they attempt to sign in', () => {
       it('Then they receive a 403 Forbidden with EMAIL_NOT_VERIFIED error code', async () => {
         // Sign up WITHOUT activating the account (no SQL update)
-        await request(app.getHttpServer())
-          .post('/api/authentication/sign-up')
-          .send({
-            email: 'unverified@example.com',
-            username: 'unverifieduser',
-            password: 'SecurePass1!',
-          });
+        await request(app.getHttpServer()).post('/api/authentication/sign-up').send({
+          email: 'unverified@example.com',
+          username: 'unverifieduser',
+          password: 'SecurePass1!',
+        });
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-in')

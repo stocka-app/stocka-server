@@ -128,9 +128,7 @@ describe('Sign Out (e2e)', () => {
 
         // Delete the user row (but keep the session and account) to create the orphan condition
         // The handler's userView will be null because findByAccountId returns nothing
-        const spy = jest
-          .spyOn(mediator.user, 'findByAccountId')
-          .mockResolvedValueOnce(null);
+        const spy = jest.spyOn(mediator.user, 'findByAccountId').mockResolvedValueOnce(null);
 
         const res = await request(app.getHttpServer())
           .post('/api/authentication/sign-out')

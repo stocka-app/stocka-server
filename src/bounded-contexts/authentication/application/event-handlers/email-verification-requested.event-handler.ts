@@ -41,7 +41,7 @@ export class EmailVerificationRequestedEventHandler implements IEventHandler<Ema
       this.logger.log(`Verification email sent successfully: emailId=${result.id}`);
     } catch (error) {
       this.logger.error(
-        `Failed to send verification email after retries: ${error instanceof Error ? error.message : error}`,
+        `Failed to send verification email after retries: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

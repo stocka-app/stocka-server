@@ -4,7 +4,9 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 import { withRetry } from '@shared/domain/utils/with-retry';
 
 jest.mock('@shared/domain/utils/with-retry', () => {
-  const actual = jest.requireActual<typeof import('@shared/domain/utils/with-retry')>('@shared/domain/utils/with-retry');
+  const actual = jest.requireActual<typeof import('@shared/domain/utils/with-retry')>(
+    '@shared/domain/utils/with-retry',
+  );
   return { ...actual, withRetry: jest.fn(actual.withRetry) };
 });
 
@@ -20,13 +22,7 @@ describe('EmailVerificationRequestedEventHandler', () => {
   let handler: EmailVerificationRequestedEventHandler;
   let emailProvider: jest.Mocked<Pick<IEmailProviderContract, 'sendVerificationEmail'>>;
 
-  const event = new EmailVerificationRequestedEvent(
-    1,
-    'user@example.com',
-    'ABC123',
-    'John',
-    'es',
-  );
+  const event = new EmailVerificationRequestedEvent(1, 'user@example.com', 'ABC123', 'John', 'es');
 
   beforeEach(() => {
     jest.useFakeTimers();

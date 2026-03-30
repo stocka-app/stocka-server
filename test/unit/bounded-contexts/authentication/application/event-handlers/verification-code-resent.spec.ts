@@ -4,7 +4,9 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 import { withRetry } from '@shared/domain/utils/with-retry';
 
 jest.mock('@shared/domain/utils/with-retry', () => {
-  const actual = jest.requireActual<typeof import('@shared/domain/utils/with-retry')>('@shared/domain/utils/with-retry');
+  const actual = jest.requireActual<typeof import('@shared/domain/utils/with-retry')>(
+    '@shared/domain/utils/with-retry',
+  );
   return { ...actual, withRetry: jest.fn(actual.withRetry) };
 });
 

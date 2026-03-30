@@ -149,10 +149,18 @@ export async function getStorageWorkerApp(): Promise<StorageWorkerApp> {
  * Use this instead of jest.resetAllMocks() to avoid nuking internal NestJS providers.
  */
 export function resetStorageEmailMock(): void {
-  storageEmailProviderMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  storageEmailProviderMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  storageEmailProviderMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  storageEmailProviderMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  storageEmailProviderMock.sendEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  storageEmailProviderMock.sendVerificationEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  storageEmailProviderMock.sendWelcomeEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  storageEmailProviderMock.sendPasswordResetEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
 }
 
 export async function truncateStorageWorkerTables(dataSource: DataSource): Promise<void> {

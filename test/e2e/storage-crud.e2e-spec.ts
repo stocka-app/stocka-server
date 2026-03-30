@@ -263,8 +263,7 @@ describe('Storage CRUD — GET / PATCH / DELETE /api/storages/:uuid (e2e)', () =
     describe('Given an unauthenticated client', () => {
       describe('When GET /api/storages/:uuid is called without a token', () => {
         it('Then it returns 401', async () => {
-          const res = await request(app.getHttpServer())
-            .get(`/api/storages/${warehouseUUID}`);
+          const res = await request(app.getHttpServer()).get(`/api/storages/${warehouseUUID}`);
 
           expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
         });

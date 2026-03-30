@@ -153,10 +153,18 @@ export async function getOnboardingWorkerApp(): Promise<OnboardingWorkerApp> {
  * Use this instead of jest.resetAllMocks() to avoid nuking internal NestJS providers.
  */
 export function resetOnboardingEmailMock(): void {
-  onboardingEmailProviderMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  onboardingEmailProviderMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  onboardingEmailProviderMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  onboardingEmailProviderMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  onboardingEmailProviderMock.sendEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  onboardingEmailProviderMock.sendVerificationEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  onboardingEmailProviderMock.sendWelcomeEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
+  onboardingEmailProviderMock.sendPasswordResetEmail
+    .mockReset()
+    .mockResolvedValue({ id: 'mock-id', success: true });
 }
 
 export async function truncateOnboardingWorkerTables(dataSource: DataSource): Promise<void> {

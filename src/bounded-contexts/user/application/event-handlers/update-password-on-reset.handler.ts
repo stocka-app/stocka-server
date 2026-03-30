@@ -22,7 +22,7 @@ export class UpdatePasswordOnResetHandler implements IEventHandler<UserPasswordR
       );
     } catch (error) {
       this.logger.warn(
-        `Failed to update password via reset event: credentialAccountId=${event.credentialAccountId}: ${error instanceof Error ? error.message : error}`,
+        `Failed to update password via reset event: credentialAccountId=${event.credentialAccountId}: ${error instanceof Error ? error.message : String(error)}`,
       );
     }
   }

@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
+import { Entity, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { AuthzRoleEntity } from '@tenant/infrastructure/entities/authz-role.entity';
 
 @Entity({ name: 'role_action_grants', schema: 'authz' })

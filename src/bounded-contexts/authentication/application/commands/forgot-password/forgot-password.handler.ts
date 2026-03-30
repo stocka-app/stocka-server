@@ -38,8 +38,13 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
 
     const isSocialAccount = !credential.hasPassword();
 
+    const credentialId = credential.id;
+    if (credentialId === undefined || credentialId === null) {
+      return { message: genericMessage };
+    }
+
     const resetToken = PasswordResetTokenModel.create({
-      credentialAccountId: credential.id!,
+      credentialAccountId: credentialId,
       tokenHash,
       expiresAt,
       email: command.email,

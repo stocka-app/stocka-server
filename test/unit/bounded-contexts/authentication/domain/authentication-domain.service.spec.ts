@@ -49,10 +49,7 @@ describe('AuthenticationDomainService', () => {
         const plain = 'SecureP@ss123';
         const hash = await AuthenticationDomainService.hashPassword(plain);
 
-        const result = await AuthenticationDomainService.comparePasswords(
-          plain,
-          hash,
-        );
+        const result = await AuthenticationDomainService.comparePasswords(plain, hash);
 
         expect(result).toBe(true);
       });
@@ -60,14 +57,9 @@ describe('AuthenticationDomainService', () => {
 
     describe('When comparePasswords() is called with a wrong password', () => {
       it('Then it returns false', async () => {
-        const hash = await AuthenticationDomainService.hashPassword(
-          'CorrectPassword',
-        );
+        const hash = await AuthenticationDomainService.hashPassword('CorrectPassword');
 
-        const result = await AuthenticationDomainService.comparePasswords(
-          'WrongPassword',
-          hash,
-        );
+        const result = await AuthenticationDomainService.comparePasswords('WrongPassword', hash);
 
         expect(result).toBe(false);
       });

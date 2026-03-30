@@ -5,7 +5,9 @@ import { ConfigService } from '@nestjs/config';
 import { withRetry } from '@shared/domain/utils/with-retry';
 
 jest.mock('@shared/domain/utils/with-retry', () => {
-  const actual = jest.requireActual<typeof import('@shared/domain/utils/with-retry')>('@shared/domain/utils/with-retry');
+  const actual = jest.requireActual<typeof import('@shared/domain/utils/with-retry')>(
+    '@shared/domain/utils/with-retry',
+  );
   return { ...actual, withRetry: jest.fn(actual.withRetry) };
 });
 
@@ -16,7 +18,14 @@ describe('PasswordResetRequestedEventHandler — error branch', () => {
   let emailProvider: jest.Mocked<Pick<IEmailProviderContract, 'sendPasswordResetEmail'>>;
   let configService: { get: jest.Mock };
 
-  const event = new PasswordResetRequestedEvent(1, 'test@example.com', 'token-123', 'es', false, null);
+  const event = new PasswordResetRequestedEvent(
+    1,
+    'test@example.com',
+    'token-123',
+    'es',
+    false,
+    null,
+  );
 
   beforeEach(() => {
     emailProvider = { sendPasswordResetEmail: jest.fn() };

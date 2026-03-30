@@ -7,7 +7,7 @@ import {
 } from '@user/application/commands/record-user-consents/record-user-consents.command';
 import { UserConsentEntity } from '@user/infrastructure/persistence/entities/user-consent.entity';
 import { ConsentType } from '@user/domain/enums/consent-type.enum';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { ConsentPersistenceException } from '@user/domain/exceptions/consent-persistence.exception';
 import { ok, err } from '@shared/domain/result';
 
 @CommandHandler(RecordUserConsentsCommand)
@@ -44,7 +44,7 @@ export class RecordUserConsentsHandler implements ICommandHandler<RecordUserCons
       return ok(undefined);
     } catch (error) {
       return err(
-        new ConsentPersistenceError(
+        new ConsentPersistenceException(
           error instanceof Error ? error.message : 'Failed to record user consents',
         ),
       );
@@ -52,26 +52,18 @@ export class RecordUserConsentsHandler implements ICommandHandler<RecordUserCons
   }
 
   private buildRow(
-    userUuid: string,
+    userUUID: string,
     consentType: ConsentType,
     granted: boolean,
     ipAddress: string | null,
     userAgent: string | null,
   ): UserConsentEntity {
     const entity = new UserConsentEntity();
-    entity.userUuid = userUuid;
+    entity.userUUID = userUUID;
     entity.consentType = consentType;
     entity.granted = granted;
     entity.ipAddress = ipAddress;
     entity.userAgent = userAgent;
     return entity;
-  }
-}
-
-class ConsentPersistenceError extends DomainException {
-  constructor(detail: string) {
-    super('Failed to persist user consents', 'CONSENT_PERSISTENCE_ERROR', [
-      { field: 'consents', message: detail },
-    ]);
   }
 }

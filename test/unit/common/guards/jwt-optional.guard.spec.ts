@@ -48,7 +48,12 @@ describe('JwtOptionalGuard', () => {
     it('Then canActivate delegates to super.canActivate and returns true', async () => {
       const context = {} as ExecutionContext;
       const spy = jest
-        .spyOn(AuthGuard('jwt').prototype as { canActivate: (ctx: ExecutionContext) => Promise<boolean> }, 'canActivate')
+        .spyOn(
+          AuthGuard('jwt').prototype as {
+            canActivate: (ctx: ExecutionContext) => Promise<boolean>;
+          },
+          'canActivate',
+        )
         .mockResolvedValue(true);
 
       const result = await guard.canActivate(context);
@@ -62,7 +67,12 @@ describe('JwtOptionalGuard', () => {
     it('Then canActivate propagates the resolved value (handleRequest already swallowed the error)', async () => {
       const context = {} as ExecutionContext;
       const spy = jest
-        .spyOn(AuthGuard('jwt').prototype as { canActivate: (ctx: ExecutionContext) => Promise<boolean> }, 'canActivate')
+        .spyOn(
+          AuthGuard('jwt').prototype as {
+            canActivate: (ctx: ExecutionContext) => Promise<boolean>;
+          },
+          'canActivate',
+        )
         .mockResolvedValue(false);
 
       const result = await guard.canActivate(context);

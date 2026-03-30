@@ -8,7 +8,10 @@ export class SignInUserOutDto extends UserOutDto {
   @ApiPropertyOptional({ example: 'Doe', description: 'Family name from social profile' })
   familyName!: string | null;
 
-  @ApiPropertyOptional({ example: 'https://lh3.google.com/...', description: 'Avatar URL from social profile' })
+  @ApiPropertyOptional({
+    example: 'https://lh3.google.com/...',
+    description: 'Avatar URL from social profile',
+  })
   avatarUrl!: string | null;
 }
 

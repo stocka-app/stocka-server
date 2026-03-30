@@ -36,21 +36,7 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
     const cached = this.getFromCache<Readonly<Record<string, string>>>(cacheKey);
     if (cached) return cached;
 
-    const rows: Array<{ key: string; tier: string }> = await this.dataSource.query(`
-      SELECT ca.key, COALESCE(
-        (SELECT tao.tier FROM tiers.tier_action_overrides tao
-         JOIN capabilities.catalog_actions ca2 ON ca2.id = tao.action_id
-         WHERE ca2.key = ca.key AND tao.enabled = false
-         ORDER BY tp.tier_order ASC LIMIT 1),
-        'FREE'
-      ) as tier
-      FROM capabilities.catalog_actions ca
-      LEFT JOIN tiers.tier_plans tp ON true
-      WHERE ca.is_active = true
-    `);
-
-    // Fallback: use the existing tier_action_overrides logic
-    // For now, derive from tier_action_overrides: actions disabled at lower tiers
+    // Derive tier requirements from tier_action_overrides: actions disabled at lower tiers
     const allActions: Array<{ key: string }> = await this.dataSource.query(
       `SELECT key FROM capabilities.catalog_actions WHERE is_active = true`,
     );
@@ -146,14 +132,14 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
     return result;
   }
 
-  async getActionLimitChecks(): Promise<Readonly<Record<string, string>>> {
+  getActionLimitChecks(): Promise<Readonly<Record<string, string>>> {
     // These are structural and unlikely to change — mapped by action semantics
     // STORAGE_CREATE → storageCount, MEMBER_INVITE → memberCount, PRODUCT_CREATE → productCount
-    return {
+    return Promise.resolve({
       STORAGE_CREATE: 'storageCount',
       MEMBER_INVITE: 'memberCount',
       PRODUCT_CREATE: 'productCount',
-    };
+    });
   }
 
   async getAssignableRoles(roleKey: string): Promise<readonly string[]> {

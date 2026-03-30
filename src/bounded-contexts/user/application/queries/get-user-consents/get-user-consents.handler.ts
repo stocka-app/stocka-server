@@ -21,7 +21,7 @@ export class GetUserConsentsHandler implements IQueryHandler<
   async execute(query: GetUserConsentsQuery): Promise<GetUserConsentsQueryResult> {
     // DISTINCT ON is PostgreSQL-specific; TypeORM QueryBuilder does not support it,
     // so we use a raw query against the identity.user_consents table.
-    const rows = await this.consentRepository.query(
+    const rows: Array<Record<string, unknown>> = await this.consentRepository.query(
       `SELECT DISTINCT ON (consent_type)
               consent_type   AS "consentType",
               granted,
@@ -34,7 +34,7 @@ export class GetUserConsentsHandler implements IQueryHandler<
     );
 
     return rows.map(
-      (row: Record<string, unknown>): UserConsentStatusDto => ({
+      (row): UserConsentStatusDto => ({
         consentType: row.consentType as string,
         granted: row.granted as boolean,
         documentVersion: row.documentVersion as string,

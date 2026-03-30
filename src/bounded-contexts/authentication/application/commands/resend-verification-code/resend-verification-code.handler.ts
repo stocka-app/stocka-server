@@ -46,7 +46,15 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     }
 
     // Get existing token
-    const existingToken = await this.tokenContract.findActiveByCredentialAccountId(credential.id!);
+    const credentialId = credential.id;
+    if (credentialId === undefined || credentialId === null) {
+      return ok({
+        success: true,
+        message: 'If your email exists, a new code has been sent.',
+      });
+    }
+
+    const existingToken = await this.tokenContract.findActiveByCredentialAccountId(credentialId);
 
     if (existingToken) {
       // Check cooldown
@@ -98,7 +106,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
     const token = EmailVerificationTokenModel.createForResend({
-      credentialAccountId: credential.id!,
+      credentialAccountId: credentialId,
       codeHash,
       expiresAt,
       email: command.email,

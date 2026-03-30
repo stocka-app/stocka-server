@@ -31,17 +31,13 @@ describe('StorageNameVO', () => {
   describe('Given an empty storage name', () => {
     describe('When create is called with an empty string', () => {
       it('Then it throws an error', () => {
-        expect(() => StorageNameVO.create('')).toThrow(
-          'Storage name cannot be empty',
-        );
+        expect(() => StorageNameVO.create('')).toThrow('Storage name cannot be empty');
       });
     });
 
     describe('When create is called with whitespace only', () => {
       it('Then it throws an error because trimmed value is empty', () => {
-        expect(() => StorageNameVO.create('   ')).toThrow(
-          'Storage name cannot be empty',
-        );
+        expect(() => StorageNameVO.create('   ')).toThrow('Storage name cannot be empty');
       });
     });
   });

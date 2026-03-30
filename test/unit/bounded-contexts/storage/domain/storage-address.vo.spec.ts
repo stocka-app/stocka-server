@@ -31,17 +31,13 @@ describe('StorageAddressVO', () => {
   describe('Given an empty address', () => {
     describe('When create is called with an empty string', () => {
       it('Then it throws an error', () => {
-        expect(() => StorageAddressVO.create('')).toThrow(
-          'Storage address cannot be empty',
-        );
+        expect(() => StorageAddressVO.create('')).toThrow('Storage address cannot be empty');
       });
     });
 
     describe('When create is called with whitespace only', () => {
       it('Then it throws an error because trimmed value is empty', () => {
-        expect(() => StorageAddressVO.create('   ')).toThrow(
-          'Storage address cannot be empty',
-        );
+        expect(() => StorageAddressVO.create('   ')).toThrow('Storage address cannot be empty');
       });
     });
   });
