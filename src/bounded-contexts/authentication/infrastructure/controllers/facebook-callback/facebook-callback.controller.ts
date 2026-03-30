@@ -5,7 +5,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { FacebookAuthenticationGuard } from '@authentication/infrastructure/guards/facebook-authentication.guard';
 import { SocialSignInCommand } from '@authentication/application/commands/social-sign-in/social-sign-in.command';
-import { SocialSignInResult } from '@authentication/application/types/authentication-result.types';
+import { SocialSignInCommandResult } from '@authentication/application/types/authentication-result.types';
 import { SocialProfile } from '@authentication/infrastructure/strategies/google.strategy';
 import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 
@@ -27,7 +27,7 @@ export class FacebookCallbackController {
   async handle(@Req() req: Request, @Res() res: Response): Promise<void> {
     const profile = req.user as SocialProfile;
 
-    const result = await this.commandBus.execute<SocialSignInCommand, SocialSignInResult>(
+    const result = await this.commandBus.execute<SocialSignInCommand, SocialSignInCommandResult>(
       new SocialSignInCommand(
         profile.email,
         profile.displayName,
@@ -43,9 +43,16 @@ export class FacebookCallbackController {
       ),
     );
 
-    setRefreshCookie(res, result.refreshToken);
+    return result.match(
+      (data) => {
+        setRefreshCookie(res, data.refreshToken);
 
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    res.redirect(`${frontendUrl}/auth/callback?accessToken=${result.accessToken}`);
+        const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+        res.redirect(`${frontendUrl}/auth/callback?accessToken=${data.accessToken}`);
+      },
+      (error) => {
+        throw error;
+      },
+    );
   }
 }

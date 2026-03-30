@@ -21,10 +21,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
-import {
-  CreateTenantResult,
-  CreateTenantErrors,
-} from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
+import { CreateTenantResult } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
 import { CreateStorageResult } from '@storage/application/commands/create-storage/create-storage.handler';
 
 export interface CompleteOnboardingData {
@@ -120,37 +117,37 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
       ),
     );
 
-    if (createTenantResult.isErr()) {
-      const tenantError: CreateTenantErrors = createTenantResult.error;
-      if (tenantError instanceof DomainException) {
-        return err(tenantError);
-      }
-      throw tenantError;
-    }
+    return createTenantResult.match(
+      async ({ tenantId, name }) => {
+        const context = session.getSectionData('context') as { storages?: unknown[] } | null;
+        const hasCustomStorages = context?.storages && context.storages.length > 0;
 
-    const { tenantId, name } = createTenantResult.value;
+        if (!hasCustomStorages) {
+          const storageName = defaultStorageName(businessProfile.businessType);
+          await this.commandBus.execute<CreateStorageCommand, CreateStorageResult>(
+            new CreateStorageCommand(
+              tenantId,
+              StorageType.CUSTOM_ROOM,
+              storageName,
+              undefined,
+              undefined,
+              'General',
+            ),
+          );
+        }
 
-    const context = session.getSectionData('context') as { storages?: unknown[] } | null;
-    const hasCustomStorages = context?.storages && context.storages.length > 0;
+        session.markCompleted();
+        await this.sessionContract.save(session);
 
-    if (!hasCustomStorages) {
-      const storageName = defaultStorageName(businessProfile.businessType);
-      await this.commandBus.execute<CreateStorageCommand, CreateStorageResult>(
-        new CreateStorageCommand(
-          tenantId,
-          StorageType.CUSTOM_ROOM,
-          storageName,
-          undefined,
-          undefined,
-          'General',
-        ),
-      );
-    }
-
-    session.markCompleted();
-    await this.sessionContract.save(session);
-
-    return ok({ path: OnboardingPath.CREATE, tenantId, tenantName: name, role: 'OWNER' });
+        return ok({ path: OnboardingPath.CREATE, tenantId, tenantName: name, role: 'OWNER' });
+      },
+      (tenantError) => {
+        if (tenantError instanceof DomainException) {
+          return err(tenantError);
+        }
+        throw tenantError;
+      },
+    );
   }
 
   private async handleJoinPath(

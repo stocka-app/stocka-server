@@ -49,6 +49,7 @@ export interface RefreshSessionResult extends AuthTokens {
   onboardingStatus: OnboardingStatus | null;
 }
 export type SocialSignInResult = AuthenticationResult;
+export type SocialSignInCommandResult = Result<SocialSignInResult, DomainException>;
 
 export interface ResetPasswordResult {
   message: string;
