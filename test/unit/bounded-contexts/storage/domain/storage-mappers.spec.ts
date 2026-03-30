@@ -43,7 +43,7 @@ describe('CustomRoomMapper', () => {
           roomType: 'Kitchen',
           address: '456 Oak Ave',
         });
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const model = aggregate.customRoom!;
         const entity = CustomRoomMapper.toEntity(model);
         expect(entity.uuid).toBeDefined();
@@ -84,7 +84,7 @@ describe('StoreRoomMapper', () => {
           name: 'Bodega',
           address: '100 Industrial',
         });
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const model = aggregate.storeRoom!;
         const entity = StoreRoomMapper.toEntity(model);
         expect(entity.uuid).toBeDefined();
@@ -124,7 +124,7 @@ describe('WarehouseMapper', () => {
           name: 'Main WH',
           address: '300 Depot Lane',
         });
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const model = aggregate.warehouse!;
         const entity = WarehouseMapper.toEntity(model);
         expect(entity.uuid).toBeDefined();

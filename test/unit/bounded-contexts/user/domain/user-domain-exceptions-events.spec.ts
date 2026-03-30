@@ -20,11 +20,7 @@ describe('User domain events', () => {
     describe('When instantiated with all arguments', () => {
       it('Then it carries the correct payload and occurredOn from DomainEvent', () => {
         const before = new Date();
-        const event = new UserCreatedFromSocialEvent(
-          'user-uuid-1',
-          'user@example.com',
-          'google',
-        );
+        const event = new UserCreatedFromSocialEvent('user-uuid-1', 'user@example.com', 'google');
         const after = new Date();
 
         expect(event.userUUID).toBe('user-uuid-1');

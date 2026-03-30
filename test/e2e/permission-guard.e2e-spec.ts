@@ -124,7 +124,6 @@ async function unblockActionForTier(
 }
 
 function clearRbacCache(rbacApp: INestApplication): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rbacApp.get<any>(INJECTION_TOKENS.RBAC_POLICY_PORT).cache.clear();
 }
 
