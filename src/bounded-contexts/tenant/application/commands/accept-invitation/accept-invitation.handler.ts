@@ -5,10 +5,12 @@ import { ITenantInvitationContract } from '@tenant/domain/contracts/tenant-invit
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { TenantMemberModel } from '@tenant/domain/models/tenant-member.model';
 import { MemberAlreadyExistsError } from '@tenant/domain/errors/member-already-exists.error';
-import { InvitationNotFoundError } from '@onboarding/domain/errors/invitation-not-found.error';
-import { InvitationExpiredError } from '@onboarding/domain/errors/invitation-expired.error';
-import { InvitationAlreadyUsedError } from '@onboarding/domain/errors/invitation-already-used.error';
-import { InvitationEmailMismatchError } from '@onboarding/domain/errors/invitation-email-mismatch.error';
+import {
+  InvitationNotFoundError,
+  InvitationExpiredError,
+  InvitationAlreadyUsedError,
+  InvitationEmailMismatchError,
+} from '@shared/domain/errors/invitation';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
