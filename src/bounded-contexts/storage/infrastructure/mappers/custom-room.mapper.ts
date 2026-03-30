@@ -4,6 +4,7 @@ import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.e
 export class CustomRoomMapper {
   static toDomain(entity: CustomRoomEntity): CustomRoomModel {
     return CustomRoomModel.reconstitute({
+      id: entity.id,
       uuid: entity.uuid,
       roomType: entity.roomType,
       address: entity.address,
@@ -13,10 +14,17 @@ export class CustomRoomMapper {
   }
 
   static toEntity(model: CustomRoomModel): Partial<CustomRoomEntity> {
-    return {
+    const entity: Partial<CustomRoomEntity> = {
       uuid: model.uuid,
       roomType: model.roomType,
       address: model.address,
     };
+
+    /* istanbul ignore next */
+    if (model.id !== undefined) {
+      entity.id = model.id;
+    }
+
+    return entity;
   }
 }

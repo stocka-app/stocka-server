@@ -1,10 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class UpdateStorageInDto {
-  @ApiPropertyOptional({ description: 'Updated storage name', maxLength: 100 })
+  @ApiPropertyOptional({ description: 'Updated storage name', minLength: 2, maxLength: 80 })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
+  @MinLength(2)
+  @MaxLength(80)
   name?: string;
 }

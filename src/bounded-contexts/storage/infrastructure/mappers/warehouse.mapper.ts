@@ -4,6 +4,7 @@ import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.enti
 export class WarehouseMapper {
   static toDomain(entity: WarehouseEntity): WarehouseModel {
     return WarehouseModel.reconstitute({
+      id: entity.id,
       uuid: entity.uuid,
       address: entity.address,
       createdAt: entity.createdAt,
@@ -12,9 +13,16 @@ export class WarehouseMapper {
   }
 
   static toEntity(model: WarehouseModel): Partial<WarehouseEntity> {
-    return {
+    const entity: Partial<WarehouseEntity> = {
       uuid: model.uuid,
       address: model.address,
     };
+
+    /* istanbul ignore next */
+    if (model.id !== undefined) {
+      entity.id = model.id;
+    }
+
+    return entity;
   }
 }

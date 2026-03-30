@@ -1,4 +1,5 @@
 export interface StoreRoomModelProps {
+  id?: number;
   uuid: string;
   address: string | null;
   createdAt: Date;
@@ -6,12 +7,14 @@ export interface StoreRoomModelProps {
 }
 
 export class StoreRoomModel {
+  readonly id: number | undefined;
   readonly uuid: string;
   readonly address: string | null;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 
   private constructor(props: StoreRoomModelProps) {
+    this.id = props.id;
     this.uuid = props.uuid;
     this.address = props.address;
     this.createdAt = props.createdAt;

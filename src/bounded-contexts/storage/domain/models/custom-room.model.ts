@@ -1,4 +1,5 @@
 export interface CustomRoomModelProps {
+  id?: number;
   uuid: string;
   roomType: string;
   address: string | null;
@@ -7,6 +8,7 @@ export interface CustomRoomModelProps {
 }
 
 export class CustomRoomModel {
+  readonly id: number | undefined;
   readonly uuid: string;
   readonly roomType: string;
   readonly address: string | null;
@@ -14,6 +16,7 @@ export class CustomRoomModel {
   readonly updatedAt: Date;
 
   private constructor(props: CustomRoomModelProps) {
+    this.id = props.id;
     this.uuid = props.uuid;
     this.roomType = props.roomType;
     this.address = props.address;

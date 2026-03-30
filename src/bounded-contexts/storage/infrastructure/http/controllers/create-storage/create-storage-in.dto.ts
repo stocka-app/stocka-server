@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 
 export class CreateStorageInDto {
@@ -7,16 +7,17 @@ export class CreateStorageInDto {
   @IsEnum(StorageType)
   type!: StorageType;
 
-  @ApiProperty({ description: 'Storage name', maxLength: 100 })
+  @ApiProperty({ description: 'Storage name', minLength: 2, maxLength: 80 })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(100)
+  @MinLength(2)
+  @MaxLength(80)
   name!: string;
 
-  @ApiPropertyOptional({ description: 'Storage description', maxLength: 500 })
+  @ApiPropertyOptional({ description: 'Storage description', maxLength: 300 })
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(300)
   description?: string;
 
   @ApiPropertyOptional({ description: 'Address (required for WAREHOUSE)', maxLength: 200 })
