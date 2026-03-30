@@ -22,6 +22,8 @@ export class SeedCapabilities1774218100000 implements MigrationInterface {
         ((SELECT id FROM capabilities.modules WHERE key = 'STORAGE'),         'STORAGE_READ',           'Read Storage',           'READ',  true),
         ((SELECT id FROM capabilities.modules WHERE key = 'STORAGE'),         'STORAGE_UPDATE',         'Update Storage',         'WRITE', true),
         ((SELECT id FROM capabilities.modules WHERE key = 'STORAGE'),         'STORAGE_DELETE',         'Delete Storage',         'WRITE', true),
+        ((SELECT id FROM capabilities.modules WHERE key = 'STORAGE'),         'STORAGE_FREEZE',         'Freeze Storage',         'WRITE', true),
+        ((SELECT id FROM capabilities.modules WHERE key = 'STORAGE'),         'STORAGE_ARCHIVE',        'Archive Storage',        'WRITE', true),
         ((SELECT id FROM capabilities.modules WHERE key = 'MEMBERS'),         'MEMBER_INVITE',          'Invite Member',          'WRITE', true),
         ((SELECT id FROM capabilities.modules WHERE key = 'MEMBERS'),         'MEMBER_READ',            'Read Members',           'READ',  true),
         ((SELECT id FROM capabilities.modules WHERE key = 'MEMBERS'),         'MEMBER_UPDATE_ROLE',     'Update Member Role',     'WRITE', true),

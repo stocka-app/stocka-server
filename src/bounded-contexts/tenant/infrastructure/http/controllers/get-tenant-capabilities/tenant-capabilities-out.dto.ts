@@ -3,16 +3,16 @@ import { TierLimits } from '@tenant/domain/contracts/tenant-facade.contract';
 
 export class TenantCapabilitiesOutDto {
   @ApiProperty({ example: 'STARTER' })
-  tier: string;
+  tier!: string;
 
   @ApiProperty({ example: 3 })
-  maxCustomRooms: number;
+  maxCustomRooms!: number;
 
   @ApiProperty({ example: 3 })
-  maxStoreRooms: number;
+  maxStoreRooms!: number;
 
   @ApiProperty({ example: 1 })
-  maxWarehouses: number;
+  maxWarehouses!: number;
 
   static fromTierLimits(limits: TierLimits): TenantCapabilitiesOutDto {
     const dto = new TenantCapabilitiesOutDto();
