@@ -2,7 +2,7 @@ import { TenantMapper } from '@tenant/infrastructure/mappers/tenant.mapper';
 import { TenantMemberMapper } from '@tenant/infrastructure/mappers/tenant-member.mapper';
 import { TenantProfileMapper } from '@tenant/infrastructure/mappers/tenant-profile.mapper';
 import { TenantConfigMapper } from '@tenant/infrastructure/mappers/tenant-config.mapper';
-import { createEmptySnapshot } from '@shared/domain/policy/capability-snapshot';
+import { createEmptySnapshot } from '@authorization/domain/models/capability-snapshot';
 import { TenantEntity } from '@tenant/infrastructure/entities/tenant.entity';
 import { TenantMemberEntity } from '@tenant/infrastructure/entities/tenant-member.entity';
 import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';

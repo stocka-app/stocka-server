@@ -18,6 +18,7 @@ module.exports = {
   },
   transformIgnorePatterns: ['[/\\\\]node_modules[/\\\\](?!uuid[/\\\\])'],
   moduleNameMapper: {
+    '^@authorization/(.*)$': '<rootDir>/src/bounded-contexts/authorization/$1',
     '^@storage/(.*)$': '<rootDir>/src/bounded-contexts/storage/$1',
     '^@onboarding/(.*)$': '<rootDir>/src/bounded-contexts/onboarding/$1',
     '^@tenant/(.*)$': '<rootDir>/src/bounded-contexts/tenant/$1',

@@ -107,7 +107,7 @@ module.exports = [
   // ── E2E-ONLY: Capability service (injects TierDataProvider + RbacPolicyPort) ─
   // Both ports are backed by TypeORM repos; needs real DB to resolve capabilities.
   // Covered by get-tenant-capabilities E2E spec.
-  '!src/shared/infrastructure/policy/capability.service.ts',
+  '!src/bounded-contexts/authorization/infrastructure/services/capability.service.ts',
 
   // ── WIRED BUT NOT YET EXERCISED (future features with active imports) ────
   // commercial-profile model/mapper: imported by profile.contract + typeorm-profile.repository

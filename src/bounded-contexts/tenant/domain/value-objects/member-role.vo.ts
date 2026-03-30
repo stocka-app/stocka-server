@@ -1,5 +1,5 @@
-export { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
-import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
+export { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
+import { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
 
 export class MemberRoleVO {
   private readonly _value: MemberRoleEnum;

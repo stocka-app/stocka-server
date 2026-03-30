@@ -31,7 +31,8 @@
       "@tenant/*": ["src/bounded-contexts/tenant/*"],
       "@test-mockup/*": ["test/__mocks__/*"],
       "@storage/*": ["src/bounded-contexts/storage/*"],
-      "@onboarding/*": ["src/bounded-contexts/onboarding/*"]
+      "@onboarding/*": ["src/bounded-contexts/onboarding/*"],
+      "@authorization/*": ["src/bounded-contexts/authorization/*"]
     }
   },
   "include": ["src/**/*", "test/**/*", "test/__mocks__/*"],

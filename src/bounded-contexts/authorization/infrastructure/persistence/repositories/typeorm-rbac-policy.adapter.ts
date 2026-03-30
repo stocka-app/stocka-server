@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 
 interface CacheEntry<T> {
   data: T;

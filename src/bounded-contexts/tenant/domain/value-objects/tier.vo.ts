@@ -1,5 +1,5 @@
-export { TierEnum } from '@shared/domain/policy/tier.enum';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+export { TierEnum } from '@authorization/domain/enums/tier.enum';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 
 export class TierVO {
   private readonly _value: TierEnum;

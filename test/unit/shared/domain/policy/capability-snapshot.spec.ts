@@ -1,9 +1,9 @@
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import {
   createEmptySnapshot,
   isValidSnapshot,
   CapabilitySnapshot,
-} from '@shared/domain/policy/capability-snapshot';
+} from '@authorization/domain/models/capability-snapshot';
 
 describe('CapabilitySnapshot', () => {
   describe('Given createEmptySnapshot is called', () => {

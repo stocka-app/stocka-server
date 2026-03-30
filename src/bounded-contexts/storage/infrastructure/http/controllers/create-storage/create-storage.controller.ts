@@ -4,7 +4,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { RequireAction } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { CreateStorageCommand } from '@storage/application/commands/create-storage/create-storage.command';
 import { CreateStorageResult } from '@storage/application/commands/create-storage/create-storage.handler';
 import { CreateStorageInDto } from '@storage/infrastructure/http/controllers/create-storage/create-storage-in.dto';

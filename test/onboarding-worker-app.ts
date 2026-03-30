@@ -19,7 +19,7 @@ import { OnboardingModule } from '@onboarding/onboarding.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
-import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
+import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
 import databaseConfig from '@core/config/database/database.config';
 import { validate } from '@core/config/environment/env.validation';
@@ -107,7 +107,7 @@ async function bootstrap(): Promise<OnboardingWorkerApp> {
       TenantModule,
       StorageModule,
       OnboardingModule,
-      CapabilityModule,
+      AuthorizationModule,
       MediatorModule,
     ],
   })

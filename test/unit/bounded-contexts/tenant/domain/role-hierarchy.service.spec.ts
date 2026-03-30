@@ -1,5 +1,5 @@
 import { RoleHierarchyService } from '@tenant/domain/services/role-hierarchy.service';
-import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 
 // ── Mock assignable-roles data (mirrors the DB seed) ──────────────────────────
 

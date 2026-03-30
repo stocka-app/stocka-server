@@ -1,6 +1,6 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
 import { TierVO } from '@tenant/domain/value-objects/tier.vo';
-import { CapabilitySnapshot } from '@shared/domain/policy/capability-snapshot';
+import { CapabilitySnapshot } from '@authorization/domain/models/capability-snapshot';
 
 export interface TenantConfigReconstituteProps extends BaseModelProps {
   id: number;

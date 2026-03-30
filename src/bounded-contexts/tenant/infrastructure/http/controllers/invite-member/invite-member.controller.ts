@@ -7,7 +7,7 @@ import { TenantStateGuard } from '@common/guards/tenant-state.guard';
 import { RequireAction } from '@common/decorators/require-action.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { InviteMemberCommand } from '@tenant/application/commands/invite-member/invite-member.command';

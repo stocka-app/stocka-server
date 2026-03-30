@@ -111,7 +111,7 @@ module.exports = [
   // Mediator service (in-process bus, tested via unit)
   '!src/shared/infrastructure/mediator/**',
   // RBAC boot validator (startup validation logic)
-  '!src/shared/infrastructure/policy/rbac-boot-validator.ts',
+  '!src/bounded-contexts/authorization/infrastructure/services/rbac-boot-validator.ts',
   // Process manager (orchestration logic, unit-tested)
   '!src/shared/infrastructure/process-manager/**',
   // Crypto service (pure utility)
