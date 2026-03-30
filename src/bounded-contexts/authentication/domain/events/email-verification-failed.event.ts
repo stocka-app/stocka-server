@@ -1,11 +1,12 @@
-import { IEvent } from '@nestjs/cqrs';
+import { DomainEvent } from '@shared/domain/base/domain-event';
 
-export class EmailVerificationFailedEvent implements IEvent {
+export class EmailVerificationFailedEvent extends DomainEvent {
   constructor(
     public readonly userUUID: string,
     public readonly email: string,
     public readonly ipAddress: string,
     public readonly failedAttempts: number,
-    public readonly occurredOn: Date = new Date(),
-  ) {}
+  ) {
+    super();
+  }
 }

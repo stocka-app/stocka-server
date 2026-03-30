@@ -1,9 +1,10 @@
-import { IEvent } from '@nestjs/cqrs';
+import { DomainEvent } from '@shared/domain/base/domain-event';
 
-export class SessionRefreshedEvent implements IEvent {
+export class SessionRefreshedEvent extends DomainEvent {
   constructor(
     public readonly oldSessionUUID: string,
     public readonly newSessionUUID: string,
-    public readonly occurredOn: Date = new Date(),
-  ) {}
+  ) {
+    super();
+  }
 }

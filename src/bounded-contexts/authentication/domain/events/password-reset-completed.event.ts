@@ -1,8 +1,7 @@
-import { IEvent } from '@nestjs/cqrs';
+import { DomainEvent } from '@shared/domain/base/domain-event';
 
-export class PasswordResetCompletedEvent implements IEvent {
-  constructor(
-    public readonly credentialAccountId: number,
-    public readonly occurredOn: Date = new Date(),
-  ) {}
+export class PasswordResetCompletedEvent extends DomainEvent {
+  constructor(public readonly credentialAccountId: number) {
+    super();
+  }
 }
