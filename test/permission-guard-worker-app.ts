@@ -200,6 +200,17 @@ export async function getPermissionGuardWorkerApp(): Promise<PermissionGuardWork
   return permissionGuardWorkerAppPromise;
 }
 
+/**
+ * Resets all permission guard email provider mock methods to their default resolved values.
+ * Use this instead of jest.resetAllMocks() to avoid nuking internal NestJS providers.
+ */
+export function resetPermissionGuardEmailMock(): void {
+  permissionGuardEmailMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  permissionGuardEmailMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  permissionGuardEmailMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  permissionGuardEmailMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+}
+
 export async function truncatePermissionGuardWorkerTables(dataSource: DataSource): Promise<void> {
   const tableList = TRUNCATE_TABLES.join(', ');
   await dataSource.query(`TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE`);

@@ -1,25 +1,23 @@
-// Jest global setup entry point — handles TypeScript transformation + path alias resolution
-// before loading the actual TypeScript implementation.
-//
-// Why a .js wrapper?
-// Jest's globalSetup runs outside the worker transform pipeline (moduleNameMapper does NOT apply).
-// We register ts-node + tsconfig-paths here so that all aliased imports in global-setup-impl.ts
-// (@authentication/*, @user/*, @shared/*, etc.) resolve correctly at runtime.
+// Jest global setup entry point.
+// global-setup-impl.ts only uses `path`, `DataSource` (from typeorm), and process.env —
+// no aliased imports — so we can compile it standalone without tsconfig-paths.
 const path = require('path');
+const fs = require('fs');
 
-// Load .env.test early so process.env is populated before ts-node evaluates any module
-// (e.g. APP_CONSTANTS which reads BCRYPT_ROUNDS at module-load time).
 require('dotenv').config({ path: path.resolve(__dirname, '..', '.env.test') });
 
-require('ts-node').register({
-  project: path.resolve(__dirname, '..', 'tsconfig.json'),
-  transpileOnly: true,
+// Compile the TypeScript setup file on-the-fly with SWC (no hooks / no pirates).
+const { transformSync } = require('@swc/core');
+const tsCode = fs.readFileSync(path.resolve(__dirname, 'global-setup-impl.ts'), 'utf8');
+const { code } = transformSync(tsCode, {
+  jsc: { parser: { syntax: 'typescript' }, target: 'es2021' },
+  module: { type: 'commonjs' },
+  filename: 'global-setup-impl.ts',
 });
 
-const { register } = require('tsconfig-paths');
-register({
-  baseUrl: path.resolve(__dirname, '..'),
-  paths: require('../tsconfig.json').compilerOptions.paths,
-});
-
-module.exports = require('./global-setup-impl.ts');
+// Evaluate the compiled JS in a temporary module
+const Module = require('module');
+const m = new Module(__filename);
+m.paths = Module._nodeModulePaths(path.resolve(__dirname, '..'));
+m._compile(code, path.resolve(__dirname, 'global-setup-impl.js'));
+module.exports = m.exports.default || m.exports;

@@ -1,8 +1,8 @@
 /**
- * Tenant-scoped NestJS application singleton for invitation e2e tests.
+ * Onboarding-scoped NestJS application singleton for Onboarding BC e2e tests.
  *
- * Extends the base worker-app pattern with TenantModule and CapabilityModule
- * to exercise the full invitation flow via HTTP.
+ * Includes OnboardingModule + all supporting modules to exercise the full
+ * onboarding lifecycle (start, progress, complete) via HTTP against a real database.
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -14,6 +14,8 @@ import cookieParser from 'cookie-parser';
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
 import { TenantModule } from '@tenant/tenant.module';
+import { StorageModule } from '@storage/storage.module';
+import { OnboardingModule } from '@onboarding/onboarding.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
@@ -27,7 +29,9 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TRUNCATE_TABLES = [
-  // User / Auth tables (schema-qualified)
+  // Onboarding tables
+  '"onboarding"."onboarding_sessions"',
+  // User / Auth tables
   '"profiles"."social_profiles"',
   '"profiles"."personal_profiles"',
   '"profiles"."commercial_profiles"',
@@ -42,27 +46,32 @@ const TRUNCATE_TABLES = [
   '"accounts"."credential_accounts"',
   '"accounts"."accounts"',
   '"identity"."users"',
-  // Tenant tables (schema-qualified)
+  // Tenant tables
   '"tenants"."tenant_invitations"',
   '"tenants"."tenant_members"',
   '"tenants"."tenant_profiles"',
   '"tenants"."tenant_config"',
   '"tenants"."tenants"',
+  // Storage tables
+  '"storage"."custom_rooms"',
+  '"storage"."store_rooms"',
+  '"storage"."warehouses"',
+  '"storage"."storages"',
 ] as const;
 
 // ─── Singleton state ──────────────────────────────────────────────────────────
 
-interface TenantWorkerApp {
+interface OnboardingWorkerApp {
   readonly app: INestApplication;
   readonly dataSource: DataSource;
 }
 
-let tenantWorkerAppInstance: TenantWorkerApp | null = null;
-let tenantWorkerAppPromise: Promise<TenantWorkerApp> | null = null;
+let onboardingWorkerAppInstance: OnboardingWorkerApp | null = null;
+let onboardingWorkerAppPromise: Promise<OnboardingWorkerApp> | null = null;
 
 // ─── Email provider mock ──────────────────────────────────────────────────────
 
-export const tenantEmailProviderMock: jest.Mocked<IEmailProviderContract> = {
+export const onboardingEmailProviderMock: jest.Mocked<IEmailProviderContract> = {
   sendEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
   sendVerificationEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
   sendWelcomeEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
@@ -71,7 +80,7 @@ export const tenantEmailProviderMock: jest.Mocked<IEmailProviderContract> = {
 
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
-async function bootstrap(): Promise<TenantWorkerApp> {
+async function bootstrap(): Promise<OnboardingWorkerApp> {
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [
       ConfigModule.forRoot({
@@ -96,12 +105,14 @@ async function bootstrap(): Promise<TenantWorkerApp> {
       UserModule,
       AuthenticationModule,
       TenantModule,
+      StorageModule,
+      OnboardingModule,
       CapabilityModule,
       MediatorModule,
     ],
   })
     .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)
-    .useValue(tenantEmailProviderMock)
+    .useValue(onboardingEmailProviderMock)
     .compile();
 
   const app = moduleFixture.createNestApplication();
@@ -122,33 +133,33 @@ async function bootstrap(): Promise<TenantWorkerApp> {
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
-export async function getTenantWorkerApp(): Promise<TenantWorkerApp> {
-  if (tenantWorkerAppInstance) {
-    return tenantWorkerAppInstance;
+export async function getOnboardingWorkerApp(): Promise<OnboardingWorkerApp> {
+  if (onboardingWorkerAppInstance) {
+    return onboardingWorkerAppInstance;
   }
 
-  if (!tenantWorkerAppPromise) {
-    tenantWorkerAppPromise = bootstrap().then((instance) => {
-      tenantWorkerAppInstance = instance;
+  if (!onboardingWorkerAppPromise) {
+    onboardingWorkerAppPromise = bootstrap().then((instance) => {
+      onboardingWorkerAppInstance = instance;
       return instance;
     });
   }
 
-  return tenantWorkerAppPromise;
+  return onboardingWorkerAppPromise;
 }
 
 /**
- * Resets all tenant email provider mock methods to their default resolved values.
+ * Resets all onboarding email provider mock methods to their default resolved values.
  * Use this instead of jest.resetAllMocks() to avoid nuking internal NestJS providers.
  */
-export function resetTenantEmailMock(): void {
-  tenantEmailProviderMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  tenantEmailProviderMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  tenantEmailProviderMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
-  tenantEmailProviderMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+export function resetOnboardingEmailMock(): void {
+  onboardingEmailProviderMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  onboardingEmailProviderMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  onboardingEmailProviderMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  onboardingEmailProviderMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
 }
 
-export async function truncateTenantWorkerTables(dataSource: DataSource): Promise<void> {
+export async function truncateOnboardingWorkerTables(dataSource: DataSource): Promise<void> {
   const tableList = TRUNCATE_TABLES.join(', ');
   await dataSource.query(`TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE`);
 }

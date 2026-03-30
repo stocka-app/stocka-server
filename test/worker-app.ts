@@ -158,6 +158,18 @@ export async function getWorkerApp(): Promise<WorkerApp> {
  * Keep existing per-test DELETE queries in beforeEach/afterEach — they are still needed
  * for isolation between individual tests within a spec.
  */
+/**
+ * Resets all email provider mock methods to their default resolved values.
+ * Use this instead of jest.resetAllMocks() which nukes ALL mocks (including
+ * internal NestJS providers) and leaves the email mock without implementations.
+ */
+export function resetEmailMock(): void {
+  emailProviderMock.sendEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  emailProviderMock.sendVerificationEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  emailProviderMock.sendWelcomeEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+  emailProviderMock.sendPasswordResetEmail.mockReset().mockResolvedValue({ id: 'mock-id', success: true });
+}
+
 export async function truncateWorkerTables(dataSource: DataSource): Promise<void> {
   const tableList = TRUNCATE_TABLES.join(', ');
   await dataSource.query(`TRUNCATE TABLE ${tableList} RESTART IDENTITY CASCADE`);
