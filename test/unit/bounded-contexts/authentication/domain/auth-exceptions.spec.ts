@@ -1,14 +1,22 @@
+import { AccountDeactivatedException } from '@authentication/domain/exceptions/account-deactivated.exception';
+import { EmailAlreadyExistsException } from '@authentication/domain/exceptions/email-already-exists.exception';
 import { EmailDeliveryFailedException } from '@authentication/domain/exceptions/email-delivery-failed.exception';
 import { RateLimitExceededException } from '@authentication/domain/exceptions/rate-limit-exceeded.exception';
 import { TooManyVerificationAttemptsException } from '@authentication/domain/exceptions/too-many-verification-attempts.exception';
 import { VerificationBlockedException } from '@authentication/domain/exceptions/verification-blocked.exception';
+import { VerificationCodeExpiredException } from '@authentication/domain/exceptions/verification-code-expired.exception';
 import { EmailNotVerifiedException } from '@authentication/domain/exceptions/email-not-verified.exception';
 import { InvalidAttemptedAtException } from '@authentication/domain/exceptions/invalid-attempted-at.exception';
+import { InvalidCredentialsException } from '@authentication/domain/exceptions/invalid-credentials.exception';
 import { InvalidIpAddressException } from '@authentication/domain/exceptions/invalid-ip-address.exception';
+import { InvalidPasswordException } from '@authentication/domain/exceptions/invalid-password.exception';
 import { InvalidUserAgentException } from '@authentication/domain/exceptions/invalid-user-agent.exception';
+import { InvalidVerificationCodeException } from '@authentication/domain/exceptions/invalid-verification-code.exception';
 import { InvalidVerificationTypeException } from '@authentication/domain/exceptions/invalid-verification-type.exception';
 import { MaxResendsExceededException } from '@authentication/domain/exceptions/max-resends-exceeded.exception';
 import { ResendCooldownActiveException } from '@authentication/domain/exceptions/resend-cooldown-active.exception';
+import { TokenExpiredException } from '@authentication/domain/exceptions/token-expired.exception';
+import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
 import { UsernameAlreadyExistsException } from '@authentication/domain/exceptions/username-already-exists.exception';
 
 describe('Authentication domain exceptions', () => {
@@ -164,6 +172,94 @@ describe('Authentication domain exceptions', () => {
         const ex = new UsernameAlreadyExistsException();
         expect(ex.errorCode).toBe('USERNAME_ALREADY_EXISTS');
         expect(ex.message).toContain('Username already taken');
+      });
+    });
+  });
+
+  describe('Given AccountDeactivatedException', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const ex = new AccountDeactivatedException();
+        expect(ex.errorCode).toBe('ACCOUNT_DEACTIVATED');
+        expect(ex.message).toBe('Account has been deactivated');
+      });
+    });
+  });
+
+  describe('Given VerificationCodeExpiredException', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and field details', () => {
+        const ex = new VerificationCodeExpiredException();
+        expect(ex.errorCode).toBe('VERIFICATION_CODE_EXPIRED');
+        expect(ex.message).toBe('Verification code has expired');
+      });
+    });
+  });
+
+  describe('Given InvalidPasswordException', () => {
+    describe('When instantiated without arguments', () => {
+      it('Then it uses the default message', () => {
+        const ex = new InvalidPasswordException();
+        expect(ex.errorCode).toBe('INVALID_PASSWORD');
+        expect(ex.message).toBe('Invalid password');
+      });
+    });
+
+    describe('When instantiated with a custom message', () => {
+      it('Then it uses the provided message', () => {
+        const ex = new InvalidPasswordException('Password too short');
+        expect(ex.errorCode).toBe('INVALID_PASSWORD');
+        expect(ex.message).toBe('Password too short');
+      });
+    });
+  });
+
+  describe('Given EmailAlreadyExistsException', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const ex = new EmailAlreadyExistsException();
+        expect(ex.errorCode).toBe('EMAIL_ALREADY_EXISTS');
+        expect(ex.message).toBe('This email is already registered');
+      });
+    });
+  });
+
+  describe('Given InvalidCredentialsException', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const ex = new InvalidCredentialsException();
+        expect(ex.errorCode).toBe('INVALID_CREDENTIALS');
+        expect(ex.message).toBe('Invalid credentials');
+      });
+    });
+  });
+
+  describe('Given InvalidVerificationCodeException', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const ex = new InvalidVerificationCodeException();
+        expect(ex.errorCode).toBe('INVALID_VERIFICATION_CODE');
+        expect(ex.message).toBe('Invalid verification code');
+      });
+    });
+  });
+
+  describe('Given TokenExpiredException', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const ex = new TokenExpiredException();
+        expect(ex.errorCode).toBe('TOKEN_EXPIRED');
+        expect(ex.message).toBe('Token has expired');
+      });
+    });
+  });
+
+  describe('Given UserAlreadyVerifiedException', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const ex = new UserAlreadyVerifiedException();
+        expect(ex.errorCode).toBe('USER_ALREADY_VERIFIED');
+        expect(ex.message).toBe('User email is already verified');
       });
     });
   });

@@ -17,6 +17,10 @@ describe('AccountTypeVO', () => {
     it('should throw InvalidAccountTypeException', () => {
       expect(() => new AccountTypeVO('unknown')).toThrow('Invalid account type: unknown');
     });
+
+    it('should throw for an empty string', () => {
+      expect(() => new AccountTypeVO('')).toThrow('Invalid account type: ');
+    });
   });
 
   describe('type checks', () => {

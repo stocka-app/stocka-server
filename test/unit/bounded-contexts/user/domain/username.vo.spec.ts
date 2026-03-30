@@ -42,6 +42,14 @@ describe('UsernameVO', () => {
         );
       });
     });
+
+    describe('When the username is empty after trimming', () => {
+      it('Then it throws INVALID_USERNAME with a minimum length message', () => {
+        expect(() => new UsernameVO('  ')).toThrow(
+          `Username must be at least ${USERNAME_MIN_LENGTH} characters long`,
+        );
+      });
+    });
   });
 
   describe('Given a username that exceeds the maximum length', () => {
@@ -58,7 +66,7 @@ describe('UsernameVO', () => {
 
   describe('Given a username with invalid characters', () => {
     describe('When the username contains spaces or special characters', () => {
-      it('Then it throws INVALID_USERNAME with an invalid characters message', () => {
+      it('Then it rejects usernames with special characters', () => {
         expect(() => new UsernameVO('invalid-user!')).toThrow(
           'Username can only contain letters, numbers, and underscores',
         );
@@ -69,6 +77,48 @@ describe('UsernameVO', () => {
           'Username can only contain letters, numbers, and underscores',
         );
       });
+
+      it('Then it rejects usernames with spaces in the middle', () => {
+        expect(() => new UsernameVO('bad name')).toThrow(
+          'Username can only contain letters, numbers, and underscores',
+        );
+      });
+
+      it('Then it rejects usernames with dots', () => {
+        expect(() => new UsernameVO('user.name')).toThrow(
+          'Username can only contain letters, numbers, and underscores',
+        );
+      });
+    });
+  });
+
+  describe('toString', () => {
+    it('should return the string representation of the username', () => {
+      const vo = new UsernameVO('myuser');
+
+      expect(vo.toString()).toBe('myuser');
+    });
+  });
+
+  describe('equals', () => {
+    it('should return true for VOs with the same username', () => {
+      const vo1 = new UsernameVO('sameuser');
+      const vo2 = new UsernameVO('sameuser');
+
+      expect(vo1.equals(vo2)).toBe(true);
+    });
+
+    it('should return false for VOs with different usernames', () => {
+      const vo1 = new UsernameVO('user_one');
+      const vo2 = new UsernameVO('user_two');
+
+      expect(vo1.equals(vo2)).toBe(false);
+    });
+
+    it('should return false when compared to a non-UsernameVO', () => {
+      const vo = new UsernameVO('myuser');
+
+      expect(vo.equals(null as unknown as UsernameVO)).toBe(false);
     });
   });
 });

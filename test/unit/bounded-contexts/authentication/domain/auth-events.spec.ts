@@ -1,6 +1,7 @@
 import { EmailVerificationFailedEvent } from '@authentication/domain/events/email-verification-failed.event';
 import { SessionArchivedEvent } from '@authentication/domain/events/session-archived.event';
 import { SessionRefreshedEvent } from '@authentication/domain/events/session-refreshed.event';
+import { UserSignedInEvent } from '@authentication/domain/events/user-signed-in.event';
 import { UserSignedOutEvent } from '@authentication/domain/events/user-signed-out.event';
 import { UserVerificationBlockedEvent } from '@authentication/domain/events/user-verification-blocked.event';
 import { EmailVerificationCompletedEvent } from '@authentication/domain/events/email-verification-completed.event';
@@ -8,6 +9,24 @@ import { PasswordResetRequestedEvent } from '@authentication/domain/events/passw
 import { VerificationCodeResentEvent } from '@authentication/domain/events/verification-code-resent.event';
 
 describe('Authentication domain events', () => {
+  describe('Given UserSignedInEvent', () => {
+    describe('When constructed with a user UUID', () => {
+      it('Then it holds the UUID and a default occurredOn', () => {
+        const event = new UserSignedInEvent('user-uuid-signin');
+        expect(event.userUUID).toBe('user-uuid-signin');
+        expect(event.occurredOn).toBeInstanceOf(Date);
+      });
+    });
+
+    describe('When constructed with an explicit date', () => {
+      it('Then it uses the provided date', () => {
+        const date = new Date('2024-05-15');
+        const event = new UserSignedInEvent('uuid', date);
+        expect(event.occurredOn).toBe(date);
+      });
+    });
+  });
+
   describe('Given EmailVerificationFailedEvent', () => {
     describe('When constructed with required fields', () => {
       it('Then it holds all properties correctly', () => {

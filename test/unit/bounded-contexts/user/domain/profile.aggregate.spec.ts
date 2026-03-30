@@ -1,6 +1,30 @@
 import { ProfileAggregate } from '@user/profile/domain/profile.aggregate';
 
 describe('ProfileAggregate', () => {
+  describe('Given ProfileAggregate.create() is called with a userId', () => {
+    describe('When a new profile is created', () => {
+      it('Then the profile stores the userId and has no id (not yet persisted)', () => {
+        const profile = ProfileAggregate.create({ userId: 42 });
+
+        expect(profile.userId).toBe(42);
+        expect(profile.id).toBeUndefined();
+      });
+
+      it('Then the profile has a generated uuid', () => {
+        const profile = ProfileAggregate.create({ userId: 1 });
+
+        expect(profile.uuid).toBeDefined();
+        expect(profile.uuid.length).toBeGreaterThan(0);
+      });
+
+      it('Then the profile is not archived', () => {
+        const profile = ProfileAggregate.create({ userId: 1 });
+
+        expect(profile.isArchived()).toBe(false);
+      });
+    });
+  });
+
   describe('Given ProfileAggregate.reconstitute() is called with persisted data', () => {
     describe('When the aggregate is hydrated from storage', () => {
       it('Then all props are preserved', () => {

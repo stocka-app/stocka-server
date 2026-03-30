@@ -140,6 +140,28 @@ describe('RateLimitInterceptor', () => {
       expect(attemptContract.persist).not.toHaveBeenCalled();
     });
 
+    it('should skip tracking when E2E_MODE is true', async () => {
+      const originalE2E = process.env.E2E_MODE;
+      process.env.E2E_MODE = 'true';
+
+      try {
+        const context = createMockExecutionContext(signInRateLimitConfig, '192.168.1.1', 'test@example.com');
+        const error = new InvalidCredentialsException();
+        const callHandler = createMockCallHandler(undefined, error);
+
+        const caughtError = await interceptAndCatchError(context, callHandler);
+
+        expect(caughtError).toBe(error);
+        expect(attemptContract.persist).not.toHaveBeenCalled();
+      } finally {
+        if (originalE2E === undefined) {
+          delete process.env.E2E_MODE;
+        } else {
+          process.env.E2E_MODE = originalE2E;
+        }
+      }
+    });
+
     it('should not track errors when no rate limit config is present', async () => {
       const context = createMockExecutionContext();
       const error = new InvalidCredentialsException();

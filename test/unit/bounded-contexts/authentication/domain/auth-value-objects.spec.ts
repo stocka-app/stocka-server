@@ -95,6 +95,54 @@ describe('Authentication domain value objects', () => {
         expect(vo.toDate().getTime()).toBeLessThanOrEqual(after);
       });
     });
+
+    describe('Given the toDate method', () => {
+      it('Then it should return a defensive copy (not the internal reference)', () => {
+        const past = new Date(Date.now() - 1000);
+        const vo = new AttemptedAtVO(past);
+        const copy1 = vo.toDate();
+        const copy2 = vo.toDate();
+        expect(copy1).not.toBe(copy2);
+        expect(copy1.getTime()).toBe(copy2.getTime());
+      });
+    });
+
+    describe('Given a date within the 5-second future tolerance', () => {
+      describe('When constructing the VO', () => {
+        it('Then it should not throw for a date 3 seconds in the future', () => {
+          const nearFuture = new Date(Date.now() + 3000);
+          expect(() => new AttemptedAtVO(nearFuture)).not.toThrow();
+        });
+      });
+    });
+
+    describe('Given isBefore and isAfter edge cases', () => {
+      it('Then isBefore should return false when comparing later to earlier', () => {
+        const earlier = new AttemptedAtVO(new Date(Date.now() - 3000));
+        const later = new AttemptedAtVO(new Date(Date.now() - 1000));
+        expect(later.isBefore(earlier)).toBe(false);
+      });
+
+      it('Then isAfter should return false when comparing earlier to later', () => {
+        const earlier = new AttemptedAtVO(new Date(Date.now() - 3000));
+        const later = new AttemptedAtVO(new Date(Date.now() - 1000));
+        expect(earlier.isAfter(later)).toBe(false);
+      });
+
+      it('Then isBefore should return false for equal timestamps', () => {
+        const date = new Date(Date.now() - 1000);
+        const a = new AttemptedAtVO(date);
+        const b = new AttemptedAtVO(date);
+        expect(a.isBefore(b)).toBe(false);
+      });
+
+      it('Then isAfter should return false for equal timestamps', () => {
+        const date = new Date(Date.now() - 1000);
+        const a = new AttemptedAtVO(date);
+        const b = new AttemptedAtVO(date);
+        expect(a.isAfter(b)).toBe(false);
+      });
+    });
   });
 
   // ─── IpAddressVO ─────────────────────────────────────────────────────────────
@@ -164,6 +212,29 @@ describe('Authentication domain value objects', () => {
       it('Then equals returns false', () => {
         const a = IpAddressVO.create('192.168.1.1');
         expect(a.equals(null as unknown as IpAddressVO)).toBe(false);
+      });
+    });
+
+    describe('Given an IP address with leading/trailing whitespace', () => {
+      it('Then create() should trim and resolve IPv4 correctly', () => {
+        const vo = IpAddressVO.create('  10.0.0.1  ');
+        expect(vo.isIPv4()).toBe(true);
+        expect(vo.toString()).toBe('10.0.0.1');
+      });
+
+      it('Then create() should trim and resolve IPv6 correctly', () => {
+        const vo = IpAddressVO.create('  ::1  ');
+        expect(vo.isIPv6()).toBe(true);
+      });
+    });
+
+    describe('Given various invalid IP strings', () => {
+      it('Then create() should throw for an empty string', () => {
+        expect(() => IpAddressVO.create('')).toThrow(InvalidIpAddressException);
+      });
+
+      it('Then create() should throw for random text', () => {
+        expect(() => IpAddressVO.create('hello.world')).toThrow(InvalidIpAddressException);
       });
     });
   });
@@ -260,6 +331,66 @@ describe('Authentication domain value objects', () => {
       it('Then it is valid — right side of :: is empty string which becomes []', () => {
         // '1:2:3:4:5:6:7::' → right = '' → rightGroups = [] → covers the right==='' true branch
         expect(IPv6AddressVO.isValid('1:2:3:4:5:6:7::')).toBe(true);
+      });
+    });
+
+    describe('Given a compressed IPv6 with :: at the start', () => {
+      it('Then it is valid — left side of :: is empty string which becomes []', () => {
+        expect(IPv6AddressVO.isValid('::1:2:3:4:5:6:7')).toBe(true);
+      });
+    });
+
+    describe('Given a full 8-group IPv6 with an invalid hex group', () => {
+      it('Then it is invalid when a group contains non-hex characters', () => {
+        expect(IPv6AddressVO.isValid('2001:0db8:85a3:0000:0000:8a2e:0370:zzzz')).toBe(false);
+      });
+
+      it('Then it is invalid when a group has more than 4 hex digits', () => {
+        expect(IPv6AddressVO.isValid('2001:0db8:85a3:0000:0000:8a2e:0370:73345')).toBe(false);
+      });
+
+      it('Then it is invalid when a group is empty (too few groups effectively)', () => {
+        expect(IPv6AddressVO.isValid('2001:0db8:85a3:0000:0000:8a2e:0370:')).toBe(false);
+      });
+    });
+
+    describe('Given a full 8-group IPv6 with too few groups (no ::)', () => {
+      it('Then it is invalid with only 7 groups', () => {
+        expect(IPv6AddressVO.isValid('2001:0db8:85a3:0000:0000:8a2e:0370')).toBe(false);
+      });
+
+      it('Then it is invalid with 9 groups', () => {
+        expect(IPv6AddressVO.isValid('2001:0db8:85a3:0000:0000:8a2e:0370:7334:extra')).toBe(false);
+      });
+    });
+
+    describe('Given a compressed IPv6 with invalid hex in left groups', () => {
+      it('Then it is invalid', () => {
+        expect(IPv6AddressVO.isValid('zzzz::1')).toBe(false);
+      });
+    });
+
+    describe('Given a compressed IPv6 with invalid hex in right groups', () => {
+      it('Then it is invalid', () => {
+        expect(IPv6AddressVO.isValid('2001::zzzz')).toBe(false);
+      });
+    });
+
+    describe('Given IPv6AddressVO constructor', () => {
+      it('Then it should normalize to lowercase', () => {
+        const vo = new IPv6AddressVO('2001:DB8::1');
+        expect(vo.getValue()).toBe('2001:db8::1');
+      });
+
+      it('Then it should trim whitespace', () => {
+        const vo = new IPv6AddressVO('  ::1  ');
+        expect(vo.getValue()).toBe('::1');
+      });
+    });
+
+    describe('Given IPv6AddressVO.isValid with whitespace', () => {
+      it('Then it should trim and validate correctly', () => {
+        expect(IPv6AddressVO.isValid('  ::1  ')).toBe(true);
       });
     });
   });
@@ -451,6 +582,56 @@ describe('Authentication domain value objects', () => {
       it('Then equals returns false', () => {
         const a = VerificationTypeVO.emailVerification();
         expect(a.equals(null as unknown as VerificationTypeVO)).toBe(false);
+      });
+
+      it('Then equals returns false for a plain object', () => {
+        const a = VerificationTypeVO.emailVerification();
+        expect(a.equals({} as unknown as VerificationTypeVO)).toBe(false);
+      });
+    });
+
+    describe('Given toString on each type', () => {
+      it('Then password_reset toString returns the correct string', () => {
+        expect(VerificationTypeVO.passwordReset().toString()).toBe('password_reset');
+      });
+
+      it('Then two_factor toString returns the correct string', () => {
+        expect(VerificationTypeVO.twoFactor().toString()).toBe('two_factor');
+      });
+
+      it('Then sign_in toString returns the correct string', () => {
+        expect(VerificationTypeVO.signIn().toString()).toBe('sign_in');
+      });
+    });
+
+    describe('Given boolean type checkers return false for non-matching types', () => {
+      it('Then password_reset is not email verification', () => {
+        const vo = VerificationTypeVO.passwordReset();
+        expect(vo.isEmailVerification()).toBe(false);
+        expect(vo.isTwoFactor()).toBe(false);
+        expect(vo.isSignIn()).toBe(false);
+      });
+
+      it('Then two_factor is not password reset or sign in', () => {
+        const vo = VerificationTypeVO.twoFactor();
+        expect(vo.isEmailVerification()).toBe(false);
+        expect(vo.isPasswordReset()).toBe(false);
+        expect(vo.isSignIn()).toBe(false);
+      });
+
+      it('Then sign_in is not email verification or two factor', () => {
+        const vo = VerificationTypeVO.signIn();
+        expect(vo.isEmailVerification()).toBe(false);
+        expect(vo.isPasswordReset()).toBe(false);
+        expect(vo.isTwoFactor()).toBe(false);
+      });
+    });
+
+    describe('Given the constructor with enum values directly', () => {
+      it('Then it should accept all valid enum values', () => {
+        expect(() => new VerificationTypeVO(VerificationTypeEnum.PASSWORD_RESET)).not.toThrow();
+        expect(() => new VerificationTypeVO(VerificationTypeEnum.TWO_FACTOR)).not.toThrow();
+        expect(() => new VerificationTypeVO(VerificationTypeEnum.SIGN_IN)).not.toThrow();
       });
     });
   });

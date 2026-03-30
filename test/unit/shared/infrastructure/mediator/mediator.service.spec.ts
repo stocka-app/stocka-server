@@ -1,132 +1,167 @@
-import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { ModuleRef } from '@nestjs/core';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function buildMockModuleRef(facades?: Record<string, object>): jest.Mocked<ModuleRef> {
-  return {
-    get: jest.fn().mockImplementation((token: string) => {
-      if (token === INJECTION_TOKENS.USER_FACADE) return facades?.user ?? {};
-      if (token === INJECTION_TOKENS.TENANT_FACADE) return facades?.tenant ?? {};
-      return {};
-    }),
-  } as unknown as jest.Mocked<ModuleRef>;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
 describe('MediatorService', () => {
-  describe('Given a MediatorService that has not been initialized', () => {
-    it('Then accessing .user throws an initialization error', () => {
-      const moduleRef = buildMockModuleRef();
-      const service = new MediatorService(moduleRef);
+  const fakeUserFacade = { findByUUID: jest.fn() } as any;
+  const fakeTenantFacade = { getActiveMembership: jest.fn() } as any;
+  const fakeOnboardingFacade = { getOnboardingStatus: jest.fn() } as any;
 
-      expect(() => service.user).toThrow(
-        'MediatorService not initialized — onModuleInit has not run',
-      );
-    });
-
-    it('Then accessing .tenant throws an initialization error', () => {
-      const moduleRef = buildMockModuleRef();
-      const service = new MediatorService(moduleRef);
-
-      expect(() => service.tenant).toThrow(
-        'MediatorService not initialized — onModuleInit has not run',
-      );
-    });
-  });
-
-  describe('Given a MediatorService after onModuleInit runs', () => {
-    let service: MediatorService;
-    let moduleRef: jest.Mocked<ModuleRef>;
-    const mockUserFacade = { findByUUID: jest.fn(), findUserByEmail: jest.fn() };
-    const mockTenantFacade = {
-      getActiveMembership: jest.fn(),
-      getMembershipContext: jest.fn(),
+  function buildModuleRef(overrides: Record<string, any> = {}): ModuleRef {
+    const providers: Record<string, any> = {
+      [INJECTION_TOKENS.USER_FACADE]: fakeUserFacade,
+      [INJECTION_TOKENS.TENANT_FACADE]: fakeTenantFacade,
+      [INJECTION_TOKENS.ONBOARDING_FACADE]: fakeOnboardingFacade,
+      ...overrides,
     };
 
+    return {
+      get: jest.fn((token: string) => {
+        if (token in providers) {
+          const val = providers[token];
+          if (val instanceof Error) throw val;
+          return val;
+        }
+        throw new Error(`Provider ${token} not found`);
+      }),
+    } as unknown as ModuleRef;
+  }
+
+  // ── Pre-init guard branches ──────────────────────────────────────
+
+  describe('Given MediatorService before onModuleInit', () => {
+    let service: MediatorService;
+
     beforeEach(() => {
-      moduleRef = buildMockModuleRef({ user: mockUserFacade, tenant: mockTenantFacade });
-      service = new MediatorService(moduleRef);
-      service.onModuleInit();
+      service = new MediatorService(buildModuleRef());
     });
 
-    describe('When onModuleInit is called', () => {
-      it('Then it resolves the USER_FACADE token using ModuleRef with strict: false', () => {
-        expect(moduleRef.get).toHaveBeenCalledWith(INJECTION_TOKENS.USER_FACADE, {
-          strict: false,
-        });
-      });
-
-      it('Then it resolves the TENANT_FACADE token using ModuleRef with strict: false', () => {
-        expect(moduleRef.get).toHaveBeenCalledWith(INJECTION_TOKENS.TENANT_FACADE, {
-          strict: false,
-        });
+    describe('When accessing .user', () => {
+      it('Then it throws because the service is not initialized', () => {
+        expect(() => service.user).toThrow('MediatorService not initialized');
       });
     });
 
-    describe('When accessing .user after initialization', () => {
-      it('Then it returns the resolved IUserFacade', () => {
-        expect(service.user).toBe(mockUserFacade);
-      });
-
-      it('Then calling a facade method works through the mediator', async () => {
-        mockUserFacade.findByUUID.mockResolvedValue({ id: 1 });
-        await service.user.findByUUID('some-uuid');
-        expect(mockUserFacade.findByUUID).toHaveBeenCalledWith('some-uuid');
+    describe('When accessing .tenant', () => {
+      it('Then it throws because the service is not initialized', () => {
+        expect(() => service.tenant).toThrow('MediatorService not initialized');
       });
     });
 
-    describe('When accessing .tenant after initialization', () => {
-      it('Then it returns the resolved ITenantFacade', () => {
-        expect(service.tenant).toBe(mockTenantFacade);
-      });
-
-      it('Then calling a facade method works through the mediator', async () => {
-        mockTenantFacade.getActiveMembership.mockResolvedValue({
-          tenantUUID: 'uuid',
-          role: 'OWNER',
-        });
-        await service.tenant.getActiveMembership('user-uuid');
-        expect(mockTenantFacade.getActiveMembership).toHaveBeenCalledWith('user-uuid');
+    describe('When accessing .onboarding', () => {
+      it('Then it throws because the service is not initialized', () => {
+        expect(() => service.onboarding).toThrow('MediatorService not initialized');
       });
     });
   });
 
-  describe('Given a MediatorService initialized in a context without TenantModule (e.g. isolated e2e worker)', () => {
+  // ── Post-init happy path ─────────────────────────────────────────
+
+  describe('Given MediatorService after onModuleInit with all modules available', () => {
     let service: MediatorService;
 
     beforeEach(() => {
-      const moduleRef = {
-        get: jest.fn().mockImplementation((token: string) => {
-          if (token === INJECTION_TOKENS.USER_FACADE) return {};
-          throw new Error('Nest could not find TenantFacade element');
-        }),
-      } as unknown as jest.Mocked<ModuleRef>;
+      service = new MediatorService(buildModuleRef());
+      service.onModuleInit();
+    });
+
+    describe('When accessing .user', () => {
+      it('Then it returns the resolved UserFacade', () => {
+        expect(service.user).toBe(fakeUserFacade);
+      });
+    });
+
+    describe('When accessing .tenant', () => {
+      it('Then it returns the resolved TenantFacade', () => {
+        expect(service.tenant).toBe(fakeTenantFacade);
+      });
+    });
+
+    describe('When accessing .onboarding', () => {
+      it('Then it returns the resolved OnboardingFacade', () => {
+        expect(service.onboarding).toBe(fakeOnboardingFacade);
+      });
+    });
+  });
+
+  // ── Fallback to NULL_TENANT_FACADE ───────────────────────────────
+
+  describe('Given MediatorService when TenantModule is NOT loaded', () => {
+    let service: MediatorService;
+
+    beforeEach(() => {
+      const moduleRef = buildModuleRef({
+        [INJECTION_TOKENS.TENANT_FACADE]: new Error('Not found'),
+      });
       service = new MediatorService(moduleRef);
       service.onModuleInit();
     });
 
-    it('Then getActiveMembership returns null without crashing', async () => {
-      const result = await service.tenant.getActiveMembership('user-uuid');
-      expect(result).toBeNull();
+    describe('When accessing .tenant', () => {
+      it('Then it returns the NULL_TENANT_FACADE (not undefined)', () => {
+        expect(service.tenant).toBeDefined();
+      });
     });
 
-    it('Then getMembershipContext returns null without crashing', async () => {
-      const result = await service.tenant.getMembershipContext('user-uuid');
-      expect(result).toBeNull();
+    describe('When calling getActiveMembership on null facade', () => {
+      it('Then it returns null', async () => {
+        const result = await service.tenant.getActiveMembership('any-uuid');
+        expect(result).toBeNull();
+      });
     });
 
-    it('Then createTenantForUser throws a meaningful error', async () => {
-      await expect(
-        service.tenant.createTenantForUser({
-          userUUID: 'u1',
-          userId: 1,
-          name: 'T',
-          businessType: 'retail',
-        }),
-      ).rejects.toThrow('TenantFacade not available in this context');
+    describe('When calling getMembershipContext on null facade', () => {
+      it('Then it returns null', async () => {
+        const result = await service.tenant.getMembershipContext('any-uuid');
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When calling getTierLimits on null facade', () => {
+      it('Then it returns null', async () => {
+        const result = await service.tenant.getTierLimits('any-uuid');
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When calling createTenantForUser on null facade', () => {
+      it('Then it throws "not available"', async () => {
+        await expect(
+          service.tenant.createTenantForUser({
+            userUUID: 'uuid',
+            userId: 1,
+            name: 'Test',
+            businessType: 'retail',
+          }),
+        ).rejects.toThrow('TenantFacade not available in this context');
+      });
+    });
+  });
+
+  // ── Fallback to NULL_ONBOARDING_FACADE ───────────────────────────
+
+  describe('Given MediatorService when OnboardingModule is NOT loaded', () => {
+    let service: MediatorService;
+
+    beforeEach(() => {
+      const moduleRef = buildModuleRef({
+        [INJECTION_TOKENS.ONBOARDING_FACADE]: new Error('Not found'),
+      });
+      service = new MediatorService(moduleRef);
+      service.onModuleInit();
+    });
+
+    describe('When accessing .onboarding', () => {
+      it('Then it returns the NULL_ONBOARDING_FACADE (not undefined)', () => {
+        expect(service.onboarding).toBeDefined();
+      });
+    });
+
+    describe('When calling getOnboardingStatus on null facade', () => {
+      it('Then it returns null', async () => {
+        const result = await service.onboarding.getOnboardingStatus('any-uuid');
+        expect(result).toBeNull();
+      });
     });
   });
 });

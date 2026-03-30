@@ -62,4 +62,56 @@ describe('PersonalProfileModel', () => {
       });
     });
   });
+
+  describe('Given PersonalProfileModel.create() is called', () => {
+    describe('When only required fields are provided', () => {
+      it('Then it defaults locale to es and timezone to America/Mexico_City', () => {
+        const model = PersonalProfileModel.create({
+          profileId: 5,
+          username: 'janedoe',
+        });
+
+        expect(model.profileId).toBe(5);
+        expect(model.username).toBe('janedoe');
+        expect(model.displayName).toBeNull();
+        expect(model.avatarUrl).toBeNull();
+        expect(model.locale).toBe('es');
+        expect(model.timezone).toBe('America/Mexico_City');
+      });
+    });
+
+    describe('When all optional fields are provided', () => {
+      it('Then it uses the provided values instead of defaults', () => {
+        const model = PersonalProfileModel.create({
+          profileId: 10,
+          username: 'johndoe',
+          displayName: 'John Doe',
+          avatarUrl: 'https://cdn.example.com/avatar.png',
+          locale: 'en',
+          timezone: 'America/New_York',
+        });
+
+        expect(model.displayName).toBe('John Doe');
+        expect(model.avatarUrl).toBe('https://cdn.example.com/avatar.png');
+        expect(model.locale).toBe('en');
+        expect(model.timezone).toBe('America/New_York');
+      });
+    });
+  });
+
+  describe('Given a reconstituted PersonalProfileModel', () => {
+    describe('When updateLocale() is called with a new locale', () => {
+      it('Then the locale is updated and updatedAt is refreshed', () => {
+        const model = PersonalProfileModel.reconstitute(BASE_PROPS);
+        const originalUpdatedAt = model.updatedAt;
+
+        model.updateLocale('fr');
+
+        expect(model.locale).toBe('fr');
+        expect(model.updatedAt.getTime()).toBeGreaterThanOrEqual(
+          originalUpdatedAt.getTime(),
+        );
+      });
+    });
+  });
 });

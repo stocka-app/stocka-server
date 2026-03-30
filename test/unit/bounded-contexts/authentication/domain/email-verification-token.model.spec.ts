@@ -92,7 +92,9 @@ describe('EmailVerificationTokenModel', () => {
         expect(token.id).toBe(5);
         expect(token.uuid).toBe(VALID_UUID);
         expect(token.credentialAccountId).toBe(10);
+        expect(token.codeHash).toBe('stored-hash');
         expect(token.resendCount).toBe(2);
+        expect(token.lastResentAt).toBeInstanceOf(Date);
         expect(token.getUncommittedEvents()).toHaveLength(0);
         // Covers line 101 null branch: usedAt getter when _usedAt is null → returns null
         expect(token.usedAt).toBeNull();
@@ -129,6 +131,63 @@ describe('EmailVerificationTokenModel', () => {
         expect(token.isValid()).toBe(true);
         expect(token.isExpired()).toBe(false);
         expect(token.isUsed()).toBe(false);
+      });
+    });
+  });
+
+  describe('Given an archived token', () => {
+    describe('When checking isValid()', () => {
+      it('Then it returns false because the token is archived', () => {
+        const token = EmailVerificationTokenModel.reconstitute({
+          id: 10,
+          uuid: VALID_UUID,
+          credentialAccountId: 1,
+          codeHash: 'h',
+          expiresAt: FUTURE_DATE(),
+          archivedAt: new Date(),
+          resendCount: 0,
+          lastResentAt: null,
+        });
+        expect(token.isArchived()).toBe(true);
+        expect(token.isValid()).toBe(false);
+      });
+    });
+  });
+
+  describe('Given an expired token', () => {
+    describe('When checking isValid()', () => {
+      it('Then it returns false because the token is expired', () => {
+        const pastDate = new Date(Date.now() - 60000);
+        const token = EmailVerificationTokenModel.reconstitute({
+          id: 11,
+          uuid: VALID_UUID,
+          credentialAccountId: 1,
+          codeHash: 'h',
+          expiresAt: pastDate,
+          resendCount: 0,
+          lastResentAt: null,
+        });
+        expect(token.isExpired()).toBe(true);
+        expect(token.isValid()).toBe(false);
+      });
+    });
+  });
+
+  describe('Given a used token', () => {
+    describe('When checking isValid()', () => {
+      it('Then it returns false because the token is already used', () => {
+        const token = EmailVerificationTokenModel.reconstitute({
+          id: 12,
+          uuid: VALID_UUID,
+          credentialAccountId: 1,
+          codeHash: 'h',
+          expiresAt: FUTURE_DATE(),
+          usedAt: new Date(),
+          resendCount: 0,
+          lastResentAt: null,
+        });
+        expect(token.isUsed()).toBe(true);
+        expect(token.isValid()).toBe(false);
       });
     });
   });
@@ -230,6 +289,22 @@ describe('EmailVerificationTokenModel', () => {
         expect(token.getSecondsUntilCanResend()).toBeGreaterThan(0);
       });
     });
+
+    describe('When the cooldown period has elapsed', () => {
+      it('Then canResend returns true', () => {
+        const token = EmailVerificationTokenModel.reconstitute({
+          id: 1,
+          uuid: VALID_UUID,
+          credentialAccountId: 1,
+          codeHash: 'h',
+          expiresAt: FUTURE_DATE(),
+          resendCount: 1,
+          lastResentAt: new Date(Date.now() - 120_000), // 2 minutes ago, cooldown is 60s
+        });
+        expect(token.canResend()).toBe(true);
+        expect(token.getSecondsUntilCanResend()).toBe(0);
+      });
+    });
   });
 
   describe('Given a valid token', () => {
@@ -285,6 +360,45 @@ describe('EmailVerificationTokenModel', () => {
           lastResentAt: null,
         });
         expect(token.getCurrentCooldownSeconds()).toBe(60);
+      });
+
+      it('Then it returns 120 for 2 resends (index 2)', () => {
+        const token = EmailVerificationTokenModel.reconstitute({
+          id: 1,
+          uuid: VALID_UUID,
+          credentialAccountId: 1,
+          codeHash: 'h',
+          expiresAt: FUTURE_DATE(),
+          resendCount: 2,
+          lastResentAt: null,
+        });
+        expect(token.getCurrentCooldownSeconds()).toBe(120);
+      });
+
+      it('Then it returns 300 for 3 resends (index 3)', () => {
+        const token = EmailVerificationTokenModel.reconstitute({
+          id: 1,
+          uuid: VALID_UUID,
+          credentialAccountId: 1,
+          codeHash: 'h',
+          expiresAt: FUTURE_DATE(),
+          resendCount: 3,
+          lastResentAt: null,
+        });
+        expect(token.getCurrentCooldownSeconds()).toBe(300);
+      });
+
+      it('Then it clamps to 300 for resend counts beyond the array length', () => {
+        const token = EmailVerificationTokenModel.reconstitute({
+          id: 1,
+          uuid: VALID_UUID,
+          credentialAccountId: 1,
+          codeHash: 'h',
+          expiresAt: FUTURE_DATE(),
+          resendCount: 10,
+          lastResentAt: null,
+        });
+        expect(token.getCurrentCooldownSeconds()).toBe(300);
       });
     });
 

@@ -2,6 +2,9 @@ import { OnboardingSessionModel } from '@onboarding/domain/models/onboarding-ses
 import { TenantInvitationModel } from '@onboarding/domain/models/tenant-invitation.model';
 import { OnboardingPath } from '@onboarding/domain/enums/onboarding-path.enum';
 import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';
+import { InvitationEmailMismatchError } from '@onboarding/domain/errors/invitation-email-mismatch.error';
+import { InvitationExpiredError } from '@onboarding/domain/errors/invitation-expired.error';
+import { OnboardingNotFoundError } from '@onboarding/domain/errors/onboarding-not-found.error';
 
 describe('OnboardingSessionModel', () => {
   const USER_UUID = '019538a0-0000-7000-8000-000000000001';
@@ -102,6 +105,57 @@ describe('OnboardingSessionModel', () => {
       });
     });
   });
+
+  describe('Given an in-progress session', () => {
+    describe('When markCompleted is called', () => {
+      it('Then the status changes to COMPLETED and updatedAt is refreshed', () => {
+        const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
+        expect(session.isCompleted()).toBe(false);
+        expect(session.status).toBe(OnboardingStatus.IN_PROGRESS);
+
+        const before = new Date();
+        session.markCompleted();
+        const after = new Date();
+
+        expect(session.isCompleted()).toBe(true);
+        expect(session.status).toBe(OnboardingStatus.COMPLETED);
+        expect(session.updatedAt.getTime()).toBeGreaterThanOrEqual(before.getTime());
+        expect(session.updatedAt.getTime()).toBeLessThanOrEqual(after.getTime() + 5);
+      });
+    });
+  });
+
+  describe('Given a session with saved section data', () => {
+    describe('When getSectionData is called for an existing section', () => {
+      it('Then it returns the data for that section', () => {
+        const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
+        session.saveProgress('consents', { acceptedTyC: true });
+
+        const data = session.getSectionData('consents');
+        expect(data).toEqual({ acceptedTyC: true });
+      });
+    });
+
+    describe('When getSectionData is called for a non-existent section', () => {
+      it('Then it returns null', () => {
+        const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
+
+        expect(session.getSectionData('nonExistent')).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a session where path section includes JOIN with invitationCode', () => {
+    describe('When saveProgress is called with path JOIN', () => {
+      it('Then path is set to JOIN and invitationCode is captured', () => {
+        const session = OnboardingSessionModel.create({ userUUID: USER_UUID });
+        session.saveProgress('path', { path: 'JOIN', invitationCode: 'INV-ABC123' });
+
+        expect(session.path).toBe(OnboardingPath.JOIN);
+        expect(session.invitationCode).toBe('INV-ABC123');
+      });
+    });
+  });
 });
 
 describe('TenantInvitationModel', () => {
@@ -133,6 +187,38 @@ describe('TenantInvitationModel', () => {
         expect(invitation.token).toBe('tok-abc123');
         expect(invitation.acceptedAt).toEqual(acceptedAt);
         expect(invitation.expiresAt).toEqual(expiresAt);
+      });
+    });
+  });
+});
+
+describe('Onboarding domain errors', () => {
+  describe('Given InvitationEmailMismatchError', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const error = new InvitationEmailMismatchError();
+        expect(error.errorCode).toBe('INVITATION_EMAIL_MISMATCH');
+        expect(error.message).toContain('does not match the invitation');
+      });
+    });
+  });
+
+  describe('Given InvitationExpiredError', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const error = new InvitationExpiredError();
+        expect(error.errorCode).toBe('INVITATION_EXPIRED');
+        expect(error.message).toBe('Invitation has expired');
+      });
+    });
+  });
+
+  describe('Given OnboardingNotFoundError', () => {
+    describe('When instantiated', () => {
+      it('Then it has the correct error code and message', () => {
+        const error = new OnboardingNotFoundError();
+        expect(error.errorCode).toBe('ONBOARDING_NOT_FOUND');
+        expect(error.message).toContain('Onboarding session not found');
       });
     });
   });

@@ -27,7 +27,7 @@ function buildConfigService(overrides: Record<string, string> = {}): ConfigServi
 }
 
 function collectValidateResult(
-  strategy: { validate: (...args: unknown[]) => void },
+  strategy: { validate: (...args: any[]) => void },
   ...args: unknown[]
 ): Promise<SocialProfile> {
   return new Promise((resolve, reject) => {

@@ -19,6 +19,10 @@ describe('OAuthProviderVO', () => {
     it('should throw InvalidOAuthProviderException', () => {
       expect(() => new OAuthProviderVO('twitter')).toThrow('Invalid OAuth provider: twitter');
     });
+
+    it('should throw for an empty string', () => {
+      expect(() => new OAuthProviderVO('')).toThrow('Invalid OAuth provider: ');
+    });
   });
 
   describe('isLocal / isSocial', () => {
@@ -29,8 +33,17 @@ describe('OAuthProviderVO', () => {
       expect(vo.isSocial()).toBe(false);
     });
 
-    it('should return isLocal=false and isSocial=true for google provider', () => {
-      const vo = OAuthProviderVO.google();
+    it.each([
+      ['google', OAuthProviderVO.google()],
+      ['facebook', OAuthProviderVO.facebook()],
+      ['microsoft', OAuthProviderVO.microsoft()],
+    ])('should return isLocal=false and isSocial=true for %s provider', (_label, vo) => {
+      expect(vo.isLocal()).toBe(false);
+      expect(vo.isSocial()).toBe(true);
+    });
+
+    it('should return isSocial=true for apple provider created via constructor', () => {
+      const vo = new OAuthProviderVO('apple');
 
       expect(vo.isLocal()).toBe(false);
       expect(vo.isSocial()).toBe(true);

@@ -76,6 +76,36 @@ describe('TierVO', () => {
       });
     });
   });
+
+  describe('Given a non-starter tier', () => {
+    describe('When isStarter is called', () => {
+      it('Then it returns false', () => {
+        expect(TierVO.free().isStarter()).toBe(false);
+        expect(TierVO.growth().isStarter()).toBe(false);
+        expect(TierVO.enterprise().isStarter()).toBe(false);
+      });
+    });
+  });
+
+  describe('Given a non-growth tier', () => {
+    describe('When isGrowth is called', () => {
+      it('Then it returns false', () => {
+        expect(TierVO.free().isGrowth()).toBe(false);
+        expect(TierVO.starter().isGrowth()).toBe(false);
+        expect(TierVO.enterprise().isGrowth()).toBe(false);
+      });
+    });
+  });
+
+  describe('Given a non-enterprise tier', () => {
+    describe('When isEnterprise is called', () => {
+      it('Then it returns false', () => {
+        expect(TierVO.free().isEnterprise()).toBe(false);
+        expect(TierVO.starter().isEnterprise()).toBe(false);
+        expect(TierVO.growth().isEnterprise()).toBe(false);
+      });
+    });
+  });
 });
 
 // ── TenantStatusVO ─────────────────────────────────────────────────────────────
@@ -109,6 +139,7 @@ describe('TenantStatusVO', () => {
         expect(vo.isActive()).toBe(true);
         expect(vo.isSuspended()).toBe(false);
         expect(vo.isCancelled()).toBe(false);
+        expect(vo.toString()).toBe('active');
       });
 
       it('Then suspended() returns suspended status', () => {
@@ -116,6 +147,7 @@ describe('TenantStatusVO', () => {
         expect(vo.isActive()).toBe(false);
         expect(vo.isSuspended()).toBe(true);
         expect(vo.isCancelled()).toBe(false);
+        expect(vo.toString()).toBe('suspended');
       });
 
       it('Then cancelled() returns cancelled status', () => {
@@ -123,6 +155,7 @@ describe('TenantStatusVO', () => {
         expect(vo.isActive()).toBe(false);
         expect(vo.isSuspended()).toBe(false);
         expect(vo.isCancelled()).toBe(true);
+        expect(vo.toString()).toBe('cancelled');
       });
     });
   });
@@ -318,7 +351,33 @@ describe('MemberRoleVO', () => {
       it('Then MemberRoleVO.viewer() returns VIEWER', () => {
         const vo = MemberRoleVO.viewer();
         expect(vo.isOwner()).toBe(false);
+        expect(vo.isPartner()).toBe(false);
+        expect(vo.isManager()).toBe(false);
         expect(vo.toString()).toBe('VIEWER');
+      });
+    });
+  });
+
+  describe('Given a PARTNER role created via fromString', () => {
+    describe('When boolean checks are called', () => {
+      it('Then isPartner returns true and others return false', () => {
+        const vo = MemberRoleVO.fromString('PARTNER');
+        expect(vo.isPartner()).toBe(true);
+        expect(vo.isOwner()).toBe(false);
+        expect(vo.isManager()).toBe(false);
+        expect(vo.toString()).toBe('PARTNER');
+      });
+    });
+  });
+
+  describe('Given a MANAGER role created via fromString', () => {
+    describe('When boolean checks are called', () => {
+      it('Then isManager returns true and others return false', () => {
+        const vo = MemberRoleVO.fromString('MANAGER');
+        expect(vo.isManager()).toBe(true);
+        expect(vo.isOwner()).toBe(false);
+        expect(vo.isPartner()).toBe(false);
+        expect(vo.toString()).toBe('MANAGER');
       });
     });
   });
@@ -371,6 +430,7 @@ describe('MemberStatusVO', () => {
         expect(vo.isActive()).toBe(true);
         expect(vo.isPending()).toBe(false);
         expect(vo.isSuspended()).toBe(false);
+        expect(vo.toString()).toBe('active');
       });
 
       it('Then MemberStatusVO.pending() returns pending', () => {
@@ -378,6 +438,7 @@ describe('MemberStatusVO', () => {
         expect(vo.isActive()).toBe(false);
         expect(vo.isPending()).toBe(true);
         expect(vo.isSuspended()).toBe(false);
+        expect(vo.toString()).toBe('pending');
       });
 
       it('Then MemberStatusVO.suspended() returns suspended', () => {
@@ -385,6 +446,7 @@ describe('MemberStatusVO', () => {
         expect(vo.isActive()).toBe(false);
         expect(vo.isPending()).toBe(false);
         expect(vo.isSuspended()).toBe(true);
+        expect(vo.toString()).toBe('suspended');
       });
     });
   });
