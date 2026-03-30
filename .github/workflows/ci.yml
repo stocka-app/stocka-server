@@ -55,8 +55,8 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-      - name: Run tests
-        run: npm run test
+      - name: Run unit tests with coverage
+        run: npm run test:cov
         env:
           NODE_ENV: test
           PORT: 3001
@@ -73,6 +73,27 @@ jobs:
           JWT_ACCESS_EXPIRATION: 15m
           JWT_REFRESH_EXPIRATION: 7d
           CORS_ORIGIN: http://localhost:5173
+
+      - name: Run E2E tests
+        run: npm run test:e2e:seq
+        env:
+          NODE_ENV: test
+          E2E_MODE: 'true'
+          PORT: 3001
+          API_PREFIX: api
+          FRONTEND_URL: http://localhost:5173
+          REQUEST_TIMEOUT_MS: 10000
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: stocka
+          DB_PASSWORD: test_password
+          DB_DATABASE: stocka_test_db
+          JWT_ACCESS_SECRET: ci-access-secret-key
+          JWT_REFRESH_SECRET: ci-refresh-secret-key
+          JWT_ACCESS_EXPIRATION: 15m
+          JWT_REFRESH_EXPIRATION: 7d
+          CORS_ORIGIN: http://localhost:5173
+          RESEND_API_KEY: re_test_fake_key
 
       - name: Build application
         run: npm run build
