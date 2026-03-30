@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Saga } from '@shared/domain/saga/saga.base';
-import { ISagaStepHandler } from '@shared/domain/saga/saga-step-handler.interface';
-import { SagaStepConfig } from '@shared/domain/saga/saga-step-config.interface';
+import { ISagaStepHandler } from '@shared/domain/saga/saga-step-handler.contract';
+import { SagaStepConfig } from '@shared/domain/saga/saga-step-config.contract';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 
 interface TestContext {

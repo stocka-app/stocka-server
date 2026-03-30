@@ -4,7 +4,7 @@ import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { InMemoryProcessStateContract } from '@shared/infrastructure/process-manager/in-memory-process-state';
 import { withRetry } from '@shared/domain/utils/with-retry';
 import { v7 as uuidv7 } from 'uuid';
-import { SagaStepConfig } from '@shared/domain/saga/saga-step-config.interface';
+import { SagaStepConfig } from '@shared/domain/saga/saga-step-config.contract';
 
 /**
  * Saga — sequential, request-scoped process orchestrator built on ProcessManager.

@@ -4,7 +4,7 @@ import { Repository, EntityManager } from 'typeorm';
 import {
   IStorageRepository,
   StoragePage,
-} from '@storage/domain/contracts/storage.repository.interface';
+} from '@storage/domain/contracts/storage.repository.contract';
 import { StorageFilters } from '@storage/application/queries/list-storages/list-storages.query';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';

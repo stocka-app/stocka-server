@@ -1,7 +1,7 @@
 import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { GetStorageQuery } from '@storage/application/queries/get-storage/get-storage.query';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.interface';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';

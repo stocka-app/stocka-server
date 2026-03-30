@@ -9,7 +9,7 @@ import {
   ListStoragesQuery,
   StorageFilters,
 } from '@storage/application/queries/list-storages/list-storages.query';
-import { StoragePage } from '@storage/domain/contracts/storage.repository.interface';
+import { StoragePage } from '@storage/domain/contracts/storage.repository.contract';
 import { ListStoragesInDto } from '@storage/infrastructure/http/controllers/list-storages/list-storages-in.dto';
 import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';
 import { StoragePageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-page.out.dto';

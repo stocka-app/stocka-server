@@ -1,7 +1,7 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ArchiveStorageCommand } from '@storage/application/commands/archive-storage/archive-storage.command';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.interface';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageAlreadyArchivedError } from '@storage/domain/errors/storage-already-archived.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
