@@ -41,10 +41,15 @@ export class GetMyTenantController {
       new GetMyTenantQuery(member.tenantId),
     );
 
-    /* istanbul ignore next */
-    if (result.isErr()) throw result.error;
-
-    const config = await this.configContract.findByTenantId(member.tenantId);
-    return GetMyTenantOutDto.fromAggregate(result.value, config);
+    return result.match(
+      async (tenant) => {
+        const config = await this.configContract.findByTenantId(member.tenantId);
+        return GetMyTenantOutDto.fromAggregate(tenant, config);
+      },
+      /* istanbul ignore next */
+      (error) => {
+        throw error;
+      },
+    );
   }
 }

@@ -39,9 +39,12 @@ export class GetInvitationsController {
       new GetInvitationsQuery(member.tenantId),
     );
 
-    /* istanbul ignore next */
-    if (result.isErr()) throw result.error;
-
-    return result.value.map((inv) => InvitationOutDto.fromModel(inv));
+    return result.match(
+      (invitations) => invitations.map((inv) => InvitationOutDto.fromModel(inv)),
+      /* istanbul ignore next */
+      (error) => {
+        throw error;
+      },
+    );
   }
 }
