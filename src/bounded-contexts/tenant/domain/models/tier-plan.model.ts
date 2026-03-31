@@ -1,4 +1,4 @@
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 
 export interface TierPlanReconstituteProps {
   tier: string;

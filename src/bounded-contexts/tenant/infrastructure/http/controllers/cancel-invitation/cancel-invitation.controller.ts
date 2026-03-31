@@ -16,7 +16,7 @@ import { TenantStateGuard } from '@common/guards/tenant-state.guard';
 import { RequireAction } from '@common/decorators/require-action.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { CancelInvitationCommand } from '@tenant/application/commands/cancel-invitation/cancel-invitation.command';
 import { CancelInvitationResult } from '@tenant/application/commands/cancel-invitation/cancel-invitation.handler';

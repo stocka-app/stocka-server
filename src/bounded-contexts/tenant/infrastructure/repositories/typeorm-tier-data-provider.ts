@@ -6,9 +6,12 @@ import {
   TierPlanLimits,
   ModulePolicy,
   ActionOverride,
-} from '@shared/domain/policy/tier-data-provider.contract';
-import { CapabilitySnapshot, isValidSnapshot } from '@shared/domain/policy/capability-snapshot';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+} from '@authorization/domain/contracts/tier-data-provider.contract';
+import {
+  CapabilitySnapshot,
+  isValidSnapshot,
+} from '@authorization/domain/models/capability-snapshot';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
 import { TierModulePolicyEntity } from '@tenant/infrastructure/entities/tier-module-policy.entity';
 import { TierActionOverrideEntity } from '@tenant/infrastructure/entities/tier-action-override.entity';

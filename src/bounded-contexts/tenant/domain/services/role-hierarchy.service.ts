@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()

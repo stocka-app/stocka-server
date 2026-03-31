@@ -1,7 +1,7 @@
 import { BusinessLogicException } from '@shared/domain/exceptions/business-logic.exception';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
-import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
+import { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 
 export class FeatureNotInTierError extends BusinessLogicException {
   constructor(action: SystemAction, tier: TierEnum, requiredTier: TierEnum) {

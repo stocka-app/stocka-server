@@ -24,7 +24,7 @@ import { RateLimitInterceptor } from '@common/interceptors/rate-limit.intercepto
 import { AppController } from '@core/infrastructure/app.controller';
 import { HealthModule } from '@core/infrastructure/health/health.module';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
-import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
+import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
 
 @Module({
   imports: [
@@ -59,7 +59,7 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     StorageModule,
     OnboardingModule,
     MediatorModule,
-    CapabilityModule,
+    AuthorizationModule,
   ],
   controllers: [AppController],
   providers: [
