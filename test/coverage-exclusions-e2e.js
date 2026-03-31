@@ -77,9 +77,6 @@ module.exports = [
   // ── WIRED BUT NOT YET EXERCISED (future features with active imports) ────
   '!src/bounded-contexts/user/profile/domain/models/commercial-profile.model.ts',
   '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
-  '!src/bounded-contexts/user/account/session/domain/session.aggregate.ts',
-  '!src/bounded-contexts/user/account/session/infrastructure/mappers/session.mapper.ts',
-  '!src/bounded-contexts/user/account/session/infrastructure/repositories/typeorm-session.repository.ts',
 
   // ═══════════════════════════════════════════════════════════════════════════
   // UNIT-COVERED: Domain layer (100% covered by unit tests)
