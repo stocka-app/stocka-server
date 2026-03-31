@@ -1,19 +1,19 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CompleteOnboardingCommand } from '@onboarding/application/commands/complete-onboarding/complete-onboarding.command';
 import { CompleteOnboardingResult } from '@onboarding/application/commands/complete-onboarding/complete-onboarding.handler';
 
 @ApiTags('Onboarding')
 @Controller('onboarding')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class CompleteOnboardingController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('complete')
+  @Secure()
   @ApiOperation({
     summary: 'Complete onboarding — creates tenant + default storage or joins via invitation',
   })

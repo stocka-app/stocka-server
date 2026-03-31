@@ -1,17 +1,17 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { RbacRoleOutDto } from '@authorization/infrastructure/http/controllers/rbac/rbac-permissions-out.dto';
 
 @ApiTags('RBAC')
 @Controller('rbac')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class GetRolesController {
   constructor(private readonly dataSource: DataSource) {}
 
   @Get('roles')
+  @Secure()
   @ApiOperation({ summary: 'Get active role catalog' })
   @ApiResponse({ status: 200, type: [RbacRoleOutDto] })
   async getRoles(): Promise<RbacRoleOutDto[]> {

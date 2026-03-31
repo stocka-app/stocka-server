@@ -18,8 +18,8 @@ import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module'
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { RateLimitGuard } from '@common/guards/rate-limit.guard';
-import { PermissionGuard } from '@common/guards/permission.guard';
-import { JwtOptionalGuard } from '@common/guards/jwt-optional.guard';
+import { SecurityGuard } from '@common/security/security.guard';
+import { SecurityModule } from '@common/security/security.module';
 import { RateLimitInterceptor } from '@common/interceptors/rate-limit.interceptor';
 import { AppController } from '@core/infrastructure/app.controller';
 import { HealthModule } from '@core/infrastructure/health/health.module';
@@ -60,6 +60,7 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
     OnboardingModule,
     MediatorModule,
     AuthorizationModule,
+    SecurityModule,
   ],
   controllers: [AppController],
   providers: [
@@ -71,17 +72,9 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
       provide: APP_GUARD,
       useClass: RateLimitGuard,
     },
-    // JwtOptionalGuard runs before PermissionGuard so that request.user is populated
-    // for any request carrying a valid Bearer token. It never throws — missing or
-    // invalid tokens are silently ignored; per-route enforcement is handled by
-    // PermissionGuard (@RequireAction) and local @UseGuards(JwtAuthenticationGuard).
     {
       provide: APP_GUARD,
-      useClass: JwtOptionalGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: PermissionGuard,
+      useClass: SecurityGuard,
     },
     {
       provide: APP_INTERCEPTOR,

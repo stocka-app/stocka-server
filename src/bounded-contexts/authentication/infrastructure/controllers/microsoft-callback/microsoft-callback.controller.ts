@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { MicrosoftAuthenticationGuard } from '@authentication/infrastructure/guards/microsoft-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { SocialSignInCommand } from '@authentication/application/commands/social-sign-in/social-sign-in.command';
 import { SocialSignInCommandResult } from '@authentication/application/types/authentication-result.types';
 import { SocialProfile } from '@authentication/infrastructure/strategies/google.strategy';
@@ -19,6 +20,7 @@ export class MicrosoftCallbackController {
   ) {}
 
   @Get('microsoft/callback')
+  @Secure()
   @UseGuards(MicrosoftAuthenticationGuard)
   @ApiOperation({
     summary: 'Microsoft OAuth callback',

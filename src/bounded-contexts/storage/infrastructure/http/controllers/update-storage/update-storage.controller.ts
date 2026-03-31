@@ -1,10 +1,8 @@
-import { Body, Controller, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Patch } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
-import { RequireAction } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { Secure } from '@common/decorators/secure.decorator';
 import { UpdateStorageCommand } from '@storage/application/commands/update-storage/update-storage.command';
 import { UpdateStorageResult } from '@storage/application/commands/update-storage/update-storage.handler';
 import { UpdateStorageInDto } from '@storage/infrastructure/http/controllers/update-storage/update-storage-in.dto';
@@ -12,12 +10,11 @@ import { UpdateStorageInDto } from '@storage/infrastructure/http/controllers/upd
 @ApiTags('Storage')
 @Controller('storages')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class UpdateStorageController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Patch(':uuid')
-  @RequireAction(SystemAction.STORAGE_UPDATE)
+  @Secure()
   @ApiOperation({ summary: 'Update a storage' })
   @ApiParam({ name: 'uuid', description: 'Storage UUID' })
   @ApiResponse({ status: 200, description: 'Storage updated' })

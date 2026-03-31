@@ -6,8 +6,6 @@ import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorat
 import { CurrentTenant } from '@common/decorators/current-tenant.decorator';
 import { CurrentMember } from '@common/decorators/current-member.decorator';
 import { IsCountryCode } from '@common/decorators/country-code.decorator';
-import { RequireAction, REQUIRE_ACTION_KEY } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
 
 /** Extract the factory function stored by createParamDecorator */
@@ -336,34 +334,27 @@ describe('CurrentMember decorator', () => {
   });
 });
 
-// ─── RequireAction decorator ─────────────────────────────────────────────────
-describe('RequireAction decorator', () => {
-  describe('Given a SystemAction value', () => {
+// ─── Secure decorator ───────────────────────────────────────────────────────
+describe('Secure decorator', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Secure } = require('@common/decorators/secure.decorator') as {
+    Secure: () => MethodDecorator;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { SECURE_KEY } = require('@common/security/security.types') as {
+    SECURE_KEY: string;
+  };
+
+  describe('Given the @Secure() decorator', () => {
     describe('When applied to a controller method', () => {
-      it('Then it sets the REQUIRE_ACTION_KEY metadata to the provided action', () => {
+      it('Then it sets the SECURE_KEY metadata to true', () => {
         class TestController {
-          @RequireAction(SystemAction.STORAGE_CREATE)
-          createStorage(): void {}
+          @Secure()
+          handle(): void {}
         }
 
-        const metadata = Reflect.getMetadata(
-          REQUIRE_ACTION_KEY,
-          TestController.prototype.createStorage,
-        );
-        expect(metadata).toBe(SystemAction.STORAGE_CREATE);
-      });
-
-      it('Then different actions produce different metadata', () => {
-        class TestController {
-          @RequireAction(SystemAction.PRODUCT_READ)
-          readProducts(): void {}
-        }
-
-        const metadata = Reflect.getMetadata(
-          REQUIRE_ACTION_KEY,
-          TestController.prototype.readProducts,
-        );
-        expect(metadata).toBe(SystemAction.PRODUCT_READ);
+        const metadata = Reflect.getMetadata(SECURE_KEY, TestController.prototype.handle);
+        expect(metadata).toBe(true);
       });
     });
   });

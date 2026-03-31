@@ -1,6 +1,6 @@
-import { Controller, Get, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import { UserFacade } from '@user/infrastructure/facade/user.facade';
 import { GetMeOutDto } from '@user/infrastructure/controllers/get-me/get-me-out.dto';
@@ -11,7 +11,7 @@ export class GetMeController {
   constructor(private readonly userFacade: UserFacade) {}
 
   @Get('me')
-  @UseGuards(JwtAuthenticationGuard)
+  @Secure()
   @ApiBearerAuth('JWT-authentication')
   @ApiOperation({ summary: 'Get current authenticated user' })
   @ApiResponse({

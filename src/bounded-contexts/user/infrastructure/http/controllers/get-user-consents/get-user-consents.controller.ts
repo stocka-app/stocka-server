@@ -1,7 +1,7 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser } from '@common/decorators/current-user.decorator';
 import {
   GetUserConsentsQuery,
@@ -12,11 +12,11 @@ import { GetUserConsentsOutDto } from '@user/infrastructure/http/controllers/get
 @ApiTags('Users')
 @Controller('users')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class GetUserConsentsController {
   constructor(private readonly queryBus: QueryBus) {}
 
   @Get('me/consents')
+  @Secure()
   @ApiOperation({ summary: 'Get current consent status for the authenticated user' })
   @ApiResponse({
     status: 200,

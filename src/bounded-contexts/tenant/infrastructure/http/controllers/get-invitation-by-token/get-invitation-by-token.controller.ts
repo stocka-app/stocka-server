@@ -1,6 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Secure } from '@common/decorators/secure.decorator';
 import {
   GetInvitationByTokenQuery,
   GetInvitationByTokenResult,
@@ -13,6 +14,7 @@ export class GetInvitationByTokenController {
   constructor(private readonly queryBus: QueryBus) {}
 
   @Get('invitations/:token')
+  @Secure()
   @ApiOperation({ summary: 'Preview an invitation by token (public)' })
   @ApiResponse({ status: 200, description: 'Invitation details', type: GetInvitationByTokenOutDto })
   @ApiResponse({ status: 404, description: 'Invitation not found' })

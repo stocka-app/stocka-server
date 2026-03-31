@@ -1,8 +1,8 @@
-import { Body, Controller, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Req } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import {
   RecordUserConsentsCommand,
@@ -13,11 +13,11 @@ import { RecordUserConsentsInDto } from '@user/infrastructure/http/controllers/r
 @ApiTags('Users')
 @Controller('users')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class RecordUserConsentsController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('me/consents')
+  @Secure()
   @HttpCode(201)
   @ApiOperation({ summary: 'Record user consent preferences (append-only audit trail)' })
   @ApiResponse({ status: 201, description: 'Consents recorded successfully' })

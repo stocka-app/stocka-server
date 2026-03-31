@@ -1,9 +1,7 @@
-import { Controller, Get, Inject, NotFoundException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, NotFoundException } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
-import { TenantGuard } from '@common/guards/tenant.guard';
-import { TenantStateGuard } from '@common/guards/tenant-state.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
@@ -16,7 +14,6 @@ import { InvitationOutDto } from '@tenant/infrastructure/http/controllers/get-in
 @ApiTags('Tenant Invitations')
 @Controller('tenant')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard, TenantGuard, TenantStateGuard)
 export class GetInvitationsController {
   constructor(
     private readonly queryBus: QueryBus,
@@ -25,6 +22,7 @@ export class GetInvitationsController {
   ) {}
 
   @Get('me/invitations')
+  @Secure()
   @ApiOperation({ summary: 'List all invitations for the current tenant' })
   @ApiResponse({ status: 200, description: 'Invitations list', type: [InvitationOutDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
