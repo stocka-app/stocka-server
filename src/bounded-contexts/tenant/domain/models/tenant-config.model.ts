@@ -1,6 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
 import { TierVO } from '@tenant/domain/value-objects/tier.vo';
-import { CapabilitySnapshot } from '@authorization/domain/models/capability-snapshot';
 
 export interface TenantConfigReconstituteProps extends BaseModelProps {
   id: number;
@@ -16,8 +15,6 @@ export interface TenantConfigReconstituteProps extends BaseModelProps {
   productCount: number;
   storageCount: number;
   memberCount: number;
-  capabilities: CapabilitySnapshot | null;
-  capabilitiesBuiltAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Date | null;
@@ -35,8 +32,6 @@ export class TenantConfigModel extends BaseModel {
   private _productCount: number;
   private _storageCount: number;
   private _memberCount: number;
-  private _capabilities: CapabilitySnapshot | null;
-  private _capabilitiesBuiltAt: Date | null;
 
   private constructor(
     props: BaseModelProps & {
@@ -51,8 +46,6 @@ export class TenantConfigModel extends BaseModel {
       productCount: number;
       storageCount: number;
       memberCount: number;
-      capabilities: CapabilitySnapshot | null;
-      capabilitiesBuiltAt: Date | null;
     },
   ) {
     super(props);
@@ -67,8 +60,6 @@ export class TenantConfigModel extends BaseModel {
     this._productCount = props.productCount;
     this._storageCount = props.storageCount;
     this._memberCount = props.memberCount;
-    this._capabilities = props.capabilities;
-    this._capabilitiesBuiltAt = props.capabilitiesBuiltAt;
   }
 
   static createFreeDefaults(tenantId: number): TenantConfigModel {
@@ -84,8 +75,6 @@ export class TenantConfigModel extends BaseModel {
       productCount: 0,
       storageCount: 0,
       memberCount: 1,
-      capabilities: null,
-      capabilitiesBuiltAt: null,
     });
   }
 
@@ -107,8 +96,6 @@ export class TenantConfigModel extends BaseModel {
       productCount: props.productCount,
       storageCount: props.storageCount,
       memberCount: props.memberCount,
-      capabilities: props.capabilities,
-      capabilitiesBuiltAt: props.capabilitiesBuiltAt,
     });
   }
 
@@ -154,19 +141,5 @@ export class TenantConfigModel extends BaseModel {
 
   get memberCount(): number {
     return this._memberCount;
-  }
-
-  get capabilities(): CapabilitySnapshot | null {
-    return this._capabilities;
-  }
-
-  get capabilitiesBuiltAt(): Date | null {
-    return this._capabilitiesBuiltAt;
-  }
-
-  updateCapabilities(snapshot: CapabilitySnapshot): void {
-    this._capabilities = snapshot;
-    this._capabilitiesBuiltAt = new Date();
-    this.touch();
   }
 }

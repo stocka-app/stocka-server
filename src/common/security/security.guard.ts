@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { SecurityRegistry } from '@common/security/security-registry';
 import { JwtValidator } from '@common/security/validators/jwt.validator';
 import { TenantAccessValidator } from '@common/security/validators/tenant-access.validator';
-import { RbacValidator } from '@common/security/validators/rbac.validator';
+import { RbacValidator } from '@authorization/infrastructure/validators/rbac.validator';
 import { JwtPayload } from '@common/decorators/current-user.decorator';
 import { TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
 

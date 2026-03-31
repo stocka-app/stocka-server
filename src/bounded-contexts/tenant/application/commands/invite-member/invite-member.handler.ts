@@ -5,7 +5,7 @@ import { InviteMemberCommand } from '@tenant/application/commands/invite-member/
 import { ITenantInvitationContract } from '@tenant/domain/contracts/tenant-invitation.contract';
 import { InvitationAlreadyPendingError } from '@tenant/domain/errors/invitation-already-pending.error';
 import { InsufficientPermissionsError } from '@tenant/domain/errors/insufficient-permissions.error';
-import { RoleHierarchyService } from '@tenant/domain/services/role-hierarchy.service';
+import { RoleHierarchyService } from '@authorization/domain/services/role-hierarchy.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';

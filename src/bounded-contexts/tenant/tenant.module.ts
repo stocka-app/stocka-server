@@ -6,19 +6,13 @@ import { TenantMemberEntity } from '@tenant/infrastructure/entities/tenant-membe
 import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';
 import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
-import { ModuleEntity } from '@tenant/infrastructure/entities/module.entity';
-import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-action.entity';
-import { TierModulePolicyEntity } from '@tenant/infrastructure/entities/tier-module-policy.entity';
-import { TierActionOverrideEntity } from '@tenant/infrastructure/entities/tier-action-override.entity';
 import { TenantInvitationEntity } from '@tenant/infrastructure/entities/tenant-invitation.entity';
 import { TypeOrmTenantRepository } from '@tenant/infrastructure/repositories/typeorm-tenant.repository';
 import { TypeOrmTenantMemberRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-member.repository';
 import { TypeOrmTenantProfileRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-profile.repository';
 import { TypeOrmTenantConfigRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-config.repository';
 import { TypeOrmTierPlanRepository } from '@tenant/infrastructure/repositories/typeorm-tier-plan.repository';
-import { TypeOrmTierDataProvider } from '@tenant/infrastructure/repositories/typeorm-tier-data-provider';
 import { TypeOrmTenantInvitationRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-invitation.repository';
-import { RoleHierarchyService } from '@tenant/domain/services/role-hierarchy.service';
 import { CreateTenantHandler } from '@tenant/application/commands/create-tenant/create-tenant.handler';
 import { InviteMemberHandler } from '@tenant/application/commands/invite-member/invite-member.handler';
 import { AcceptInvitationHandler } from '@tenant/application/commands/accept-invitation/accept-invitation.handler';
@@ -48,10 +42,6 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
       TenantProfileEntity,
       TenantConfigEntity,
       TierPlanEntity,
-      ModuleEntity,
-      CatalogActionEntity,
-      TierModulePolicyEntity,
-      TierActionOverrideEntity,
       TenantInvitationEntity,
     ]),
     CqrsModule,
@@ -74,7 +64,6 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
     { provide: INJECTION_TOKENS.TENANT_PROFILE_CONTRACT, useClass: TypeOrmTenantProfileRepository },
     { provide: INJECTION_TOKENS.TENANT_CONFIG_CONTRACT, useClass: TypeOrmTenantConfigRepository },
     { provide: INJECTION_TOKENS.TIER_PLAN_CONTRACT, useClass: TypeOrmTierPlanRepository },
-    { provide: INJECTION_TOKENS.TIER_DATA_PROVIDER, useClass: TypeOrmTierDataProvider },
     {
       provide: INJECTION_TOKENS.TENANT_INVITATION_CONTRACT,
       useClass: TypeOrmTenantInvitationRepository,
@@ -84,9 +73,7 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
     TypeOrmTenantProfileRepository,
     TypeOrmTenantConfigRepository,
     TypeOrmTierPlanRepository,
-    TypeOrmTierDataProvider,
     TypeOrmTenantInvitationRepository,
-    RoleHierarchyService,
     TenantFacade,
     { provide: INJECTION_TOKENS.TENANT_FACADE, useExisting: TenantFacade },
     CreateTenantHandler,
@@ -105,7 +92,6 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
     INJECTION_TOKENS.TENANT_CONTRACT,
     INJECTION_TOKENS.TENANT_CONFIG_CONTRACT,
     INJECTION_TOKENS.TIER_PLAN_CONTRACT,
-    INJECTION_TOKENS.TIER_DATA_PROVIDER,
     INJECTION_TOKENS.TENANT_INVITATION_CONTRACT,
   ],
 })

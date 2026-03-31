@@ -1,18 +1,8 @@
 import { TenantConfigModel } from '@tenant/domain/models/tenant-config.model';
 import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
-import {
-  CapabilitySnapshot,
-  isValidSnapshot,
-} from '@authorization/domain/models/capability-snapshot';
 
 export class TenantConfigMapper {
   static toDomain(entity: TenantConfigEntity): TenantConfigModel {
-    let capabilities: CapabilitySnapshot | null = null;
-
-    if (entity.capabilities && isValidSnapshot(entity.capabilities)) {
-      capabilities = entity.capabilities;
-    }
-
     return TenantConfigModel.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
@@ -27,8 +17,6 @@ export class TenantConfigMapper {
       productCount: entity.productCount,
       storageCount: entity.storageCount,
       memberCount: entity.memberCount,
-      capabilities,
-      capabilitiesBuiltAt: entity.capabilitiesBuiltAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       archivedAt: entity.archivedAt,
@@ -49,8 +37,6 @@ export class TenantConfigMapper {
       productCount: model.productCount,
       storageCount: model.storageCount,
       memberCount: model.memberCount,
-      capabilities: model.capabilities as Record<string, unknown> | null,
-      capabilitiesBuiltAt: model.capabilitiesBuiltAt,
       archivedAt: model.archivedAt,
     };
 

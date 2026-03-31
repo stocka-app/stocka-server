@@ -13,10 +13,10 @@ import {
 } from '@authorization/domain/models/capability-snapshot';
 import { TierEnum } from '@authorization/domain/enums/tier.enum';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
-import { TierModulePolicyEntity } from '@tenant/infrastructure/entities/tier-module-policy.entity';
-import { TierActionOverrideEntity } from '@tenant/infrastructure/entities/tier-action-override.entity';
-import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-action.entity';
-import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
+import { TierModulePolicyEntity } from '@authorization/infrastructure/persistence/entities/tier-module-policy.entity';
+import { TierActionOverrideEntity } from '@authorization/infrastructure/persistence/entities/tier-action-override.entity';
+import { CatalogActionEntity } from '@authorization/infrastructure/persistence/entities/catalog-action.entity';
+import { CapabilityCacheEntity } from '@authorization/infrastructure/persistence/entities/capability-cache.entity';
 
 @Injectable()
 export class TypeOrmTierDataProvider implements ITierDataProvider {
@@ -29,28 +29,29 @@ export class TypeOrmTierDataProvider implements ITierDataProvider {
     private readonly actionOverrideRepo: Repository<TierActionOverrideEntity>,
     @InjectRepository(CatalogActionEntity)
     private readonly catalogActionRepo: Repository<CatalogActionEntity>,
-    @InjectRepository(TenantConfigEntity)
-    private readonly tenantConfigRepo: Repository<TenantConfigEntity>,
+    @InjectRepository(CapabilityCacheEntity)
+    private readonly capabilityCacheRepo: Repository<CapabilityCacheEntity>,
   ) {}
 
   async getSnapshot(tenantId: number): Promise<CapabilitySnapshot | null> {
-    const config = await this.tenantConfigRepo.findOne({ where: { tenantId } });
-    if (!config || !config.capabilities) {
+    const cache = await this.capabilityCacheRepo.findOne({ where: { tenantId } });
+    if (!cache || !cache.capabilities) {
       return null;
     }
 
-    if (!isValidSnapshot(config.capabilities)) {
+    if (!isValidSnapshot(cache.capabilities)) {
       return null;
     }
 
-    return config.capabilities;
+    return cache.capabilities;
   }
 
   async saveSnapshot(tenantId: number, snapshot: CapabilitySnapshot): Promise<void> {
-    const config = await this.tenantConfigRepo.findOneOrFail({ where: { tenantId } });
-    config.capabilities = snapshot as Record<string, unknown>;
-    config.capabilitiesBuiltAt = new Date();
-    await this.tenantConfigRepo.save(config);
+    await this.capabilityCacheRepo.save({
+      tenantId,
+      capabilities: snapshot as Record<string, unknown>,
+      capabilitiesBuiltAt: new Date(),
+    });
   }
 
   async getTierPlanLimits(tier: TierEnum): Promise<TierPlanLimits | null> {

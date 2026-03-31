@@ -1,16 +1,16 @@
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
-import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-action.entity';
+import { ModuleEntity } from '@authorization/infrastructure/persistence/entities/module.entity';
 
-@Entity({ name: 'tier_action_overrides', schema: 'tiers' })
-export class TierActionOverrideEntity {
+@Entity({ name: 'tier_module_policies', schema: 'tiers' })
+export class TierModulePolicyEntity {
   @PrimaryColumn({ type: 'varchar', length: 20 })
   tier!: string;
 
-  @PrimaryColumn({ name: 'action_id', type: 'int' })
-  actionId!: number;
+  @PrimaryColumn({ name: 'module_id', type: 'int' })
+  moduleId!: number;
 
-  @Column({ type: 'boolean' })
+  @Column({ type: 'boolean', default: true })
   enabled!: boolean;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -20,7 +20,7 @@ export class TierActionOverrideEntity {
   @JoinColumn({ name: 'tier', referencedColumnName: 'tier' })
   tierPlan!: TierPlanEntity;
 
-  @ManyToOne(() => CatalogActionEntity)
-  @JoinColumn({ name: 'action_id' })
-  action!: CatalogActionEntity;
+  @ManyToOne(() => ModuleEntity)
+  @JoinColumn({ name: 'module_id' })
+  module!: ModuleEntity;
 }

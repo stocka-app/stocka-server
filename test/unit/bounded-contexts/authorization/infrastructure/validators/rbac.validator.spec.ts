@@ -1,20 +1,20 @@
 import { ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
 import { ok, err } from 'neverthrow';
-import { RbacValidator } from '@common/security/validators/rbac.validator';
+import { RbacValidator } from '@authorization/infrastructure/validators/rbac.validator';
 import { JwtPayload } from '@common/decorators/current-user.decorator';
 import {
   ITenantFacade,
   TenantMembershipContext,
 } from '@tenant/domain/contracts/tenant-facade.contract';
-import { CapabilityResolver } from '@shared/domain/policy/capability.resolver';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
-import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
+import { CapabilityResolver } from '@authorization/domain/services/capability.resolver';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
+import { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
 import {
   ActionNotAllowedError,
   FeatureNotInTierError,
   TierLimitReachedError,
-} from '@shared/domain/policy/policy-errors';
+} from '@authorization/domain/errors/policy-errors';
 
 function buildUser(overrides: Partial<JwtPayload> = {}): JwtPayload {
   return {

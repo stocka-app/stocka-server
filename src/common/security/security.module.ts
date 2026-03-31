@@ -4,20 +4,13 @@ import { DiscoveryModule } from '@nestjs/core';
 import { SecurityGuard } from '@common/security/security.guard';
 import { JwtValidator } from '@common/security/validators/jwt.validator';
 import { TenantAccessValidator } from '@common/security/validators/tenant-access.validator';
-import { RbacValidator } from '@common/security/validators/rbac.validator';
 import { SecurityBootstrapValidator } from '@common/security/security-bootstrap.validator';
-import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
+import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 
 @Module({
-  imports: [JwtModule.register({}), DiscoveryModule, CapabilityModule, MediatorModule],
-  providers: [
-    SecurityGuard,
-    JwtValidator,
-    TenantAccessValidator,
-    RbacValidator,
-    SecurityBootstrapValidator,
-  ],
+  imports: [JwtModule.register({}), DiscoveryModule, AuthorizationModule, MediatorModule],
+  providers: [SecurityGuard, JwtValidator, TenantAccessValidator, SecurityBootstrapValidator],
   exports: [SecurityGuard],
 })
 export class SecurityModule {}
