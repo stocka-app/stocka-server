@@ -1,5 +1,5 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { ModuleEntity } from '@tenant/infrastructure/entities/module.entity';
+import { ModuleEntity } from '@authorization/infrastructure/persistence/entities/module.entity';
 
 @Entity({ name: 'catalog_actions', schema: 'capabilities' })
 export class CatalogActionEntity {

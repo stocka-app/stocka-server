@@ -35,10 +35,4 @@ export class TenantConfigEntity extends BaseEntity {
 
   @Column({ name: 'member_count', type: 'int', default: 1 })
   memberCount!: number;
-
-  @Column({ type: 'jsonb', nullable: true, default: null })
-  capabilities!: Record<string, unknown> | null;
-
-  @Column({ name: 'capabilities_built_at', type: 'timestamptz', nullable: true, default: null })
-  capabilitiesBuiltAt!: Date | null;
 }

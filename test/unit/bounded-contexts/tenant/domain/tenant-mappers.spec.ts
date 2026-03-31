@@ -2,7 +2,6 @@ import { TenantMapper } from '@tenant/infrastructure/mappers/tenant.mapper';
 import { TenantMemberMapper } from '@tenant/infrastructure/mappers/tenant-member.mapper';
 import { TenantProfileMapper } from '@tenant/infrastructure/mappers/tenant-profile.mapper';
 import { TenantConfigMapper } from '@tenant/infrastructure/mappers/tenant-config.mapper';
-import { createEmptySnapshot } from '@authorization/domain/models/capability-snapshot';
 import { TenantEntity } from '@tenant/infrastructure/entities/tenant.entity';
 import { TenantMemberEntity } from '@tenant/infrastructure/entities/tenant-member.entity';
 import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';
@@ -195,8 +194,6 @@ describe('TenantConfigMapper', () => {
           productCount: 10,
           storageCount: 0,
           memberCount: 1,
-          capabilities: null,
-          capabilitiesBuiltAt: null,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
           archivedAt: null,
@@ -215,67 +212,6 @@ describe('TenantConfigMapper', () => {
         expect(model.productCount).toBe(10);
         expect(model.storageCount).toBe(0);
         expect(model.memberCount).toBe(1);
-        expect(model.capabilities).toBeNull();
-        expect(model.capabilitiesBuiltAt).toBeNull();
-      });
-    });
-
-    describe('When toDomain is called with a valid capabilities snapshot', () => {
-      it('Then the capabilities are preserved on the model', () => {
-        const validCaps = createEmptySnapshot();
-        const entity = {
-          id: 5,
-          uuid: '550e8400-e29b-41d4-a716-446655440005',
-          tenantId: 3,
-          tier: 'FREE',
-          maxWarehouses: 0,
-          maxCustomRooms: 1,
-          maxStoreRooms: 1,
-          maxUsers: 1,
-          maxProducts: 100,
-          notificationsEnabled: true,
-          productCount: 0,
-          storageCount: 0,
-          memberCount: 1,
-          capabilities: validCaps,
-          capabilitiesBuiltAt: new Date('2024-01-01'),
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-          archivedAt: null,
-        } as unknown as TenantConfigEntity;
-
-        const model = TenantConfigMapper.toDomain(entity);
-        expect(model.capabilities).not.toBeNull();
-        expect(model.capabilities).toEqual(validCaps);
-      });
-    });
-
-    describe('When toDomain is called with an invalid capabilities snapshot', () => {
-      it('Then the capabilities are set to null', () => {
-        const entity = {
-          id: 4,
-          uuid: '550e8400-e29b-41d4-a716-446655440004',
-          tenantId: 2,
-          tier: 'FREE',
-          maxWarehouses: 0,
-          maxCustomRooms: 1,
-          maxStoreRooms: 1,
-          maxUsers: 1,
-          maxProducts: 100,
-          notificationsEnabled: true,
-          productCount: 0,
-          storageCount: 0,
-          memberCount: 1,
-          capabilities: { invalid: 'data' },
-          capabilitiesBuiltAt: new Date('2024-01-01'),
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-          archivedAt: null,
-          generateUUID: (): void => {},
-        } as unknown as TenantConfigEntity;
-
-        const model = TenantConfigMapper.toDomain(entity);
-        expect(model.capabilities).toBeNull();
       });
     });
   });
@@ -294,8 +230,6 @@ describe('TenantConfigMapper', () => {
         expect(entity.productCount).toBe(0);
         expect(entity.storageCount).toBe(0);
         expect(entity.memberCount).toBe(1);
-        expect(entity.capabilities).toBeNull();
-        expect(entity.capabilitiesBuiltAt).toBeNull();
         expect(entity.id).toBeUndefined();
       });
     });

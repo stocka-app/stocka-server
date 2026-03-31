@@ -1,6 +1,6 @@
 import { Entity, Column, ManyToOne, JoinColumn, PrimaryColumn } from 'typeorm';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
-import { ModuleEntity } from '@tenant/infrastructure/entities/module.entity';
+import { ModuleEntity } from '@authorization/infrastructure/persistence/entities/module.entity';
 
 @Entity({ name: 'tier_module_policies', schema: 'tiers' })
 export class TierModulePolicyEntity {

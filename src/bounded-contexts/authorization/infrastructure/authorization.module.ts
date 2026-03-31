@@ -20,8 +20,9 @@ import { GetRolesController } from '@authorization/infrastructure/http/controlle
 import { GetAssignableRolesController } from '@authorization/infrastructure/http/controllers/get-assignable-roles/get-assignable-roles.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
-import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-action.entity';
-import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
+import { ModuleEntity } from '@authorization/infrastructure/persistence/entities/module.entity';
+import { CatalogActionEntity } from '@authorization/infrastructure/persistence/entities/catalog-action.entity';
+import { CapabilityCacheEntity } from '@authorization/infrastructure/persistence/entities/capability-cache.entity';
 import { TenantModule } from '@tenant/tenant.module';
 
 @Module({
@@ -36,8 +37,9 @@ import { TenantModule } from '@tenant/tenant.module';
       TierModulePolicyEntity,
       TierActionOverrideEntity,
       TierPlanEntity,
+      ModuleEntity,
       CatalogActionEntity,
-      TenantConfigEntity,
+      CapabilityCacheEntity,
     ]),
     forwardRef(() => TenantModule),
   ],

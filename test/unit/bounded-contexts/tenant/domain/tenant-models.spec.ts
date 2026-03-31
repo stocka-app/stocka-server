@@ -186,11 +186,6 @@ describe('TenantConfigModel', () => {
         expect(config.memberCount).toBe(1);
       });
 
-      it('Then the capabilities snapshot is null', () => {
-        expect(config.capabilities).toBeNull();
-        expect(config.capabilitiesBuiltAt).toBeNull();
-      });
-
       it('Then the config has a uuid and no id', () => {
         expect(config.uuid).toBeDefined();
         expect(config.id).toBeUndefined();
@@ -215,8 +210,6 @@ describe('TenantConfigModel', () => {
           productCount: 50,
           storageCount: 2,
           memberCount: 3,
-          capabilities: null,
-          capabilitiesBuiltAt: null,
           createdAt: new Date('2024-01-01'),
           updatedAt: new Date('2024-01-01'),
           archivedAt: null,
@@ -234,22 +227,6 @@ describe('TenantConfigModel', () => {
         expect(config.productCount).toBe(50);
         expect(config.storageCount).toBe(2);
         expect(config.memberCount).toBe(3);
-        expect(config.capabilities).toBeNull();
-        expect(config.capabilitiesBuiltAt).toBeNull();
-      });
-    });
-  });
-
-  describe('Given a TenantConfigModel without a capabilities snapshot', () => {
-    describe('When updateCapabilities is called with a snapshot', () => {
-      it('Then the snapshot and timestamp are stored on the model', () => {
-        const config = TenantConfigModel.createFreeDefaults(1);
-        const snapshot = { PRODUCT_CREATE: { enabled: true } } as never;
-
-        config.updateCapabilities(snapshot);
-
-        expect(config.capabilities).toBe(snapshot);
-        expect(config.capabilitiesBuiltAt).toBeInstanceOf(Date);
       });
     });
   });

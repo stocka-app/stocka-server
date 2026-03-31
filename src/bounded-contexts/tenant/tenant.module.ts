@@ -6,8 +6,6 @@ import { TenantMemberEntity } from '@tenant/infrastructure/entities/tenant-membe
 import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';
 import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
-import { ModuleEntity } from '@tenant/infrastructure/entities/module.entity';
-import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-action.entity';
 import { TenantInvitationEntity } from '@tenant/infrastructure/entities/tenant-invitation.entity';
 import { TypeOrmTenantRepository } from '@tenant/infrastructure/repositories/typeorm-tenant.repository';
 import { TypeOrmTenantMemberRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-member.repository';
@@ -44,8 +42,6 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
       TenantProfileEntity,
       TenantConfigEntity,
       TierPlanEntity,
-      ModuleEntity,
-      CatalogActionEntity,
       TenantInvitationEntity,
     ]),
     CqrsModule,
