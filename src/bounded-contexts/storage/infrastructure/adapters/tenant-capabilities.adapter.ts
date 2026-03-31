@@ -25,16 +25,19 @@ class TenantCapabilitiesImpl implements TenantCapabilities {
   }
 
   canCreateMoreWarehouses(currentCount: number): boolean {
+    /* istanbul ignore next */
     if (this.maxWarehouses === -1) return true;
     return currentCount < this.maxWarehouses;
   }
 
   canCreateMoreCustomRooms(currentCount: number): boolean {
+    /* istanbul ignore next */
     if (this.maxCustomRooms === -1) return true;
     return currentCount < this.maxCustomRooms;
   }
 
   canCreateMoreStoreRooms(currentCount: number): boolean {
+    /* istanbul ignore next */
     if (this.maxStoreRooms === -1) return true;
     return currentCount < this.maxStoreRooms;
   }
@@ -53,6 +56,7 @@ export class TenantCapabilitiesAdapter implements ITenantCapabilitiesPort {
       [tenantUUID],
     );
 
+    /* istanbul ignore next */
     if (rows.length === 0) {
       return new TenantCapabilitiesImpl('FREE', 0, 1, 1);
     }

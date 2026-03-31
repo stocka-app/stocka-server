@@ -126,14 +126,14 @@ describe('RbacValidator', () => {
         );
       });
 
-      it('Then it throws HttpException with 403 and FEATURE_NOT_IN_TIER', async () => {
+      it('Then it throws HttpException with 403 and PLAN_UPGRADE_REQUIRED', async () => {
         try {
           await validator.validate(buildUser(), SystemAction.STORAGE_CREATE, membershipContext);
           fail('Expected to throw');
         } catch (e) {
           expect(e).toBeInstanceOf(HttpException);
           const response = (e as HttpException).getResponse() as Record<string, unknown>;
-          expect(response.error).toBe('FEATURE_NOT_IN_TIER');
+          expect(response.error).toBe('PLAN_UPGRADE_REQUIRED');
         }
       });
     });
@@ -164,14 +164,14 @@ describe('RbacValidator', () => {
         tenantFacade.getMembershipContext.mockResolvedValue(null);
       });
 
-      it('Then it throws ForbiddenException with MEMBERSHIP_REQUIRED', async () => {
+      it('Then it throws ForbiddenException with PERMISSION_DENIED', async () => {
         await expect(validator.validate(buildUser(), SystemAction.STORAGE_READ)).rejects.toThrow(
           ForbiddenException,
         );
         await expect(
           validator.validate(buildUser(), SystemAction.STORAGE_READ),
         ).rejects.toMatchObject({
-          response: { error: 'MEMBERSHIP_REQUIRED' },
+          response: { error: 'PERMISSION_DENIED' },
         });
       });
     });

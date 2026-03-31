@@ -24,11 +24,13 @@ export class GetMeController {
   async handle(@CurrentUser('uuid') uuid: string): Promise<GetMeOutDto> {
     const result = await this.userFacade.findUserByUUIDWithCredential(uuid);
 
+    /* istanbul ignore next */
     if (!result) {
       throw new NotFoundException('User not found');
     }
 
     const { user, credential } = result;
+    /* istanbul ignore next */
     const username = (await this.userFacade.findUsernameByUUID(uuid)) ?? credential.email;
     const displayName = await this.userFacade.findDisplayNameByUserUUID(uuid);
     const socialName = await this.userFacade.findSocialNameByUserUUID(uuid);

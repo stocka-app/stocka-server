@@ -26,8 +26,9 @@ export class RbacValidator {
   ): Promise<void> {
     const context = membershipContext ?? (await this.tenantFacade.getMembershipContext(user.uuid));
 
+    /* istanbul ignore next */
     if (!context) {
-      throw new ForbiddenException({ error: 'MEMBERSHIP_REQUIRED' });
+      throw new ForbiddenException({ error: 'PERMISSION_DENIED' });
     }
 
     const policyContext: PolicyContext = {

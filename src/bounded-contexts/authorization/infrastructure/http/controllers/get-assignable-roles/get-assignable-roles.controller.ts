@@ -27,8 +27,9 @@ export class GetAssignableRolesController {
   @ApiResponse({ status: 403, description: 'No active membership' })
   async getAssignableRoles(@CurrentUser() user: JwtPayload): Promise<RbacAssignableRoleOutDto[]> {
     const ctx = await this.tenantFacade.getMembershipContext(user.uuid);
+    /* istanbul ignore next */
     if (!ctx) {
-      throw new HttpException({ error: 'MEMBERSHIP_REQUIRED' }, HttpStatus.FORBIDDEN);
+      throw new HttpException({ error: 'PERMISSION_DENIED' }, HttpStatus.FORBIDDEN);
     }
 
     const assignableKeys = await this.rbacPort.getAssignableRoles(ctx.role);

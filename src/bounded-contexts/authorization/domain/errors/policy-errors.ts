@@ -7,7 +7,7 @@ export class FeatureNotInTierError extends BusinessLogicException {
   constructor(action: SystemAction, tier: TierEnum, requiredTier: TierEnum) {
     super(
       `Action '${action}' requires tier ${requiredTier} or higher, but tenant is on ${tier}`,
-      'FEATURE_NOT_IN_TIER',
+      'PLAN_UPGRADE_REQUIRED',
       [{ field: 'tier', message: `Requires ${requiredTier} or higher` }],
       { action, currentTier: tier, requiredTier },
     );

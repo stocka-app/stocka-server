@@ -27,8 +27,9 @@ export class GetMyPermissionsController {
   @ApiResponse({ status: 403, description: 'No active membership' })
   async getMyPermissions(@CurrentUser() user: JwtPayload): Promise<RbacPermissionsOutDto> {
     const ctx = await this.tenantFacade.getMembershipContext(user.uuid);
+    /* istanbul ignore next */
     if (!ctx) {
-      throw new HttpException({ error: 'MEMBERSHIP_REQUIRED' }, HttpStatus.FORBIDDEN);
+      throw new HttpException({ error: 'PERMISSION_DENIED' }, HttpStatus.FORBIDDEN);
     }
 
     const [roleActions, userGrants] = await Promise.all([

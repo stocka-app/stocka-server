@@ -20,11 +20,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CqrsModule } from '@nestjs/cqrs';
+import { APP_GUARD } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import cookieParser from 'cookie-parser';
 
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
+import { TenantModule } from '@tenant/tenant.module';
+import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
+import { StorageModule } from '@storage/storage.module';
+import { OnboardingModule } from '@onboarding/onboarding.module';
+import { SecurityModule } from '@common/security/security.module';
+import { SecurityGuard } from '@common/security/security.guard';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
@@ -39,10 +47,10 @@ import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/e
 // Tables to truncate between specs (restores a clean slate without a full schema drop).
 // Order does not matter because CASCADE handles FK dependencies.
 // Schema-qualified names are required since entities live in named PostgreSQL schemas.
-// NOTE: profile tables (social_profiles, personal_profiles, commercial_profiles, profiles)
-// are NOT reachable via FK cascade from users — ProfileEntity has no @ManyToOne decorator,
-// so there is no FK. They must be listed explicitly.
+// NOTE: Reference/seed data tables (tier_plans, catalog_actions, modules, roles, etc.)
+// are intentionally excluded — they must remain intact between test runs.
 const TRUNCATE_TABLES = [
+  // Auth / User
   '"profiles"."social_profiles"',
   '"profiles"."personal_profiles"',
   '"profiles"."commercial_profiles"',
@@ -58,6 +66,25 @@ const TRUNCATE_TABLES = [
   '"accounts"."accounts"',
   '"identity"."user_consents"',
   '"identity"."users"',
+
+  // Tenant
+  '"tenants"."tenant_invitations"',
+  '"tenants"."tenant_members"',
+  '"tenants"."tenant_config"',
+  '"tenants"."tenant_profiles"',
+  '"tenants"."tenants"',
+
+  // Storage
+  '"storage"."storages"',
+
+  // Onboarding
+  '"onboarding"."onboarding_sessions"',
+
+  // RBAC — user-generated data only (seed/reference tables excluded)
+  '"authz"."user_permission_grants"',
+  '"authz"."capability_cache"',
+  '"authz"."permission_grant_log"',
+  '"authz"."role_change_log"',
 ] as const;
 
 // ─── Singleton state ──────────────────────────────────────────────────────────
@@ -101,11 +128,23 @@ async function bootstrap(): Promise<WorkerApp> {
         synchronize: false,
         logging: false,
       }),
+      CqrsModule.forRoot(),
       EmailModule,
       UnitOfWorkModule,
+      MediatorModule,
       UserModule,
       AuthenticationModule,
-      MediatorModule,
+      TenantModule,
+      AuthorizationModule,
+      StorageModule,
+      OnboardingModule,
+      SecurityModule,
+    ],
+    providers: [
+      {
+        provide: APP_GUARD,
+        useClass: SecurityGuard,
+      },
     ],
   })
     .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)

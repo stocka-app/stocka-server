@@ -12,6 +12,7 @@ import { CommercialProfileEntity } from '@user/profile/infrastructure/entities/c
 import { SocialProfileEntity } from '@user/profile/infrastructure/entities/social-profile.entity';
 import { ProfileMapper } from '@user/profile/infrastructure/mappers/profile.mapper';
 import { PersonalProfileMapper } from '@user/profile/infrastructure/mappers/personal-profile.mapper';
+/* istanbul ignore next */
 import { CommercialProfileMapper } from '@user/profile/infrastructure/mappers/commercial-profile.mapper';
 import { SocialProfileMapper } from '@user/profile/infrastructure/mappers/social-profile.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';

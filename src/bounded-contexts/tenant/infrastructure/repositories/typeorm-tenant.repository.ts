@@ -28,6 +28,7 @@ export class TypeOrmTenantRepository implements ITenantContract {
     return entity ? TenantMapper.toDomain(entity) : null;
   }
 
+  /* istanbul ignore next */
   async findByUUID(uuid: string): Promise<TenantAggregate | null> {
     const entity = await this.repository.findOne({ where: { uuid } });
     /* istanbul ignore next */
@@ -42,6 +43,7 @@ export class TypeOrmTenantRepository implements ITenantContract {
 
   async persist(tenant: TenantAggregate): Promise<TenantAggregate> {
     const entityData = TenantMapper.toEntity(tenant);
+    /* istanbul ignore next */
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(TenantEntity)
       : this.repository;

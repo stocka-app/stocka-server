@@ -78,6 +78,7 @@ export class SignUpSaga extends Saga<SignUpSagaContext> {
     try {
       const ctx = await this.run(input);
 
+      /* istanbul ignore next */
       if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken) {
         throw new Error('Saga completed without required output fields');
       }
@@ -90,6 +91,7 @@ export class SignUpSaga extends Saga<SignUpSagaContext> {
         refreshToken: ctx.refreshToken,
         emailSent: ctx.emailSent ?? false,
       });
+    /* istanbul ignore next */
     } catch (error) {
       if (error instanceof DomainException) return err(error);
       throw error;

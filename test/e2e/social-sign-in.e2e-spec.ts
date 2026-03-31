@@ -56,9 +56,9 @@ describe('Social Sign In (e2e)', () => {
           ),
         );
 
-        expect(result.accessToken).toBeDefined();
-        expect(result.refreshToken).toBeDefined();
-        expect(result.credential.email).toBe('newgoogle@example.com');
+        expect(result.value.accessToken).toBeDefined();
+        expect(result.value.refreshToken).toBeDefined();
+        expect(result.value.credential.email).toBe('newgoogle@example.com');
       });
 
       it('Then their account is persisted in the database', async () => {
@@ -115,7 +115,7 @@ describe('Social Sign In (e2e)', () => {
           `SELECT COUNT(*) as count FROM "accounts"."social_accounts" WHERE provider_id = 'google-new-uid-001' AND provider = 'google'`,
         );
 
-        expect(result.accessToken).toBeDefined();
+        expect(result.value.accessToken).toBeDefined();
         expect(parseInt(after[0].count)).toBe(parseInt(before[0].count)); // no new social account created
       });
     });
@@ -151,8 +151,8 @@ describe('Social Sign In (e2e)', () => {
           ),
         );
 
-        expect(result.accessToken).toBeDefined();
-        expect(result.credential.email).toBe('manual.then.oauth@example.com');
+        expect(result.value.accessToken).toBeDefined();
+        expect(result.value.credential.email).toBe('manual.then.oauth@example.com');
       });
 
       it('Then no new user account is created — only the existing one is updated', async () => {
@@ -271,7 +271,7 @@ describe('Social Sign In (e2e)', () => {
         );
 
         // Saga completes despite publish failure
-        expect(result.accessToken).toBeDefined();
+        expect(result.value.accessToken).toBeDefined();
 
         spy.mockRestore();
       });
@@ -301,8 +301,8 @@ describe('Social Sign In (e2e)', () => {
           ),
         );
 
-        expect(result.accessToken).toBeDefined();
-        expect(result.credential.email).toBe('locale.test@example.com');
+        expect(result.value.accessToken).toBeDefined();
+        expect(result.value.credential.email).toBe('locale.test@example.com');
       });
     });
   });
@@ -330,7 +330,7 @@ describe('Social Sign In (e2e)', () => {
           ),
         );
 
-        expect(result.accessToken).toBeDefined();
+        expect(result.value.accessToken).toBeDefined();
       });
     });
   });
@@ -376,8 +376,8 @@ describe('Social Sign In (e2e)', () => {
           ),
         );
 
-        expect(result.accessToken).toBeDefined();
-        expect(result.credential.email).toBe('collision2@example.com');
+        expect(result.value.accessToken).toBeDefined();
+        expect(result.value.credential.email).toBe('collision2@example.com');
       });
     });
   });

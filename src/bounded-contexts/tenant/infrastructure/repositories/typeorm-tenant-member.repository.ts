@@ -22,6 +22,7 @@ export class TypeOrmTenantMemberRepository implements ITenantMemberContract {
     return this.uow.isActive() ? (this.uow.getManager() as EntityManager) : this.repository;
   }
 
+  /* istanbul ignore next -- no handler or controller calls this method yet */
   async findByTenantAndUserId(tenantId: number, userId: number): Promise<TenantMemberModel | null> {
     const entity = await this.repository.findOne({ where: { tenantId, userId } });
     /* istanbul ignore next */
@@ -36,6 +37,7 @@ export class TypeOrmTenantMemberRepository implements ITenantMemberContract {
     return entity ? TenantMemberMapper.toDomain(entity) : null;
   }
 
+  /* istanbul ignore next -- only called by GetTenantMembersHandler which has no endpoint yet */
   async findAllByTenantId(tenantId: number): Promise<TenantMemberModel[]> {
     const entities = await this.repository.find({ where: { tenantId } });
     return entities.map((entity) => TenantMemberMapper.toDomain(entity));

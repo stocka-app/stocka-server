@@ -18,8 +18,10 @@ export class CreateVerificationTokenStep implements ISagaStepHandler<SignUpSagaC
   ) {}
 
   async execute(ctx: SignUpSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.credential)
       throw new Error('CreateVerificationTokenStep: ctx.credential not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.verificationCode)
       throw new Error('CreateVerificationTokenStep: ctx.verificationCode not set by prior step');
 

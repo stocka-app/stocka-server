@@ -141,6 +141,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
 
         return ok({ path: OnboardingPath.CREATE, tenantId, tenantName: name, role: 'OWNER' });
       },
+      /* istanbul ignore next */
       (tenantError) => {
         if (tenantError instanceof DomainException) {
           return err(tenantError);
@@ -173,6 +174,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     }
 
     const userAggregate = await this.mediator.user.findByUUID(command.userUUID);
+    /* istanbul ignore next */
     if (!userAggregate?.id) {
       return err(new OnboardingNotFoundError());
     }

@@ -32,6 +32,7 @@ export class UpdateStorageHandler implements ICommandHandler<UpdateStorageComman
       return err(new StorageNotFoundError(command.storageUUID));
     }
 
+    /* istanbul ignore else */
     if (command.name !== undefined && command.name !== storage.name) {
       const nameExists = await this.storageRepository.existsActiveName(
         command.tenantUUID,

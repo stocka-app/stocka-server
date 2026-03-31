@@ -53,7 +53,9 @@ export class SecurityGuard implements CanActivate {
     const methodValue: number = Reflect.getMetadata('method', context.getHandler()) as number;
     const method: string = RequestMethod[methodValue] ?? 'GET';
 
-    const segments = [controllerPath, handlerPath].filter(Boolean);
+    const segments = [controllerPath, handlerPath].filter(
+      (s): s is string => Boolean(s) && s !== '/',
+    );
     const fullPath = segments.length > 0 ? `/${segments.join('/')}` : '/';
     const normalized = fullPath.replace(/\/+/g, '/');
 

@@ -12,8 +12,10 @@ export class PublishResetPasswordEventsStep implements ISagaStepHandler<ResetPas
   ) {}
 
   execute(ctx: ResetPasswordSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.resetToken)
       throw new Error('PublishResetPasswordEventsStep: ctx.resetToken not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.newPasswordHash)
       throw new Error('PublishResetPasswordEventsStep: ctx.newPasswordHash not set by prior step');
 

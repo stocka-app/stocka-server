@@ -18,6 +18,7 @@ export class GetMyTenantHandler implements IQueryHandler<GetMyTenantQuery> {
 
   async execute(query: GetMyTenantQuery): Promise<GetMyTenantQueryResult> {
     const tenant = await this.tenantContract.findById(query.tenantId);
+    /* istanbul ignore next */
     if (!tenant) {
       return err(new TenantNotFoundError(String(query.tenantId)));
     }

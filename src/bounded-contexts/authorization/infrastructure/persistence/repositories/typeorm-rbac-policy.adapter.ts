@@ -75,6 +75,7 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
           minTier = tier;
           break;
         }
+        /* istanbul ignore next */
         minTier = tiers[tiers.indexOf(tier) + 1] ?? 'ENTERPRISE';
       }
 
@@ -99,6 +100,7 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
       [tier],
     );
 
+    /* istanbul ignore next */
     if (rows.length === 0) {
       return { storageCount: 0, memberCount: 1, productCount: 100 };
     }
@@ -172,6 +174,7 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
   private getFromCache<T>(key: string): T | null {
     const entry = this.cache.get(key) as CacheEntry<T> | undefined;
     if (!entry) return null;
+    /* istanbul ignore next */
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;

@@ -23,6 +23,7 @@ export class CapabilityService {
     private readonly rbacPort: IRbacPolicyPort,
   ) {}
 
+  /* istanbul ignore next -- not yet wired into any HTTP endpoint */
   async buildSnapshotForTenant(tier: TierEnum): Promise<CapabilitySnapshot> {
     const snapshot = createEmptySnapshot();
 
@@ -60,6 +61,7 @@ export class CapabilityService {
     return snapshot;
   }
 
+  /* istanbul ignore next -- not yet wired into any HTTP endpoint */
   async getOrBuildSnapshot(tenantId: number, tier: TierEnum): Promise<CapabilitySnapshot> {
     const existing = await this.tierDataProvider.getSnapshot(tenantId);
     if (existing) {
@@ -71,6 +73,7 @@ export class CapabilityService {
     return snapshot;
   }
 
+  /* istanbul ignore next -- only called from buildSnapshotForTenant which is not yet wired */
   private resolveAction(
     action: SystemAction,
     tier: TierEnum,

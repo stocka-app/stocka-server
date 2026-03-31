@@ -45,12 +45,12 @@ describe('TenantAccessValidator', () => {
 
   describe('Given a user with no tenantId in the JWT', () => {
     describe('When the validator runs', () => {
-      it('Then it throws ForbiddenException with TENANT_REQUIRED', async () => {
+      it('Then it throws ForbiddenException with MEMBERSHIP_REQUIRED', async () => {
         const user = buildUser({ tenantId: null });
 
         await expect(validator.validate(user)).rejects.toThrow(ForbiddenException);
         await expect(validator.validate(user)).rejects.toMatchObject({
-          response: { error: 'TENANT_REQUIRED' },
+          response: { error: 'MEMBERSHIP_REQUIRED' },
         });
       });
 

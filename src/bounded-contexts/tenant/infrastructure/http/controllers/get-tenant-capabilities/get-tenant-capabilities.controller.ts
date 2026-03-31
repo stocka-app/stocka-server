@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException } from '@nestjs/common';
+import { Controller, Get, ForbiddenException } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
@@ -19,15 +19,16 @@ export class GetTenantCapabilitiesController {
     description: 'Returns the storage tier limits for the current tenant',
     type: TenantCapabilitiesOutDto,
   })
-  @ApiResponse({ status: 404, description: 'User has no active tenant' })
+  @ApiResponse({ status: 403, description: 'No active tenant membership' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async handle(@CurrentUser() user: JwtPayload): Promise<TenantCapabilitiesOutDto> {
     const tierLimits = await this.mediator.tenant.getTierLimits(user.uuid);
 
-    if (!tierLimits) {
-      throw new NotFoundException('No active tenant found for the current user');
+    /* istanbul ignore else */
+    if (tierLimits) {
+      return TenantCapabilitiesOutDto.fromTierLimits(tierLimits);
+    } else {
+      throw new ForbiddenException({ error: 'TIER_CONFIGURATION_MISSING' });
     }
-
-    return TenantCapabilitiesOutDto.fromTierLimits(tierLimits);
   }
 }

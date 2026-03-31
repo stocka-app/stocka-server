@@ -9,7 +9,7 @@ export class TenantAccessValidator {
 
   async validate(user: JwtPayload): Promise<TenantMembershipContext> {
     if (!user.tenantId) {
-      throw new ForbiddenException({ error: 'TENANT_REQUIRED' });
+      throw new ForbiddenException({ error: 'MEMBERSHIP_REQUIRED' });
     }
 
     const membershipContext = await this.mediator.tenant.getMembershipContext(user.uuid);

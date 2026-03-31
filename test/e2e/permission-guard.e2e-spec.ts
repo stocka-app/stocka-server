@@ -338,7 +338,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
   });
 
   // ══════════════════════════════════════════════════════════════════════════
-  // FEATURE_NOT_IN_TIER — actions gated by tier, regardless of role
+  // PLAN_UPGRADE_REQUIRED — actions gated by tier, regardless of role
   // ══════════════════════════════════════════════════════════════════════════
 
   describe('Given POST /api/tenant/me/invitations (MEMBER_INVITE) requires STARTER tier', () => {
@@ -358,19 +358,19 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
 
     describe('When the tenant is on FREE tier', () => {
       describe('When an OWNER (role has MEMBER_INVITE) tries to invite a member', () => {
-        it('Then SecurityGuard blocks with 403 FEATURE_NOT_IN_TIER', async () => {
+        it('Then SecurityGuard blocks with 403 PLAN_UPGRADE_REQUIRED', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/tenant/me/invitations')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send({ email: INVITEE_EMAIL, role: 'VIEWER' });
 
           expect(res.status).toBe(HttpStatus.FORBIDDEN);
-          expect(res.body.error).toBe('FEATURE_NOT_IN_TIER');
+          expect(res.body.error).toBe('PLAN_UPGRADE_REQUIRED');
         });
       });
 
       describe('When a VIEWER (role lacks MEMBER_INVITE) tries to invite a member', () => {
-        it('Then SecurityGuard blocks with 403 FEATURE_NOT_IN_TIER (tier check precedes role check)', async () => {
+        it('Then SecurityGuard blocks with 403 PLAN_UPGRADE_REQUIRED (tier check precedes role check)', async () => {
           // Important: even though VIEWER lacks MEMBER_INVITE, the tier block fires first.
           // This verifies the evaluation order: tier → role → usage.
           const res = await request(app.getHttpServer())
@@ -379,7 +379,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
             .send({ email: INVITEE_EMAIL, role: 'VIEWER' });
 
           expect(res.status).toBe(HttpStatus.FORBIDDEN);
-          expect(res.body.error).toBe('FEATURE_NOT_IN_TIER');
+          expect(res.body.error).toBe('PLAN_UPGRADE_REQUIRED');
         });
       });
     });
@@ -440,14 +440,14 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When an OWNER (role has STORAGE_CREATE) tries to create a storage', () => {
-        it('Then SecurityGuard blocks with 403 FEATURE_NOT_IN_TIER', async () => {
+        it('Then SecurityGuard blocks with 403 PLAN_UPGRADE_REQUIRED', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send(validBody);
 
           expect(res.status).toBe(HttpStatus.FORBIDDEN);
-          expect(res.body.error).toBe('FEATURE_NOT_IN_TIER');
+          expect(res.body.error).toBe('PLAN_UPGRADE_REQUIRED');
         });
       });
     });
@@ -459,14 +459,14 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When an OWNER (role has STORAGE_CREATE) tries to create a storage', () => {
-        it('Then SecurityGuard still blocks with 403 FEATURE_NOT_IN_TIER (STARTER is also below GROWTH)', async () => {
+        it('Then SecurityGuard still blocks with 403 PLAN_UPGRADE_REQUIRED (STARTER is also below GROWTH)', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send(validBody);
 
           expect(res.status).toBe(HttpStatus.FORBIDDEN);
-          expect(res.body.error).toBe('FEATURE_NOT_IN_TIER');
+          expect(res.body.error).toBe('PLAN_UPGRADE_REQUIRED');
         });
       });
     });

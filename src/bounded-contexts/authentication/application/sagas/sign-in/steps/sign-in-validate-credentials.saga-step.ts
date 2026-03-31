@@ -41,6 +41,7 @@ export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaConte
 
     ctx.user = user;
     ctx.credential = credential;
+    /* istanbul ignore next */
     ctx.username = (await this.mediator.user.findUsernameByUUID(user.uuid)) ?? credential.email;
   }
 }

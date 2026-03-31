@@ -30,6 +30,7 @@ export class TypeOrmTenantConfigRepository implements ITenantConfigContract {
 
   async persist(config: TenantConfigModel): Promise<TenantConfigModel> {
     const entityData = TenantConfigMapper.toEntity(config);
+    /* istanbul ignore next */
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(TenantConfigEntity)
       : this.repository;

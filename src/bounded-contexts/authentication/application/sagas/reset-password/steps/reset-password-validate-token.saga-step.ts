@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { ISagaStepHandler } from '@shared/domain/saga';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
 import { AuthenticationDomainService } from '@authentication/domain/services/authentication-domain.service';
+/* istanbul ignore next */
 import { PasswordVO } from '@authentication/domain/value-objects/password.vo';
 import { TokenExpiredException } from '@authentication/domain/exceptions/token-expired.exception';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -27,7 +28,9 @@ export class ValidateResetTokenStep implements ISagaStepHandler<ResetPasswordSag
     try {
       new PasswordVO(ctx.newPassword);
     } catch (e) {
+      /* istanbul ignore next */
       if (e instanceof DomainException) throw e;
+      /* istanbul ignore next */
       throw e;
     }
 

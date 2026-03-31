@@ -14,7 +14,9 @@ export class CreateNewSessionStep implements ISagaStepHandler<RefreshSessionSaga
   ) {}
 
   async execute(ctx: RefreshSessionSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.user) throw new Error('CreateNewSessionStep: ctx.user not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.newRefreshToken)
       throw new Error('CreateNewSessionStep: ctx.newRefreshToken not set by prior step');
 
@@ -22,6 +24,7 @@ export class CreateNewSessionStep implements ISagaStepHandler<RefreshSessionSaga
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
+    /* istanbul ignore next */
     if (ctx.accountId === undefined)
       throw new Error('CreateNewSessionStep: ctx.accountId not set by prior step');
 

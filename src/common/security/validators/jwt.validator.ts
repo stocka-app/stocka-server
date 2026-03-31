@@ -25,7 +25,7 @@ export class JwtValidator {
     const authHeader = request.headers['authorization'];
 
     if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException({ error: 'MISSING_TOKEN' });
+      throw new UnauthorizedException({ error: 'NOT_AUTHENTICATED' });
     }
 
     const token = authHeader.slice(7);

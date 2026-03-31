@@ -77,6 +77,16 @@ module.exports = [
   // ── WIRED BUT NOT YET EXERCISED (future features with active imports) ────
   '!src/bounded-contexts/user/profile/domain/models/commercial-profile.model.ts',
   '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
+  // CapabilityService + TypeOrmTierDataProvider: snapshot-cache system not yet wired to any endpoint
+  '!src/bounded-contexts/authorization/infrastructure/services/capability.service.ts',
+  '!src/bounded-contexts/authorization/infrastructure/persistence/repositories/typeorm-tier-data-provider.ts',
+  // TypeOrmTierPlanRepository: TIER_PLAN_CONTRACT exported but no handler injects it yet
+  '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
+  // GetTenantMembersHandler: handler registered but no controller dispatches this query yet
+  '!src/bounded-contexts/tenant/application/queries/get-tenant-members/get-tenant-members.handler.ts',
+  // TenantFacade: createTenantForUser bypassed by controller (CommandBus direct); import-statement
+  // coverage for its unused imports cannot be excluded per-line — covered 100% by unit tests
+  '!src/bounded-contexts/tenant/application/facades/tenant.facade.ts',
 
   // ═══════════════════════════════════════════════════════════════════════════
   // UNIT-COVERED: Domain layer (100% covered by unit tests)

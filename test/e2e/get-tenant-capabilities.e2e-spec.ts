@@ -78,7 +78,7 @@ describe('GET /api/tenants/me/capabilities (e2e)', () => {
   });
 
   describe('Given an authenticated user who has not yet completed onboarding (no tenant)', () => {
-    it('Then the endpoint returns 404 with a tenant-not-found message', async () => {
+    it('Then the guard blocks access with 403 MEMBERSHIP_REQUIRED', async () => {
       await signUp(app, dataSource, USER_EMAIL, USER_USERNAME);
       const token = await signIn(app, USER_EMAIL);
 
@@ -86,7 +86,8 @@ describe('GET /api/tenants/me/capabilities (e2e)', () => {
         .get('/api/tenants/me/capabilities')
         .set('Authorization', `Bearer ${token}`);
 
-      expect(res.status).toBe(HttpStatus.NOT_FOUND);
+      expect(res.status).toBe(HttpStatus.FORBIDDEN);
+      expect(res.body.error).toBe('MEMBERSHIP_REQUIRED');
     });
   });
 
