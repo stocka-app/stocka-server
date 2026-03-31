@@ -1,7 +1,7 @@
-import { Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Param, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { AcceptInvitationCommand } from '@tenant/application/commands/accept-invitation/accept-invitation.command';
 import { AcceptInvitationResult } from '@tenant/application/commands/accept-invitation/accept-invitation.handler';
@@ -10,11 +10,11 @@ import { AcceptInvitationOutDto } from '@tenant/infrastructure/http/controllers/
 @ApiTags('Tenant Invitations')
 @Controller('tenant')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class AcceptInvitationController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('invitations/:token/accept')
+  @Secure()
   @ApiOperation({ summary: 'Accept an invitation by token' })
   @ApiResponse({ status: 201, description: 'Invitation accepted', type: AcceptInvitationOutDto })
   @ApiResponse({ status: 404, description: 'Invitation not found' })

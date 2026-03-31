@@ -1,11 +1,13 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { MicrosoftAuthenticationGuard } from '@authentication/infrastructure/guards/microsoft-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 
 @ApiTags('Authentication')
 @Controller('authentication')
 export class MicrosoftAuthenticationController {
   @Get('microsoft')
+  @Secure()
   @UseGuards(MicrosoftAuthenticationGuard)
   @ApiOperation({
     summary: 'Initiate Microsoft OAuth flow',

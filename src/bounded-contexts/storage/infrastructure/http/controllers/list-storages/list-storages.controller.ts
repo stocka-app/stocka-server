@@ -1,10 +1,8 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
-import { RequireAction } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { Secure } from '@common/decorators/secure.decorator';
 import {
   ListStoragesQuery,
   StorageFilters,
@@ -17,12 +15,11 @@ import { StoragePageOutDto } from '@storage/infrastructure/http/controllers/list
 @ApiTags('Storage')
 @Controller('storages')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class ListStoragesController {
   constructor(private readonly queryBus: QueryBus) {}
 
   @Get()
-  @RequireAction(SystemAction.STORAGE_READ)
+  @Secure()
   @ApiOperation({
     summary: 'List storages for the tenant with optional filters, pagination, search and sort',
   })

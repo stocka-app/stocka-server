@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { RateLimit } from '@common/decorators/rate-limit.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 import { VerifyEmailCommand } from '@authentication/application/commands/verify-email/verify-email.command';
 import { VerifyEmailCommandResult } from '@authentication/application/types/authentication-result.types';
 import { VerifyEmailInDto } from '@authentication/infrastructure/controllers/verify-email/verify-email-in.dto';
@@ -37,6 +38,7 @@ export class VerifyEmailController {
     failureErrorCodes: ['INVALID_VERIFICATION_CODE'],
   })
   @Post('verify-email')
+  @Secure()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify user email with code' })
   @ApiResponse({

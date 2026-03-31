@@ -1,6 +1,7 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Secure } from '@common/decorators/secure.decorator';
 import { ResetPasswordCommand } from '@authentication/application/commands/reset-password/reset-password.command';
 import { ResetPasswordCommandResult } from '@authentication/application/types/authentication-result.types';
 import { ResetPasswordInDto } from '@authentication/infrastructure/controllers/reset-password/reset-password-in.dto';
@@ -12,6 +13,7 @@ export class ResetPasswordController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('reset-password')
+  @Secure()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Reset password using token' })
   @ApiResponse({

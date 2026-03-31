@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { Secure } from '@common/decorators/secure.decorator';
 
 interface ProviderInfo {
   id: string;
@@ -20,6 +21,7 @@ export class AuthenticationProvidersController {
   constructor(private readonly configService: ConfigService) {}
 
   @Get('providers')
+  @Secure()
   @ApiOperation({
     summary: 'List available authentication providers',
     description:

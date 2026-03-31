@@ -1,6 +1,6 @@
-import { Controller, Get, NotFoundException, UseGuards } from '@nestjs/common';
+import { Controller, Get, NotFoundException } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { TenantCapabilitiesOutDto } from '@tenant/infrastructure/http/controllers/get-tenant-capabilities/tenant-capabilities-out.dto';
@@ -8,11 +8,11 @@ import { TenantCapabilitiesOutDto } from '@tenant/infrastructure/http/controller
 @ApiTags('Tenant')
 @Controller('tenants')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class GetTenantCapabilitiesController {
   constructor(private readonly mediator: MediatorService) {}
 
   @Get('me/capabilities')
+  @Secure()
   @ApiOperation({ summary: 'Get tier limits for the current tenant' })
   @ApiResponse({
     status: 200,

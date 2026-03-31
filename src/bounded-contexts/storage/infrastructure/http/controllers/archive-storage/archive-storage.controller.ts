@@ -1,23 +1,20 @@
-import { Controller, Delete, HttpCode, HttpStatus, Param, UseGuards } from '@nestjs/common';
+import { Controller, Delete, HttpCode, HttpStatus, Param } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
-import { RequireAction } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { Secure } from '@common/decorators/secure.decorator';
 import { ArchiveStorageCommand } from '@storage/application/commands/archive-storage/archive-storage.command';
 import { ArchiveStorageResult } from '@storage/application/commands/archive-storage/archive-storage.handler';
 
 @ApiTags('Storage')
 @Controller('storages')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class ArchiveStorageController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Delete(':uuid')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequireAction(SystemAction.STORAGE_DELETE)
+  @Secure()
   @ApiOperation({ summary: 'Archive a storage (soft delete)' })
   @ApiParam({ name: 'uuid', description: 'Storage UUID' })
   @ApiResponse({ status: 204, description: 'Storage archived' })

@@ -1,7 +1,7 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { CompleteOnboardingInDto } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-in.dto';
@@ -13,11 +13,11 @@ import {
 @ApiTags('Tenant')
 @Controller('tenant')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class CompleteOnboardingController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('onboarding/complete')
+  @Secure()
   @ApiOperation({ summary: 'Complete onboarding and create organization' })
   @ApiResponse({
     status: 201,

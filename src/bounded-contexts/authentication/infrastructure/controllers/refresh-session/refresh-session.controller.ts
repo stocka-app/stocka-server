@@ -2,6 +2,7 @@ import { Controller, Post, Req, Res, UnauthorizedException } from '@nestjs/commo
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { Secure } from '@common/decorators/secure.decorator';
 import { RefreshSessionCommand } from '@authentication/application/commands/refresh-session/refresh-session.command';
 import { RefreshSessionCommandResult } from '@authentication/application/types/authentication-result.types';
 import { RefreshSessionOutDto } from '@authentication/infrastructure/controllers/refresh-session/refresh-session-out.dto';
@@ -14,6 +15,7 @@ export class RefreshSessionController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('refresh-session')
+  @Secure()
   @ApiOperation({ summary: 'Refresh access token using httpOnly cookie' })
   @ApiResponse({
     status: 200,

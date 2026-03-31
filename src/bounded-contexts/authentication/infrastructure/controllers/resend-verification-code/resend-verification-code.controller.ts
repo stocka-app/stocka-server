@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
+import { Secure } from '@common/decorators/secure.decorator';
 import { ResendVerificationCodeCommand } from '@authentication/application/commands/resend-verification-code/resend-verification-code.command';
 import { ResendVerificationCodeCommandResult } from '@authentication/application/types/authentication-result.types';
 import { ResendVerificationCodeInDto } from '@authentication/infrastructure/controllers/resend-verification-code/resend-verification-code-in.dto';
@@ -17,6 +18,7 @@ export class ResendVerificationCodeController {
 
   @Throttle({ short: { ttl: 1000, limit: 1 }, medium: { ttl: 60000, limit: 3 } })
   @Post('resend-verification-code')
+  @Secure()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resend email verification code' })
   @ApiResponse({

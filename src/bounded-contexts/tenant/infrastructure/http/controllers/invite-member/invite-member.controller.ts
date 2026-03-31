@@ -1,13 +1,9 @@
-import { Body, Controller, Inject, NotFoundException, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Inject, NotFoundException, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
-import { TenantGuard } from '@common/guards/tenant.guard';
-import { TenantStateGuard } from '@common/guards/tenant-state.guard';
-import { RequireAction } from '@common/decorators/require-action.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { InviteMemberCommand } from '@tenant/application/commands/invite-member/invite-member.command';
@@ -18,7 +14,6 @@ import { InviteMemberOutDto } from '@tenant/infrastructure/http/controllers/invi
 @ApiTags('Tenant Invitations')
 @Controller('tenant')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard, TenantGuard, TenantStateGuard)
 export class InviteMemberController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -29,7 +24,7 @@ export class InviteMemberController {
   ) {}
 
   @Post('me/invitations')
-  @RequireAction(SystemAction.MEMBER_INVITE)
+  @Secure()
   @ApiOperation({ summary: 'Invite a member to the current tenant' })
   @ApiResponse({ status: 201, description: 'Invitation created', type: InviteMemberOutDto })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })

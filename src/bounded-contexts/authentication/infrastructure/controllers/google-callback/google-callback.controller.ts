@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { GoogleAuthenticationGuard } from '@authentication/infrastructure/guards/google-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { SocialSignInCommand } from '@authentication/application/commands/social-sign-in/social-sign-in.command';
 import { SocialSignInCommandResult } from '@authentication/application/types/authentication-result.types';
 import { SocialProfile } from '@authentication/infrastructure/strategies/google.strategy';
@@ -19,6 +20,7 @@ export class GoogleCallbackController {
   ) {}
 
   @Get('google/callback')
+  @Secure()
   @UseGuards(GoogleAuthenticationGuard)
   @ApiOperation({ summary: 'Google OAuth callback' })
   @ApiResponse({

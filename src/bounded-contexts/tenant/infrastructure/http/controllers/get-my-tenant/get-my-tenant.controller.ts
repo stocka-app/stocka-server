@@ -1,7 +1,7 @@
-import { Controller, Get, Inject, NotFoundException, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, NotFoundException } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import {
@@ -15,7 +15,6 @@ import { GetMyTenantOutDto } from '@tenant/infrastructure/http/controllers/get-m
 @ApiTags('Tenant')
 @Controller('tenant')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class GetMyTenantController {
   constructor(
     private readonly queryBus: QueryBus,
@@ -26,6 +25,7 @@ export class GetMyTenantController {
   ) {}
 
   @Get('me')
+  @Secure()
   @ApiOperation({ summary: 'Get my organization' })
   @ApiResponse({ status: 200, description: 'Returns the current tenant', type: GetMyTenantOutDto })
   @ApiResponse({ status: 404, description: 'No active membership found' })
