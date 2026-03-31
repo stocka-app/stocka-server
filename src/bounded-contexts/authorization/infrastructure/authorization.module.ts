@@ -10,6 +10,7 @@ import { TypeOrmRbacPolicyAdapter } from '@authorization/infrastructure/persiste
 import { CapabilityService } from '@authorization/infrastructure/services/capability.service';
 import { CapabilityResolver } from '@authorization/domain/services/capability.resolver';
 import { RbacBootValidator } from '@authorization/infrastructure/services/rbac-boot-validator';
+import { RbacValidator } from '@authorization/infrastructure/validators/rbac.validator';
 import { GetMyPermissionsController } from '@authorization/infrastructure/http/controllers/get-my-permissions/get-my-permissions.controller';
 import { GetRolesController } from '@authorization/infrastructure/http/controllers/get-roles/get-roles.controller';
 import { GetAssignableRolesController } from '@authorization/infrastructure/http/controllers/get-assignable-roles/get-assignable-roles.controller';
@@ -34,8 +35,9 @@ import { TenantModule } from '@tenant/tenant.module';
     CapabilityService,
     CapabilityResolver,
     RbacBootValidator,
+    RbacValidator,
     { provide: INJECTION_TOKENS.RBAC_POLICY_PORT, useExisting: TypeOrmRbacPolicyAdapter },
   ],
-  exports: [CapabilityService, CapabilityResolver, INJECTION_TOKENS.RBAC_POLICY_PORT],
+  exports: [CapabilityService, CapabilityResolver, RbacValidator, INJECTION_TOKENS.RBAC_POLICY_PORT],
 })
 export class AuthorizationModule {}

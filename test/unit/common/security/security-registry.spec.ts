@@ -1,5 +1,5 @@
 import { SecurityRegistry } from '@common/security/security-registry';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 
 describe('SecurityRegistry', () => {
   describe('Given the centralized route-to-security-policy mapping', () => {
