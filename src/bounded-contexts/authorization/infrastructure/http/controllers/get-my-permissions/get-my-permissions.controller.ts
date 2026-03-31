@@ -5,8 +5,8 @@ import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jw
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { ITenantFacade } from '@tenant/domain/contracts/tenant-facade.contract';
-import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
-import { RbacPermissionsOutDto } from '@tenant/infrastructure/http/controllers/rbac/rbac-permissions-out.dto';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
+import { RbacPermissionsOutDto } from '@authorization/infrastructure/http/controllers/rbac/rbac-permissions-out.dto';
 
 @ApiTags('RBAC')
 @Controller('rbac')

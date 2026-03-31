@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
-import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
+import { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
 
 export class InviteMemberInDto {
   @ApiProperty({

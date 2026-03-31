@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+import { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 
 @Injectable()
 export class RbacBootValidator implements OnModuleInit {

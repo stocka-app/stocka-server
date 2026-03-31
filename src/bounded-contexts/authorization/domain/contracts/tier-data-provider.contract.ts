@@ -1,5 +1,5 @@
-import { CapabilitySnapshot } from '@shared/domain/policy/capability-snapshot';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+import { CapabilitySnapshot } from '@authorization/domain/models/capability-snapshot';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 
 export interface TierPlanLimits {
   maxProducts: number | null;

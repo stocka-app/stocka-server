@@ -1,14 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ok, err, Result } from '@shared/domain/result';
-import { PolicyContext, UsageCounts } from '@shared/domain/policy/policy-context';
+import { PolicyContext, UsageCounts } from '@authorization/domain/models/policy-context';
 import {
   FeatureNotInTierError,
   ActionNotAllowedError,
   TierLimitReachedError,
   PolicyViolationError,
-} from '@shared/domain/policy/policy-errors';
-import { CapabilitySnapshot } from '@shared/domain/policy/capability-snapshot';
-import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+} from '@authorization/domain/errors/policy-errors';
+import { CapabilitySnapshot } from '@authorization/domain/models/capability-snapshot';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()

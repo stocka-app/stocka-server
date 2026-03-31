@@ -1,4 +1,4 @@
-import { UsageCounts } from '@shared/domain/policy/policy-context';
+import { UsageCounts } from '@authorization/domain/models/policy-context';
 
 // ── Types kept for compile-time safety ──────────────────────────────────────
 // All policy data now lives in the authz schema (DB-driven via IRbacPolicyPort).

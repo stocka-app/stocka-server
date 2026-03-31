@@ -5,7 +5,7 @@ import { ITierPlanContract } from '@tenant/domain/contracts/tier-plan.contract';
 import { TierPlanModel } from '@tenant/domain/models/tier-plan.model';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
 import { TierPlanMapper } from '@tenant/infrastructure/mappers/tier-plan.mapper';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 
 @Injectable()
 export class TypeOrmTierPlanRepository implements ITierPlanContract {

@@ -1,7 +1,7 @@
 /**
  * Tenant-scoped NestJS application singleton for invitation e2e tests.
  *
- * Extends the base worker-app pattern with TenantModule and CapabilityModule
+ * Extends the base worker-app pattern with TenantModule and AuthorizationModule
  * to exercise the full invitation flow via HTTP.
  */
 import { Test, TestingModule } from '@nestjs/testing';
@@ -17,7 +17,7 @@ import { TenantModule } from '@tenant/tenant.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
-import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
+import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
 import databaseConfig from '@core/config/database/database.config';
 import { validate } from '@core/config/environment/env.validation';
@@ -96,7 +96,7 @@ async function bootstrap(): Promise<TenantWorkerApp> {
       UserModule,
       AuthenticationModule,
       TenantModule,
-      CapabilityModule,
+      AuthorizationModule,
       MediatorModule,
     ],
   })

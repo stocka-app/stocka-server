@@ -1,17 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import {
   CapabilitySnapshot,
   ActionCapability,
   createEmptySnapshot,
-} from '@shared/domain/policy/capability-snapshot';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+} from '@authorization/domain/models/capability-snapshot';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 import {
   ITierDataProvider,
   ModulePolicy,
   ActionOverride,
-} from '@shared/domain/policy/tier-data-provider.contract';
-import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+} from '@authorization/domain/contracts/tier-data-provider.contract';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()

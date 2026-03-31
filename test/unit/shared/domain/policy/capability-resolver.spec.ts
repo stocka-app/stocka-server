@@ -1,10 +1,13 @@
-import { CapabilityResolver } from '@shared/domain/policy/capability.resolver';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
-import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
-import { PolicyContext } from '@shared/domain/policy/policy-context';
-import { CapabilitySnapshot, createEmptySnapshot } from '@shared/domain/policy/capability-snapshot';
-import { IRbacPolicyPort } from '@shared/domain/policy/rbac-policy.port';
+import { CapabilityResolver } from '@authorization/domain/services/capability.resolver';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
+import { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
+import { PolicyContext } from '@authorization/domain/models/policy-context';
+import {
+  CapabilitySnapshot,
+  createEmptySnapshot,
+} from '@authorization/domain/models/capability-snapshot';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 
 // ── Mock RBAC policy data (mirrors the old static constants) ──────────────────
 

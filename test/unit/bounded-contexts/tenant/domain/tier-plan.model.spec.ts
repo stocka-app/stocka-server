@@ -1,5 +1,5 @@
 import { TierPlanModel } from '@tenant/domain/models/tier-plan.model';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 
 describe('TierPlanModel', () => {
   describe('Given valid reconstitute props for a FREE tier plan', () => {

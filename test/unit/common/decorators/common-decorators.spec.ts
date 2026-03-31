@@ -7,7 +7,7 @@ import { CurrentTenant } from '@common/decorators/current-tenant.decorator';
 import { CurrentMember } from '@common/decorators/current-member.decorator';
 import { IsCountryCode } from '@common/decorators/country-code.decorator';
 import { RequireAction, REQUIRE_ACTION_KEY } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
 
 /** Extract the factory function stored by createParamDecorator */

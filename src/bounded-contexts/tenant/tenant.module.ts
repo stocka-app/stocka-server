@@ -11,12 +11,6 @@ import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-act
 import { TierModulePolicyEntity } from '@tenant/infrastructure/entities/tier-module-policy.entity';
 import { TierActionOverrideEntity } from '@tenant/infrastructure/entities/tier-action-override.entity';
 import { TenantInvitationEntity } from '@tenant/infrastructure/entities/tenant-invitation.entity';
-import { AuthzRoleEntity } from '@tenant/infrastructure/entities/authz-role.entity';
-import { RoleActionGrantEntity } from '@tenant/infrastructure/entities/role-action-grant.entity';
-import { RoleDelegationRuleEntity } from '@tenant/infrastructure/entities/role-delegation-rule.entity';
-import { UserPermissionGrantEntity } from '@tenant/infrastructure/entities/user-permission-grant.entity';
-import { RoleChangeLogEntity } from '@tenant/infrastructure/entities/role-change-log.entity';
-import { PermissionGrantLogEntity } from '@tenant/infrastructure/entities/permission-grant-log.entity';
 import { TypeOrmTenantRepository } from '@tenant/infrastructure/repositories/typeorm-tenant.repository';
 import { TypeOrmTenantMemberRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-member.repository';
 import { TypeOrmTenantProfileRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-profile.repository';
@@ -24,7 +18,6 @@ import { TypeOrmTenantConfigRepository } from '@tenant/infrastructure/repositori
 import { TypeOrmTierPlanRepository } from '@tenant/infrastructure/repositories/typeorm-tier-plan.repository';
 import { TypeOrmTierDataProvider } from '@tenant/infrastructure/repositories/typeorm-tier-data-provider';
 import { TypeOrmTenantInvitationRepository } from '@tenant/infrastructure/repositories/typeorm-tenant-invitation.repository';
-import { TypeOrmRbacPolicyAdapter } from '@tenant/infrastructure/repositories/typeorm-rbac-policy.adapter';
 import { RoleHierarchyService } from '@tenant/domain/services/role-hierarchy.service';
 import { CreateTenantHandler } from '@tenant/application/commands/create-tenant/create-tenant.handler';
 import { InviteMemberHandler } from '@tenant/application/commands/invite-member/invite-member.handler';
@@ -42,13 +35,10 @@ import { GetInvitationsController } from '@tenant/infrastructure/http/controller
 import { CancelInvitationController } from '@tenant/infrastructure/http/controllers/cancel-invitation/cancel-invitation.controller';
 import { AcceptInvitationController } from '@tenant/infrastructure/http/controllers/accept-invitation/accept-invitation.controller';
 import { GetInvitationByTokenController } from '@tenant/infrastructure/http/controllers/get-invitation-by-token/get-invitation-by-token.controller';
-import { GetMyPermissionsController } from '@tenant/infrastructure/http/controllers/get-my-permissions/get-my-permissions.controller';
-import { GetRolesController } from '@tenant/infrastructure/http/controllers/get-roles/get-roles.controller';
-import { GetAssignableRolesController } from '@tenant/infrastructure/http/controllers/get-assignable-roles/get-assignable-roles.controller';
 import { GetTenantCapabilitiesController } from '@tenant/infrastructure/http/controllers/get-tenant-capabilities/get-tenant-capabilities.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
-import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
+import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
 
 @Module({
   imports: [
@@ -63,16 +53,10 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
       TierModulePolicyEntity,
       TierActionOverrideEntity,
       TenantInvitationEntity,
-      AuthzRoleEntity,
-      RoleActionGrantEntity,
-      RoleDelegationRuleEntity,
-      UserPermissionGrantEntity,
-      RoleChangeLogEntity,
-      PermissionGrantLogEntity,
     ]),
     CqrsModule,
     MediatorModule,
-    forwardRef(() => CapabilityModule),
+    forwardRef(() => AuthorizationModule),
   ],
   controllers: [
     CompleteOnboardingController,
@@ -82,9 +66,6 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     CancelInvitationController,
     AcceptInvitationController,
     GetInvitationByTokenController,
-    GetMyPermissionsController,
-    GetRolesController,
-    GetAssignableRolesController,
     GetTenantCapabilitiesController,
   ],
   providers: [
@@ -105,8 +86,6 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     TypeOrmTierPlanRepository,
     TypeOrmTierDataProvider,
     TypeOrmTenantInvitationRepository,
-    TypeOrmRbacPolicyAdapter,
-    { provide: INJECTION_TOKENS.RBAC_POLICY_PORT, useExisting: TypeOrmRbacPolicyAdapter },
     RoleHierarchyService,
     TenantFacade,
     { provide: INJECTION_TOKENS.TENANT_FACADE, useExisting: TenantFacade },
@@ -128,7 +107,6 @@ import { CapabilityModule } from '@shared/infrastructure/policy/capability.modul
     INJECTION_TOKENS.TIER_PLAN_CONTRACT,
     INJECTION_TOKENS.TIER_DATA_PROVIDER,
     INJECTION_TOKENS.TENANT_INVITATION_CONTRACT,
-    INJECTION_TOKENS.RBAC_POLICY_PORT,
   ],
 })
 export class TenantModule {}

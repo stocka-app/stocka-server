@@ -4,7 +4,7 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@ne
 import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { RequireAction } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { UpdateStorageCommand } from '@storage/application/commands/update-storage/update-storage.command';
 import { UpdateStorageResult } from '@storage/application/commands/update-storage/update-storage.handler';
 import { UpdateStorageInDto } from '@storage/infrastructure/http/controllers/update-storage/update-storage-in.dto';

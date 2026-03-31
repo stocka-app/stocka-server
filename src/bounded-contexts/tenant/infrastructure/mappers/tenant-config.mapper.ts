@@ -1,6 +1,9 @@
 import { TenantConfigModel } from '@tenant/domain/models/tenant-config.model';
 import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
-import { CapabilitySnapshot, isValidSnapshot } from '@shared/domain/policy/capability-snapshot';
+import {
+  CapabilitySnapshot,
+  isValidSnapshot,
+} from '@authorization/domain/models/capability-snapshot';
 
 export class TenantConfigMapper {
   static toDomain(entity: TenantConfigEntity): TenantConfigModel {

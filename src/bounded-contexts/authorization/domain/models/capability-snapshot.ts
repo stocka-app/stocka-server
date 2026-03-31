@@ -1,4 +1,4 @@
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 
 export interface ActionCapability {
   enabled: boolean;

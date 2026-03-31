@@ -1,7 +1,7 @@
-import { RbacBootValidator } from '@shared/infrastructure/policy/rbac-boot-validator';
-import { MemberRoleEnum } from '@shared/domain/policy/member-role.enum';
-import { SystemAction } from '@shared/domain/policy/actions-catalog';
-import { TierEnum } from '@shared/domain/policy/tier.enum';
+import { RbacBootValidator } from '@authorization/infrastructure/services/rbac-boot-validator';
+import { MemberRoleEnum } from '@authorization/domain/enums/member-role.enum';
+import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { TierEnum } from '@authorization/domain/enums/tier.enum';
 import { DataSource } from 'typeorm';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
