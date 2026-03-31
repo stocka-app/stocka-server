@@ -13,8 +13,8 @@ import {
 } from '@authorization/domain/models/capability-snapshot';
 import { TierEnum } from '@authorization/domain/enums/tier.enum';
 import { TierPlanEntity } from '@tenant/infrastructure/entities/tier-plan.entity';
-import { TierModulePolicyEntity } from '@tenant/infrastructure/entities/tier-module-policy.entity';
-import { TierActionOverrideEntity } from '@tenant/infrastructure/entities/tier-action-override.entity';
+import { TierModulePolicyEntity } from '@authorization/infrastructure/persistence/entities/tier-module-policy.entity';
+import { TierActionOverrideEntity } from '@authorization/infrastructure/persistence/entities/tier-action-override.entity';
 import { CatalogActionEntity } from '@tenant/infrastructure/entities/catalog-action.entity';
 import { TenantConfigEntity } from '@tenant/infrastructure/entities/tenant-config.entity';
 
