@@ -1,24 +1,18 @@
-import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import {
-  ITenantFacade,
-  TenantMembershipContext,
-} from '@tenant/domain/contracts/tenant-facade.contract';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
 import { JwtPayload } from '@common/decorators/current-user.decorator';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 
 @Injectable()
 export class TenantAccessValidator {
-  constructor(
-    @Inject(INJECTION_TOKENS.TENANT_FACADE)
-    private readonly tenantFacade: ITenantFacade,
-  ) {}
+  constructor(private readonly mediator: MediatorService) {}
 
   async validate(user: JwtPayload): Promise<TenantMembershipContext> {
     if (!user.tenantId) {
       throw new ForbiddenException({ error: 'TENANT_REQUIRED' });
     }
 
-    const membershipContext = await this.tenantFacade.getMembershipContext(user.uuid);
+    const membershipContext = await this.mediator.tenant.getMembershipContext(user.uuid);
 
     if (!membershipContext) {
       throw new ForbiddenException({ error: 'MEMBERSHIP_REQUIRED' });

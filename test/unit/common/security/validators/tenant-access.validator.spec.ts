@@ -1,10 +1,8 @@
 import { ForbiddenException } from '@nestjs/common';
 import { TenantAccessValidator } from '@common/security/validators/tenant-access.validator';
 import { JwtPayload } from '@common/decorators/current-user.decorator';
-import {
-  ITenantFacade,
-  TenantMembershipContext,
-} from '@tenant/domain/contracts/tenant-facade.contract';
+import { TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
+import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 
 function buildUser(overrides: Partial<JwtPayload> = {}): JwtPayload {
   return {
@@ -32,15 +30,17 @@ function buildMembershipContext(
 
 describe('TenantAccessValidator', () => {
   let validator: TenantAccessValidator;
-  let tenantFacade: jest.Mocked<ITenantFacade>;
+  let getMembershipContext: jest.Mock;
+  let mediator: MediatorService;
 
   beforeEach(() => {
-    tenantFacade = {
-      getMembershipContext: jest.fn(),
-      getTierLimits: jest.fn(),
-    } as unknown as jest.Mocked<ITenantFacade>;
+    getMembershipContext = jest.fn();
 
-    validator = new TenantAccessValidator(tenantFacade);
+    mediator = {
+      tenant: { getMembershipContext },
+    } as unknown as MediatorService;
+
+    validator = new TenantAccessValidator(mediator);
   });
 
   describe('Given a user with no tenantId in the JWT', () => {
@@ -63,14 +63,14 @@ describe('TenantAccessValidator', () => {
           // expected
         }
 
-        expect(tenantFacade.getMembershipContext).not.toHaveBeenCalled();
+        expect(getMembershipContext).not.toHaveBeenCalled();
       });
     });
   });
 
   describe('Given a user with tenantId but no active membership in the database', () => {
     beforeEach(() => {
-      tenantFacade.getMembershipContext.mockResolvedValue(null);
+      getMembershipContext.mockResolvedValue(null);
     });
 
     describe('When the validator runs', () => {
@@ -87,9 +87,7 @@ describe('TenantAccessValidator', () => {
 
   describe('Given a user whose tenant is not active (e.g. suspended)', () => {
     beforeEach(() => {
-      tenantFacade.getMembershipContext.mockResolvedValue(
-        buildMembershipContext({ tenantStatus: 'suspended' }),
-      );
+      getMembershipContext.mockResolvedValue(buildMembershipContext({ tenantStatus: 'suspended' }));
     });
 
     describe('When the validator runs', () => {
@@ -106,9 +104,7 @@ describe('TenantAccessValidator', () => {
 
   describe('Given a user whose tenant is cancelled', () => {
     beforeEach(() => {
-      tenantFacade.getMembershipContext.mockResolvedValue(
-        buildMembershipContext({ tenantStatus: 'cancelled' }),
-      );
+      getMembershipContext.mockResolvedValue(buildMembershipContext({ tenantStatus: 'cancelled' }));
     });
 
     describe('When the validator runs', () => {
@@ -127,7 +123,7 @@ describe('TenantAccessValidator', () => {
     const membershipContext = buildMembershipContext();
 
     beforeEach(() => {
-      tenantFacade.getMembershipContext.mockResolvedValue(membershipContext);
+      getMembershipContext.mockResolvedValue(membershipContext);
     });
 
     describe('When the validator runs', () => {
@@ -142,7 +138,7 @@ describe('TenantAccessValidator', () => {
         const user = buildUser();
         await validator.validate(user);
 
-        expect(tenantFacade.getMembershipContext).toHaveBeenCalledWith('user-uuid-123');
+        expect(getMembershipContext).toHaveBeenCalledWith('user-uuid-123');
       });
     });
   });

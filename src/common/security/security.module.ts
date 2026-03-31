@@ -7,9 +7,10 @@ import { TenantAccessValidator } from '@common/security/validators/tenant-access
 import { RbacValidator } from '@common/security/validators/rbac.validator';
 import { SecurityBootstrapValidator } from '@common/security/security-bootstrap.validator';
 import { CapabilityModule } from '@shared/infrastructure/policy/capability.module';
+import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 
 @Module({
-  imports: [JwtModule.register({}), DiscoveryModule, CapabilityModule],
+  imports: [JwtModule.register({}), DiscoveryModule, CapabilityModule, MediatorModule],
   providers: [
     SecurityGuard,
     JwtValidator,
