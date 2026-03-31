@@ -1,8 +1,8 @@
-import { Body, Controller, Headers, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Headers, Patch } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { SaveOnboardingStepCommand } from '@onboarding/application/commands/save-onboarding-step/save-onboarding-step.command';
 import { SaveOnboardingStepResult } from '@onboarding/application/commands/save-onboarding-step/save-onboarding-step.handler';
@@ -18,7 +18,6 @@ function normalizeLocale(header?: string): string {
 @ApiTags('Onboarding')
 @Controller('onboarding')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class SaveOnboardingStepController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -26,6 +25,7 @@ export class SaveOnboardingStepController {
   ) {}
 
   @Patch('progress')
+  @Secure()
   @ApiOperation({ summary: 'Save progress for an onboarding section' })
   @ApiResponse({ status: 200, description: 'Section data saved' })
   @ApiResponse({ status: 404, description: 'Onboarding session not found' })

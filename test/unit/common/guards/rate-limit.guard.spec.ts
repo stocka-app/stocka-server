@@ -442,5 +442,21 @@ describe('RateLimitGuard', () => {
         'sign_in',
       );
     });
+
+    it('should return true immediately when E2E_MODE is enabled (bypasses all rate limiting)', async () => {
+      const originalEnv = process.env['E2E_MODE'];
+      process.env['E2E_MODE'] = 'true';
+
+      try {
+        reflector.getAllAndOverride.mockReturnValue(undefined);
+        const context = createMockExecutionContext();
+        const result = await guard.canActivate(context);
+
+        expect(result).toBe(true);
+        expect(attemptContract.countFailedByIpAddressInLastHourByType).not.toHaveBeenCalled();
+      } finally {
+        process.env['E2E_MODE'] = originalEnv;
+      }
+    });
   });
 });

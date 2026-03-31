@@ -3,6 +3,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { DataSource } from 'typeorm';
+import { Secure } from '@common/decorators/secure.decorator';
 
 interface HealthResponse {
   status: 'ok' | 'error';
@@ -16,6 +17,7 @@ export class HealthController {
   constructor(private readonly dataSource: DataSource) {}
 
   @Get()
+  @Secure()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Health check — server and database status' })
   @ApiResponse({ status: 200, description: 'Server and DB are healthy' })

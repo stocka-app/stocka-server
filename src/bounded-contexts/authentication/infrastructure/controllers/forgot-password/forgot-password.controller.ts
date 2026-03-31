@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { RateLimit } from '@common/decorators/rate-limit.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 import { ForgotPasswordCommand } from '@authentication/application/commands/forgot-password/forgot-password.command';
 import { ForgotPasswordResult } from '@authentication/application/types/authentication-result.types';
 import { ForgotPasswordInDto } from '@authentication/infrastructure/controllers/forgot-password/forgot-password-in.dto';
@@ -27,6 +28,7 @@ export class ForgotPasswordController {
     failureErrorCodes: [],
   })
   @Post('forgot-password')
+  @Secure()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset email' })
   @ApiResponse({

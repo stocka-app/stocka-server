@@ -6,17 +6,12 @@ import {
   Inject,
   NotFoundException,
   Param,
-  UseGuards,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
-import { TenantGuard } from '@common/guards/tenant.guard';
-import { TenantStateGuard } from '@common/guards/tenant-state.guard';
-import { RequireAction } from '@common/decorators/require-action.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { CancelInvitationCommand } from '@tenant/application/commands/cancel-invitation/cancel-invitation.command';
 import { CancelInvitationResult } from '@tenant/application/commands/cancel-invitation/cancel-invitation.handler';
@@ -24,7 +19,6 @@ import { CancelInvitationResult } from '@tenant/application/commands/cancel-invi
 @ApiTags('Tenant Invitations')
 @Controller('tenant')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard, TenantGuard, TenantStateGuard)
 export class CancelInvitationController {
   constructor(
     private readonly commandBus: CommandBus,
@@ -33,8 +27,8 @@ export class CancelInvitationController {
   ) {}
 
   @Delete('me/invitations/:id')
+  @Secure()
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequireAction(SystemAction.MEMBER_INVITE)
   @ApiOperation({ summary: 'Cancel a pending invitation' })
   @ApiResponse({ status: 204, description: 'Invitation cancelled' })
   @ApiResponse({ status: 404, description: 'Invitation not found' })

@@ -2,6 +2,7 @@ import { Controller, Post, Req, Res, HttpCode, HttpStatus } from '@nestjs/common
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { Secure } from '@common/decorators/secure.decorator';
 import { SignOutCommand } from '@authentication/application/commands/sign-out/sign-out.command';
 import { clearRefreshCookie } from '@authentication/infrastructure/helpers/refresh-cookie.helper';
 
@@ -11,6 +12,7 @@ export class SignOutController {
   constructor(private readonly commandBus: CommandBus) {}
 
   @Post('sign-out')
+  @Secure()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign out and invalidate all sessions' })
   @ApiResponse({

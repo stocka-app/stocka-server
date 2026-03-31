@@ -131,7 +131,7 @@ function clearRbacCache(rbacApp: INestApplication): void {
 
 const TENANT_NAME = 'Permission Guard Test Business';
 
-describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
+describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
@@ -205,7 +205,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
 
   describe('Given GET /api/storages (STORAGE_READ action, FREE tier threshold)', () => {
     describe('When an unauthenticated client calls the endpoint', () => {
-      it('Then PermissionGuard blocks with 401 NOT_AUTHENTICATED before any auth guard runs', async () => {
+      it('Then SecurityGuard blocks with 401 NOT_AUTHENTICATED before any auth guard runs', async () => {
         const res = await request(app.getHttpServer()).get('/api/storages');
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
@@ -214,7 +214,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
     });
 
     describe('When a user with no tenant membership calls the endpoint', () => {
-      it('Then PermissionGuard blocks with 403 MEMBERSHIP_REQUIRED', async () => {
+      it('Then SecurityGuard blocks with 403 MEMBERSHIP_REQUIRED', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages')
           .set('Authorization', `Bearer ${noTenantToken}`);
@@ -225,7 +225,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
     });
 
     describe('When a SALES_REP (role lacks STORAGE_READ) calls the endpoint', () => {
-      it('Then PermissionGuard blocks with 403 ACTION_NOT_ALLOWED', async () => {
+      it('Then SecurityGuard blocks with 403 ACTION_NOT_ALLOWED', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages')
           .set('Authorization', `Bearer ${salesRepToken}`);
@@ -236,7 +236,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
     });
 
     describe('When a VIEWER (role has STORAGE_READ, FREE tier qualifies) calls the endpoint', () => {
-      it('Then PermissionGuard passes and the endpoint returns 200', async () => {
+      it('Then SecurityGuard passes and the endpoint returns 200', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages')
           .set('Authorization', `Bearer ${viewerToken}`);
@@ -247,7 +247,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
     });
 
     describe('When an OWNER (role has STORAGE_READ, FREE tier qualifies) calls the endpoint', () => {
-      it('Then PermissionGuard passes and the endpoint returns 200', async () => {
+      it('Then SecurityGuard passes and the endpoint returns 200', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages')
           .set('Authorization', `Bearer ${ownerToken}`);
@@ -267,7 +267,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
 
     describe('When the tenant is on FREE tier', () => {
       describe('When an OWNER tries to create a storage', () => {
-        it('Then PermissionGuard blocks with 403 TIER_LIMIT_REACHED (FREE tier storage cap is 0)', async () => {
+        it('Then SecurityGuard blocks with 403 TIER_LIMIT_REACHED (FREE tier storage cap is 0)', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -285,7 +285,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When a WAREHOUSE_KEEPER (role lacks STORAGE_CREATE) tries to create a storage', () => {
-        it('Then PermissionGuard blocks with 403 ACTION_NOT_ALLOWED', async () => {
+        it('Then SecurityGuard blocks with 403 ACTION_NOT_ALLOWED', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages')
             .set('Authorization', `Bearer ${warehouseKeeperToken}`)
@@ -303,7 +303,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
         });
 
         describe('When an OWNER (role has STORAGE_CREATE) tries to create another storage', () => {
-          it('Then PermissionGuard blocks with 403 TIER_LIMIT_REACHED', async () => {
+          it('Then SecurityGuard blocks with 403 TIER_LIMIT_REACHED', async () => {
             const res = await request(app.getHttpServer())
               .post('/api/storages')
               .set('Authorization', `Bearer ${ownerToken}`)
@@ -322,7 +322,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
         });
 
         describe('When the OWNER sends a valid create storage request', () => {
-          it('Then PermissionGuard passes and the storage is created successfully', async () => {
+          it('Then SecurityGuard passes and the storage is created successfully', async () => {
             const res = await request(app.getHttpServer())
               .post('/api/storages')
               .set('Authorization', `Bearer ${ownerToken}`)
@@ -358,7 +358,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
 
     describe('When the tenant is on FREE tier', () => {
       describe('When an OWNER (role has MEMBER_INVITE) tries to invite a member', () => {
-        it('Then PermissionGuard blocks with 403 FEATURE_NOT_IN_TIER', async () => {
+        it('Then SecurityGuard blocks with 403 FEATURE_NOT_IN_TIER', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/tenant/me/invitations')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -370,7 +370,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When a VIEWER (role lacks MEMBER_INVITE) tries to invite a member', () => {
-        it('Then PermissionGuard blocks with 403 FEATURE_NOT_IN_TIER (tier check precedes role check)', async () => {
+        it('Then SecurityGuard blocks with 403 FEATURE_NOT_IN_TIER (tier check precedes role check)', async () => {
           // Important: even though VIEWER lacks MEMBER_INVITE, the tier block fires first.
           // This verifies the evaluation order: tier → role → usage.
           const res = await request(app.getHttpServer())
@@ -391,7 +391,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When an OWNER (role has MEMBER_INVITE, below the member limit) invites a member', () => {
-        it('Then PermissionGuard passes and the invitation is created', async () => {
+        it('Then SecurityGuard passes and the invitation is created', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/tenant/me/invitations')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -404,7 +404,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When a VIEWER (role lacks MEMBER_INVITE) tries to invite on an unlocked tier', () => {
-        it('Then PermissionGuard blocks with 403 ACTION_NOT_ALLOWED (tier passes, role fails)', async () => {
+        it('Then SecurityGuard blocks with 403 ACTION_NOT_ALLOWED (tier passes, role fails)', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/tenant/me/invitations')
             .set('Authorization', `Bearer ${viewerToken}`)
@@ -440,7 +440,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When an OWNER (role has STORAGE_CREATE) tries to create a storage', () => {
-        it('Then PermissionGuard blocks with 403 FEATURE_NOT_IN_TIER', async () => {
+        it('Then SecurityGuard blocks with 403 FEATURE_NOT_IN_TIER', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -459,7 +459,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When an OWNER (role has STORAGE_CREATE) tries to create a storage', () => {
-        it('Then PermissionGuard still blocks with 403 FEATURE_NOT_IN_TIER (STARTER is also below GROWTH)', async () => {
+        it('Then SecurityGuard still blocks with 403 FEATURE_NOT_IN_TIER (STARTER is also below GROWTH)', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages')
             .set('Authorization', `Bearer ${ownerToken}`)
@@ -477,7 +477,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
         // The previous "OWNER sends a valid create storage request" test left one
         // STORE_ROOM, and tenant_config.max_store_rooms defaults to 1 — without
         // clearing it the handler would return STORE_ROOM_LIMIT_REACHED even though
-        // PermissionGuard correctly passes.
+        // SecurityGuard correctly passes.
         await dataSource.query(
           `TRUNCATE TABLE "storage"."custom_rooms", "storage"."store_rooms", "storage"."warehouses", "storage"."storages" RESTART IDENTITY CASCADE`,
         );
@@ -487,7 +487,7 @@ describe('PermissionGuard — real business endpoint enforcement (e2e)', () => {
       });
 
       describe('When an OWNER (role has STORAGE_CREATE, below GROWTH limit) creates a storage', () => {
-        it('Then PermissionGuard passes and the storage is created', async () => {
+        it('Then SecurityGuard passes and the storage is created', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages')
             .set('Authorization', `Bearer ${ownerToken}`)

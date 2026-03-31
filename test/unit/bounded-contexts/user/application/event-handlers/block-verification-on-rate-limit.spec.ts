@@ -83,4 +83,21 @@ describe('BlockVerificationOnRateLimitHandler', () => {
       });
     });
   });
+
+  describe('Given a valid event but the credential has no id', () => {
+    beforeEach(() => {
+      mediator.user.findUserByUUIDWithCredential.mockResolvedValue({
+        user: { uuid: 'user-uuid-1' },
+        credential: { id: undefined },
+      });
+    });
+
+    describe('When handle is called', () => {
+      it('Then it returns silently without calling blockVerification', async () => {
+        await expect(handler.handle(event)).resolves.toBeUndefined();
+
+        expect(mediator.user.blockVerification).not.toHaveBeenCalled();
+      });
+    });
+  });
 });

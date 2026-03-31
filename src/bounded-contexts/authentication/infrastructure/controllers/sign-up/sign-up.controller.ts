@@ -15,6 +15,7 @@ import { setRefreshCookie } from '@authentication/infrastructure/helpers/refresh
 import { mapDomainErrorToHttp } from '@shared/infrastructure/http/domain-error-mapper';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { RateLimit } from '@common/decorators/rate-limit.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 
 @ApiTags('Authentication')
 @Controller('authentication')
@@ -40,6 +41,7 @@ export class SignUpController {
     failureErrorCodes: [],
   })
   @Post('sign-up')
+  @Secure()
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({
     status: 201,

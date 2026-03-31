@@ -1,10 +1,8 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
-import { RequireAction } from '@common/decorators/require-action.decorator';
-import { SystemAction } from '@authorization/domain/enums/actions-catalog';
+import { Secure } from '@common/decorators/secure.decorator';
 import { GetStorageQuery } from '@storage/application/queries/get-storage/get-storage.query';
 import { GetStorageResult } from '@storage/application/queries/get-storage/get-storage.handler';
 import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';
@@ -12,12 +10,11 @@ import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-sto
 @ApiTags('Storage')
 @Controller('storages')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class GetStorageController {
   constructor(private readonly queryBus: QueryBus) {}
 
   @Get(':uuid')
-  @RequireAction(SystemAction.STORAGE_READ)
+  @Secure()
   @ApiOperation({ summary: 'Get a storage by UUID' })
   @ApiParam({ name: 'uuid', description: 'Storage UUID' })
   @ApiResponse({ status: 200, description: 'Storage details', type: StorageOutDto })

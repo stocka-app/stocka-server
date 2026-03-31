@@ -1,7 +1,7 @@
-import { Controller, Get, Inject, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Inject, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DataSource } from 'typeorm';
-import { JwtAuthenticationGuard } from '@authentication/infrastructure/guards/jwt-authentication.guard';
+import { Secure } from '@common/decorators/secure.decorator';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { ITenantFacade } from '@tenant/domain/contracts/tenant-facade.contract';
@@ -11,7 +11,6 @@ import { RbacAssignableRoleOutDto } from '@authorization/infrastructure/http/con
 @ApiTags('RBAC')
 @Controller('rbac')
 @ApiBearerAuth('JWT-authentication')
-@UseGuards(JwtAuthenticationGuard)
 export class GetAssignableRolesController {
   constructor(
     @Inject(INJECTION_TOKENS.TENANT_FACADE)
@@ -22,6 +21,7 @@ export class GetAssignableRolesController {
   ) {}
 
   @Get('assignable-roles')
+  @Secure()
   @ApiOperation({ summary: 'Get roles assignable by the current user' })
   @ApiResponse({ status: 200, type: [RbacAssignableRoleOutDto] })
   @ApiResponse({ status: 403, description: 'No active membership' })

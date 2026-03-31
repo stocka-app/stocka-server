@@ -4,6 +4,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Response } from 'express';
 import { RateLimit } from '@common/decorators/rate-limit.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
 import { SignInCommand } from '@authentication/application/commands/sign-in/sign-in.command';
 import { SignInCommandResult } from '@authentication/application/types/authentication-result.types';
 import { SignInInDto } from '@authentication/infrastructure/controllers/sign-in/sign-in-in.dto';
@@ -40,6 +41,7 @@ export class SignInController {
     failureErrorCodes: ['INVALID_CREDENTIALS'],
   })
   @Post('sign-in')
+  @Secure()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Sign in with email/username and password' })
   @ApiResponse({

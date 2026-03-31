@@ -1,13 +1,9 @@
 /**
- * Permission-guard-scoped NestJS application singleton for PermissionGuard e2e tests.
+ * Security-guard-scoped NestJS application singleton for SecurityGuard e2e tests.
  *
- * Extends the tenant worker app with StorageModule and registers PermissionGuard
- * as a global APP_GUARD. Also adds an Express middleware that extracts and sets
- * request.user from the JWT Bearer token before guards run.
- *
- * This middleware is required because PermissionGuard is a global guard and therefore
- * runs BEFORE class-level JwtAuthenticationGuard. Without it, request.user is always
- * undefined when PermissionGuard executes, causing it to always throw NOT_AUTHENTICATED.
+ * Extends the tenant worker app with StorageModule and registers SecurityGuard
+ * as a global APP_GUARD. The SecurityGuard handles JWT extraction internally
+ * (via JwtValidator), so no Express middleware is needed for request.user population.
  */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -16,8 +12,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { APP_GUARD } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
-import { JwtService } from '@nestjs/jwt';
-import type { Request, Response, NextFunction } from 'express';
 
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
@@ -27,15 +21,15 @@ import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.m
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
-import { PermissionGuard } from '@common/guards/permission.guard';
+import { SecurityModule } from '@common/security/security.module';
+import { SecurityGuard } from '@common/security/security.guard';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
 import databaseConfig from '@core/config/database/database.config';
 import { validate } from '@core/config/environment/env.validation';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
-import { JwtPayload } from '@common/decorators/current-user.decorator';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Constants ──────────────────────────────────────────��─────────────────────
 
 const TRUNCATE_TABLES = [
   // User / Auth tables (schema-qualified)
@@ -66,7 +60,7 @@ const TRUNCATE_TABLES = [
   '"storage"."storages"',
 ] as const;
 
-// ─── Singleton state ──────────────────────────────────────────────────────────
+// ��── Singleton state ────────��─────────────────────────────────────────────────
 
 interface PermissionGuardWorkerApp {
   readonly app: INestApplication;
@@ -76,7 +70,7 @@ interface PermissionGuardWorkerApp {
 let permissionGuardWorkerAppInstance: PermissionGuardWorkerApp | null = null;
 let permissionGuardWorkerAppPromise: Promise<PermissionGuardWorkerApp> | null = null;
 
-// ─── Email provider mock ──────────────────────────────────────────────────────
+// ─��─ Email provider mock ──────────────────────────────────────────────────────
 
 export const permissionGuardEmailMock: jest.Mocked<IEmailProviderContract> = {
   sendEmail: jest.fn().mockResolvedValue({ id: 'mock-id', success: true }),
@@ -114,12 +108,13 @@ async function bootstrap(): Promise<PermissionGuardWorkerApp> {
       TenantModule,
       StorageModule,
       AuthorizationModule,
+      SecurityModule,
       MediatorModule,
     ],
     providers: [
       {
         provide: APP_GUARD,
-        useClass: PermissionGuard,
+        useClass: SecurityGuard,
       },
     ],
   })
@@ -127,48 +122,9 @@ async function bootstrap(): Promise<PermissionGuardWorkerApp> {
     .useValue(permissionGuardEmailMock)
     .compile();
 
-  // Obtain JwtService to decode tokens in the pre-guard middleware.
-  // This is the same JwtService used by AuthenticationModule — same secret, same config.
-  const jwtService = moduleFixture.get<JwtService>(JwtService);
-
   const app = moduleFixture.createNestApplication();
 
   app.use(cookieParser());
-
-  // ── JWT extraction middleware ───────────────────────────────────────────────
-  // Sets request.user BEFORE global guards run so PermissionGuard can evaluate
-  // the authenticated user's membership context and permissions.
-  //
-  // Why this is needed: PermissionGuard is registered as APP_GUARD (global) and
-  // therefore runs BEFORE class-level JwtAuthenticationGuard. Without this
-  // middleware, request.user is always undefined when PermissionGuard runs, which
-  // would cause it to throw NOT_AUTHENTICATED for every @RequireAction endpoint —
-  // even for correctly authenticated users. The middleware mirrors what
-  // JwtAuthenticationGuard does, but at the Express middleware layer (before guards).
-  app.use((req: Request, _res: Response, next: NextFunction) => {
-    const authHeader = req.headers['authorization'];
-    if (authHeader?.startsWith('Bearer ')) {
-      const token = authHeader.slice(7);
-      try {
-        const decoded = jwtService.verify<{
-          sub: string;
-          email: string;
-          tenantId: string | null;
-          role: string | null;
-        }>(token);
-        req.user = {
-          uuid: decoded.sub,
-          email: decoded.email,
-          tenantId: decoded.tenantId,
-          role: decoded.role,
-        } as JwtPayload;
-      } catch {
-        // Invalid or expired token — leave request.user undefined.
-        // PermissionGuard will throw NOT_AUTHENTICATED for @RequireAction endpoints.
-      }
-    }
-    next();
-  });
 
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
@@ -183,7 +139,7 @@ async function bootstrap(): Promise<PermissionGuardWorkerApp> {
   return { app, dataSource };
 }
 
-// ─── Public API ───────────────────────────────────────────────────────────────
+// ─── Public API ───���───────────────────────────────────────────────────────────
 
 export async function getPermissionGuardWorkerApp(): Promise<PermissionGuardWorkerApp> {
   if (permissionGuardWorkerAppInstance) {
