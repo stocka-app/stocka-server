@@ -181,4 +181,117 @@ describe('SecurityBootstrapValidator', () => {
       });
     });
   });
+
+  describe('Given a controller whose constructor has no path metadata (undefined)', () => {
+    beforeEach(() => {
+      const controller = { constructor: class NoPathController {} };
+      // Intentionally NOT setting 'path' metadata on constructor → falls back to ''
+
+      discoveryService.getControllers.mockReturnValue([
+        { instance: controller },
+      ] as unknown as ReturnType<DiscoveryService['getControllers']>);
+
+      metadataScanner.scanFromPrototype.mockImplementation(
+        (_instance: unknown, _proto: object | null, callback: (key: string) => unknown) => {
+          const proto = _proto as Record<string, unknown>;
+          const handler = (): void => {};
+          Reflect.defineMetadata('path', 'route', handler);
+          Reflect.defineMetadata('method', 0, handler); // GET
+          proto.handle = handler;
+          callback('handle');
+          return [] as unknown[];
+        },
+      );
+    });
+
+    describe('When the application bootstraps', () => {
+      it('Then it uses empty string as controllerPath without crashing', () => {
+        expect(() => validator.onApplicationBootstrap()).not.toThrow();
+      });
+    });
+  });
+
+  describe('Given a route handler that has no path metadata on the handler function', () => {
+    beforeEach(() => {
+      const controller = { constructor: class TestController {} };
+      Reflect.defineMetadata('path', 'test', controller.constructor);
+
+      discoveryService.getControllers.mockReturnValue([
+        { instance: controller },
+      ] as unknown as ReturnType<DiscoveryService['getControllers']>);
+
+      metadataScanner.scanFromPrototype.mockImplementation(
+        (_instance: unknown, _proto: object | null, callback: (key: string) => unknown) => {
+          const proto = _proto as Record<string, unknown>;
+          const handler = (): void => {};
+          // handler path metadata intentionally NOT set → falls back to ''
+          Reflect.defineMetadata('method', 0, handler); // GET
+          proto.handle = handler;
+          callback('handle');
+          return [] as unknown[];
+        },
+      );
+    });
+
+    describe('When the application bootstraps', () => {
+      it('Then it uses empty string as handlerPath without crashing', () => {
+        expect(() => validator.onApplicationBootstrap()).not.toThrow();
+      });
+    });
+  });
+
+  describe('Given a controller whose prototype exposes a non-function property', () => {
+    beforeEach(() => {
+      const controller = { constructor: class TestController {}, someProperty: 'not-a-function' };
+      Reflect.defineMetadata('path', 'test', controller.constructor);
+
+      discoveryService.getControllers.mockReturnValue([
+        { instance: controller },
+      ] as unknown as ReturnType<DiscoveryService['getControllers']>);
+
+      metadataScanner.scanFromPrototype.mockImplementation(
+        (_instance: unknown, _proto: object | null, callback: (key: string) => unknown) => {
+          callback('someProperty');
+          return [] as unknown[];
+        },
+      );
+    });
+
+    describe('When the application bootstraps', () => {
+      it('Then it skips the non-function property without crashing', () => {
+        expect(() => validator.onApplicationBootstrap()).not.toThrow();
+      });
+    });
+  });
+
+  describe('Given a controller method that has no HTTP method metadata (not a route handler)', () => {
+    beforeEach(() => {
+      const controller = { constructor: class TestController {} };
+      Reflect.defineMetadata('path', 'test', controller.constructor);
+
+      discoveryService.getControllers.mockReturnValue([
+        { instance: controller },
+      ] as unknown as ReturnType<DiscoveryService['getControllers']>);
+
+      metadataScanner.scanFromPrototype.mockImplementation(
+        (_instance: unknown, _proto: object | null, callback: (key: string) => unknown) => {
+          const proto = _proto as Record<string, unknown>;
+          const helperFn = (): void => {};
+          Reflect.defineMetadata('path', 'helper', helperFn);
+          // method metadata intentionally NOT set — this is not an HTTP handler
+          proto.helperMethod = helperFn;
+          callback('helperMethod');
+          return [] as unknown[];
+        },
+      );
+    });
+
+    describe('When the application bootstraps', () => {
+      it('Then it skips the non-handler method and marks all registry entries as orphans', () => {
+        validator.onApplicationBootstrap();
+
+        expect(loggerWarnSpy).toHaveBeenCalledTimes(3);
+      });
+    });
+  });
 });

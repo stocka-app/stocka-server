@@ -36,7 +36,7 @@ export class SecurityBootstrapValidator implements OnApplicationBootstrap {
           | undefined;
         if (methodValue === undefined) return;
 
-        const method: string = RequestMethod[methodValue] ?? 'GET';
+        const method: string = RequestMethod[methodValue];
         const segments = [controllerPath, handlerPath].filter(Boolean);
         const fullPath = segments.length > 0 ? `/${segments.join('/')}` : '/';
         const normalized = fullPath.replace(/\/+/g, '/');

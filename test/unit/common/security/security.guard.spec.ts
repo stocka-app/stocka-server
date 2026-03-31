@@ -233,4 +233,94 @@ describe('SecurityGuard', () => {
       });
     });
   });
+
+  describe('Given a route where NestJS metadata returns undefined for method value', () => {
+    describe('When the guard evaluates the request', () => {
+      it('Then it falls back to GET and resolves the route key correctly', async () => {
+        const request: Record<string, unknown> = { headers: {}, user: undefined };
+        const handler = jest.fn();
+        Reflect.defineMetadata('path', 'me', handler);
+        // method metadata intentionally NOT set → undefined → fallback to GET
+        const controllerClass = jest.fn();
+        Reflect.defineMetadata('path', 'users', controllerClass);
+
+        const ctx = {
+          switchToHttp: () => ({ getRequest: () => request }),
+          getHandler: () => handler,
+          getClass: () => controllerClass,
+        } as unknown as ExecutionContext;
+
+        const result = await guard.canActivate(ctx);
+
+        // GET /users/me is in the mocked registry as {} — JWT only
+        expect(result).toBe(true);
+        expect(jwtValidator.validate).toHaveBeenCalledWith(ctx);
+        expect(tenantAccessValidator.validate).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a route where the controller class has no path metadata (undefined)', () => {
+    describe('When the guard evaluates the request', () => {
+      it('Then it falls back to empty string for controllerPath and resolves the key', async () => {
+        const request: Record<string, unknown> = { headers: {}, user: undefined };
+        const handler = jest.fn();
+        Reflect.defineMetadata('path', '', handler);
+        Reflect.defineMetadata('method', GET, handler);
+        // class path metadata intentionally NOT set → undefined → falls back to ''
+        const controllerClass = jest.fn();
+
+        const ctx = {
+          switchToHttp: () => ({ getRequest: () => request }),
+          getHandler: () => handler,
+          getClass: () => controllerClass,
+        } as unknown as ExecutionContext;
+
+        const result = await guard.canActivate(ctx);
+
+        // resolves as 'GET /' which is public in the mocked registry
+        expect(result).toBe(true);
+        expect(jwtValidator.validate).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a route where the handler has no path metadata (undefined)', () => {
+    describe('When the guard evaluates the request', () => {
+      it('Then it falls back to empty string for handlerPath and resolves the key', async () => {
+        const request: Record<string, unknown> = { headers: {}, user: undefined };
+        const handler = jest.fn();
+        // handler path metadata intentionally NOT set → undefined → falls back to ''
+        Reflect.defineMetadata('method', GET, handler);
+        const controllerClass = jest.fn();
+        Reflect.defineMetadata('path', 'health', controllerClass);
+
+        const ctx = {
+          switchToHttp: () => ({ getRequest: () => request }),
+          getHandler: () => handler,
+          getClass: () => controllerClass,
+        } as unknown as ExecutionContext;
+
+        const result = await guard.canActivate(ctx);
+
+        // resolves as 'GET /health' which is public in the mocked registry
+        expect(result).toBe(true);
+        expect(jwtValidator.validate).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a route where both controller and handler paths are empty', () => {
+    describe('When the guard evaluates the request', () => {
+      it('Then it resolves the key as GET / (the root path)', async () => {
+        // Both empty → segments = [] → fullPath = '/' → key = 'GET /'
+        const ctx = buildExecutionContext('', '', GET);
+        const result = await guard.canActivate(ctx);
+
+        // GET / is public in the mocked registry
+        expect(result).toBe(true);
+        expect(jwtValidator.validate).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
