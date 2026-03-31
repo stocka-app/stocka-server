@@ -109,7 +109,10 @@ describe('New account registration — transactional email delivery', () => {
         },
         {
           provide: INJECTION_TOKENS.SESSION_CONTRACT,
-          useValue: { persist: jest.fn().mockResolvedValue(undefined) },
+          useValue: {
+            persist: jest.fn().mockResolvedValue(undefined),
+            persistWithCredential: jest.fn().mockResolvedValue({ uuid: 'mock-session-uuid' }),
+          },
         },
         {
           provide: INJECTION_TOKENS.EMAIL_VERIFICATION_TOKEN_CONTRACT,

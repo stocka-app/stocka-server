@@ -1,6 +1,6 @@
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
-import { SessionModel } from '@authentication/domain/models/session.model';
+import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';
 
 export interface SignInSagaContext {
@@ -15,7 +15,7 @@ export interface SignInSagaContext {
   username?: string;
   accessToken?: string;
   refreshToken?: string;
-  session?: SessionModel; // stored for EventPublisher.commit() in publish-events step
+  session?: SessionAggregate; // stored for EventPublisher.commit() in publish-events step
 
   // Enrichment data (fetched in generate-tokens step)
   givenName?: string | null;

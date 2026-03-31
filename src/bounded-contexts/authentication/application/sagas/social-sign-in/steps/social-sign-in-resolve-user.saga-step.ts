@@ -13,6 +13,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     if (linked) {
       ctx.user = linked.user;
       ctx.accountId = linked.social.accountId;
+      ctx.socialAccountId = linked.social.id;
       ctx.socialAccountUUID = linked.social.uuid;
       // Fetch credential for token generation
       const credResult = await this.mediator.user.findUserByEmail(ctx.email);
@@ -33,6 +34,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       ctx.user = existingByEmail.user;
       ctx.credential = existingByEmail.credential;
       ctx.accountId = newSocial.accountId;
+      ctx.socialAccountId = newSocial.id;
       ctx.socialAccountUUID = newSocial.uuid;
       ctx.path = 'linked-provider';
       return;
@@ -52,6 +54,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     ctx.user = result.user;
     ctx.credential = result.credential;
     ctx.accountId = result.social.accountId;
+    ctx.socialAccountId = result.social.id;
     ctx.socialAccountUUID = result.social.uuid;
     ctx.path = 'new-user';
   }

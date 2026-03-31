@@ -3,7 +3,7 @@ import { DataSource } from 'typeorm';
 import { v4 as uuidv4, version as uuidVersion } from 'uuid';
 
 import { IUserContract } from '@user/domain/contracts/user.contract';
-import { ISessionContract } from '@authentication/domain/contracts/session.contract';
+import { ISessionContract } from '@user/account/session/domain/session.contract';
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
@@ -19,7 +19,7 @@ import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { AccountAggregate } from '@user/account/domain/account.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
-import { SessionModel } from '@authentication/domain/models/session.model';
+import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
@@ -254,8 +254,8 @@ describe('Infrastructure Repositories (e2e)', () => {
       savedAccount = account;
     });
 
-    async function createSession(): Promise<SessionModel> {
-      const session = SessionModel.create({
+    async function createSession(): Promise<SessionAggregate> {
+      const session = SessionAggregate.create({
         accountId: savedAccount.id!,
         tokenHash: sha256(`session-${uuidv4()}`),
         expiresAt: futureDate(),
@@ -264,7 +264,7 @@ describe('Infrastructure Repositories (e2e)', () => {
     }
 
     describe('Given a session exists in the database', () => {
-      let savedSession: SessionModel;
+      let savedSession: SessionAggregate;
 
       beforeEach(async () => {
         savedSession = await createSession();
@@ -328,7 +328,7 @@ describe('Infrastructure Repositories (e2e)', () => {
         it('Then it uses the transaction manager and saves the session', async () => {
           await uow.begin();
           try {
-            const session = SessionModel.create({
+            const session = SessionAggregate.create({
               accountId: savedAccount.id!,
               tokenHash: sha256(`uow-session-${uuidv4()}`),
               expiresAt: futureDate(),

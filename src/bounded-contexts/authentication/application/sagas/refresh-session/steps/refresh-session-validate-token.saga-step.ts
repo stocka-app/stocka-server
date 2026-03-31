@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { ISagaStepHandler } from '@shared/domain/saga';
-import { ISessionContract } from '@authentication/domain/contracts/session.contract';
+import { ISessionContract } from '@user/account/session/domain/session.contract';
 import { AuthenticationDomainService } from '@authentication/domain/services/authentication-domain.service';
 import { TokenExpiredException } from '@authentication/domain/exceptions/token-expired.exception';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';

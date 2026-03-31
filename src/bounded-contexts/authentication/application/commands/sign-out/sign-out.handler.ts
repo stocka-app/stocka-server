@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { SignOutCommand } from '@authentication/application/commands/sign-out/sign-out.command';
 import { AuthenticationDomainService } from '@authentication/domain/services/authentication-domain.service';
-import { ISessionContract } from '@authentication/domain/contracts/session.contract';
+import { ISessionContract } from '@user/account/session/domain/session.contract';
 import { UserSignedOutEvent } from '@authentication/domain/events/user-signed-out.event';
 import { SessionArchivedEvent } from '@authentication/domain/events/session-archived.event';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';

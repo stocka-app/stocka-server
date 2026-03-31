@@ -1,7 +1,7 @@
 import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
 
-export class SessionAggregateMapper {
+export class SessionMapper {
   static toDomain(entity: SessionEntity): SessionAggregate {
     return SessionAggregate.reconstitute({
       id: entity.id,

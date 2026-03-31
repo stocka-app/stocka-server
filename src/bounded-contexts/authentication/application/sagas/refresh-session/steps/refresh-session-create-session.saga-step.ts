@@ -1,8 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ISagaStepHandler } from '@shared/domain/saga';
-import { ISessionContract } from '@authentication/domain/contracts/session.contract';
+import { ISessionContract } from '@user/account/session/domain/session.contract';
 import { AuthenticationDomainService } from '@authentication/domain/services/authentication-domain.service';
-import { SessionModel } from '@authentication/domain/models/session.model';
+import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 import { RefreshSessionSagaContext } from '@authentication/application/sagas/refresh-session/refresh-session.saga-context';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -25,7 +25,7 @@ export class CreateNewSessionStep implements ISagaStepHandler<RefreshSessionSaga
     if (ctx.accountId === undefined)
       throw new Error('CreateNewSessionStep: ctx.accountId not set by prior step');
 
-    const session = SessionModel.create({ accountId: ctx.accountId, tokenHash, expiresAt });
+    const session = SessionAggregate.create({ accountId: ctx.accountId, tokenHash, expiresAt });
     const persisted = await this.sessionContract.persist(session);
     ctx.newSessionUUID = persisted.uuid;
   }

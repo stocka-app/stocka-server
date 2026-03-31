@@ -12,7 +12,7 @@ import { SocialSessionEntity } from '@user/account/session/infrastructure/entiti
 import { PasswordResetTokenEntity } from '@authentication/infrastructure/persistence/entities/password-reset-token.entity';
 import { EmailVerificationTokenEntity } from '@authentication/infrastructure/persistence/entities/email-verification-token.entity';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
-import { TypeOrmSessionRepository } from '@authentication/infrastructure/persistence/repositories/typeorm-session.repository';
+import { TypeOrmSessionRepository } from '@user/account/session/infrastructure/repositories/typeorm-session.repository';
 import { TypeOrmPasswordResetTokenRepository } from '@authentication/infrastructure/persistence/repositories/typeorm-password-reset-token.repository';
 import { TypeOrmEmailVerificationTokenRepository } from '@authentication/infrastructure/persistence/repositories/typeorm-email-verification-token.repository';
 import { TypeOrmVerificationAttemptRepository } from '@authentication/infrastructure/persistence/repositories/typeorm-verification-attempt.repository';

@@ -1,5 +1,6 @@
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 
 export type SocialSignInPath = 'existing-provider' | 'linked-provider' | 'new-user';
 
@@ -21,10 +22,12 @@ export interface SocialSignInSagaContext {
   user?: UserAggregate;
   credential?: CredentialAccountModel;
   accountId?: number;
+  socialAccountId?: number;
   socialAccountUUID?: string;
   path?: SocialSignInPath;
   accessToken?: string;
   refreshToken?: string;
+  session?: SessionAggregate; // stored for EventPublisher.commit() in publish-events step
 }
 
 export interface SocialSignInSagaOutput {

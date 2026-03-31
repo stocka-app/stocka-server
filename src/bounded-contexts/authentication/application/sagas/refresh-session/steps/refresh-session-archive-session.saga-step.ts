@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ISagaStepHandler } from '@shared/domain/saga';
-import { ISessionContract } from '@authentication/domain/contracts/session.contract';
+import { ISessionContract } from '@user/account/session/domain/session.contract';
 import { RefreshSessionSagaContext } from '@authentication/application/sagas/refresh-session/refresh-session.saga-context';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 

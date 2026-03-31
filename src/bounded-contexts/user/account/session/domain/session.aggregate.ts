@@ -1,6 +1,7 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
 import { TokenHashVO } from '@shared/domain/value-objects/primitive/token-hash.vo';
 import { ExpiresAtVO } from '@shared/domain/value-objects/compound/expires-at.vo';
+import { SessionCreatedEvent } from '@user/account/session/domain/events/session-created.event';
 
 export interface SessionAggregateProps extends AggregateRootProps {
   accountId: number;
@@ -42,11 +43,13 @@ export class SessionAggregate extends AggregateRoot {
     tokenHash: string;
     expiresAt: Date;
   }): SessionAggregate {
-    return new SessionAggregate({
+    const session = new SessionAggregate({
       accountId: props.accountId,
       tokenHash: props.tokenHash,
       expiresAt: props.expiresAt,
     });
+    session.apply(new SessionCreatedEvent(session.uuid, session.accountId));
+    return session;
   }
 
   static reconstitute(props: SessionAggregateReconstitueProps): SessionAggregate {

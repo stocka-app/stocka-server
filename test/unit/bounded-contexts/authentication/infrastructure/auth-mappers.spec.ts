@@ -1,14 +1,20 @@
-import { SessionMapper } from '@authentication/infrastructure/persistence/mappers/session.mapper';
+import { SessionMapper } from '@user/account/session/infrastructure/mappers/session.mapper';
+import { CredentialSessionMapper } from '@user/account/session/infrastructure/mappers/credential-session.mapper';
+import { SocialSessionMapper } from '@user/account/session/infrastructure/mappers/social-session.mapper';
 import { EmailVerificationTokenMapper } from '@authentication/infrastructure/persistence/mappers/email-verification-token.mapper';
 import { PasswordResetTokenMapper } from '@authentication/infrastructure/persistence/mappers/password-reset-token.mapper';
 import { VerificationAttemptMapper } from '@authentication/infrastructure/persistence/mappers/verification-attempt.mapper';
 
-import { SessionModel } from '@authentication/domain/models/session.model';
+import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
+import { CredentialSessionModel } from '@user/account/session/domain/models/credential-session.model';
+import { SocialSessionModel } from '@user/account/session/domain/models/social-session.model';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
 
 import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
+import { CredentialSessionEntity } from '@user/account/session/infrastructure/entities/credential-session.entity';
+import { SocialSessionEntity } from '@user/account/session/infrastructure/entities/social-session.entity';
 import { EmailVerificationTokenEntity } from '@authentication/infrastructure/persistence/entities/email-verification-token.entity';
 import { PasswordResetTokenEntity } from '@authentication/infrastructure/persistence/entities/password-reset-token.entity';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
@@ -17,6 +23,8 @@ import { VerificationAttemptEntity } from '@authentication/infrastructure/persis
 
 // Valid UUID v4 constants for test data
 const UUID_SESSION = '550e8400-e29b-41d4-a716-446655440001';
+const UUID_CRED_SESSION = '550e8400-e29b-41d4-a716-446655440006';
+const UUID_SOC_SESSION = '550e8400-e29b-41d4-a716-446655440007';
 const UUID_EVT = '550e8400-e29b-41d4-a716-446655440002';
 const UUID_PRT = '550e8400-e29b-41d4-a716-446655440003';
 const UUID_VA = '550e8400-e29b-41d4-a716-446655440004';
@@ -89,16 +97,43 @@ function buildVerificationAttemptEntity(
   return Object.assign(e, overrides);
 }
 
+function buildCredentialSessionEntity(
+  overrides?: Partial<CredentialSessionEntity>,
+): CredentialSessionEntity {
+  const e = new CredentialSessionEntity();
+  e.id = 5;
+  e.uuid = UUID_CRED_SESSION;
+  e.sessionId = 1;
+  e.credentialAccountId = 42;
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-01-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
+function buildSocialSessionEntity(overrides?: Partial<SocialSessionEntity>): SocialSessionEntity {
+  const e = new SocialSessionEntity();
+  e.id = 6;
+  e.uuid = UUID_SOC_SESSION;
+  e.sessionId = 2;
+  e.socialAccountId = 7;
+  e.provider = 'google';
+  e.createdAt = new Date('2024-01-01');
+  e.updatedAt = new Date('2024-01-01');
+  e.archivedAt = null;
+  return Object.assign(e, overrides);
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('SessionMapper', () => {
   describe('Given a SessionEntity', () => {
     describe('When toDomain is called', () => {
-      it('Then it returns a SessionModel with all fields mapped correctly', () => {
+      it('Then it returns a SessionAggregate with all fields mapped correctly', () => {
         const entity = buildSessionEntity();
         const model = SessionMapper.toDomain(entity);
 
-        expect(model).toBeInstanceOf(SessionModel);
+        expect(model).toBeInstanceOf(SessionAggregate);
         expect(model.id).toBe(entity.id);
         expect(model.uuid).toBe(entity.uuid);
         expect(model.accountId).toBe(entity.accountId);
@@ -127,7 +162,8 @@ describe('SessionMapper', () => {
   describe('Given a SessionModel without an id (new session)', () => {
     describe('When toEntity is called', () => {
       it('Then the id field is omitted from the result', () => {
-        const model = SessionModel.reconstitute({
+        const model = SessionAggregate.reconstitute({
+          id: 1,
           uuid: '550e8400-e29b-41d4-a716-446655440099',
           accountId: 99,
           tokenHash: 'd'.repeat(64),
@@ -135,7 +171,7 @@ describe('SessionMapper', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           archivedAt: null,
-        } as Parameters<typeof SessionModel.reconstitute>[0]);
+        });
 
         // Override id to be undefined to test the branch
         Object.defineProperty(model, 'id', { get: () => undefined });
@@ -329,6 +365,102 @@ describe('VerificationAttemptMapper', () => {
         Object.defineProperty(model, 'id', { get: () => undefined });
 
         const result = VerificationAttemptMapper.toEntity(model);
+        expect(result.id).toBeUndefined();
+      });
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('CredentialSessionMapper', () => {
+  describe('Given a CredentialSessionEntity', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a CredentialSessionModel with all fields mapped', () => {
+        const entity = buildCredentialSessionEntity();
+        const model = CredentialSessionMapper.toDomain(entity);
+
+        expect(model).toBeInstanceOf(CredentialSessionModel);
+        expect(model.id).toBe(entity.id);
+        expect(model.uuid).toBe(entity.uuid);
+        expect(model.sessionId).toBe(entity.sessionId);
+        expect(model.credentialAccountId).toBe(entity.credentialAccountId);
+        expect(model.archivedAt).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a CredentialSessionModel with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then it returns a Partial entity with id and FK fields', () => {
+        const entity = buildCredentialSessionEntity();
+        const model = CredentialSessionMapper.toDomain(entity);
+        const result = CredentialSessionMapper.toEntity(model, entity.sessionId);
+
+        expect(result.id).toBe(entity.id);
+        expect(result.sessionId).toBe(entity.sessionId);
+        expect(result.credentialAccountId).toBe(entity.credentialAccountId);
+      });
+    });
+  });
+
+  describe('Given a CredentialSessionModel without an id (new record)', () => {
+    describe('When toEntity is called', () => {
+      it('Then the id field is omitted from the result', () => {
+        const entity = buildCredentialSessionEntity();
+        const model = CredentialSessionMapper.toDomain(entity);
+        Object.defineProperty(model, 'id', { get: () => undefined });
+
+        const result = CredentialSessionMapper.toEntity(model, entity.sessionId);
+        expect(result.id).toBeUndefined();
+      });
+    });
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe('SocialSessionMapper', () => {
+  describe('Given a SocialSessionEntity', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a SocialSessionModel with all fields mapped', () => {
+        const entity = buildSocialSessionEntity();
+        const model = SocialSessionMapper.toDomain(entity);
+
+        expect(model).toBeInstanceOf(SocialSessionModel);
+        expect(model.id).toBe(entity.id);
+        expect(model.uuid).toBe(entity.uuid);
+        expect(model.sessionId).toBe(entity.sessionId);
+        expect(model.socialAccountId).toBe(entity.socialAccountId);
+        expect(model.provider).toBe(entity.provider);
+        expect(model.archivedAt).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a SocialSessionModel with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then it returns a Partial entity with id and FK fields', () => {
+        const entity = buildSocialSessionEntity();
+        const model = SocialSessionMapper.toDomain(entity);
+        const result = SocialSessionMapper.toEntity(model, entity.sessionId);
+
+        expect(result.id).toBe(entity.id);
+        expect(result.sessionId).toBe(entity.sessionId);
+        expect(result.socialAccountId).toBe(entity.socialAccountId);
+        expect(result.provider).toBe(entity.provider);
+      });
+    });
+  });
+
+  describe('Given a SocialSessionModel without an id (new record)', () => {
+    describe('When toEntity is called', () => {
+      it('Then the id field is omitted from the result', () => {
+        const entity = buildSocialSessionEntity();
+        const model = SocialSessionMapper.toDomain(entity);
+        Object.defineProperty(model, 'id', { get: () => undefined });
+
+        const result = SocialSessionMapper.toEntity(model, entity.sessionId);
         expect(result.id).toBeUndefined();
       });
     });
