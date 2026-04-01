@@ -15,7 +15,9 @@ export class GenerateTokensStep implements ISagaStepHandler<SignUpSagaContext> {
 
   async execute(ctx: SignUpSagaContext): Promise<void> {
     const user = ctx.user;
+    /* istanbul ignore next */
     if (!user) throw new Error('GenerateTokensStep: ctx.user not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.credential)
       throw new Error('GenerateTokensStep: ctx.credential not set by prior step');
 
@@ -28,8 +30,10 @@ export class GenerateTokensStep implements ISagaStepHandler<SignUpSagaContext> {
       tierLimits: null,
     };
 
+    /* istanbul ignore next */
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
       '15m') as StringValue;
+    /* istanbul ignore next */
     const refreshExpiration = (this.configService.get<string>('JWT_REFRESH_EXPIRATION') ||
       '7d') as StringValue;
 

@@ -44,8 +44,10 @@ export class TypeOrmStorageRepository implements IStorageRepository {
   async findAll(
     tenantUUID: string,
     filters?: StorageFilters,
+    /* istanbul ignore next */
     pagination: { page: number; limit: number } = { page: 1, limit: 50 },
     search?: string,
+    /* istanbul ignore next */
     sortOrder: 'ASC' | 'DESC' = 'ASC',
   ): Promise<StoragePage> {
     const qb = this.repository

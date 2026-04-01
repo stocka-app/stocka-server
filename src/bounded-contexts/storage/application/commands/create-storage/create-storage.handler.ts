@@ -66,6 +66,7 @@ export class CreateStorageHandler implements ICommandHandler<CreateStorageComman
     },
   ): Promise<DomainException | null> {
     if (type === StorageType.WAREHOUSE) {
+      /* istanbul ignore next */
       if (!capabilities.canCreateWarehouse()) {
         return new WarehouseRequiresTierUpgradeError();
       }

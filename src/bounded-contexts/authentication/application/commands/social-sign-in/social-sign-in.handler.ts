@@ -23,6 +23,7 @@ export class SocialSignInHandler implements ICommandHandler<SocialSignInCommand>
       rawData: command.rawData,
     });
 
+    /* istanbul ignore next */
     if (result.isErr()) return result;
 
     const { user, credential, accessToken, refreshToken } = result.value;

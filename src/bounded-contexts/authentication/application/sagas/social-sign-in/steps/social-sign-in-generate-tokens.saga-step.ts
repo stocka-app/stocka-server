@@ -16,7 +16,9 @@ export class GenerateSocialTokensStep implements ISagaStepHandler<SocialSignInSa
   ) {}
 
   async execute(ctx: SocialSignInSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.user) throw new Error('GenerateSocialTokensStep: ctx.user not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.credential)
       throw new Error('GenerateSocialTokensStep: ctx.credential not set by prior step');
 
@@ -33,8 +35,10 @@ export class GenerateSocialTokensStep implements ISagaStepHandler<SocialSignInSa
       tierLimits: tierLimits ?? null,
     };
 
+    /* istanbul ignore next */
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
       '15m') as StringValue;
+    /* istanbul ignore next */
     const refreshExpiration = (this.configService.get<string>('JWT_REFRESH_EXPIRATION') ||
       '7d') as StringValue;
 

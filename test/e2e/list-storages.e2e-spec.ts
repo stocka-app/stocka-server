@@ -206,6 +206,25 @@ describe('List Storages — GET /api/storages (e2e)', () => {
     });
   });
 
+  // ── E2E-L2b: status=ARCHIVED → only archived storages ───────────────────
+
+  describe('Given a tenant with one archived custom room', () => {
+    describe('When GET /api/storages?status=ARCHIVED is called', () => {
+      it('Then it returns only the archived custom room', async () => {
+        const res = await request(app.getHttpServer())
+          .get('/api/storages?status=ARCHIVED')
+          .set('Authorization', `Bearer ${ownerAToken}`);
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.items).toHaveLength(1);
+        expect(res.body.total).toBe(1);
+        expect(res.body.items[0].uuid).toBe(customRoomUUID);
+        expect(res.body.items[0].type).toBe('CUSTOM_ROOM');
+        expect(res.body.items[0].archivedAt).not.toBeNull();
+      });
+    });
+  });
+
   // ── E2E-L3: status=ACTIVE&type=WAREHOUSE → only active warehouses ────────
 
   describe('Given a tenant with an active warehouse and an archived custom room', () => {

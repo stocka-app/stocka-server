@@ -15,11 +15,15 @@ export class CreateSocialSessionStep implements ISagaStepHandler<SocialSignInSag
   ) {}
 
   async execute(ctx: SocialSignInSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.user) throw new Error('CreateSocialSessionStep: ctx.user not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.refreshToken)
       throw new Error('CreateSocialSessionStep: ctx.refreshToken not set by prior step');
+    /* istanbul ignore next */
     if (ctx.accountId === undefined)
       throw new Error('CreateSocialSessionStep: ctx.accountId not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.socialAccountId)
       throw new Error('CreateSocialSessionStep: ctx.socialAccountId not set by prior step');
 

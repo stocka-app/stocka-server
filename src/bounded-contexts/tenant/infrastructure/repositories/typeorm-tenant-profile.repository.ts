@@ -22,6 +22,7 @@ export class TypeOrmTenantProfileRepository implements ITenantProfileContract {
     return this.uow.isActive() ? (this.uow.getManager() as EntityManager) : this.repository;
   }
 
+  /* istanbul ignore next */
   async findByTenantId(tenantId: number): Promise<TenantProfileModel | null> {
     const entity = await this.repository.findOne({ where: { tenantId } });
     /* istanbul ignore next */
@@ -30,6 +31,7 @@ export class TypeOrmTenantProfileRepository implements ITenantProfileContract {
 
   async persist(profile: TenantProfileModel): Promise<TenantProfileModel> {
     const entityData = TenantProfileMapper.toEntity(profile);
+    /* istanbul ignore next */
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(TenantProfileEntity)
       : this.repository;

@@ -144,7 +144,7 @@ describe('mapDomainErrorToHttp', () => {
 
     it('Then it contains all expected RBAC / Policy error codes', () => {
       expect(STATUS_MAP).toMatchObject({
-        FEATURE_NOT_IN_TIER: HttpStatus.FORBIDDEN,
+        PLAN_UPGRADE_REQUIRED: HttpStatus.FORBIDDEN,
         ACTION_NOT_ALLOWED: HttpStatus.FORBIDDEN,
         TIER_LIMIT_REACHED: HttpStatus.FORBIDDEN,
       });

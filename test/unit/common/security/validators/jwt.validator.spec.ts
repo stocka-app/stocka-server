@@ -36,14 +36,14 @@ describe('JwtValidator', () => {
 
   describe('Given a request with no Authorization header', () => {
     describe('When the validator runs', () => {
-      it('Then it throws UnauthorizedException with MISSING_TOKEN', () => {
+      it('Then it throws UnauthorizedException with NOT_AUTHENTICATED', () => {
         const ctx = buildExecutionContext();
 
         expect(() => validator.validate(ctx)).toThrow(UnauthorizedException);
         try {
           validator.validate(ctx);
         } catch (e) {
-          expect((e as UnauthorizedException).getResponse()).toEqual({ error: 'MISSING_TOKEN' });
+          expect((e as UnauthorizedException).getResponse()).toEqual({ error: 'NOT_AUTHENTICATED' });
         }
       });
     });

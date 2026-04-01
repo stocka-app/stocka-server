@@ -8,6 +8,7 @@ export class RegisterUserStep implements ISagaStepHandler<SignUpSagaContext> {
   constructor(private readonly mediator: MediatorService) {}
 
   async execute(ctx: SignUpSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.passwordHash)
       throw new Error('RegisterUserStep: ctx.passwordHash not set by prior step');
 

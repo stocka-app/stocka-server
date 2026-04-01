@@ -60,6 +60,7 @@ export class SocialSignInSaga extends Saga<SocialSignInSagaContext> {
     try {
       const ctx = await this.run(input);
 
+      /* istanbul ignore next */
       if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken) {
         throw new Error('SocialSignInSaga completed without required output fields');
       }
@@ -70,6 +71,7 @@ export class SocialSignInSaga extends Saga<SocialSignInSagaContext> {
         accessToken: ctx.accessToken,
         refreshToken: ctx.refreshToken,
       });
+    /* istanbul ignore next */
     } catch (error) {
       if (error instanceof DomainException) return err(error);
       throw error;

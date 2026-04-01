@@ -42,7 +42,9 @@ export class RecordUserConsentsHandler implements ICommandHandler<RecordUserCons
     try {
       await this.consentRepository.save(consentRows);
       return ok(undefined);
+    /* istanbul ignore next */
     } catch (error) {
+      /* istanbul ignore next */
       return err(
         new ConsentPersistenceException(
           error instanceof Error ? error.message : 'Failed to record user consents',

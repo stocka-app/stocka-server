@@ -12,6 +12,7 @@ export class ArchiveOldSessionStep implements ISagaStepHandler<RefreshSessionSag
   ) {}
 
   async execute(ctx: RefreshSessionSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.oldSessionUUID)
       throw new Error('ArchiveOldSessionStep: ctx.oldSessionUUID not set by prior step');
 

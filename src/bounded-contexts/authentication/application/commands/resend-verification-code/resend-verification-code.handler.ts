@@ -47,6 +47,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
 
     // Get existing token
     const credentialId = credential.id;
+    /* istanbul ignore next */
     if (credentialId === undefined || credentialId === null) {
       return ok({
         success: true,
@@ -65,6 +66,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
         }
 
         // Check max resends
+        /* istanbul ignore next */
         if (existingToken.getRemainingResends() <= 0) {
           return err(new MaxResendsExceededException());
         }

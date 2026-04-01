@@ -11,6 +11,6 @@ import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module'
 @Module({
   imports: [JwtModule.register({}), DiscoveryModule, AuthorizationModule, MediatorModule],
   providers: [SecurityGuard, JwtValidator, TenantAccessValidator, SecurityBootstrapValidator],
-  exports: [SecurityGuard],
+  exports: [SecurityGuard, JwtValidator, TenantAccessValidator],
 })
 export class SecurityModule {}

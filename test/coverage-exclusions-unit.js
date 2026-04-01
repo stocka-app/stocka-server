@@ -61,19 +61,35 @@ module.exports = [
   // Covered by E2E specs (sign-up, sign-in, onboarding, storage-crud, etc.).
   // NOTE: OAuth controllers already excluded above under EXTERNAL.
   // NOTE: health.controller has a unit test — excluded from this glob via path.
+  // EXCEPT: controllers with unit tests (ResendVerificationCode, GetMe, RefreshSession,
+  //         SaveOnboardingStep, GetMyPermissions, GetAssignableRoles, GetTenantCapabilities)
   '!src/**/infrastructure/controllers/**/*.controller.ts',
   '!src/**/infrastructure/http/controllers/**/*.controller.ts',
+  // Re-include controllers with unit test coverage
+  'src/bounded-contexts/authentication/infrastructure/controllers/resend-verification-code/resend-verification-code.controller.ts',
+  'src/bounded-contexts/authentication/infrastructure/controllers/refresh-session/refresh-session.controller.ts',
+  'src/bounded-contexts/user/infrastructure/controllers/get-me/get-me.controller.ts',
+  'src/bounded-contexts/onboarding/infrastructure/http/controllers/save-onboarding-step/save-onboarding-step.controller.ts',
+  'src/bounded-contexts/authorization/infrastructure/http/controllers/get-my-permissions/get-my-permissions.controller.ts',
+  'src/bounded-contexts/authorization/infrastructure/http/controllers/get-assignable-roles/get-assignable-roles.controller.ts',
+  'src/bounded-contexts/tenant/infrastructure/http/controllers/get-tenant-capabilities/get-tenant-capabilities.controller.ts',
 
   // ── E2E-ONLY: Infrastructure repositories (TypeORM persistence) ──────────
   // These ARE the contract implementations — TypeORM queries against real DB.
   // Covered by E2E infra-repository spec + feature E2E specs.
   '!src/**/infrastructure/repositories/**',
   '!src/**/infrastructure/persistence/repositories/**',
+  // Re-include repositories with unit test coverage
+  'src/bounded-contexts/authorization/infrastructure/persistence/repositories/typeorm-tier-data-provider.ts',
+  'src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
 
   // ── E2E-ONLY: Application facades (cross-BC orchestration via contracts) ──
   // Facades inject contracts backed by TypeORM repos; need real DB.
   // onboarding.facade, tenant.facade — exercised by onboarding + tenant E2E.
   '!src/**/application/facades/**',
+  // Re-include facades with unit test coverage
+  'src/bounded-contexts/tenant/application/facades/tenant.facade.ts',
+  'src/bounded-contexts/user/infrastructure/facade/user.facade.ts',
 
   // ── E2E-ONLY: Application sagas + saga steps (multi-step DB workflows) ────
   // Sagas orchestrate repos, contracts, EventPublisher — need full DI + DB.
@@ -87,6 +103,19 @@ module.exports = [
   // Covered by feature-level E2E specs (sign-up, storage-crud, invitation, etc.).
   '!src/**/application/commands/**/*.handler.ts',
   '!src/**/application/queries/**/*.handler.ts',
+  // Re-include handlers with unit test coverage
+  'src/bounded-contexts/authentication/application/commands/verify-email/verify-email.handler.ts',
+  'src/bounded-contexts/authentication/application/commands/forgot-password/forgot-password.handler.ts',
+  'src/bounded-contexts/authentication/application/commands/social-sign-in/social-sign-in.handler.ts',
+  'src/bounded-contexts/authentication/application/commands/resend-verification-code/resend-verification-code.handler.ts',
+  'src/bounded-contexts/tenant/application/commands/create-tenant/create-tenant.handler.ts',
+  'src/bounded-contexts/tenant/application/commands/accept-invitation/accept-invitation.handler.ts',
+  'src/bounded-contexts/tenant/application/commands/cancel-invitation/cancel-invitation.handler.ts',
+  'src/bounded-contexts/tenant/application/commands/invite-member/invite-member.handler.ts',
+  'src/bounded-contexts/tenant/application/queries/get-my-tenant/get-my-tenant.handler.ts',
+  'src/bounded-contexts/tenant/application/queries/get-tenant-members/get-tenant-members.handler.ts',
+  'src/bounded-contexts/user/application/commands/record-user-consents/record-user-consents.handler.ts',
+  'src/bounded-contexts/onboarding/application/commands/complete-onboarding/complete-onboarding.handler.ts',
 
   // ── CQRS DTOs (command/query classes — pure data carriers, no logic) ─────
   '!src/**/application/commands/**/*.command.ts',
@@ -94,6 +123,8 @@ module.exports = [
 
   // ── E2E-ONLY: Infrastructure adapters (raw SQL / DataSource) ─────────────
   '!src/**/infrastructure/adapters/**',
+  // Re-include validators with unit test coverage
+  'src/bounded-contexts/authorization/infrastructure/validators/rbac.validator.ts',
 
   // ── E2E-ONLY: Infrastructure facades (inject contracts backed by repos) ──
   '!src/**/infrastructure/facade/**',
@@ -106,8 +137,10 @@ module.exports = [
 
   // ── E2E-ONLY: Capability service (injects TierDataProvider + RbacPolicyPort) ─
   // Both ports are backed by TypeORM repos; needs real DB to resolve capabilities.
-  // Covered by get-tenant-capabilities E2E spec.
+  // Covered by get-tenant-capabilities E2E spec AND unit tests.
   '!src/bounded-contexts/authorization/infrastructure/services/capability.service.ts',
+  // Re-include: unit tests cover all branches
+  'src/bounded-contexts/authorization/infrastructure/services/capability.service.ts',
 
   // ── WIRED BUT NOT YET EXERCISED (future features with active imports) ────
   // commercial-profile model/mapper: imported by profile.contract + typeorm-profile.repository

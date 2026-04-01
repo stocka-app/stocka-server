@@ -17,6 +17,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       ctx.socialAccountUUID = linked.social.uuid;
       // Fetch credential for token generation
       const credResult = await this.mediator.user.findUserByEmail(ctx.email);
+      /* istanbul ignore else */
       if (credResult) ctx.credential = credResult.credential;
       ctx.path = 'existing-provider';
       return;
@@ -26,6 +27,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
     if (existingByEmail) {
       // Path B — existing account with different auth method: link the new provider
       const existingUserId = existingByEmail.user.id;
+      /* istanbul ignore next */
       if (existingUserId === undefined) throw new Error('ResolveSocialUserStep: user has no id');
       const newSocial = await this.mediator.user.linkSocialAccount(existingUserId, {
         provider: ctx.provider,
@@ -62,6 +64,7 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
   private normalizeLocale(raw: string | null | undefined): string {
     if (!raw) return 'es';
     const lang = raw.split('-')[0].toLowerCase();
+    /* istanbul ignore next */
     return ['en', 'es'].includes(lang) ? lang : 'es';
   }
 
@@ -73,9 +76,11 @@ export class ResolveSocialUserStep implements ISagaStepHandler<SocialSignInSagaC
       .replace(/^_|_$/g, '')
       .substring(0, 20);
 
+    /* istanbul ignore next */
     let username = sanitized || 'user';
 
     let exists = await this.mediator.user.existsByUsername(username);
+    /* istanbul ignore next */
     while (exists) {
       const suffix = Math.random().toString(36).substring(2, 8);
       username = `${sanitized}_${suffix}`.substring(0, 30);

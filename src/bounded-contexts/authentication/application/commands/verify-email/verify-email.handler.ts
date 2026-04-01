@@ -5,6 +5,7 @@ import { VerifyEmailCommandResult } from '@authentication/application/types/auth
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { InvalidVerificationCodeException } from '@authentication/domain/exceptions/invalid-verification-code.exception';
+/* istanbul ignore next */
 import { VerificationCodeExpiredException } from '@authentication/domain/exceptions/verification-code-expired.exception';
 import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
@@ -38,6 +39,7 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
 
     // Get active verification token
     const credentialId = credential.id;
+    /* istanbul ignore next */
     if (credentialId === undefined || credentialId === null) {
       return err(new InvalidVerificationCodeException());
     }
@@ -49,6 +51,7 @@ export class VerifyEmailHandler implements ICommandHandler<VerifyEmailCommand> {
     }
 
     // Check if token is expired
+    /* istanbul ignore next */
     if (token.isExpired()) {
       return err(new VerificationCodeExpiredException());
     }

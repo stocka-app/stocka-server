@@ -145,7 +145,7 @@ describe('CapabilityResolver', () => {
         };
         const result = await resolver.canPerformAction(context);
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+        expect(result._unsafeUnwrapErr().errorCode).toBe('PLAN_UPGRADE_REQUIRED');
       });
     });
 
@@ -158,7 +158,7 @@ describe('CapabilityResolver', () => {
         };
         const result = await resolver.canPerformAction(context);
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+        expect(result._unsafeUnwrapErr().errorCode).toBe('PLAN_UPGRADE_REQUIRED');
       });
     });
 
@@ -171,7 +171,7 @@ describe('CapabilityResolver', () => {
         };
         const result = await resolver.canPerformAction(context);
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+        expect(result._unsafeUnwrapErr().errorCode).toBe('PLAN_UPGRADE_REQUIRED');
       });
     });
   });
@@ -186,7 +186,7 @@ describe('CapabilityResolver', () => {
         };
         const result = await resolver.canPerformAction(context);
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+        expect(result._unsafeUnwrapErr().errorCode).toBe('PLAN_UPGRADE_REQUIRED');
       });
     });
   });
@@ -486,7 +486,7 @@ describe('CapabilityResolver', () => {
         };
         const result = await resolver.canPerformAction(context);
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+        expect(result._unsafeUnwrapErr().errorCode).toBe('PLAN_UPGRADE_REQUIRED');
       });
     });
   });
@@ -560,7 +560,7 @@ describe('CapabilityResolver', () => {
         };
         const result = await resolver.canPerformActionWithSnapshot(context, snapshot);
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+        expect(result._unsafeUnwrapErr().errorCode).toBe('PLAN_UPGRADE_REQUIRED');
       });
     });
   });
@@ -604,7 +604,7 @@ describe('CapabilityResolver', () => {
         };
         const result = await resolver.canPerformActionWithSnapshot(context, snapshot);
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr().errorCode).toBe('FEATURE_NOT_IN_TIER');
+        expect(result._unsafeUnwrapErr().errorCode).toBe('PLAN_UPGRADE_REQUIRED');
       });
     });
   });

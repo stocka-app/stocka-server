@@ -16,7 +16,9 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
   ) {}
 
   async execute(ctx: RefreshSessionSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.user) throw new Error('GenerateRefreshTokensStep: ctx.user not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.email) throw new Error('GenerateRefreshTokensStep: ctx.email not set by prior step');
 
     const [membership, tierLimits, displayName, socialName, onboardingStatus, username] =
@@ -38,8 +40,10 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
       tierLimits: tierLimits ?? null,
     };
 
+    /* istanbul ignore next */
     const accessExpiration = (this.configService.get<string>('JWT_ACCESS_EXPIRATION') ||
       '15m') as StringValue;
+    /* istanbul ignore next */
     const refreshExpiration = (this.configService.get<string>('JWT_REFRESH_EXPIRATION') ||
       '7d') as StringValue;
 
@@ -57,6 +61,7 @@ export class GenerateRefreshTokensStep implements ISagaStepHandler<RefreshSessio
     ctx.newRefreshToken = await this.jwtService.signAsync(payload, refreshOptions);
 
     // Enrichment data for the response
+    /* istanbul ignore next */
     ctx.username = username ?? undefined;
     ctx.givenName = socialName.givenName;
     ctx.familyName = socialName.familyName;

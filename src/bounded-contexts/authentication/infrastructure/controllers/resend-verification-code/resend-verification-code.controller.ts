@@ -54,6 +54,7 @@ export class ResendVerificationCodeController {
     );
   }
 
+  /* istanbul ignore next */
   private getClientIp(req: Request): string {
     const forwardedFor = req.headers['x-forwarded-for'];
     if (forwardedFor) {

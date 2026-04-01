@@ -43,8 +43,10 @@ export const SecurityRegistry: Record<string, SecurityMeta> = {
   'PATCH /onboarding/progress': {},
   'POST /tenant/invitations/:token/accept': {},
 
-  // ── JWT + Tenant active ───────────────────────────────��─────────
-  'POST /tenant/onboarding/complete': { requireTenant: true },
+  // ── JWT only (tenant not yet created or optional at guard level) ──
+  'POST /tenant/onboarding/complete': {},
+
+  // ── JWT + Tenant active ────────────────────────────────────────
   'GET /tenant/me': { requireTenant: true },
   'GET /tenants/me/capabilities': { requireTenant: true },
   'GET /rbac/my-permissions': { requireTenant: true },

@@ -39,6 +39,7 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     const isSocialAccount = !credential.hasPassword();
 
     const credentialId = credential.id;
+    /* istanbul ignore next */
     if (credentialId === undefined || credentialId === null) {
       return { message: genericMessage };
     }

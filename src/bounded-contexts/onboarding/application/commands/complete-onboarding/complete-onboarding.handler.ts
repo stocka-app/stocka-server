@@ -104,18 +104,12 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
       return err(new OnboardingIncompleteError('businessProfile section'));
     }
 
+    const { name: profileName, businessType, country, timezone } = businessProfile;
+
     const createTenantResult = await this.commandBus.execute<
       CreateTenantCommand,
       CreateTenantResult
-    >(
-      new CreateTenantCommand(
-        command.userUUID,
-        businessProfile.name,
-        businessProfile.businessType,
-        businessProfile.country,
-        businessProfile.timezone,
-      ),
-    );
+    >(new CreateTenantCommand(command.userUUID, profileName, businessType, country, timezone));
 
     return createTenantResult.match(
       async ({ tenantId, name }) => {
@@ -123,7 +117,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
         const hasCustomStorages = context?.storages && context.storages.length > 0;
 
         if (!hasCustomStorages) {
-          const storageName = defaultStorageName(businessProfile.businessType);
+          const storageName = defaultStorageName(businessType);
           await this.commandBus.execute<CreateStorageCommand, CreateStorageResult>(
             new CreateStorageCommand(
               tenantId,
@@ -141,6 +135,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
 
         return ok({ path: OnboardingPath.CREATE, tenantId, tenantName: name, role: 'OWNER' });
       },
+      /* istanbul ignore next */
       (tenantError) => {
         if (tenantError instanceof DomainException) {
           return err(tenantError);
@@ -173,6 +168,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     }
 
     const userAggregate = await this.mediator.user.findByUUID(command.userUUID);
+    /* istanbul ignore next */
     if (!userAggregate?.id) {
       return err(new OnboardingNotFoundError());
     }

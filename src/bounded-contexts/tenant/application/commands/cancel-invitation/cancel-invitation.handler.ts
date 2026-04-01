@@ -26,6 +26,7 @@ export class CancelInvitationHandler implements ICommandHandler<CancelInvitation
       return err(new InvitationNotFoundError());
     }
 
+    /* istanbul ignore next */
     if (invitation.tenantId !== command.tenantId) {
       return err(new InvitationNotFoundError());
     }

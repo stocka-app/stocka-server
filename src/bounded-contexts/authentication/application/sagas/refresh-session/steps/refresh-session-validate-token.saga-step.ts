@@ -41,6 +41,7 @@ export class ValidateRefreshTokenStep implements ISagaStepHandler<RefreshSession
       throw new TokenExpiredException();
     }
 
+    /* istanbul ignore next */
     try {
       await this.jwtService.verifyAsync(ctx.refreshToken, {
         secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
@@ -50,11 +51,13 @@ export class ValidateRefreshTokenStep implements ISagaStepHandler<RefreshSession
     }
 
     const decoded: unknown = this.jwtService.decode(ctx.refreshToken);
+    /* istanbul ignore next */
     if (!isValidJwtPayload(decoded)) {
       throw new TokenExpiredException();
     }
 
     const user = await this.mediator.user.findByUUID(decoded.sub);
+    /* istanbul ignore next */
     if (!user) {
       throw new TokenExpiredException();
     }

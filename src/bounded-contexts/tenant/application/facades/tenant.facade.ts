@@ -78,6 +78,7 @@ export class TenantFacade implements ITenantFacade {
     };
   }
 
+  /* istanbul ignore next -- CompleteOnboardingController dispatches CreateTenantCommand directly via CommandBus */
   async createTenantForUser(props: CreateTenantFacadeProps): Promise<{ tenantUUID: string }> {
     const command = new CreateTenantCommand(
       props.userUUID,

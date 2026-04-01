@@ -12,6 +12,7 @@ export class MarkTokenUsedStep implements ISagaStepHandler<ResetPasswordSagaCont
   ) {}
 
   async execute(ctx: ResetPasswordSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.resetToken) throw new Error('MarkTokenUsedStep: ctx.resetToken not set by prior step');
 
     ctx.resetToken.markAsUsed();

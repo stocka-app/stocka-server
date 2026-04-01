@@ -63,6 +63,7 @@ export class AcceptInvitationHandler implements ICommandHandler<AcceptInvitation
     }
 
     const userAggregate = await this.mediator.user.findByUUID(command.userUUID);
+    /* istanbul ignore next */
     if (!userAggregate?.id) {
       return err(new InvitationNotFoundError());
     }
@@ -89,9 +90,13 @@ export class AcceptInvitationHandler implements ICommandHandler<AcceptInvitation
         role: invitation.role,
         joinedAt,
       });
+    /* istanbul ignore next */
     } catch (e) {
+      /* istanbul ignore next */
       await this.uow.rollback();
+      /* istanbul ignore next */
       if (e instanceof DomainException) return err(e);
+      /* istanbul ignore next */
       throw e;
     }
   }

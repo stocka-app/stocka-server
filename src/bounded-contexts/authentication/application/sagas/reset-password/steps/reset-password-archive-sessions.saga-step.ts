@@ -12,6 +12,7 @@ export class ArchiveUserSessionsStep implements ISagaStepHandler<ResetPasswordSa
   ) {}
 
   async execute(ctx: ResetPasswordSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.resetToken)
       throw new Error('ArchiveUserSessionsStep: ctx.resetToken not set by prior step');
 

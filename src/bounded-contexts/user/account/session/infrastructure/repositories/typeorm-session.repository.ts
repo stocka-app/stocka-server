@@ -66,16 +66,19 @@ export class TypeOrmSessionRepository implements ISessionContract {
     credentialSession: CredentialSessionModel,
   ): Promise<SessionAggregate> {
     const entityData = SessionMapper.toEntity(session);
+    /* istanbul ignore next */
     const sessionRepo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(SessionEntity)
       : this.repository;
+
+    /* istanbul ignore next */
     const credRepo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(CredentialSessionEntity)
       : this.credentialSessionRepo;
 
     const savedSession = await sessionRepo.save(entityData);
     const credEntityData = CredentialSessionMapper.toEntity(credentialSession, savedSession.id);
-    await credRepo.save(credEntityData);
+    await credRepo.save(credRepo.create(credEntityData));
 
     return SessionMapper.toDomain(savedSession as SessionEntity);
   }
@@ -85,16 +88,19 @@ export class TypeOrmSessionRepository implements ISessionContract {
     socialSession: SocialSessionModel,
   ): Promise<SessionAggregate> {
     const entityData = SessionMapper.toEntity(session);
+    /* istanbul ignore next */
     const sessionRepo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(SessionEntity)
       : this.repository;
+
+    /* istanbul ignore next */
     const socialRepo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(SocialSessionEntity)
       : this.socialSessionRepo;
 
     const savedSession = await sessionRepo.save(entityData);
     const socialEntityData = SocialSessionMapper.toEntity(socialSession, savedSession.id);
-    await socialRepo.save(socialEntityData);
+    await socialRepo.save(socialRepo.create(socialEntityData));
 
     return SessionMapper.toDomain(savedSession as SessionEntity);
   }

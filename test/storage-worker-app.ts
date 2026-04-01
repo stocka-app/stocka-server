@@ -11,6 +11,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import cookieParser from 'cookie-parser';
 
+import { APP_GUARD } from '@nestjs/core';
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
 import { TenantModule } from '@tenant/tenant.module';
@@ -19,6 +20,8 @@ import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.m
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
 import { EmailModule } from '@shared/infrastructure/email/email.module';
 import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
+import { SecurityModule } from '@common/security/security.module';
+import { SecurityGuard } from '@common/security/security.guard';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
 import databaseConfig from '@core/config/database/database.config';
 import { validate } from '@core/config/environment/env.validation';
@@ -104,7 +107,14 @@ async function bootstrap(): Promise<StorageWorkerApp> {
       TenantModule,
       StorageModule,
       AuthorizationModule,
+      SecurityModule,
       MediatorModule,
+    ],
+    providers: [
+      {
+        provide: APP_GUARD,
+        useClass: SecurityGuard,
+      },
     ],
   })
     .overrideProvider(INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT)

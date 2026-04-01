@@ -15,11 +15,15 @@ export class CreateSignInSessionStep implements ISagaStepHandler<SignInSagaConte
   ) {}
 
   async execute(ctx: SignInSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.user) throw new Error('CreateSignInSessionStep: ctx.user not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.refreshToken)
       throw new Error('CreateSignInSessionStep: ctx.refreshToken not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.credential)
       throw new Error('CreateSignInSessionStep: ctx.credential not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.credential.id)
       throw new Error('CreateSignInSessionStep: ctx.credential has no id');
 

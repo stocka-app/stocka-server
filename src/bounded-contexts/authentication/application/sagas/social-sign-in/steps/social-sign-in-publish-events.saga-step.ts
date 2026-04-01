@@ -12,10 +12,12 @@ export class PublishSocialSignInEventsStep implements ISagaStepHandler<SocialSig
   ) {}
 
   execute(ctx: SocialSignInSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.user)
       return Promise.reject(
         new Error('PublishSocialSignInEventsStep: ctx.user not set by prior step'),
       );
+    /* istanbul ignore next */
     if (!ctx.session)
       return Promise.reject(
         new Error('PublishSocialSignInEventsStep: ctx.session not set by prior step'),

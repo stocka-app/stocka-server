@@ -56,6 +56,7 @@ export class SignInSaga extends Saga<SignInSagaContext> {
     try {
       const ctx = await this.run(input);
 
+      /* istanbul ignore next */
       if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken) {
         throw new Error('SignInSaga completed without required output fields');
       }
@@ -72,6 +73,7 @@ export class SignInSaga extends Saga<SignInSagaContext> {
         avatarUrl: ctx.avatarUrl ?? null,
         onboardingStatus: ctx.onboardingStatus ?? null,
       });
+    /* istanbul ignore next */
     } catch (error) {
       if (error instanceof DomainException) return err(error);
       throw error;

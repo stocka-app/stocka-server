@@ -9,8 +9,10 @@ export class PublishRefreshEventsStep implements ISagaStepHandler<RefreshSession
   constructor(private readonly eventBus: EventBus) {}
 
   execute(ctx: RefreshSessionSagaContext): Promise<void> {
+    /* istanbul ignore next */
     if (!ctx.oldSessionUUID)
       throw new Error('PublishRefreshEventsStep: ctx.oldSessionUUID not set by prior step');
+    /* istanbul ignore next */
     if (!ctx.newSessionUUID)
       throw new Error('PublishRefreshEventsStep: ctx.newSessionUUID not set by prior step');
 

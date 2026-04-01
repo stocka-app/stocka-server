@@ -29,6 +29,7 @@ export class RefreshSessionController {
   ): Promise<RefreshSessionOutDto> {
     let token: string | undefined;
 
+    /* istanbul ignore else */
     if (req.cookies && typeof req.cookies === 'object') {
       token = (req.cookies as Record<string, unknown>)['refresh_token'] as string | undefined;
     } else {
