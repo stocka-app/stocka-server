@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ProfileEntity } from '@user/profile/infrastructure/entities/profile.entity';
 import { PersonalProfileEntity } from '@user/profile/infrastructure/entities/personal-profile.entity';
-import { CommercialProfileEntity } from '@user/profile/infrastructure/entities/commercial-profile.entity';
 import { SocialProfileEntity } from '@user/profile/infrastructure/entities/social-profile.entity';
 import { TypeOrmProfileRepository } from '@user/profile/infrastructure/repositories/typeorm-profile.repository';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -13,7 +12,6 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     TypeOrmModule.forFeature([
       ProfileEntity,
       PersonalProfileEntity,
-      CommercialProfileEntity,
       SocialProfileEntity,
     ]),
   ],

@@ -3,7 +3,6 @@ import { TypeOrmModuleAsyncOptions } from '@nestjs/typeorm';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 import { ProfileEntity } from '@user/profile/infrastructure/entities/profile.entity';
 import { PersonalProfileEntity } from '@user/profile/infrastructure/entities/personal-profile.entity';
-import { CommercialProfileEntity } from '@user/profile/infrastructure/entities/commercial-profile.entity';
 import { SocialProfileEntity } from '@user/profile/infrastructure/entities/social-profile.entity';
 import { AccountEntity } from '@user/account/infrastructure/entities/account.entity';
 import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
@@ -43,7 +42,6 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       // User BC — Profile sub-aggregate
       ProfileEntity,
       PersonalProfileEntity,
-      CommercialProfileEntity,
       SocialProfileEntity,
       // User BC — Account sub-aggregate
       AccountEntity,
