@@ -263,7 +263,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
   // ══════════════════════════════════════════════════════════════════════════
 
   describe('Given POST /api/storages/store-rooms (STORAGE_CREATE action, STARTER tier threshold)', () => {
-    const validStorageBody = { name: 'Test Storage Room', icon: 'default-icon', color: '#AABBCC', address: '100 Test St' };
+    const validStorageBody = { name: 'Test Storage Room', address: '100 Test St' };
 
     describe('When the tenant is on FREE tier', () => {
       describe('When an OWNER tries to create a storage', () => {
@@ -418,7 +418,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
   });
 
   describe('Given POST /api/storages/store-rooms (STORAGE_CREATE) requires GROWTH tier', () => {
-    const validBody = { name: 'Growth-tier Storage', icon: 'default-icon', color: '#AABBCC', address: '100 Test St' };
+    const validBody = { name: 'Growth-tier Storage', address: '100 Test St' };
 
     beforeAll(async () => {
       // Seed: STORAGE_CREATE disabled on FREE and STARTER — requires GROWTH+

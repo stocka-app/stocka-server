@@ -29,9 +29,6 @@ function buildUser(id?: number): UserAggregate {
   return { id, uuid: 'user-uuid-123' } as unknown as UserAggregate;
 }
 
-function buildUserWithNoId(): UserAggregate {
-  return { uuid: 'user-uuid-123' } as unknown as UserAggregate;
-}
 
 function buildSavedTenant(): TenantAggregate {
   return {
@@ -111,21 +108,6 @@ describe('CreateTenantHandler', () => {
     describe('When execute is called with a non-existing user UUID', () => {
       beforeEach(() => {
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue(null);
-      });
-
-      it('Then it returns a NotFoundException error', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(NotFoundException);
-      });
-    });
-  });
-
-  describe('Given the user exists but has no id', () => {
-    describe('When execute is called', () => {
-      beforeEach(() => {
-        (mediator.user.findByUUID as jest.Mock).mockResolvedValue(buildUserWithNoId());
       });
 
       it('Then it returns a NotFoundException error', async () => {

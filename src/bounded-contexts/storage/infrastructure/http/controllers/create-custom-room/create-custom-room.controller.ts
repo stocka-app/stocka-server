@@ -28,11 +28,11 @@ export class CreateCustomRoomController {
         user.tenantId as string,
         dto.name,
         dto.roomType,
-        dto.icon,
-        dto.color,
         dto.address,
         dto.description,
         dto.parentUUID,
+        dto.icon,
+        dto.color,
       ),
     );
 

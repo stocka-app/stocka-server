@@ -84,7 +84,7 @@ async function createStorage(
   return request(app.getHttpServer())
     .post(STORAGE_ROUTES[type])
     .set('Authorization', `Bearer ${token}`)
-    .send({ icon: 'default-icon', color: '#AABBCC', address: '100 Test St', ...body });
+    .send({ address: '100 Test St', ...body });
 }
 
 async function getStorage(
@@ -120,14 +120,12 @@ describe('Storage BC — Sprint 2 Schema (sub-table fields)', () => {
   });
 
   describe('Given a tenant on STARTER tier', () => {
-    describe('When creating a WAREHOUSE with icon, color, and description', () => {
-      it('Then the warehouse fields are stored in the warehouses sub-table and returned', async () => {
+    describe('When creating a WAREHOUSE with a description', () => {
+      it('Then the warehouse is stored with its fixed icon and color, and description is persisted', async () => {
         const createRes = await createStorage(app, token, {
           type: 'WAREHOUSE',
           name: 'Schema Test WH',
           description: 'A warehouse for schema validation',
-          icon: 'warehouse-icon',
-          color: '#1A2B3C',
         });
 
         expect(createRes.status).toBe(HttpStatus.CREATED);
@@ -136,8 +134,8 @@ describe('Storage BC — Sprint 2 Schema (sub-table fields)', () => {
 
         const getRes = await getStorage(app, token, uuid);
         expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.icon).toBe('warehouse-icon');
-        expect(getRes.body.color).toBe('#1A2B3C');
+        expect(getRes.body.icon).toBe('warehouse');
+        expect(getRes.body.color).toBe('#3b82f6');
         expect(getRes.body.description).toBe('A warehouse for schema validation');
         expect(getRes.body.parentId).toBeNull();
       });

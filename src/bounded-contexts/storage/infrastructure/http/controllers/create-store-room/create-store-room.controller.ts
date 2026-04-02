@@ -27,8 +27,6 @@ export class CreateStoreRoomController {
       new CreateStoreRoomCommand(
         user.tenantId as string,
         dto.name,
-        dto.icon,
-        dto.color,
         dto.address,
         dto.description,
         dto.parentUUID,

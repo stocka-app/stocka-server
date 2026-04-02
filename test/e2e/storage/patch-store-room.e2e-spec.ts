@@ -88,7 +88,7 @@ async function createStorage(
   const res = await request(app.getHttpServer())
     .post(routes[type])
     .set('Authorization', `Bearer ${token}`)
-    .send({ icon: 'default-icon', color: '#AABBCC', address: '100 Test St', ...body });
+    .send({ address: '100 Test St', ...body });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
@@ -237,16 +237,15 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
     });
   });
 
-  describe('Given an active store-room and no name in the update payload', () => {
-    describe('When PATCH is called with only icon and color', () => {
-      it('Then it returns 200 and the name remains unchanged', async () => {
+  describe('Given an active store-room and a request body with non-whitelisted icon and color fields', () => {
+    describe('When PATCH is called with icon and color', () => {
+      it('Then it returns 400 because store-room icon and color are fixed and not updatable by the client', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/storages/store-rooms/${storeRoomUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({ icon: 'new-icon', color: '#112233' });
 
-        expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual({ storageUUID: storeRoomUUID });
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
       });
     });
   });

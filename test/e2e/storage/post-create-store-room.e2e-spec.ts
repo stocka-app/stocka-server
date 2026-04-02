@@ -77,7 +77,7 @@ async function createStoreRoom(
   const res = await request(app.getHttpServer())
     .post('/api/storages/store-rooms')
     .set('Authorization', `Bearer ${token}`)
-    .send({ name, icon: 'default-icon', color: '#AABBCC', address: '100 Test St' });
+    .send({ name, address: '100 Test St' });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
@@ -122,7 +122,7 @@ describe('POST /api/storages/store-rooms (e2e)', () => {
         const res = await request(app.getHttpServer())
           .post('/api/storages/store-rooms')
           .set('Authorization', `Bearer ${starterToken}`)
-          .send({ name: 'Store Room Over Limit', icon: 'icon', color: '#AABBCC', address: '100 St' });
+          .send({ name: 'Store Room Over Limit', address: '100 St' });
 
         expect(res.status).toBe(HttpStatus.FORBIDDEN);
       });
@@ -152,8 +152,6 @@ describe('POST /api/storages/store-rooms (e2e)', () => {
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({
             name: 'PostCreateStoreRoom Existing Storage',
-            icon: 'icon',
-            color: '#AABBCC',
             address: '100 St',
           });
 

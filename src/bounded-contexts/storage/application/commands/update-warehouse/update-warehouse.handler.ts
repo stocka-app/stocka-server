@@ -42,8 +42,6 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
     storage.updateWarehouse({
       name: command.name,
       description: command.description,
-      icon: command.icon,
-      color: command.color,
       address: command.address,
     });
 

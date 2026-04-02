@@ -42,8 +42,6 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
     storage.updateStoreRoom({
       name: command.name,
       description: command.description,
-      icon: command.icon,
-      color: command.color,
       address: command.address,
     });
 

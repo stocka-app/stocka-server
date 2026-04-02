@@ -22,17 +22,6 @@ export class CreateCustomRoomInDto {
   @MaxLength(50)
   roomType!: string;
 
-  @ApiProperty({ description: 'Icon identifier', maxLength: 100 })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  icon!: string;
-
-  @ApiProperty({ description: 'Color hex code', example: '#FF5733' })
-  @IsString()
-  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'color must be a valid hex color (e.g. #FF5733)' })
-  color!: string;
-
   @ApiProperty({ description: 'Address', maxLength: 200 })
   @IsString()
   @IsNotEmpty()
@@ -50,4 +39,16 @@ export class CreateCustomRoomInDto {
   @IsOptional()
   @IsUUID()
   parentUUID?: string;
+
+  @ApiPropertyOptional({ description: 'Icon identifier', maxLength: 100 })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  icon?: string;
+
+  @ApiPropertyOptional({ description: 'Color hex code', example: '#FF5733' })
+  @IsOptional()
+  @IsString()
+  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'color must be a valid hex color (e.g. #FF5733)' })
+  color?: string;
 }

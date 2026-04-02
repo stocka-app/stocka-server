@@ -5,6 +5,14 @@ import { CreateStoreRoomHandler } from '@storage/application/commands/create-sto
 import { CreateStoreRoomCommand } from '@storage/application/commands/create-store-room/create-store-room.command';
 import { CreateWarehouseHandler } from '@storage/application/commands/create-warehouse/create-warehouse.handler';
 import { CreateWarehouseCommand } from '@storage/application/commands/create-warehouse/create-warehouse.command';
+import {
+  WAREHOUSE_DEFAULT_ICON,
+  WAREHOUSE_DEFAULT_COLOR,
+  STORE_ROOM_DEFAULT_ICON,
+  STORE_ROOM_DEFAULT_COLOR,
+  CUSTOM_ROOM_DEFAULT_ICON,
+  CUSTOM_ROOM_DEFAULT_COLOR,
+} from '@storage/domain/services/storage-icon-color.resolver';
 import { UpdateCustomRoomHandler } from '@storage/application/commands/update-custom-room/update-custom-room.handler';
 import { UpdateCustomRoomCommand } from '@storage/application/commands/update-custom-room/update-custom-room.command';
 import { UpdateStoreRoomHandler } from '@storage/application/commands/update-store-room/update-store-room.handler';
@@ -161,29 +169,57 @@ describe('CreateCustomRoomHandler', () => {
       mockStorageRepository.existsActiveName.mockResolvedValue(false);
     });
 
-    describe('When the storage name is unique', () => {
-      it('Then creates and saves the storage, returning the UUID', async () => {
+    describe('When the storage name is unique and no icon or color is provided', () => {
+      it('Then creates the storage with default icon and color, returning the UUID', async () => {
         const savedAggregate = StorageAggregate.createCustomRoom({
           tenantUUID: TENANT_UUID,
           name: 'New Room',
           roomType: 'Office',
-          icon: 'icon-1',
-          color: '#AABBCC',
+          icon: CUSTOM_ROOM_DEFAULT_ICON,
+          color: CUSTOM_ROOM_DEFAULT_COLOR,
           address: '123 Main St',
         });
         jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
         mockStorageRepository.save.mockResolvedValue(savedAggregate);
         mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
 
-        const command = new CreateCustomRoomCommand(
-          TENANT_UUID, 'New Room', 'Office', 'icon-1', '#AABBCC', '123 Main St',
-        );
+        const command = new CreateCustomRoomCommand(TENANT_UUID, 'New Room', 'Office', '123 Main St');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
         expect(result._unsafeUnwrap().storageUUID).toBe(savedAggregate.uuid);
         expect(mockStorageRepository.save).toHaveBeenCalledTimes(1);
+        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
+        expect(createdAggregate.icon).toBe(CUSTOM_ROOM_DEFAULT_ICON);
+        expect(createdAggregate.color).toBe(CUSTOM_ROOM_DEFAULT_COLOR);
         expect(savedAggregate.commit).toHaveBeenCalled();
+      });
+    });
+
+    describe('When the storage name is unique and a custom icon and color are provided', () => {
+      it('Then creates the storage with the provided icon and color', async () => {
+        const savedAggregate = StorageAggregate.createCustomRoom({
+          tenantUUID: TENANT_UUID,
+          name: 'Styled Room',
+          roomType: 'Kitchen',
+          icon: 'kitchen',
+          color: '#A855F7',
+          address: '99 Custom Blvd',
+        });
+        jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
+        mockStorageRepository.save.mockResolvedValue(savedAggregate);
+        mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
+
+        const command = new CreateCustomRoomCommand(
+          TENANT_UUID, 'Styled Room', 'Kitchen', '99 Custom Blvd',
+          undefined, undefined, 'kitchen', '#A855F7',
+        );
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
+        expect(createdAggregate.icon).toBe('kitchen');
+        expect(createdAggregate.color).toBe('#A855F7');
       });
     });
 
@@ -191,9 +227,7 @@ describe('CreateCustomRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new CreateCustomRoomCommand(
-          TENANT_UUID, 'Taken Name', 'Office', 'icon-1', '#AABBCC', '123 St',
-        );
+        const command = new CreateCustomRoomCommand(TENANT_UUID, 'Taken Name', 'Office', '123 St');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -209,9 +243,7 @@ describe('CreateCustomRoomHandler', () => {
         mockStorageRepository.countActiveByType.mockResolvedValue(3);
         mockCapabilities.canCreateMoreCustomRooms.mockReturnValue(false);
 
-        const command = new CreateCustomRoomCommand(
-          TENANT_UUID, 'Over Limit', 'Office', 'icon-1', '#AABBCC', '123 St',
-        );
+        const command = new CreateCustomRoomCommand(TENANT_UUID, 'Over Limit', 'Office', '123 St');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -242,25 +274,26 @@ describe('CreateStoreRoomHandler', () => {
     });
 
     describe('When the storage name is unique', () => {
-      it('Then creates and saves the storage, returning the UUID', async () => {
+      it('Then creates and saves the storage with fixed store room icon and color, returning the UUID', async () => {
         const savedAggregate = StorageAggregate.createStoreRoom({
           tenantUUID: TENANT_UUID,
           name: 'New Bodega',
-          icon: 'store-icon',
-          color: '#334455',
+          icon: STORE_ROOM_DEFAULT_ICON,
+          color: STORE_ROOM_DEFAULT_COLOR,
           address: '456 Ave',
         });
         jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
         mockStorageRepository.save.mockResolvedValue(savedAggregate);
         mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
 
-        const command = new CreateStoreRoomCommand(
-          TENANT_UUID, 'New Bodega', 'store-icon', '#334455', '456 Ave',
-        );
+        const command = new CreateStoreRoomCommand(TENANT_UUID, 'New Bodega', '456 Ave');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
         expect(result._unsafeUnwrap().storageUUID).toBe(savedAggregate.uuid);
+        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
+        expect(createdAggregate.icon).toBe(STORE_ROOM_DEFAULT_ICON);
+        expect(createdAggregate.color).toBe(STORE_ROOM_DEFAULT_COLOR);
       });
     });
 
@@ -268,9 +301,7 @@ describe('CreateStoreRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new CreateStoreRoomCommand(
-          TENANT_UUID, 'Taken Name', 'icon-1', '#AABBCC', '123 St',
-        );
+        const command = new CreateStoreRoomCommand(TENANT_UUID, 'Taken Name', '123 St');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -285,9 +316,7 @@ describe('CreateStoreRoomHandler', () => {
         mockStorageRepository.countActiveByType.mockResolvedValue(5);
         mockCapabilities.canCreateMoreStoreRooms.mockReturnValue(false);
 
-        const command = new CreateStoreRoomCommand(
-          TENANT_UUID, 'Over Limit', 'icon-1', '#AABBCC', '123 St',
-        );
+        const command = new CreateStoreRoomCommand(TENANT_UUID, 'Over Limit', '123 St');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -317,25 +346,26 @@ describe('CreateWarehouseHandler', () => {
     });
 
     describe('When the warehouse name is unique', () => {
-      it('Then creates and saves the warehouse, returning the UUID', async () => {
+      it('Then creates and saves the warehouse with fixed icon and color, returning the UUID', async () => {
         const savedAggregate = StorageAggregate.createWarehouse({
           tenantUUID: TENANT_UUID,
           name: 'Main WH',
-          icon: 'wh-icon',
-          color: '#667788',
+          icon: WAREHOUSE_DEFAULT_ICON,
+          color: WAREHOUSE_DEFAULT_COLOR,
           address: '789 Industrial',
         });
         jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
         mockStorageRepository.save.mockResolvedValue(savedAggregate);
         mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
 
-        const command = new CreateWarehouseCommand(
-          TENANT_UUID, 'Main WH', 'wh-icon', '#667788', '789 Industrial',
-        );
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'Main WH', '789 Industrial');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
         expect(result._unsafeUnwrap().storageUUID).toBe(savedAggregate.uuid);
+        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
+        expect(createdAggregate.icon).toBe(WAREHOUSE_DEFAULT_ICON);
+        expect(createdAggregate.color).toBe(WAREHOUSE_DEFAULT_COLOR);
       });
     });
 
@@ -343,9 +373,7 @@ describe('CreateWarehouseHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new CreateWarehouseCommand(
-          TENANT_UUID, 'Taken WH', 'icon-1', '#AABBCC', '123 St',
-        );
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'Taken WH', '123 St');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -359,9 +387,7 @@ describe('CreateWarehouseHandler', () => {
       it('Then returns WarehouseRequiresTierUpgradeError', async () => {
         mockCapabilities.canCreateWarehouse.mockReturnValue(false);
 
-        const command = new CreateWarehouseCommand(
-          TENANT_UUID, 'WH', 'icon-1', '#AABBCC', '123 St',
-        );
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'WH', '123 St');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -377,9 +403,7 @@ describe('CreateWarehouseHandler', () => {
         mockStorageRepository.countActiveByType.mockResolvedValue(3);
         mockCapabilities.canCreateMoreWarehouses.mockReturnValue(false);
 
-        const command = new CreateWarehouseCommand(
-          TENANT_UUID, 'Over Limit WH', 'icon-1', '#AABBCC', '123 St',
-        );
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'Over Limit WH', '123 St');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);

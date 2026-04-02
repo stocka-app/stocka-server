@@ -122,9 +122,11 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
               tenantId,
               storageName,
               'General',
+              'Pendiente',
+              'Pendiente',
+              undefined,
               'box',
               '#6366F1',
-              'Pendiente',
             ),
           );
         }

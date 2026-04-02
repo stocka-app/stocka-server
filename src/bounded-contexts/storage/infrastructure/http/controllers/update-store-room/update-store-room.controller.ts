@@ -31,8 +31,6 @@ export class UpdateStoreRoomController {
         user.tenantId as string,
         dto.name,
         dto.description,
-        dto.icon,
-        dto.color,
         dto.address,
       ),
     );
