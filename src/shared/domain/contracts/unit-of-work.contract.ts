@@ -5,20 +5,23 @@
  * The implementation (TypeOrmUnitOfWork) lives in infrastructure;
  * this contract has zero infrastructure imports.
  *
- * Usage in handlers:
- *   await uow.begin();
- *   try {
+ * Usage in handlers (preferred):
+ *   const result = await uow.execute(async () => {
  *     // ... repository operations automatically join the active transaction ...
- *     await uow.commit();
- *   } catch (error) {
- *     await uow.rollback();
- *     throw error;
- *   }
+ *     return result;
+ *   });
  *
  * Repositories call isActive() and getManager() internally — handlers
- * only know begin(), commit(), and rollback().
+ * only know execute() (or begin/commit/rollback for advanced use).
  */
 export interface IUnitOfWork {
+  /**
+   * Executes the given callback inside a transaction.
+   * Automatically commits on success and rolls back on error.
+   * Preferred over manual begin/commit/rollback in handlers.
+   */
+  execute<T>(fn: () => Promise<T>): Promise<T>;
+
   /**
    * Starts a new database transaction.
    * Must be called before performing any transactional operations.
