@@ -257,6 +257,50 @@ describe('TenantFacade', () => {
     });
   });
 
+  // ─── getTierLimitsByTenantUUID ───────────────────────────────────────────
+
+  describe('Given getTierLimitsByTenantUUID is called', () => {
+    describe('When the tenant is not found', () => {
+      beforeEach(() => {
+        tenantContract.findByUUID.mockResolvedValue(null);
+      });
+
+      it('Then it returns null', async () => {
+        const result = await facade.getTierLimitsByTenantUUID('tenant-uuid-abc');
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When the tenant config is not found', () => {
+      beforeEach(() => {
+        tenantContract.findByUUID.mockResolvedValue(buildTenant());
+        configContract.findByTenantId.mockResolvedValue(null);
+      });
+
+      it('Then it returns null', async () => {
+        const result = await facade.getTierLimitsByTenantUUID('tenant-uuid-abc');
+        expect(result).toBeNull();
+      });
+    });
+
+    describe('When both tenant and config are present', () => {
+      beforeEach(() => {
+        tenantContract.findByUUID.mockResolvedValue(buildTenant());
+        configContract.findByTenantId.mockResolvedValue(buildConfig(1));
+      });
+
+      it('Then it returns tier limits with correct values', async () => {
+        const result = await facade.getTierLimitsByTenantUUID('tenant-uuid-abc');
+
+        expect(result).not.toBeNull();
+        expect(result?.tier).toBe('STARTER');
+        expect(result?.maxCustomRooms).toBe(5);
+        expect(result?.maxStoreRooms).toBe(3);
+        expect(result?.maxWarehouses).toBe(3);
+      });
+    });
+  });
+
   // ─── createTenantForUser ─────────────────────────────────────────────────
 
   describe('Given createTenantForUser is called', () => {

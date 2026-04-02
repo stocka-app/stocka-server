@@ -86,8 +86,8 @@ describe('AcceptInvitationHandler', () => {
       begin: jest.fn().mockResolvedValue(undefined),
       commit: jest.fn().mockResolvedValue(undefined),
       rollback: jest.fn().mockResolvedValue(undefined),
-      execute: jest.fn(),
-    };
+      execute: jest.fn().mockImplementation(async (fn: () => Promise<unknown>) => fn()),
+    } as unknown as jest.Mocked<IUnitOfWork>;
 
     mediator = {
       user: {
@@ -183,23 +183,6 @@ describe('AcceptInvitationHandler', () => {
     });
   });
 
-  describe('Given the user aggregate cannot be found', () => {
-    describe('When execute is called', () => {
-      beforeEach(() => {
-        invitationContract.findByToken.mockResolvedValue(buildInvitation({ tenantId: 10 }));
-        memberContract.findActiveByUserUUID.mockResolvedValue(null);
-        (mediator.user.findByUUID as jest.Mock).mockResolvedValue(null);
-      });
-
-      it('Then it returns an InvitationNotFoundError', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvitationNotFoundError);
-      });
-    });
-  });
-
   describe('Given the invitation is valid and the user exists', () => {
     describe('When the transaction succeeds', () => {
       beforeEach(() => {
@@ -236,12 +219,8 @@ describe('AcceptInvitationHandler', () => {
         memberContract.persist.mockRejectedValue(new TestDomainException());
       });
 
-      it('Then it rolls back and returns the domain exception', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(TestDomainException);
-        expect(uow.rollback).toHaveBeenCalled();
+      it('Then it rethrows the domain exception', async () => {
+        await expect(handler.execute(buildCommand())).rejects.toThrow(TestDomainException);
       });
     });
 
@@ -253,9 +232,8 @@ describe('AcceptInvitationHandler', () => {
         memberContract.persist.mockRejectedValue(new Error('Network error'));
       });
 
-      it('Then it rolls back and rethrows the error', async () => {
+      it('Then it rethrows the error', async () => {
         await expect(handler.execute(buildCommand())).rejects.toThrow('Network error');
-        expect(uow.rollback).toHaveBeenCalled();
       });
     });
   });

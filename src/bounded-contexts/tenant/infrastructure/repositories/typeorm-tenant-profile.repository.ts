@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { ITenantProfileContract } from '@tenant/domain/contracts/tenant-profile.contract';
 import { TenantProfileModel } from '@tenant/domain/models/tenant-profile.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { TenantProfileEntity } from '@tenant/infrastructure/entities/tenant-profile.entity';
 import { TenantProfileMapper } from '@tenant/infrastructure/mappers/tenant-profile.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
@@ -23,19 +24,19 @@ export class TypeOrmTenantProfileRepository implements ITenantProfileContract {
   }
 
   /* istanbul ignore next */
-  async findByTenantId(tenantId: number): Promise<TenantProfileModel | null> {
+  async findByTenantId(tenantId: number): Promise<Persisted<TenantProfileModel> | null> {
     const entity = await this.repository.findOne({ where: { tenantId } });
     /* istanbul ignore next */
-    return entity ? TenantProfileMapper.toDomain(entity) : null;
+    return entity ? TenantProfileMapper.toDomain(entity) as Persisted<TenantProfileModel> : null;
   }
 
-  async persist(profile: TenantProfileModel): Promise<TenantProfileModel> {
+  async persist(profile: TenantProfileModel): Promise<Persisted<TenantProfileModel>> {
     const entityData = TenantProfileMapper.toEntity(profile);
     /* istanbul ignore next */
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(TenantProfileEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return TenantProfileMapper.toDomain(savedEntity as TenantProfileEntity);
+    return TenantProfileMapper.toDomain(savedEntity as TenantProfileEntity) as Persisted<TenantProfileModel>;
   }
 }

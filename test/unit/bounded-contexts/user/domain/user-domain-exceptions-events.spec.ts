@@ -1,5 +1,4 @@
 import { UserNotFoundException } from '@user/domain/exceptions/user-not-found.exception';
-import { ConsentPersistenceException } from '@user/domain/exceptions/consent-persistence.exception';
 import { UserCreatedFromSocialEvent } from '@user/domain/events/user-created-from-social.event';
 import { UserPasswordUpdatedEvent } from '@user/domain/events/user-password-updated.event';
 
@@ -15,15 +14,6 @@ describe('User domain exceptions', () => {
     });
   });
 
-  describe('Given ConsentPersistenceException', () => {
-    describe('When instantiated with a detail message', () => {
-      it('Then it has the correct error code and includes the detail in the violations', () => {
-        const ex = new ConsentPersistenceException('duplicate key violation');
-        expect(ex.errorCode).toBe('CONSENT_PERSISTENCE_ERROR');
-        expect(ex.details).toEqual([{ field: 'consents', message: 'duplicate key violation' }]);
-      });
-    });
-  });
 });
 
 describe('User domain events', () => {

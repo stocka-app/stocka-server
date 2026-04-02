@@ -36,7 +36,6 @@ export class InviteMemberHandler implements ICommandHandler<InviteMemberCommand>
       command.inviterRole,
       command.role,
     );
-    /* istanbul ignore next */
     if (!canAssign) {
       return err(new InsufficientPermissionsError());
     }

@@ -1,7 +1,6 @@
 import { Entity, Column, OneToOne } from 'typeorm';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 import { PersonalProfileEntity } from '@user/profile/infrastructure/entities/personal-profile.entity';
-import { CommercialProfileEntity } from '@user/profile/infrastructure/entities/commercial-profile.entity';
 
 @Entity({ name: 'profiles', schema: 'profiles' })
 export class ProfileEntity extends BaseEntity {
@@ -10,7 +9,4 @@ export class ProfileEntity extends BaseEntity {
 
   @OneToOne(() => PersonalProfileEntity, (personal) => personal.profile)
   personalProfile!: PersonalProfileEntity | null;
-
-  @OneToOne(() => CommercialProfileEntity, (commercial) => commercial.profile)
-  commercialProfile!: CommercialProfileEntity | null;
 }

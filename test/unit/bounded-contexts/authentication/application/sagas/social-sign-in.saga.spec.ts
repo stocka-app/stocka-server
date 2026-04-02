@@ -1,20 +1,10 @@
-/**
- * Unit tests for SocialSignInSaga orchestrator — covers DomainException error path.
- */
 import { SocialSignInSaga } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { SocialSignInSagaContext } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga-context';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-class TestDomainException extends DomainException {
-  constructor() {
-    super('TEST_ERROR', 'test domain error');
-  }
-}
 
 function buildCtx(): SocialSignInSagaContext {
   return {
@@ -49,30 +39,6 @@ describe('SocialSignInSaga', () => {
 
   beforeEach(() => {
     uow = buildUow();
-  });
-
-  describe('Given the saga run throws a DomainException', () => {
-    describe('When execute is called', () => {
-      it('Then it returns an err result wrapping the DomainException', async () => {
-        const saga = new SocialSignInSaga(
-          uow,
-          buildNoop() as never,
-          buildNoop() as never,
-          buildNoop() as never,
-          buildNoop() as never,
-          buildNoop() as never,
-        );
-
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new TestDomainException(),
-        );
-
-        const result = await saga.execute(buildCtx());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(DomainException);
-      });
-    });
   });
 
   describe('Given the saga run throws a non-domain error', () => {

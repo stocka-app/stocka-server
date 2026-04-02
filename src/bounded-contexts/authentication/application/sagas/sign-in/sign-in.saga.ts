@@ -57,14 +57,14 @@ export class SignInSaga extends Saga<SignInSagaContext> {
       const ctx = await this.run(input);
 
       /* istanbul ignore next */
-      if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken) {
+      if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken || !ctx.username) {
         throw new Error('SignInSaga completed without required output fields');
       }
 
       return ok({
         user: ctx.user,
         credential: ctx.credential,
-        username: ctx.username ?? ctx.credential.email,
+        username: ctx.username,
         accessToken: ctx.accessToken,
         refreshToken: ctx.refreshToken,
         emailVerificationRequired: false,

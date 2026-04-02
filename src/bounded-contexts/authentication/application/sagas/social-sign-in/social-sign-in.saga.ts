@@ -6,7 +6,7 @@ import {
   SocialSignInSagaContext,
   SocialSignInSagaOutput,
 } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga-context';
-import { ok, err, Result } from '@shared/domain/result';
+import { ok, Result } from '@shared/domain/result';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import {
   ResolveSocialUserStep,
@@ -57,24 +57,18 @@ export class SocialSignInSaga extends Saga<SocialSignInSagaContext> {
   async execute(
     input: SocialSignInSagaContext,
   ): Promise<Result<SocialSignInSagaOutput, DomainException>> {
-    try {
-      const ctx = await this.run(input);
+    const ctx = await this.run(input);
 
-      /* istanbul ignore next */
-      if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken) {
-        throw new Error('SocialSignInSaga completed without required output fields');
-      }
-
-      return ok({
-        user: ctx.user,
-        credential: ctx.credential,
-        accessToken: ctx.accessToken,
-        refreshToken: ctx.refreshToken,
-      });
     /* istanbul ignore next */
-    } catch (error) {
-      if (error instanceof DomainException) return err(error);
-      throw error;
+    if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken) {
+      throw new Error('SocialSignInSaga completed without required output fields');
     }
+
+    return ok({
+      user: ctx.user,
+      credential: ctx.credential,
+      accessToken: ctx.accessToken,
+      refreshToken: ctx.refreshToken,
+    });
   }
 }

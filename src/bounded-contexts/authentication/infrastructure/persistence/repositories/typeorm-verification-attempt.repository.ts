@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
 import { VerificationAttemptMapper } from '@authentication/infrastructure/persistence/mappers/verification-attempt.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
@@ -17,24 +18,24 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
     private readonly uow: IUnitOfWork,
   ) {}
 
-  async findById(id: number): Promise<VerificationAttemptModel | null> {
+  async findById(id: number): Promise<Persisted<VerificationAttemptModel> | null> {
     const entity = await this.repository.findOne({ where: { id } });
-    return entity ? VerificationAttemptMapper.toDomain(entity) : null;
+    return entity ? VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel> : null;
   }
 
-  async findByUUID(uuid: string): Promise<VerificationAttemptModel | null> {
+  async findByUUID(uuid: string): Promise<Persisted<VerificationAttemptModel> | null> {
     const entity = await this.repository.findOne({ where: { uuid } });
-    return entity ? VerificationAttemptMapper.toDomain(entity) : null;
+    return entity ? VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel> : null;
   }
 
-  async persist(attempt: VerificationAttemptModel): Promise<VerificationAttemptModel> {
+  async persist(attempt: VerificationAttemptModel): Promise<Persisted<VerificationAttemptModel>> {
     const entityData = VerificationAttemptMapper.toEntity(attempt);
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(VerificationAttemptEntity)
       : this.repository;
 
     const savedEntity = await repo.save(entityData);
-    return VerificationAttemptMapper.toDomain(savedEntity as VerificationAttemptEntity);
+    return VerificationAttemptMapper.toDomain(savedEntity as VerificationAttemptEntity) as Persisted<VerificationAttemptModel>;
   }
 
   async countFailedByUserUUIDInLastHour(userUUID: string): Promise<number> {
@@ -81,14 +82,14 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
       .getCount();
   }
 
-  async findRecentByUserUUID(userUUID: string, limit: number): Promise<VerificationAttemptModel[]> {
+  async findRecentByUserUUID(userUUID: string, limit: number): Promise<Persisted<VerificationAttemptModel>[]> {
     const entities = await this.repository.find({
       where: { userUUID },
       order: { attemptedAt: 'DESC' },
       take: limit,
     });
 
-    return entities.map((entity) => VerificationAttemptMapper.toDomain(entity));
+    return entities.map((entity) => VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel>);
   }
 
   async archiveOlderThan(date: Date): Promise<number> {

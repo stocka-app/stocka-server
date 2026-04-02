@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, EntityManager } from 'typeorm';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { PasswordResetTokenEntity } from '@authentication/infrastructure/persistence/entities/password-reset-token.entity';
 import { PasswordResetTokenMapper } from '@authentication/infrastructure/persistence/mappers/password-reset-token.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
@@ -17,34 +18,34 @@ export class TypeOrmPasswordResetTokenRepository implements IPasswordResetTokenC
     private readonly uow: IUnitOfWork,
   ) {}
 
-  async findById(id: number): Promise<PasswordResetTokenModel | null> {
+  async findById(id: number): Promise<Persisted<PasswordResetTokenModel> | null> {
     const entity = await this.repository.findOne({
       where: { id, archivedAt: IsNull() },
     });
-    return entity ? PasswordResetTokenMapper.toDomain(entity) : null;
+    return entity ? PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel> : null;
   }
 
-  async findByUUID(uuid: string): Promise<PasswordResetTokenModel | null> {
+  async findByUUID(uuid: string): Promise<Persisted<PasswordResetTokenModel> | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: IsNull() },
     });
-    return entity ? PasswordResetTokenMapper.toDomain(entity) : null;
+    return entity ? PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel> : null;
   }
 
-  async findByTokenHash(tokenHash: string): Promise<PasswordResetTokenModel | null> {
+  async findByTokenHash(tokenHash: string): Promise<Persisted<PasswordResetTokenModel> | null> {
     const entity = await this.repository.findOne({
       where: { tokenHash, archivedAt: IsNull() },
     });
-    return entity ? PasswordResetTokenMapper.toDomain(entity) : null;
+    return entity ? PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel> : null;
   }
 
-  async persist(token: PasswordResetTokenModel): Promise<PasswordResetTokenModel> {
+  async persist(token: PasswordResetTokenModel): Promise<Persisted<PasswordResetTokenModel>> {
     const entityData = PasswordResetTokenMapper.toEntity(token);
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(PasswordResetTokenEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return PasswordResetTokenMapper.toDomain(savedEntity as PasswordResetTokenEntity);
+    return PasswordResetTokenMapper.toDomain(savedEntity as PasswordResetTokenEntity) as Persisted<PasswordResetTokenModel>;
   }
 
   async archive(uuid: string): Promise<void> {

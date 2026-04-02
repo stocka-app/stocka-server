@@ -11,15 +11,11 @@ import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
  * per request. Repositories inject this singleton and call isActive()/getManager()
  * internally — the handler never passes the manager around.
  *
- * Usage (handler):
- *   await uow.begin();
- *   try {
+ * Usage (handler — preferred):
+ *   const result = await uow.execute(async () => {
  *     await repo.persist(entity);   // repo internally joins the active transaction
- *     await uow.commit();
- *   } catch (error) {
- *     await uow.rollback();
- *     throw error;
- *   }
+ *     return result;
+ *   });
  */
 @Injectable()
 export class TypeOrmUnitOfWork implements IUnitOfWork {
@@ -27,6 +23,18 @@ export class TypeOrmUnitOfWork implements IUnitOfWork {
   private readonly als = new AsyncLocalStorage<QueryRunner | undefined>();
 
   constructor(private readonly dataSource: DataSource) {}
+
+  async execute<T>(fn: () => Promise<T>): Promise<T> {
+    await this.begin();
+    try {
+      const result = await fn();
+      await this.commit();
+      return result;
+    } catch (error) {
+      await this.rollback();
+      throw error;
+    }
+  }
 
   async begin(): Promise<void> {
     const existing = this.als.getStore();

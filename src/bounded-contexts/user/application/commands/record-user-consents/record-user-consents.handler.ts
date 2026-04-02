@@ -7,8 +7,7 @@ import {
 } from '@user/application/commands/record-user-consents/record-user-consents.command';
 import { UserConsentEntity } from '@user/infrastructure/persistence/entities/user-consent.entity';
 import { ConsentType } from '@user/domain/enums/consent-type.enum';
-import { ConsentPersistenceException } from '@user/domain/exceptions/consent-persistence.exception';
-import { ok, err } from '@shared/domain/result';
+import { ok } from '@shared/domain/result';
 
 @CommandHandler(RecordUserConsentsCommand)
 export class RecordUserConsentsHandler implements ICommandHandler<RecordUserConsentsCommand> {
@@ -39,18 +38,8 @@ export class RecordUserConsentsHandler implements ICommandHandler<RecordUserCons
       ),
     ];
 
-    try {
-      await this.consentRepository.save(consentRows);
-      return ok(undefined);
-    /* istanbul ignore next */
-    } catch (error) {
-      /* istanbul ignore next */
-      return err(
-        new ConsentPersistenceException(
-          error instanceof Error ? error.message : 'Failed to record user consents',
-        ),
-      );
-    }
+    await this.consentRepository.save(consentRows);
+    return ok(undefined);
   }
 
   private buildRow(

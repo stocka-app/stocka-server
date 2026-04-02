@@ -30,5 +30,6 @@ export interface ITenantFacade {
   getActiveMembership(userUUID: string): Promise<{ tenantUUID: string; role: string } | null>;
   getMembershipContext(userUUID: string): Promise<TenantMembershipContext | null>;
   getTierLimits(userUUID: string): Promise<TierLimits | null>;
+  getTierLimitsByTenantUUID(tenantUUID: string): Promise<TierLimits | null>;
   createTenantForUser(props: CreateTenantFacadeProps): Promise<{ tenantUUID: string }>;
 }

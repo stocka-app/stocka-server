@@ -56,22 +56,34 @@ export class TypeOrmStorageRepository implements IStorageRepository {
       .leftJoinAndSelect('s.storeRoom', 'storeRoom')
       .leftJoinAndSelect('s.warehouse', 'warehouse')
       .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
-      .orderBy('s.name', sortOrder);
+      .orderBy('s.id', sortOrder);
 
     if (filters?.type) {
       qb.andWhere('s.type = :type', { type: filters.type });
     }
 
     if (filters?.status === StorageStatus.ACTIVE) {
-      qb.andWhere('s.archived_at IS NULL').andWhere('s.frozen_at IS NULL');
+      qb.andWhere(
+        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
+      ).andWhere(
+        'COALESCE(customRoom.frozen_at, storeRoom.frozen_at, warehouse.frozen_at) IS NULL',
+      );
     } else if (filters?.status === StorageStatus.ARCHIVED) {
-      qb.andWhere('s.archived_at IS NOT NULL');
+      qb.andWhere(
+        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NOT NULL',
+      );
     } else if (filters?.status === StorageStatus.FROZEN) {
-      qb.andWhere('s.frozen_at IS NOT NULL').andWhere('s.archived_at IS NULL');
+      qb.andWhere(
+        'COALESCE(customRoom.frozen_at, storeRoom.frozen_at, warehouse.frozen_at) IS NOT NULL',
+      ).andWhere(
+        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
+      );
     }
 
     if (search) {
-      qb.andWhere('s.name ILIKE :search', { search: `%${search}%` });
+      qb.andWhere('COALESCE(customRoom.name, storeRoom.name, warehouse.name) ILIKE :search', {
+        search: `%${search}%`,
+      });
     }
 
     const skip = (pagination.page - 1) * pagination.limit;
@@ -82,20 +94,33 @@ export class TypeOrmStorageRepository implements IStorageRepository {
   }
 
   async countActiveByType(tenantUUID: string, type: StorageType): Promise<number> {
-    return this.repository
+    const qb = this.repository
       .createQueryBuilder('s')
+      .leftJoin('s.customRoom', 'customRoom')
+      .leftJoin('s.storeRoom', 'storeRoom')
+      .leftJoin('s.warehouse', 'warehouse')
       .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
       .andWhere('s.type = :type', { type })
-      .andWhere('s.archived_at IS NULL')
-      .getCount();
+      .andWhere(
+        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
+      );
+
+    return qb.getCount();
   }
 
   async existsActiveName(tenantUUID: string, name: string): Promise<boolean> {
     const count = await this.repository
       .createQueryBuilder('s')
+      .leftJoin('s.customRoom', 'customRoom')
+      .leftJoin('s.storeRoom', 'storeRoom')
+      .leftJoin('s.warehouse', 'warehouse')
       .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
-      .andWhere('LOWER(s.name) = LOWER(:name)', { name })
-      .andWhere('s.archived_at IS NULL')
+      .andWhere('LOWER(COALESCE(customRoom.name, storeRoom.name, warehouse.name)) = LOWER(:name)', {
+        name,
+      })
+      .andWhere(
+        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
+      )
       .getCount();
 
     return count > 0;
@@ -109,7 +134,8 @@ export class TypeOrmStorageRepository implements IStorageRepository {
   }
 
   async archive(storage: StorageAggregate): Promise<void> {
+    const entityData = StorageMapper.toEntity(storage);
     const repo = this.getRepo();
-    await repo.update({ uuid: storage.uuid }, { archivedAt: storage.archivedAt });
+    await repo.save(entityData);
   }
 }

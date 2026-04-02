@@ -49,6 +49,7 @@ describe('Saga Base', () => {
       isActive: jest.fn().mockReturnValue(false),
       getManager: jest.fn(),
       runIsolated: jest.fn(),
+      execute: jest.fn(),
     } as jest.Mocked<IUnitOfWork>;
 
     saga = new TestSaga(uow);

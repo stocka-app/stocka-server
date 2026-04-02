@@ -4,7 +4,6 @@ import { EmailDeliveryFailedException } from '@authentication/domain/exceptions/
 import { RateLimitExceededException } from '@authentication/domain/exceptions/rate-limit-exceeded.exception';
 import { TooManyVerificationAttemptsException } from '@authentication/domain/exceptions/too-many-verification-attempts.exception';
 import { VerificationBlockedException } from '@authentication/domain/exceptions/verification-blocked.exception';
-import { VerificationCodeExpiredException } from '@authentication/domain/exceptions/verification-code-expired.exception';
 import { EmailNotVerifiedException } from '@authentication/domain/exceptions/email-not-verified.exception';
 import { InvalidAttemptedAtException } from '@authentication/domain/exceptions/invalid-attempted-at.exception';
 import { InvalidCredentialsException } from '@authentication/domain/exceptions/invalid-credentials.exception';
@@ -182,16 +181,6 @@ describe('Authentication domain exceptions', () => {
         const ex = new AccountDeactivatedException();
         expect(ex.errorCode).toBe('ACCOUNT_DEACTIVATED');
         expect(ex.message).toBe('Account has been deactivated');
-      });
-    });
-  });
-
-  describe('Given VerificationCodeExpiredException', () => {
-    describe('When instantiated', () => {
-      it('Then it has the correct error code and field details', () => {
-        const ex = new VerificationCodeExpiredException();
-        expect(ex.errorCode).toBe('VERIFICATION_CODE_EXPIRED');
-        expect(ex.message).toBe('Verification code has expired');
       });
     });
   });

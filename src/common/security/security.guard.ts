@@ -38,7 +38,7 @@ export class SecurityGuard implements CanActivate {
 
       // RBAC check — pass the already-fetched membership context
       if (meta?.action !== undefined) {
-        await this.rbacValidator.validate(user, meta.action, membershipContext);
+        await this.rbacValidator.validate(meta.action, membershipContext);
       }
     }
 

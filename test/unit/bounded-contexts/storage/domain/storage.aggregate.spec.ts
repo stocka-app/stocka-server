@@ -3,6 +3,8 @@ import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { StorageCreatedEvent } from '@storage/domain/events/storage-created.event';
 import { StorageUpdatedEvent } from '@storage/domain/events/storage-updated.event';
 import { StorageArchivedEvent } from '@storage/domain/events/storage-archived.event';
+import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
+import { StoreRoomModel } from '@storage/domain/models/store-room.model';
 
 describe('StorageAggregate', () => {
   const TENANT_UUID = '019538a0-0000-7000-8000-000000000001';
@@ -16,6 +18,8 @@ describe('StorageAggregate', () => {
           tenantUUID: TENANT_UUID,
           name: 'My Office',
           roomType: 'Office',
+          icon: 'office-icon',
+          color: '#AABBCC',
           address: '123 Main St',
         });
       });
@@ -36,8 +40,8 @@ describe('StorageAggregate', () => {
 
       it('Then the customRoom sub-model is populated', () => {
         expect(aggregate.customRoom).not.toBeNull();
-        expect(aggregate.customRoom?.roomType).toBe('Office');
-        expect(aggregate.customRoom?.address).toBe('123 Main St');
+        expect(aggregate.customRoom?.roomType.getValue()).toBe('Office');
+        expect(aggregate.customRoom?.address.getValue()).toBe('123 Main St');
       });
 
       it('Then the other sub-models are null', () => {
@@ -65,27 +69,34 @@ describe('StorageAggregate', () => {
       });
     });
 
-    describe('When createCustomRoom is called without an address', () => {
-      it('Then the custom room address is null', () => {
-        const aggregate = StorageAggregate.createCustomRoom({
-          tenantUUID: TENANT_UUID,
-          name: 'No Address Room',
-          roomType: 'Storage',
-        });
-        expect(aggregate.customRoom?.address).toBeNull();
-        expect(aggregate.address).toBeNull();
-      });
-    });
-
     describe('When createCustomRoom is called with a description', () => {
       it('Then description is stored on the aggregate', () => {
         const aggregate = StorageAggregate.createCustomRoom({
           tenantUUID: TENANT_UUID,
           name: 'Described Room',
           roomType: 'Office',
+          icon: 'office-icon',
+          color: '#AABBCC',
+          address: '456 Oak Ave',
           description: 'Main office space for the team',
         });
         expect(aggregate.description).toBe('Main office space for the team');
+      });
+    });
+
+    describe('When createCustomRoom is called with a parentUUID', () => {
+      it('Then parentUUID is set on the aggregate', () => {
+        const parentUUID = '019538a0-0000-7000-8000-000000000002';
+        const aggregate = StorageAggregate.createCustomRoom({
+          tenantUUID: TENANT_UUID,
+          name: 'Child Room',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '789 Elm St',
+          parentUUID,
+        });
+        expect(aggregate.parentUUID).toBe(parentUUID);
       });
     });
   });
@@ -98,6 +109,8 @@ describe('StorageAggregate', () => {
         aggregate = StorageAggregate.createStoreRoom({
           tenantUUID: TENANT_UUID,
           name: 'Main Store Room',
+          icon: 'store-icon',
+          color: '#334455',
           address: '456 Oak Ave',
         });
       });
@@ -108,7 +121,7 @@ describe('StorageAggregate', () => {
 
       it('Then the storeRoom sub-model is populated', () => {
         expect(aggregate.storeRoom).not.toBeNull();
-        expect(aggregate.storeRoom?.address).toBe('456 Oak Ave');
+        expect(aggregate.storeRoom?.address.getValue()).toBe('456 Oak Ave');
       });
 
       it('Then the other sub-models are null', () => {
@@ -126,17 +139,6 @@ describe('StorageAggregate', () => {
         expect(events[0]).toBeInstanceOf(StorageCreatedEvent);
       });
     });
-
-    describe('When createStoreRoom is called without an address', () => {
-      it('Then the store room address is null', () => {
-        const aggregate = StorageAggregate.createStoreRoom({
-          tenantUUID: TENANT_UUID,
-          name: 'No Address Store',
-        });
-        expect(aggregate.storeRoom?.address).toBeNull();
-        expect(aggregate.address).toBeNull();
-      });
-    });
   });
 
   describe('Given a request to create a Warehouse storage', () => {
@@ -147,6 +149,8 @@ describe('StorageAggregate', () => {
         aggregate = StorageAggregate.createWarehouse({
           tenantUUID: TENANT_UUID,
           name: 'Central Warehouse',
+          icon: 'wh-icon',
+          color: '#667788',
           address: '789 Industrial Blvd',
         });
       });
@@ -157,7 +161,7 @@ describe('StorageAggregate', () => {
 
       it('Then the warehouse sub-model is populated', () => {
         expect(aggregate.warehouse).not.toBeNull();
-        expect(aggregate.warehouse?.address).toBe('789 Industrial Blvd');
+        expect(aggregate.warehouse?.address.getValue()).toBe('789 Industrial Blvd');
       });
 
       it('Then the other sub-models are null', () => {
@@ -177,7 +181,7 @@ describe('StorageAggregate', () => {
     });
   });
 
-  describe('Given an existing storage aggregate', () => {
+  describe('Given an existing custom room storage', () => {
     let aggregate: StorageAggregate;
 
     beforeEach(() => {
@@ -185,13 +189,16 @@ describe('StorageAggregate', () => {
         tenantUUID: TENANT_UUID,
         name: 'Old Name',
         roomType: 'Office',
+        icon: 'icon-1',
+        color: '#AABBCC',
+        address: '123 Main St',
       });
       aggregate.commit();
     });
 
-    describe('When updateName is called', () => {
+    describe('When updateCustomRoom name is called', () => {
       beforeEach(() => {
-        aggregate.updateName('New Name');
+        aggregate.updateCustomRoom({ name: 'New Name' });
       });
 
       it('Then the name is updated', () => {
@@ -205,6 +212,23 @@ describe('StorageAggregate', () => {
         const event = events[0] as StorageUpdatedEvent;
         expect(event.storageUUID).toBe(aggregate.uuid);
         expect(event.tenantUUID).toBe(TENANT_UUID);
+      });
+    });
+
+    describe('When updateCustomRoom is called on a wrong type storage', () => {
+      it('Then no update is applied and no event is emitted', () => {
+        const storeRoom = StorageAggregate.createStoreRoom({
+          tenantUUID: TENANT_UUID,
+          name: 'Store',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '456 Ave',
+        });
+        storeRoom.commit();
+        storeRoom.updateCustomRoom({ name: 'Attempted Update' });
+
+        expect(storeRoom.name).toBe('Store');
+        expect(storeRoom.getUncommittedEvents()).toHaveLength(0);
       });
     });
 
@@ -229,6 +253,94 @@ describe('StorageAggregate', () => {
     });
   });
 
+  describe('Given an existing store room storage', () => {
+    let aggregate: StorageAggregate;
+
+    beforeEach(() => {
+      aggregate = StorageAggregate.createStoreRoom({
+        tenantUUID: TENANT_UUID,
+        name: 'Old Store',
+        icon: 'store-icon',
+        color: '#112233',
+        address: '789 Elm Rd',
+      });
+      aggregate.commit();
+    });
+
+    describe('When updateStoreRoom is called with a new name', () => {
+      it('Then the name is updated and a StorageUpdatedEvent is emitted', () => {
+        aggregate.updateStoreRoom({ name: 'Updated Store' });
+
+        expect(aggregate.name).toBe('Updated Store');
+        const events = aggregate.getUncommittedEvents();
+        expect(events).toHaveLength(1);
+        expect(events[0]).toBeInstanceOf(StorageUpdatedEvent);
+      });
+    });
+
+    describe('When updateStoreRoom is called on a wrong type storage', () => {
+      it('Then no update is applied and no event is emitted', () => {
+        const customRoom = StorageAggregate.createCustomRoom({
+          tenantUUID: TENANT_UUID,
+          name: 'Room',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '100 St',
+        });
+        customRoom.commit();
+        customRoom.updateStoreRoom({ name: 'Attempted Update' });
+
+        expect(customRoom.name).toBe('Room');
+        expect(customRoom.getUncommittedEvents()).toHaveLength(0);
+      });
+    });
+  });
+
+  describe('Given an existing warehouse storage', () => {
+    let aggregate: StorageAggregate;
+
+    beforeEach(() => {
+      aggregate = StorageAggregate.createWarehouse({
+        tenantUUID: TENANT_UUID,
+        name: 'Old Warehouse',
+        icon: 'wh-icon',
+        color: '#DDEEFF',
+        address: '200 Depot Rd',
+      });
+      aggregate.commit();
+    });
+
+    describe('When updateWarehouse is called with a new name', () => {
+      it('Then the name is updated and a StorageUpdatedEvent is emitted', () => {
+        aggregate.updateWarehouse({ name: 'Updated Warehouse' });
+
+        expect(aggregate.name).toBe('Updated Warehouse');
+        const events = aggregate.getUncommittedEvents();
+        expect(events).toHaveLength(1);
+        expect(events[0]).toBeInstanceOf(StorageUpdatedEvent);
+      });
+    });
+
+    describe('When updateWarehouse is called on a wrong type storage', () => {
+      it('Then no update is applied and no event is emitted', () => {
+        const customRoom = StorageAggregate.createCustomRoom({
+          tenantUUID: TENANT_UUID,
+          name: 'Room',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '100 St',
+        });
+        customRoom.commit();
+        customRoom.updateWarehouse({ name: 'Attempted Update' });
+
+        expect(customRoom.name).toBe('Room');
+        expect(customRoom.getUncommittedEvents()).toHaveLength(0);
+      });
+    });
+  });
+
   describe('Given persisted storage data', () => {
     describe('When reconstitute is called', () => {
       it('Then all properties are restored correctly', () => {
@@ -237,18 +349,18 @@ describe('StorageAggregate', () => {
           id: 42,
           uuid: '019538a0-0000-7000-8000-000000000099',
           tenantUUID: TENANT_UUID,
-          type: StorageType.CUSTOM_ROOM,
-          name: 'Restored Room',
-          description: null,
-          customRoom: {
-            uuid: '019538a0-0000-7000-8000-000000000098',
-            roomType: 'Office',
-            address: '123 St',
-            createdAt: now,
-            updatedAt: now,
-          } as never,
-          storeRoom: null,
-          warehouse: null,
+          parentUUID: null,
+          sub: {
+            type: StorageType.CUSTOM_ROOM,
+            model: CustomRoomModel.create({
+              uuid: '019538a0-0000-7000-8000-000000000098',
+              name: 'Restored Room',
+              roomType: 'Office',
+              icon: 'icon-x',
+              color: '#AABBCC',
+              address: '123 St',
+            }),
+          },
           createdAt: now,
           updatedAt: now,
           archivedAt: null,
@@ -264,6 +376,33 @@ describe('StorageAggregate', () => {
         expect(aggregate.isFrozen()).toBe(false);
         expect(aggregate.status).toBe('ACTIVE');
       });
+
+      it('Then parentUUID is mapped when provided', () => {
+        const parentUUID = '019538a0-0000-7000-8000-000000000002';
+        const aggregate = StorageAggregate.reconstitute({
+          id: 43,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          parentUUID,
+          sub: {
+            type: StorageType.CUSTOM_ROOM,
+            model: CustomRoomModel.create({
+              uuid: '019538a0-0000-7000-8000-000000000098',
+              name: 'Child Room',
+              roomType: 'Office',
+              icon: 'icon-x',
+              color: '#AABBCC',
+              address: '123 St',
+            }),
+          },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          archivedAt: null,
+          frozenAt: null,
+        });
+
+        expect(aggregate.parentUUID).toBe(parentUUID);
+      });
     });
   });
 
@@ -274,12 +413,17 @@ describe('StorageAggregate', () => {
           id: 5,
           uuid: '019538a0-0000-7000-8000-000000000055',
           tenantUUID: TENANT_UUID,
-          type: StorageType.CUSTOM_ROOM,
-          name: 'Frozen Room',
-          description: null,
-          customRoom: null,
-          storeRoom: null,
-          warehouse: null,
+          parentUUID: null,
+          sub: {
+            type: StorageType.STORE_ROOM,
+            model: StoreRoomModel.create({
+              uuid: '019538a0-0000-7000-8000-000000000054',
+              name: 'Frozen Store',
+              icon: 'store-icon',
+              color: '#AABBCC',
+              address: '100 Main St',
+            }),
+          },
           createdAt: new Date(),
           updatedAt: new Date(),
           archivedAt: null,
@@ -301,12 +445,17 @@ describe('StorageAggregate', () => {
           id: 6,
           uuid: '019538a0-0000-7000-8000-000000000056',
           tenantUUID: TENANT_UUID,
-          type: StorageType.CUSTOM_ROOM,
-          name: 'Archived Frozen',
-          description: null,
-          customRoom: null,
-          storeRoom: null,
-          warehouse: null,
+          parentUUID: null,
+          sub: {
+            type: StorageType.STORE_ROOM,
+            model: StoreRoomModel.create({
+              uuid: '019538a0-0000-7000-8000-000000000053',
+              name: 'Archived Store',
+              icon: 'store-icon',
+              color: '#AABBCC',
+              address: '200 Main St',
+            }),
+          },
           createdAt: new Date(),
           updatedAt: new Date(),
           archivedAt: new Date(),
@@ -316,30 +465,6 @@ describe('StorageAggregate', () => {
         expect(aggregate.status).toBe('ARCHIVED');
         expect(aggregate.isArchived()).toBe(true);
         expect(aggregate.isFrozen()).toBe(false);
-      });
-    });
-  });
-
-  describe('Given a storage without any sub-model', () => {
-    describe('When the address getter is called', () => {
-      it('Then it returns null', () => {
-        const aggregate = StorageAggregate.reconstitute({
-          id: 1,
-          uuid: '019538a0-0000-7000-8000-000000000050',
-          tenantUUID: TENANT_UUID,
-          type: StorageType.CUSTOM_ROOM,
-          name: 'Empty',
-          description: null,
-          customRoom: null,
-          storeRoom: null,
-          warehouse: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          archivedAt: null,
-          frozenAt: null,
-        });
-
-        expect(aggregate.address).toBeNull();
       });
     });
   });

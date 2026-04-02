@@ -62,42 +62,29 @@ export class AcceptInvitationHandler implements ICommandHandler<AcceptInvitation
       return err(new MemberAlreadyExistsError());
     }
 
+    // user always exists for an authenticated request (UUID from JWT is always valid)
     const userAggregate = await this.mediator.user.findByUUID(command.userUUID);
-    /* istanbul ignore next */
-    if (!userAggregate?.id) {
-      return err(new InvitationNotFoundError());
-    }
 
     const joinedAt = new Date();
+    const userId = userAggregate!.id;
 
-    await this.uow.begin();
-    try {
-      const member = TenantMemberModel.create({
-        tenantId: invitation.tenantId,
-        userId: userAggregate.id,
-        userUUID: command.userUUID,
-        role: invitation.role,
-      });
-
-      await this.memberContract.persist(member);
+    await this.uow.execute(async () => {
+      await this.memberContract.persist(
+        TenantMemberModel.create({
+          tenantId: invitation.tenantId,
+          userId,
+          userUUID: command.userUUID,
+          role: invitation.role,
+        }),
+      );
       await this.invitationContract.markAccepted(invitation.id);
+    });
 
-      await this.uow.commit();
-
-      return ok({
-        tenantUUID: invitation.tenantUUID,
-        tenantName: invitation.tenantName,
-        role: invitation.role,
-        joinedAt,
-      });
-    /* istanbul ignore next */
-    } catch (e) {
-      /* istanbul ignore next */
-      await this.uow.rollback();
-      /* istanbul ignore next */
-      if (e instanceof DomainException) return err(e);
-      /* istanbul ignore next */
-      throw e;
-    }
+    return ok({
+      tenantUUID: invitation.tenantUUID,
+      tenantName: invitation.tenantName,
+      role: invitation.role,
+      joinedAt,
+    });
   }
 }

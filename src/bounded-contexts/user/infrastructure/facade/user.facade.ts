@@ -14,6 +14,7 @@ import { SocialAccountModel } from '@user/account/domain/models/social-account.m
 import { ProfileAggregate } from '@user/profile/domain/profile.aggregate';
 import { PersonalProfileModel } from '@user/profile/domain/models/personal-profile.model';
 import { SocialProfileModel } from '@user/profile/domain/models/social-profile.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
@@ -33,11 +34,11 @@ export class UserFacade implements IUserFacade {
 
   // === Queries ===
 
-  async findByUUID(uuid: string): Promise<UserAggregate | null> {
+  async findByUUID(uuid: string): Promise<Persisted<UserAggregate> | null> {
     return this.userContract.findByUUID(uuid);
   }
 
-  async findByAccountId(accountId: number): Promise<UserAggregate | null> {
+  async findByAccountId(accountId: number): Promise<Persisted<UserAggregate> | null> {
     const account = await this.accountContract.findById(accountId);
     if (!account) return null;
     return this.userContract.findById(account.userId);
@@ -45,73 +46,65 @@ export class UserFacade implements IUserFacade {
 
   async findUsernameByUUID(uuid: string): Promise<string | null> {
     const user = await this.userContract.findByUUID(uuid);
-    if (!user || user.id === undefined) return null;
+    if (!user) return null;
     const profile = await this.profileContract.findPersonalProfileByUserId(user.id);
     return profile?.username ?? null;
   }
 
   async findUserByUUIDWithCredential(
     uuid: string,
-  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null> {
+  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null> {
     const user = await this.userContract.findByUUID(uuid);
-    if (!user || user.id === undefined) return null;
+    if (!user) return null;
 
+    // account and credential always exist for a persisted user (created atomically)
     const account = await this.accountContract.findByUserId(user.id);
-    if (!account || account.id === undefined) return null;
+    const credential = await this.credentialAccountContract.findByAccountId(account!.id);
 
-    const credential = await this.credentialAccountContract.findByAccountId(account.id);
-    if (!credential) return null;
-
-    return { user, credential };
+    return { user, credential: credential! };
   }
 
   async findUserByEmail(
     email: string,
-  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null> {
+  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null> {
     const credential = await this.credentialAccountContract.findByEmail(email);
     if (!credential) return null;
 
+    // account and user always exist for a persisted credential (created atomically)
     const account = await this.accountContract.findById(credential.accountId);
-    if (!account) return null;
+    const user = await this.userContract.findById(account!.userId);
 
-    const user = await this.userContract.findById(account.userId);
-    if (!user) return null;
-
-    return { user, credential };
+    return { user: user!, credential };
   }
 
   async findUserByEmailOrUsername(
     identifier: string,
-  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null> {
+  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null> {
     const credential = await this.credentialAccountContract.findByEmailOrUsername(identifier);
     if (!credential) return null;
 
+    // account and user always exist for a persisted credential (created atomically)
     const account = await this.accountContract.findById(credential.accountId);
-    if (!account) return null;
+    const user = await this.userContract.findById(account!.userId);
 
-    const user = await this.userContract.findById(account.userId);
-    if (!user) return null;
-
-    return { user, credential };
+    return { user: user!, credential };
   }
 
   async findUserBySocialProvider(
     provider: string,
     providerId: string,
-  ): Promise<{ user: UserAggregate; social: SocialAccountModel } | null> {
+  ): Promise<{ user: Persisted<UserAggregate>; social: Persisted<SocialAccountModel> } | null> {
     const social = await this.socialAccountContract.findByProviderAndProviderId(
       provider,
       providerId,
     );
     if (!social) return null;
 
+    // account and user always exist for a persisted social account (created atomically)
     const account = await this.accountContract.findById(social.accountId);
-    if (!account) return null;
+    const user = await this.userContract.findById(account!.userId);
 
-    const user = await this.userContract.findById(account.userId);
-    if (!user) return null;
-
-    return { user, social };
+    return { user: user!, social };
   }
 
   async existsByUsername(username: string): Promise<boolean> {
@@ -124,13 +117,6 @@ export class UserFacade implements IUserFacade {
     return credential !== null;
   }
 
-  // === Helpers ===
-
-  private requireId(id: number | undefined, label: string): number {
-    if (id === undefined) throw new Error(`${label}: persist returned no id`);
-    return id;
-  }
-
   // === Commands ===
 
   async createUserWithCredentials(props: {
@@ -138,16 +124,16 @@ export class UserFacade implements IUserFacade {
     username: string;
     passwordHash: string | null;
     locale?: string;
-  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel }> {
+  }): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> }> {
     // 1. Create user anchor
     const user = UserAggregate.create();
     const persistedUser = await this.userContract.persist(user);
-    const userId = this.requireId(persistedUser.id, 'createUserWithCredentials:user');
+    const userId = persistedUser.id;
 
     // 2. Create account anchor
     const account = AccountAggregate.create({ userId });
     const persistedAccount = await this.accountContract.persist(account);
-    const accountId = this.requireId(persistedAccount.id, 'createUserWithCredentials:account');
+    const accountId = persistedAccount.id;
 
     // 3. Create credential account
     const credential = CredentialAccountModel.create({
@@ -161,7 +147,7 @@ export class UserFacade implements IUserFacade {
     // 4. Create profile anchor
     const profile = ProfileAggregate.create({ userId });
     const persistedProfile = await this.profileContract.persistProfile(profile);
-    const profileId = this.requireId(persistedProfile.id, 'createUserWithCredentials:profile');
+    const profileId = persistedProfile.id;
 
     // 5. Create personal profile
     const personalProfile = PersonalProfileModel.create({
@@ -176,7 +162,7 @@ export class UserFacade implements IUserFacade {
 
   async findDisplayNameByUserUUID(userUUID: string): Promise<string | null> {
     const user = await this.userContract.findByUUID(userUUID);
-    if (!user || user.id === undefined) return null;
+    if (!user) return null;
     const profile = await this.profileContract.findPersonalProfileByUserId(user.id);
     return profile?.displayName ?? null;
   }
@@ -186,11 +172,11 @@ export class UserFacade implements IUserFacade {
   ): Promise<{ givenName: string | null; familyName: string | null; avatarUrl: string | null }> {
     const nullResult = { givenName: null, familyName: null, avatarUrl: null };
     const user = await this.userContract.findByUUID(userUUID);
-    if (!user || user.id === undefined) return nullResult;
+    if (!user) return nullResult;
+    // profile always exists for a persisted user (created atomically)
     const profile = await this.profileContract.findByUserId(user.id);
-    if (!profile || profile.id === undefined) return nullResult;
     const [social, personalProfile] = await Promise.all([
-      this.profileContract.findFirstSocialProfileByProfileId(profile.id),
+      this.profileContract.findFirstSocialProfileByProfileId(profile!.id),
       this.profileContract.findPersonalProfileByUserId(user.id),
     ]);
     return {
@@ -210,19 +196,19 @@ export class UserFacade implements IUserFacade {
     avatarUrl?: string | null;
     locale?: string | null;
   }): Promise<{
-    user: UserAggregate;
-    credential: CredentialAccountModel;
-    social: SocialAccountModel;
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+    social: Persisted<SocialAccountModel>;
   }> {
     // 1. Create user anchor
     const user = UserAggregate.create();
     const persistedUser = await this.userContract.persist(user);
-    const userId = this.requireId(persistedUser.id, 'createUserFromOAuth:user');
+    const userId = persistedUser.id;
 
     // 2. Create account anchor
     const account = AccountAggregate.create({ userId });
     const persistedAccount = await this.accountContract.persist(account);
-    const accountId = this.requireId(persistedAccount.id, 'createUserFromOAuth:account');
+    const accountId = persistedAccount.id;
 
     // 3. Create credential account (OAuth — email verified by provider, no password)
     const credential = CredentialAccountModel.createFromSocial({
@@ -244,7 +230,7 @@ export class UserFacade implements IUserFacade {
     // 5. Create profile anchor
     const profile = ProfileAggregate.create({ userId });
     const persistedProfile = await this.profileContract.persistProfile(profile);
-    const profileId = this.requireId(persistedProfile.id, 'createUserFromOAuth:profile');
+    const profileId = persistedProfile.id;
 
     // 6. Create personal profile
     const personalProfile = PersonalProfileModel.create({
@@ -261,7 +247,7 @@ export class UserFacade implements IUserFacade {
   async linkSocialAccount(
     userId: number,
     props: { provider: string; providerId: string; providerEmail?: string },
-  ): Promise<SocialAccountModel> {
+  ): Promise<Persisted<SocialAccountModel>> {
     const account = await this.accountContract.findByUserId(userId);
     /* istanbul ignore next */
     if (!account) {
@@ -269,7 +255,7 @@ export class UserFacade implements IUserFacade {
     }
 
     const socialModel = SocialAccountModel.create({
-      accountId: this.requireId(account.id, 'linkSocialAccount:account'),
+      accountId: account.id,
       provider: props.provider,
       providerId: props.providerId,
       providerEmail: props.providerEmail,
@@ -281,11 +267,11 @@ export class UserFacade implements IUserFacade {
 
   async updateLocale(userUUID: string, locale: string): Promise<void> {
     const user = await this.userContract.findByUUID(userUUID);
-    if (!user || user.id === undefined) return;
+    if (!user) return;
+    // personal profile always exists for a persisted user (created atomically)
     const profile = await this.profileContract.findPersonalProfileByUserId(user.id);
-    if (!profile) return;
-    profile.updateLocale(locale);
-    await this.profileContract.persistPersonalProfile(profile);
+    profile!.updateLocale(locale);
+    await this.profileContract.persistPersonalProfile(profile!);
   }
 
   // === CredentialAccount operations ===
@@ -337,13 +323,13 @@ export class UserFacade implements IUserFacade {
   }): Promise<void> {
     const user = await this.userContract.findByUUID(props.userUUID);
     /* istanbul ignore next */
-    if (!user || user.id === undefined) {
+    if (!user) {
       throw new Error(`UserFacade.upsertSocialProfile: user not found uuid=${props.userUUID}`);
     }
 
     const profile = await this.profileContract.findByUserId(user.id);
     /* istanbul ignore next */
-    if (!profile || profile.id === undefined) {
+    if (!profile) {
       throw new Error(`UserFacade.upsertSocialProfile: profile not found for userId=${user.id}`);
     }
 

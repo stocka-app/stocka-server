@@ -4,7 +4,6 @@ import {
   RecordUserConsentsCommand,
 } from '@user/application/commands/record-user-consents/record-user-consents.command';
 import { UserConsentEntity } from '@user/infrastructure/persistence/entities/user-consent.entity';
-import { ConsentPersistenceException } from '@user/domain/exceptions/consent-persistence.exception';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -67,45 +66,4 @@ describe('RecordUserConsentsHandler', () => {
     });
   });
 
-  describe('Given the database operation fails with an Error instance', () => {
-    describe('When execute is called', () => {
-      beforeEach(() => {
-        consentRepository.save.mockRejectedValue(new Error('DB constraint violation'));
-      });
-
-      it('Then it returns an err with ConsentPersistenceException', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(ConsentPersistenceException);
-      });
-
-      it('Then the exception has CONSENT_PERSISTENCE_ERROR error code', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result._unsafeUnwrapErr().errorCode).toBe('CONSENT_PERSISTENCE_ERROR');
-      });
-    });
-  });
-
-  describe('Given the database operation fails with a non-Error value', () => {
-    describe('When execute is called', () => {
-      beforeEach(() => {
-        consentRepository.save.mockRejectedValue('unknown string error');
-      });
-
-      it('Then it returns an err with ConsentPersistenceException', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(ConsentPersistenceException);
-      });
-
-      it('Then the exception message includes the fallback message', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result._unsafeUnwrapErr().message).toContain('persist user consents');
-      });
-    });
-  });
 });

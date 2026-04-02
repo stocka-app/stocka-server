@@ -1,11 +1,7 @@
-import { ForbiddenException, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { ok, err } from 'neverthrow';
 import { RbacValidator } from '@authorization/infrastructure/validators/rbac.validator';
-import { JwtPayload } from '@common/decorators/current-user.decorator';
-import {
-  ITenantFacade,
-  TenantMembershipContext,
-} from '@tenant/domain/contracts/tenant-facade.contract';
+import { TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
 import { CapabilityResolver } from '@authorization/domain/services/capability.resolver';
 import { SystemAction } from '@authorization/domain/enums/actions-catalog';
 import { TierEnum } from '@authorization/domain/enums/tier.enum';
@@ -15,17 +11,6 @@ import {
   FeatureNotInTierError,
   TierLimitReachedError,
 } from '@authorization/domain/errors/policy-errors';
-
-function buildUser(overrides: Partial<JwtPayload> = {}): JwtPayload {
-  return {
-    uuid: 'user-uuid-123',
-    email: 'test@example.com',
-    tenantId: 'tenant-uuid-456',
-    role: 'OWNER',
-    tierLimits: null,
-    ...overrides,
-  };
-}
 
 function buildMembershipContext(
   overrides: Partial<TenantMembershipContext> = {},
@@ -42,23 +27,17 @@ function buildMembershipContext(
 
 describe('RbacValidator', () => {
   let validator: RbacValidator;
-  let tenantFacade: jest.Mocked<ITenantFacade>;
   let capabilityResolver: jest.Mocked<CapabilityResolver>;
 
   beforeEach(() => {
-    tenantFacade = {
-      getMembershipContext: jest.fn(),
-      getTierLimits: jest.fn(),
-    } as unknown as jest.Mocked<ITenantFacade>;
-
     capabilityResolver = {
       canPerformAction: jest.fn(),
     } as unknown as jest.Mocked<CapabilityResolver>;
 
-    validator = new RbacValidator(tenantFacade, capabilityResolver);
+    validator = new RbacValidator(capabilityResolver);
   });
 
-  describe('Given a membership context is passed directly (from SecurityGuard)', () => {
+  describe('Given a membership context is passed (from SecurityGuard)', () => {
     const membershipContext = buildMembershipContext();
 
     describe('When the action is allowed by the policy engine', () => {
@@ -68,18 +47,12 @@ describe('RbacValidator', () => {
 
       it('Then it resolves without throwing', async () => {
         await expect(
-          validator.validate(buildUser(), SystemAction.STORAGE_READ, membershipContext),
+          validator.validate(SystemAction.STORAGE_READ, membershipContext),
         ).resolves.toBeUndefined();
       });
 
-      it('Then it does not call getMembershipContext (uses passed context)', async () => {
-        await validator.validate(buildUser(), SystemAction.STORAGE_READ, membershipContext);
-
-        expect(tenantFacade.getMembershipContext).not.toHaveBeenCalled();
-      });
-
       it('Then it passes the correct PolicyContext to the resolver', async () => {
-        await validator.validate(buildUser(), SystemAction.STORAGE_CREATE, membershipContext);
+        await validator.validate(SystemAction.STORAGE_CREATE, membershipContext);
 
         expect(capabilityResolver.canPerformAction).toHaveBeenCalledWith({
           tenantTier: 'STARTER',
@@ -98,18 +71,14 @@ describe('RbacValidator', () => {
       });
 
       it('Then it throws HttpException with 403 and ACTION_NOT_ALLOWED', async () => {
-        const promise = validator.validate(
-          buildUser(),
-          SystemAction.STORAGE_CREATE,
-          membershipContext,
-        );
+        const promise = validator.validate(SystemAction.STORAGE_CREATE, membershipContext);
 
         await expect(promise).rejects.toThrow(HttpException);
         await expect(promise).rejects.toMatchObject({
           status: HttpStatus.FORBIDDEN,
         });
         try {
-          await validator.validate(buildUser(), SystemAction.STORAGE_CREATE, membershipContext);
+          await validator.validate(SystemAction.STORAGE_CREATE, membershipContext);
         } catch (e) {
           const response = (e as HttpException).getResponse() as Record<string, unknown>;
           expect(response.error).toBe('ACTION_NOT_ALLOWED');
@@ -128,7 +97,7 @@ describe('RbacValidator', () => {
 
       it('Then it throws HttpException with 403 and PLAN_UPGRADE_REQUIRED', async () => {
         try {
-          await validator.validate(buildUser(), SystemAction.STORAGE_CREATE, membershipContext);
+          await validator.validate(SystemAction.STORAGE_CREATE, membershipContext);
           fail('Expected to throw');
         } catch (e) {
           expect(e).toBeInstanceOf(HttpException);
@@ -147,47 +116,13 @@ describe('RbacValidator', () => {
 
       it('Then it throws HttpException with 403 and TIER_LIMIT_REACHED', async () => {
         try {
-          await validator.validate(buildUser(), SystemAction.STORAGE_CREATE, membershipContext);
+          await validator.validate(SystemAction.STORAGE_CREATE, membershipContext);
           fail('Expected to throw');
         } catch (e) {
           expect(e).toBeInstanceOf(HttpException);
           const response = (e as HttpException).getResponse() as Record<string, unknown>;
           expect(response.error).toBe('TIER_LIMIT_REACHED');
         }
-      });
-    });
-  });
-
-  describe('Given no membership context is passed (fallback to facade lookup)', () => {
-    describe('When the facade returns null (no membership)', () => {
-      beforeEach(() => {
-        tenantFacade.getMembershipContext.mockResolvedValue(null);
-      });
-
-      it('Then it throws ForbiddenException with PERMISSION_DENIED', async () => {
-        await expect(validator.validate(buildUser(), SystemAction.STORAGE_READ)).rejects.toThrow(
-          ForbiddenException,
-        );
-        await expect(
-          validator.validate(buildUser(), SystemAction.STORAGE_READ),
-        ).rejects.toMatchObject({
-          response: { error: 'PERMISSION_DENIED' },
-        });
-      });
-    });
-
-    describe('When the facade returns a valid context and the action is allowed', () => {
-      beforeEach(() => {
-        tenantFacade.getMembershipContext.mockResolvedValue(buildMembershipContext());
-        capabilityResolver.canPerformAction.mockResolvedValue(ok(undefined));
-      });
-
-      it('Then it resolves without throwing and uses the fetched context', async () => {
-        await expect(
-          validator.validate(buildUser(), SystemAction.STORAGE_READ),
-        ).resolves.toBeUndefined();
-
-        expect(tenantFacade.getMembershipContext).toHaveBeenCalledWith('user-uuid-123');
       });
     });
   });

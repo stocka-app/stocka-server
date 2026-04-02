@@ -1,26 +1,23 @@
-export class StorageAddressVO {
-  private readonly _value: string;
+import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
 
-  private constructor(value: string) {
-    this._value = value;
+export class StorageAddressVO extends StringVO {
+  private static readonly MAX_LENGTH = 200;
+
+  constructor(value: string) {
+    super(value);
+    this.ensureValid();
   }
 
-  static create(raw: string): StorageAddressVO {
-    const trimmed = raw.trim();
-    if (trimmed.length === 0) {
+  static create(value: string): StorageAddressVO {
+    return new StorageAddressVO(value.trim());
+  }
+
+  protected ensureValid(): void {
+    if (this.value.length === 0) {
       throw new Error('Storage address cannot be empty');
     }
-    if (trimmed.length > 200) {
-      throw new Error('Storage address cannot exceed 200 characters');
+    if (this.value.length > StorageAddressVO.MAX_LENGTH) {
+      throw new Error(`Storage address cannot exceed ${StorageAddressVO.MAX_LENGTH} characters`);
     }
-    return new StorageAddressVO(trimmed);
-  }
-
-  toString(): string {
-    return this._value;
-  }
-
-  equals(other: StorageAddressVO): boolean {
-    return this._value === other._value;
   }
 }

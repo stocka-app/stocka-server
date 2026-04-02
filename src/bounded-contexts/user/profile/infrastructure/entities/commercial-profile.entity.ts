@@ -19,7 +19,7 @@ export class CommercialProfileEntity extends BaseEntity {
   @Column({ name: 'tax_id', type: 'varchar', length: 50, nullable: true })
   taxId!: string | null;
 
-  @ManyToOne(() => ProfileEntity, (profile) => profile.commercialProfile, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ProfileEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'profile_id' })
   profile!: ProfileEntity;
 }

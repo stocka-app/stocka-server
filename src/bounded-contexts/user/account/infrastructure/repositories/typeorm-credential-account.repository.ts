@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { ICredentialAccountContract } from '@user/account/domain/contracts/account.contract';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { CredentialAccountEntity } from '@user/account/infrastructure/entities/credential-account.entity';
 import { CredentialAccountMapper } from '@user/account/infrastructure/mappers/credential-account.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
@@ -17,28 +18,28 @@ export class TypeOrmCredentialAccountRepository implements ICredentialAccountCon
     private readonly uow: IUnitOfWork,
   ) {}
 
-  async findById(id: number): Promise<CredentialAccountModel | null> {
+  async findById(id: number): Promise<Persisted<CredentialAccountModel> | null> {
     const entity = await this.repository.findOne({ where: { id } });
     /* istanbul ignore next */
-    return entity ? CredentialAccountMapper.toDomain(entity) : null;
+    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
   }
 
-  async findByAccountId(accountId: number): Promise<CredentialAccountModel | null> {
+  async findByAccountId(accountId: number): Promise<Persisted<CredentialAccountModel> | null> {
     const entity = await this.repository.findOne({ where: { accountId } });
     /* istanbul ignore next */
-    return entity ? CredentialAccountMapper.toDomain(entity) : null;
+    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
   }
 
-  async findByEmail(email: string): Promise<CredentialAccountModel | null> {
+  async findByEmail(email: string): Promise<Persisted<CredentialAccountModel> | null> {
     const entity = await this.repository
       .createQueryBuilder('ca')
       .where('LOWER(ca.email) = LOWER(:email)', { email })
       .andWhere('ca.archivedAt IS NULL')
       .getOne();
-    return entity ? CredentialAccountMapper.toDomain(entity) : null;
+    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
   }
 
-  async findByEmailOrUsername(identifier: string): Promise<CredentialAccountModel | null> {
+  async findByEmailOrUsername(identifier: string): Promise<Persisted<CredentialAccountModel> | null> {
     const isEmail = identifier.includes('@');
 
     if (isEmail) {
@@ -56,16 +57,16 @@ export class TypeOrmCredentialAccountRepository implements ICredentialAccountCon
       .getOne();
 
     /* istanbul ignore next */
-    return entity ? CredentialAccountMapper.toDomain(entity) : null;
+    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
   }
 
-  async persist(model: CredentialAccountModel): Promise<CredentialAccountModel> {
+  async persist(model: CredentialAccountModel): Promise<Persisted<CredentialAccountModel>> {
     const entityData = CredentialAccountMapper.toEntity(model);
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(CredentialAccountEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return CredentialAccountMapper.toDomain(savedEntity as CredentialAccountEntity);
+    return CredentialAccountMapper.toDomain(savedEntity as CredentialAccountEntity) as Persisted<CredentialAccountModel>;
   }
 
   /* istanbul ignore next */

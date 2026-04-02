@@ -1,6 +1,7 @@
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 
 /**
  * IUserFacade — typed contract for cross-BC communication with User BC.
@@ -12,25 +13,28 @@ import { SocialAccountModel } from '@user/account/domain/models/social-account.m
  * When called within an active UoW transaction, cross-BC writes automatically
  * join the transaction via the shared AsyncLocalStorage-backed UoW singleton.
  * No transaction context parameter needed — repos detect it internally.
+ *
+ * Methods that retrieve or persist domain objects return Persisted<T> so callers
+ * can safely access .id without type assertions.
  */
 export interface IUserFacade {
   // === Queries ===
-  findByUUID(uuid: string): Promise<UserAggregate | null>;
-  findByAccountId(accountId: number): Promise<UserAggregate | null>;
+  findByUUID(uuid: string): Promise<Persisted<UserAggregate> | null>;
+  findByAccountId(accountId: number): Promise<Persisted<UserAggregate> | null>;
   findUsernameByUUID(uuid: string): Promise<string | null>;
   findUserByUUIDWithCredential(
     uuid: string,
-  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null>;
   findUserByEmail(
     email: string,
-  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null>;
   findUserByEmailOrUsername(
     identifier: string,
-  ): Promise<{ user: UserAggregate; credential: CredentialAccountModel } | null>;
+  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null>;
   findUserBySocialProvider(
     provider: string,
     providerId: string,
-  ): Promise<{ user: UserAggregate; social: SocialAccountModel } | null>;
+  ): Promise<{ user: Persisted<UserAggregate>; social: Persisted<SocialAccountModel> } | null>;
   existsByUsername(username: string): Promise<boolean>;
   existsByEmail(email: string): Promise<boolean>;
   findDisplayNameByUserUUID(userUUID: string): Promise<string | null>;
@@ -44,7 +48,7 @@ export interface IUserFacade {
     username: string;
     passwordHash: string | null;
     locale?: string;
-  }): Promise<{ user: UserAggregate; credential: CredentialAccountModel }>;
+  }): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> }>;
 
   createUserFromOAuth(props: {
     email: string;
@@ -56,9 +60,9 @@ export interface IUserFacade {
     avatarUrl?: string | null;
     locale?: string | null;
   }): Promise<{
-    user: UserAggregate;
-    credential: CredentialAccountModel;
-    social: SocialAccountModel;
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+    social: Persisted<SocialAccountModel>;
   }>;
 
   linkSocialAccount(
@@ -68,7 +72,7 @@ export interface IUserFacade {
       providerId: string;
       providerEmail?: string;
     },
-  ): Promise<SocialAccountModel>;
+  ): Promise<Persisted<SocialAccountModel>>;
 
   upsertSocialProfile(props: {
     userUUID: string;

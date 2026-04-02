@@ -78,6 +78,21 @@ export class TenantFacade implements ITenantFacade {
     };
   }
 
+  async getTierLimitsByTenantUUID(tenantUUID: string): Promise<TierLimits | null> {
+    const tenant = await this.tenantContract.findByUUID(tenantUUID);
+    if (!tenant?.id) return null;
+
+    const config = await this.configContract.findByTenantId(tenant.id);
+    if (!config) return null;
+
+    return {
+      tier: config.tier.toString(),
+      maxCustomRooms: config.maxCustomRooms,
+      maxStoreRooms: config.maxStoreRooms,
+      maxWarehouses: config.maxWarehouses,
+    };
+  }
+
   /* istanbul ignore next -- CompleteOnboardingController dispatches CreateTenantCommand directly via CommandBus */
   async createTenantForUser(props: CreateTenantFacadeProps): Promise<{ tenantUUID: string }> {
     const command = new CreateTenantCommand(

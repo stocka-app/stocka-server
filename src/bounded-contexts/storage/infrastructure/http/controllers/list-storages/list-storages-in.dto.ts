@@ -8,7 +8,7 @@ export class ListStoragesInDto {
   @ApiPropertyOptional({ enum: StorageStatus, description: 'Filter by storage status' })
   @IsOptional()
   @IsEnum(StorageStatus)
-  status?: StorageStatus;
+  status: StorageStatus = StorageStatus.ACTIVE;
 
   @ApiPropertyOptional({ enum: StorageType, description: 'Filter by storage type' })
   @IsOptional()
@@ -20,7 +20,7 @@ export class ListStoragesInDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number;
+  page: number = 1;
 
   @ApiPropertyOptional({ description: 'Items per page (max 100)', default: 50 })
   @IsOptional()
@@ -28,7 +28,7 @@ export class ListStoragesInDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  limit?: number;
+  limit: number = 50;
 
   @ApiPropertyOptional({ description: 'Search by name (case-insensitive)' })
   @IsOptional()
@@ -39,5 +39,5 @@ export class ListStoragesInDto {
   @ApiPropertyOptional({ enum: ['ASC', 'DESC'], description: 'Sort order by name', default: 'ASC' })
   @IsOptional()
   @IsIn(['ASC', 'DESC'])
-  sortOrder?: 'ASC' | 'DESC';
+  sortOrder: 'ASC' | 'DESC' = 'ASC';
 }

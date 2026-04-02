@@ -12,8 +12,7 @@ import { InvitationExpiredError } from '@onboarding/domain/errors/invitation-exp
 import { InvitationAlreadyUsedError } from '@onboarding/domain/errors/invitation-already-used.error';
 import { InvitationEmailMismatchError } from '@onboarding/domain/errors/invitation-email-mismatch.error';
 import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
-import { CreateStorageCommand } from '@storage/application/commands/create-storage/create-storage.command';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
+import { CreateCustomRoomCommand } from '@storage/application/commands/create-custom-room/create-custom-room.command';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { TenantMemberModel } from '@tenant/domain/models/tenant-member.model';
@@ -22,7 +21,7 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
 import { CreateTenantResult } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
-import { CreateStorageResult } from '@storage/application/commands/create-storage/create-storage.handler';
+import { CreateCustomRoomResult } from '@storage/application/commands/create-custom-room/create-custom-room.handler';
 
 export interface CompleteOnboardingData {
   path: OnboardingPath;
@@ -118,14 +117,14 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
 
         if (!hasCustomStorages) {
           const storageName = defaultStorageName(businessType);
-          await this.commandBus.execute<CreateStorageCommand, CreateStorageResult>(
-            new CreateStorageCommand(
+          await this.commandBus.execute<CreateCustomRoomCommand, CreateCustomRoomResult>(
+            new CreateCustomRoomCommand(
               tenantId,
-              StorageType.CUSTOM_ROOM,
               storageName,
-              undefined,
-              undefined,
               'General',
+              'box',
+              '#6366F1',
+              'Pendiente',
             ),
           );
         }
@@ -183,11 +182,10 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     await this.memberContract.persist(member);
     await this.invitationContract.markAccepted(invitation.id);
 
+    // session always exists at this point (execute() verified it before delegating here)
     const session = await this.sessionContract.findByUserUUID(command.userUUID);
-    if (session) {
-      session.markCompleted();
-      await this.sessionContract.save(session);
-    }
+    session!.markCompleted();
+    await this.sessionContract.save(session!);
 
     return ok({
       path: OnboardingPath.JOIN,

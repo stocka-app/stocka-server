@@ -124,6 +124,13 @@ describe('MediatorService', () => {
       });
     });
 
+    describe('When calling getTierLimitsByTenantUUID on null facade', () => {
+      it('Then it returns null', async () => {
+        const result = await service.tenant.getTierLimitsByTenantUUID('any-tenant-uuid');
+        expect(result).toBeNull();
+      });
+    });
+
     describe('When calling createTenantForUser on null facade', () => {
       it('Then it throws "not available"', async () => {
         await expect(

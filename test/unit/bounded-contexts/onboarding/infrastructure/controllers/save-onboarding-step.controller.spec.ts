@@ -60,7 +60,7 @@ describe('SaveOnboardingStepController', () => {
         expect(result).toEqual({ status: 'in_progress', currentStep: 1, path: null });
       });
 
-      it('Then it fires updateLocale as a fire-and-forget', async () => {
+      it('Then it calls updateLocale with the normalized locale', async () => {
         await controller.handle(buildDto(), buildUser(), 'en-US');
 
         expect(mediator.user.updateLocale).toHaveBeenCalledWith('user-uuid-123', 'en');
@@ -103,10 +103,8 @@ describe('SaveOnboardingStepController', () => {
         (mediator.user.updateLocale as jest.Mock).mockRejectedValue(new Error('locale update failed'));
       });
 
-      it('Then it still returns ok because updateLocale is fire-and-forget', async () => {
-        const result = await controller.handle(buildDto(), buildUser(), 'en-US');
-
-        expect(result).toEqual({ status: 'in_progress', currentStep: 1, path: null });
+      it('Then it propagates the error', async () => {
+        await expect(controller.handle(buildDto(), buildUser(), 'en-US')).rejects.toThrow('locale update failed');
       });
     });
 
