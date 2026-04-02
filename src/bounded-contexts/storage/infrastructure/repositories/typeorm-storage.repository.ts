@@ -56,7 +56,7 @@ export class TypeOrmStorageRepository implements IStorageRepository {
       .leftJoinAndSelect('s.storeRoom', 'storeRoom')
       .leftJoinAndSelect('s.warehouse', 'warehouse')
       .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
-      .orderBy('COALESCE(customRoom.name, storeRoom.name, warehouse.name)', sortOrder);
+      .orderBy('s.id', sortOrder);
 
     if (filters?.type) {
       qb.andWhere('s.type = :type', { type: filters.type });
