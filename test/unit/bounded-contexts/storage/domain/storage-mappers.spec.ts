@@ -2,12 +2,17 @@ import { StorageMapper } from '@storage/infrastructure/mappers/storage.mapper';
 import { CustomRoomMapper } from '@storage/infrastructure/mappers/custom-room.mapper';
 import { StoreRoomMapper } from '@storage/infrastructure/mappers/store-room.mapper';
 import { WarehouseMapper } from '@storage/infrastructure/mappers/warehouse.mapper';
+import { StorageActivityLogMapper } from '@storage/infrastructure/mappers/storage-activity-log.mapper';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
+import { StorageActivityAction } from '@storage/domain/enums/storage-activity-action.enum';
+import { StorageActivityLogEntry } from '@storage/domain/models/storage-activity-log-entry.model';
 import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
 import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.entity';
 import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
+import { StorageActivityLogEntity } from '@storage/infrastructure/entities/storage-activity-log.entity';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
 // ── CustomRoomMapper ────────────────────────────────────────────────────────────
 
@@ -540,6 +545,130 @@ describe('StorageMapper', () => {
         expect(() => StorageMapper.toDomain(entity)).toThrow(
           'StorageEntity 019538a0-0000-7000-8000-000000000097 missing warehouse',
         );
+      });
+    });
+  });
+});
+
+// ── StorageActivityLogMapper ────────────────────────────────────────────────────
+
+const LOG_STORAGE_UUID = '019538a0-0000-7000-8000-000000000001';
+const LOG_TENANT_UUID = '019538a0-0000-7000-8000-000000000002';
+const LOG_ACTOR_UUID = '019538a0-0000-7000-8000-000000000003';
+const LOG_ENTRY_UUID = '019538a0-0000-7000-8000-000000000099';
+
+describe('StorageActivityLogMapper', () => {
+  describe('Given a StorageActivityLogEntity with all fields set', () => {
+    describe('When toDomain is called', () => {
+      it('Then it returns a StorageActivityLogEntry with all fields mapped correctly', () => {
+        const occurredAt = new Date('2026-01-15T10:00:00Z');
+        const entity = {
+          id: 5,
+          uuid: LOG_ENTRY_UUID,
+          storageUUID: LOG_STORAGE_UUID,
+          tenantUUID: LOG_TENANT_UUID,
+          actorUUID: LOG_ACTOR_UUID,
+          action: StorageActivityAction.CREATED,
+          previousValue: null,
+          newValue: { name: 'Bodega Norte', type: 'WAREHOUSE' },
+          occurredAt,
+        } as StorageActivityLogEntity;
+
+        const entry = StorageActivityLogMapper.toDomain(entity);
+
+        expect(entry.id).toBe(5);
+        expect(entry.uuid.toString()).toBe(LOG_ENTRY_UUID);
+        expect(entry.storageUUID.toString()).toBe(LOG_STORAGE_UUID);
+        expect(entry.tenantUUID.toString()).toBe(LOG_TENANT_UUID);
+        expect(entry.actorUUID.toString()).toBe(LOG_ACTOR_UUID);
+        expect(entry.action).toBe(StorageActivityAction.CREATED);
+        expect(entry.previousValue).toBeNull();
+        expect(entry.newValue).toEqual({ name: 'Bodega Norte', type: 'WAREHOUSE' });
+        expect(entry.occurredAt).toEqual(occurredAt);
+      });
+
+      it('Then previousValue and newValue are preserved when both are present', () => {
+        const entity = {
+          id: 6,
+          uuid: LOG_ENTRY_UUID,
+          storageUUID: LOG_STORAGE_UUID,
+          tenantUUID: LOG_TENANT_UUID,
+          actorUUID: LOG_ACTOR_UUID,
+          action: StorageActivityAction.NAME_CHANGED,
+          previousValue: { value: 'Old Name' },
+          newValue: { value: 'New Name' },
+          occurredAt: new Date(),
+        } as StorageActivityLogEntity;
+
+        const entry = StorageActivityLogMapper.toDomain(entity);
+
+        expect(entry.previousValue).toEqual({ value: 'Old Name' });
+        expect(entry.newValue).toEqual({ value: 'New Name' });
+        expect(entry.action).toBe(StorageActivityAction.NAME_CHANGED);
+      });
+    });
+  });
+
+  describe('Given a StorageActivityLogEntry created via create()', () => {
+    describe('When toEntity is called', () => {
+      it('Then the entity has all fields set and id is not assigned', () => {
+        const entry = StorageActivityLogEntry.create({
+          storageUUID: LOG_STORAGE_UUID,
+          tenantUUID: LOG_TENANT_UUID,
+          actorUUID: LOG_ACTOR_UUID,
+          action: StorageActivityAction.ARCHIVED,
+          previousValue: null,
+          newValue: null,
+        });
+
+        const entity = StorageActivityLogMapper.toEntity(entry);
+
+        expect(entity.uuid).toBeDefined();
+        expect(entity.storageUUID).toBe(LOG_STORAGE_UUID);
+        expect(entity.tenantUUID).toBe(LOG_TENANT_UUID);
+        expect(entity.actorUUID).toBe(LOG_ACTOR_UUID);
+        expect(entity.action).toBe(StorageActivityAction.ARCHIVED);
+        expect(entity.previousValue).toBeNull();
+        expect(entity.newValue).toBeNull();
+        expect(entity.id).toBeUndefined();
+      });
+
+      it('Then previousValue and newValue are mapped when set', () => {
+        const entry = StorageActivityLogEntry.create({
+          storageUUID: LOG_STORAGE_UUID,
+          tenantUUID: LOG_TENANT_UUID,
+          actorUUID: LOG_ACTOR_UUID,
+          action: StorageActivityAction.COLOR_CHANGED,
+          previousValue: { value: '#6b7280' },
+          newValue: { value: '#3b82f6' },
+        });
+
+        const entity = StorageActivityLogMapper.toEntity(entry);
+
+        expect(entity.previousValue).toEqual({ value: '#6b7280' });
+        expect(entity.newValue).toEqual({ value: '#3b82f6' });
+      });
+    });
+  });
+
+  describe('Given a StorageActivityLogEntry reconstituted with an id', () => {
+    describe('When toEntity is called', () => {
+      it('Then the entity id is set', () => {
+        const entry = StorageActivityLogEntry.reconstitute({
+          id: 99,
+          uuid: new UUIDVO(LOG_ENTRY_UUID),
+          storageUUID: new UUIDVO(LOG_STORAGE_UUID),
+          tenantUUID: new UUIDVO(LOG_TENANT_UUID),
+          actorUUID: new UUIDVO(LOG_ACTOR_UUID),
+          action: StorageActivityAction.FROZEN,
+          previousValue: null,
+          newValue: null,
+          occurredAt: new Date(),
+        });
+
+        const entity = StorageActivityLogMapper.toEntity(entry);
+
+        expect(entity.id).toBe(99);
       });
     });
   });
