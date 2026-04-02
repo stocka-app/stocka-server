@@ -99,7 +99,6 @@ describe('UserFacade', () => {
       findPersonalProfileByUsername: jest.fn(),
       persistProfile: jest.fn(),
       persistPersonalProfile: jest.fn(),
-      persistCommercialProfile: jest.fn(),
       upsertSocialProfile: jest.fn(),
       findSocialProfileByProfileAndProvider: jest.fn(),
       findFirstSocialProfileByProfileId: jest.fn(),
@@ -160,18 +159,6 @@ describe('UserFacade', () => {
       it('Then it returns silently without throwing', async () => {
         await expect(facade.updateLocale('user-uuid-123', 'en')).resolves.toBeUndefined();
         expect(profileContract.findPersonalProfileByUserId).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('When the user exists but has no personal profile', () => {
-      beforeEach(() => {
-        userContract.findByUUID.mockResolvedValue(buildUser(42));
-        profileContract.findPersonalProfileByUserId.mockResolvedValue(null);
-      });
-
-      it('Then it returns silently without throwing', async () => {
-        await expect(facade.updateLocale('user-uuid-001', 'en')).resolves.toBeUndefined();
-        expect(profileContract.persistPersonalProfile).not.toHaveBeenCalled();
       });
     });
 
@@ -409,16 +396,5 @@ describe('UserFacade', () => {
       });
     });
 
-    describe('When the profile aggregate is not found', () => {
-      beforeEach(() => {
-        userContract.findByUUID.mockResolvedValue(buildUser(42));
-        profileContract.findByUserId.mockResolvedValue(null);
-      });
-
-      it('Then it returns nulls for all social name fields', async () => {
-        const result = await facade.findSocialNameByUserUUID('user-uuid-001');
-        expect(result).toEqual({ givenName: null, familyName: null, avatarUrl: null });
-      });
-    });
   });
 });

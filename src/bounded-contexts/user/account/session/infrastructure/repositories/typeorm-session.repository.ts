@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, EntityManager } from 'typeorm';
 import { ISessionContract } from '@user/account/session/domain/session.contract';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 import { CredentialSessionModel } from '@user/account/session/domain/models/credential-session.model';
 import { SocialSessionModel } from '@user/account/session/domain/models/social-session.model';
@@ -27,44 +28,44 @@ export class TypeOrmSessionRepository implements ISessionContract {
     private readonly uow: IUnitOfWork,
   ) {}
 
-  async findById(id: number): Promise<SessionAggregate | null> {
+  async findById(id: number): Promise<Persisted<SessionAggregate> | null> {
     const entity = await this.repository.findOne({ where: { id, archivedAt: IsNull() } });
-    return entity ? SessionMapper.toDomain(entity) : null;
+    return entity ? SessionMapper.toDomain(entity) as Persisted<SessionAggregate> : null;
   }
 
-  async findByUUID(uuid: string): Promise<SessionAggregate | null> {
+  async findByUUID(uuid: string): Promise<Persisted<SessionAggregate> | null> {
     const entity = await this.repository.findOne({ where: { uuid, archivedAt: IsNull() } });
-    return entity ? SessionMapper.toDomain(entity) : null;
+    return entity ? SessionMapper.toDomain(entity) as Persisted<SessionAggregate> : null;
   }
 
-  async findByTokenHash(tokenHash: string): Promise<SessionAggregate | null> {
+  async findByTokenHash(tokenHash: string): Promise<Persisted<SessionAggregate> | null> {
     const entity = await this.repository.findOne({ where: { tokenHash, archivedAt: IsNull() } });
-    return entity ? SessionMapper.toDomain(entity) : null;
+    return entity ? SessionMapper.toDomain(entity) as Persisted<SessionAggregate> : null;
   }
 
-  async findActiveByAccountId(accountId: number): Promise<SessionAggregate[]> {
+  async findActiveByAccountId(accountId: number): Promise<Persisted<SessionAggregate>[]> {
     const entities = await this.repository
       .createQueryBuilder('session')
       .where('session.accountId = :accountId', { accountId })
       .andWhere('session.archivedAt IS NULL')
       .andWhere('session.expiresAt > :now', { now: new Date() })
       .getMany();
-    return entities.map((e) => SessionMapper.toDomain(e));
+    return entities.map((e) => SessionMapper.toDomain(e) as Persisted<SessionAggregate>);
   }
 
-  async persist(session: SessionAggregate): Promise<SessionAggregate> {
+  async persist(session: SessionAggregate): Promise<Persisted<SessionAggregate>> {
     const entityData = SessionMapper.toEntity(session);
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(SessionEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return SessionMapper.toDomain(savedEntity as SessionEntity);
+    return SessionMapper.toDomain(savedEntity as SessionEntity) as Persisted<SessionAggregate>;
   }
 
   async persistWithCredential(
     session: SessionAggregate,
     credentialSession: CredentialSessionModel,
-  ): Promise<SessionAggregate> {
+  ): Promise<Persisted<SessionAggregate>> {
     const entityData = SessionMapper.toEntity(session);
     /* istanbul ignore next */
     const sessionRepo = this.uow.isActive()
@@ -80,13 +81,13 @@ export class TypeOrmSessionRepository implements ISessionContract {
     const credEntityData = CredentialSessionMapper.toEntity(credentialSession, savedSession.id);
     await credRepo.save(credRepo.create(credEntityData));
 
-    return SessionMapper.toDomain(savedSession as SessionEntity);
+    return SessionMapper.toDomain(savedSession as SessionEntity) as Persisted<SessionAggregate>;
   }
 
   async persistWithSocial(
     session: SessionAggregate,
     socialSession: SocialSessionModel,
-  ): Promise<SessionAggregate> {
+  ): Promise<Persisted<SessionAggregate>> {
     const entityData = SessionMapper.toEntity(session);
     /* istanbul ignore next */
     const sessionRepo = this.uow.isActive()
@@ -102,7 +103,7 @@ export class TypeOrmSessionRepository implements ISessionContract {
     const socialEntityData = SocialSessionMapper.toEntity(socialSession, savedSession.id);
     await socialRepo.save(socialRepo.create(socialEntityData));
 
-    return SessionMapper.toDomain(savedSession as SessionEntity);
+    return SessionMapper.toDomain(savedSession as SessionEntity) as Persisted<SessionAggregate>;
   }
 
   async archive(uuid: string): Promise<void> {
