@@ -44,7 +44,7 @@ export class SaveOnboardingStepController {
     // Accept-Language on every request, so if the user toggles language
     // mid-onboarding, the DB stays in sync for emails and future sessions.
     const locale = normalizeLocale(acceptLanguage);
-    this.mediator.user.updateLocale(user.uuid, locale).catch(() => {});
+    await this.mediator.user.updateLocale(user.uuid, locale);
 
     return result.match(
       (session) => ({

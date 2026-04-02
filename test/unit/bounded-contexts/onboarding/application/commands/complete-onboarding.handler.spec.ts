@@ -570,24 +570,5 @@ describe('CompleteOnboardingHandler', () => {
       });
     });
 
-    describe('When all validation passes but session is not found for the final save', () => {
-      beforeEach(() => {
-        // First call returns session, second call (for markCompleted) returns null
-        sessionContract.findByUserUUID
-          .mockResolvedValueOnce(
-            buildSession({ path: OnboardingPath.JOIN, invitationCode: 'inv-token-xyz' }),
-          )
-          .mockResolvedValueOnce(null);
-        invitationContract.findByToken.mockResolvedValue(buildInvitation());
-        (mediator.user.findByUUID as jest.Mock).mockResolvedValue({ id: 42, uuid: 'user-uuid-123' });
-      });
-
-      it('Then it returns ok and skips the session save gracefully', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isOk()).toBe(true);
-        expect(sessionContract.save).not.toHaveBeenCalled();
-      });
-    });
   });
 });

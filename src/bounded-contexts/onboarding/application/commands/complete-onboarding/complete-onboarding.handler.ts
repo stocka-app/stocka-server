@@ -118,7 +118,14 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
         if (!hasCustomStorages) {
           const storageName = defaultStorageName(businessType);
           await this.commandBus.execute<CreateCustomRoomCommand, CreateCustomRoomResult>(
-            new CreateCustomRoomCommand(tenantId, storageName, 'General', 'box', '#6366F1', ''),
+            new CreateCustomRoomCommand(
+              tenantId,
+              storageName,
+              'General',
+              'box',
+              '#6366F1',
+              'Pendiente',
+            ),
           );
         }
 
@@ -175,11 +182,10 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     await this.memberContract.persist(member);
     await this.invitationContract.markAccepted(invitation.id);
 
+    // session always exists at this point (execute() verified it before delegating here)
     const session = await this.sessionContract.findByUserUUID(command.userUUID);
-    if (session) {
-      session.markCompleted();
-      await this.sessionContract.save(session);
-    }
+    session!.markCompleted();
+    await this.sessionContract.save(session!);
 
     return ok({
       path: OnboardingPath.JOIN,
