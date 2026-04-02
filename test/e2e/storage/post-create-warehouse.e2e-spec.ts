@@ -95,7 +95,7 @@ async function createWarehouse(
   const res = await request(app.getHttpServer())
     .post('/api/storages/warehouses')
     .set('Authorization', `Bearer ${token}`)
-    .send({ name, icon: 'default-icon', color: '#AABBCC', address });
+    .send({ name, address });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
@@ -134,7 +134,7 @@ describe('POST /api/storages/warehouses (e2e)', () => {
         const res = await request(app.getHttpServer())
           .post('/api/storages/warehouses')
           .set('Authorization', `Bearer ${freeOwnerToken}`)
-          .send({ name: 'Free Warehouse', icon: 'icon', color: '#AABBCC', address: 'Some Addr' });
+          .send({ name: 'Free Warehouse', address: 'Some Addr' });
 
         expect(res.status).toBe(HttpStatus.FORBIDDEN);
       });
@@ -163,7 +163,7 @@ describe('POST /api/storages/warehouses (e2e)', () => {
         const res = await request(app.getHttpServer())
           .post('/api/storages/warehouses')
           .set('Authorization', `Bearer ${zeroWarehouseToken}`)
-          .send({ name: 'Zero Limit Warehouse', icon: 'icon', color: '#AABBCC', address: 'Some St' });
+          .send({ name: 'Zero Limit Warehouse', address: 'Some St' });
 
         expect(res.status).toBe(HttpStatus.FORBIDDEN);
         expect(res.body.error).toBe('WAREHOUSE_REQUIRES_TIER_UPGRADE');
@@ -195,7 +195,7 @@ describe('POST /api/storages/warehouses (e2e)', () => {
         const res = await request(app.getHttpServer())
           .post('/api/storages/warehouses')
           .set('Authorization', `Bearer ${starterToken}`)
-          .send({ name: 'Warehouse Over Limit', icon: 'icon', color: '#AABBCC', address: 'Addr 4' });
+          .send({ name: 'Warehouse Over Limit', address: 'Addr 4' });
 
         expect(res.status).toBe(HttpStatus.FORBIDDEN);
       });
@@ -225,8 +225,6 @@ describe('POST /api/storages/warehouses (e2e)', () => {
           .set('Authorization', `Bearer ${ownerBToken}`)
           .send({
             name: 'PostCreateWarehouse Existing Warehouse',
-            icon: 'icon',
-            color: '#AABBCC',
             address: '100 St',
           });
 

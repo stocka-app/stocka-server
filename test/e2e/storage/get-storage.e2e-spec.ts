@@ -88,7 +88,7 @@ async function createStorage(
   const res = await request(app.getHttpServer())
     .post(routes[type])
     .set('Authorization', `Bearer ${token}`)
-    .send({ icon: 'default-icon', color: '#AABBCC', address: '100 Test St', ...body });
+    .send({ address: '100 Test St', ...body });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 

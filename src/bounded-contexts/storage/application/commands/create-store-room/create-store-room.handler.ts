@@ -5,6 +5,10 @@ import { IStorageRepository } from '@storage/domain/contracts/storage.repository
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
+import {
+  resolveStorageIcon,
+  resolveStorageColor,
+} from '@storage/domain/services/storage-icon-color.resolver';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { StoreRoomLimitReachedError } from '@storage/application/errors/store-room-limit-reached.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -48,8 +52,8 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
       tenantUUID: command.tenantUUID,
       name: command.name,
       description: command.description,
-      icon: command.icon,
-      color: command.color,
+      icon: resolveStorageIcon(StorageType.STORE_ROOM),
+      color: resolveStorageColor(StorageType.STORE_ROOM),
       address: command.address,
       parentUUID: command.parentUUID,
     });

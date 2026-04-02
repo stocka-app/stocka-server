@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 export class CreateWarehouseInDto {
   @ApiProperty({ description: 'Warehouse name', minLength: 1, maxLength: 100 })
@@ -7,17 +7,6 @@ export class CreateWarehouseInDto {
   @IsNotEmpty()
   @MaxLength(100)
   name!: string;
-
-  @ApiProperty({ description: 'Icon identifier', maxLength: 100 })
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(100)
-  icon!: string;
-
-  @ApiProperty({ description: 'Color hex code', example: '#FF5733' })
-  @IsString()
-  @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'color must be a valid hex color (e.g. #FF5733)' })
-  color!: string;
 
   @ApiProperty({ description: 'Physical address', maxLength: 200 })
   @IsString()

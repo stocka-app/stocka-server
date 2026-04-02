@@ -5,6 +5,10 @@ import { IStorageRepository } from '@storage/domain/contracts/storage.repository
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
+import {
+  resolveStorageIcon,
+  resolveStorageColor,
+} from '@storage/domain/services/storage-icon-color.resolver';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -52,8 +56,8 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       tenantUUID: command.tenantUUID,
       name: command.name,
       description: command.description,
-      icon: command.icon,
-      color: command.color,
+      icon: resolveStorageIcon(StorageType.WAREHOUSE),
+      color: resolveStorageColor(StorageType.WAREHOUSE),
       address: command.address,
     });
 

@@ -88,7 +88,7 @@ async function createStorage(
   const res = await request(app.getHttpServer())
     .post(routes[type])
     .set('Authorization', `Bearer ${token}`)
-    .send({ icon: 'default-icon', color: '#AABBCC', address: '100 Test St', ...body });
+    .send({ address: '100 Test St', ...body });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
@@ -212,16 +212,15 @@ describe('PATCH /api/storages/warehouses/:uuid (e2e)', () => {
     });
   });
 
-  describe('Given an active warehouse and no name in the update payload', () => {
-    describe('When PATCH /api/storages/warehouses/:uuid is called with only icon and color', () => {
-      it('Then it returns 200 and the name remains unchanged', async () => {
+  describe('Given an active warehouse and a request body with non-whitelisted icon and color fields', () => {
+    describe('When PATCH /api/storages/warehouses/:uuid is called with icon and color', () => {
+      it('Then it returns 400 because warehouse icon and color are fixed and not updatable by the client', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/storages/warehouses/${warehouseUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({ icon: 'new-icon', color: '#334455' });
 
-        expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual({ storageUUID: warehouseUUID });
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
       });
     });
   });
