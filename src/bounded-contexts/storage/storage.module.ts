@@ -6,7 +6,9 @@ import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
 import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.entity';
 import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
+import { StorageActivityLogEntity } from '@storage/infrastructure/entities/storage-activity-log.entity';
 import { TypeOrmStorageRepository } from '@storage/infrastructure/repositories/typeorm-storage.repository';
+import { TypeOrmStorageActivityLogRepository } from '@storage/infrastructure/repositories/typeorm-storage-activity-log.repository';
 import { TenantCapabilitiesAdapter } from '@storage/infrastructure/adapters/tenant-capabilities.adapter';
 import { CreateCustomRoomHandler } from '@storage/application/commands/create-custom-room/create-custom-room.handler';
 import { CreateStoreRoomHandler } from '@storage/application/commands/create-store-room/create-store-room.handler';
@@ -30,7 +32,13 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([StorageEntity, CustomRoomEntity, StoreRoomEntity, WarehouseEntity]),
+    TypeOrmModule.forFeature([
+      StorageEntity,
+      CustomRoomEntity,
+      StoreRoomEntity,
+      WarehouseEntity,
+      StorageActivityLogEntity,
+    ]),
     CqrsModule,
     MediatorModule,
   ],
@@ -47,8 +55,13 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
   ],
   providers: [
     { provide: INJECTION_TOKENS.STORAGE_CONTRACT, useClass: TypeOrmStorageRepository },
+    {
+      provide: INJECTION_TOKENS.STORAGE_ACTIVITY_LOG_CONTRACT,
+      useClass: TypeOrmStorageActivityLogRepository,
+    },
     { provide: INJECTION_TOKENS.TENANT_CAPABILITIES_PORT, useClass: TenantCapabilitiesAdapter },
     TypeOrmStorageRepository,
+    TypeOrmStorageActivityLogRepository,
     TenantCapabilitiesAdapter,
     CreateCustomRoomHandler,
     CreateStoreRoomHandler,
