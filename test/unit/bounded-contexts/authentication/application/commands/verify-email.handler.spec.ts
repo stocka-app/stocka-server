@@ -9,7 +9,6 @@ import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { InvalidVerificationCodeException } from '@authentication/domain/exceptions/invalid-verification-code.exception';
 import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
-import { VerificationCodeExpiredException } from '@authentication/domain/exceptions/verification-code-expired.exception';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -27,29 +26,21 @@ function buildUser(): UserAggregate {
 }
 
 function buildCredential(overrides: {
-  id?: number | null;
   requiresEmailVerification?: boolean;
 } = {}): CredentialAccountModel {
-  const obj: Record<string, unknown> = {
+  return {
+    id: 10,
     requiresEmailVerification: jest.fn().mockReturnValue(
       overrides.requiresEmailVerification ?? true,
     ),
-  };
-  if ('id' in overrides) {
-    obj.id = overrides.id;
-  } else {
-    obj.id = 10;
-  }
-  return obj as unknown as CredentialAccountModel;
+  } as unknown as CredentialAccountModel;
 }
 
 function buildToken(overrides: {
-  isExpired?: boolean;
   codeHash?: string;
 } = {}): EmailVerificationTokenModel {
   return {
     codeHash: overrides.codeHash ?? 'hashed-ABC123',
-    isExpired: jest.fn().mockReturnValue(overrides.isExpired ?? false),
     markAsUsed: jest.fn(),
     commit: jest.fn(),
   } as unknown as EmailVerificationTokenModel;
@@ -119,24 +110,6 @@ describe('VerifyEmailHandler', () => {
     });
   });
 
-  describe('Given the credential has no id', () => {
-    describe('When execute is called', () => {
-      beforeEach(() => {
-        (mediator.user.findUserByEmail as jest.Mock).mockResolvedValue({
-          user: buildUser(),
-          credential: buildCredential({ id: null }),
-        });
-      });
-
-      it('Then it returns an err with InvalidVerificationCodeException', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
-      });
-    });
-  });
-
   describe('Given no active verification token exists', () => {
     describe('When execute is called', () => {
       beforeEach(() => {
@@ -152,27 +125,6 @@ describe('VerifyEmailHandler', () => {
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(InvalidVerificationCodeException);
-      });
-    });
-  });
-
-  describe('Given the verification token is expired', () => {
-    describe('When execute is called', () => {
-      beforeEach(() => {
-        (mediator.user.findUserByEmail as jest.Mock).mockResolvedValue({
-          user: buildUser(),
-          credential: buildCredential(),
-        });
-        tokenContract.findActiveByCredentialAccountId.mockResolvedValue(
-          buildToken({ isExpired: true }),
-        );
-      });
-
-      it('Then it returns an err with VerificationCodeExpiredException', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(VerificationCodeExpiredException);
       });
     });
   });

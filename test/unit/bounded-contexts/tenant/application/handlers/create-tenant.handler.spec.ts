@@ -83,8 +83,8 @@ describe('CreateTenantHandler', () => {
       begin: jest.fn(),
       commit: jest.fn(),
       rollback: jest.fn(),
-      execute: jest.fn(),
-    };
+      execute: jest.fn().mockImplementation(async (fn: () => Promise<unknown>) => fn()),
+    } as unknown as jest.Mocked<IUnitOfWork>;
 
     eventPublisher = {
       mergeObjectContext: jest.fn().mockImplementation((obj: unknown) => obj),
@@ -239,17 +239,11 @@ describe('CreateTenantHandler', () => {
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue(buildUser(42));
         memberContract.findActiveByUserUUID.mockResolvedValue(null);
         tenantContract.findBySlug.mockResolvedValue(null);
-        uow.begin.mockResolvedValue(undefined);
-        uow.rollback.mockResolvedValue(undefined);
         tenantContract.persist.mockRejectedValue(new TestDomainException());
       });
 
-      it('Then it rolls back and returns err with the domain exception', async () => {
-        const result = await handler.execute(buildCommand());
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(TestDomainException);
-        expect(uow.rollback).toHaveBeenCalled();
+      it('Then it rethrows the domain exception', async () => {
+        await expect(handler.execute(buildCommand())).rejects.toThrow(TestDomainException);
       });
     });
 
@@ -258,14 +252,11 @@ describe('CreateTenantHandler', () => {
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue(buildUser(42));
         memberContract.findActiveByUserUUID.mockResolvedValue(null);
         tenantContract.findBySlug.mockResolvedValue(null);
-        uow.begin.mockResolvedValue(undefined);
-        uow.rollback.mockResolvedValue(undefined);
         tenantContract.persist.mockRejectedValue(new Error('DB connection failed'));
       });
 
-      it('Then it rolls back and rethrows the error', async () => {
+      it('Then it rethrows the error', async () => {
         await expect(handler.execute(buildCommand())).rejects.toThrow('DB connection failed');
-        expect(uow.rollback).toHaveBeenCalled();
       });
     });
   });

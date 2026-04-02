@@ -14,7 +14,6 @@ import { BusinessTypeVO } from '@tenant/domain/value-objects/business-type.vo';
 import { OnboardingAlreadyCompletedError } from '@tenant/domain/errors/onboarding-already-completed.error';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { ok, err } from '@shared/domain/result';
 import { v7 as uuidV7 } from 'uuid';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
@@ -41,7 +40,7 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
     const userAggregate = await this.mediator.user.findByUUID(command.userUUID);
 
     /* istanbul ignore next */
-    if (!userAggregate?.id) {
+    if (!userAggregate) {
       return err(new NotFoundException('User not found'));
     }
 
@@ -50,18 +49,8 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
       return err(new OnboardingAlreadyCompletedError());
     }
 
-    let slug: SlugVO;
-    let businessType: BusinessTypeVO;
-
-    try {
-      slug = SlugVO.fromName(command.name);
-      businessType = BusinessTypeVO.fromString(command.businessType);
-    } catch (e) {
-      /* istanbul ignore next -- defensive: VOs currently throw plain Error, not DomainException */
-      if (e instanceof DomainException) return err(e);
-      /* istanbul ignore next */
-      throw e;
-    }
+    const slug = SlugVO.fromName(command.name);
+    const businessType = BusinessTypeVO.fromString(command.businessType);
 
     const existingBySlug = await this.tenantContract.findBySlug(slug.toString());
     const finalSlug = existingBySlug
@@ -77,40 +66,30 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
       ownerUserId: userAggregate.id,
     });
 
-    await this.uow.begin();
-    try {
-      const savedTenant = await this.tenantContract.persist(tenant);
-      const tenantId = savedTenant.id as number;
+    const ownerUserId = userAggregate.id;
 
-      const member = TenantMemberModel.create({
-        tenantId,
-        userId: userAggregate.id,
-        userUUID: command.userUUID,
-        role: 'OWNER',
-      });
+    const savedTenant = await this.uow.execute(async () => {
+      const persisted = await this.tenantContract.persist(tenant);
+      const tenantId = persisted.id;
 
-      await this.memberContract.persist(member);
+      await this.memberContract.persist(
+        TenantMemberModel.create({
+          tenantId,
+          userId: ownerUserId,
+          userUUID: command.userUUID,
+          role: 'OWNER',
+        }),
+      );
 
-      const profile = TenantProfileModel.createEmpty(tenantId);
-      await this.profileContract.persist(profile);
+      await this.profileContract.persist(TenantProfileModel.createEmpty(tenantId));
+      await this.configContract.persist(TenantConfigModel.createFreeDefaults(tenantId));
 
-      const config = TenantConfigModel.createFreeDefaults(tenantId);
-      await this.configContract.persist(config);
+      return persisted;
+    });
 
-      await this.uow.commit();
+    this.eventPublisher.mergeObjectContext(savedTenant);
+    savedTenant.commit();
 
-      this.eventPublisher.mergeObjectContext(savedTenant);
-      savedTenant.commit();
-
-      return ok({ tenantId: savedTenant.uuid, name: savedTenant.name });
-    /* istanbul ignore next */
-    } catch (e) {
-      /* istanbul ignore next */
-      await this.uow.rollback();
-      /* istanbul ignore next */
-      if (e instanceof DomainException) return err(e);
-      /* istanbul ignore next */
-      throw e;
-    }
+    return ok({ tenantId: savedTenant.uuid, name: savedTenant.name });
   }
 }
