@@ -190,7 +190,6 @@ describe('SecurityGuard', () => {
         expect(jwtValidator.validate).toHaveBeenCalledWith(ctx);
         expect(tenantAccessValidator.validate).toHaveBeenCalledWith(mockUser);
         expect(rbacValidator.validate).toHaveBeenCalledWith(
-          mockUser,
           SystemAction.STORAGE_CREATE,
           mockMembership,
         );
