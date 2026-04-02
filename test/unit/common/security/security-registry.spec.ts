@@ -100,7 +100,13 @@ describe('SecurityRegistry', () => {
 
     describe('When checking RBAC-protected routes', () => {
       it('Then storage CRUD endpoints require the correct SystemAction', () => {
-        expect(SecurityRegistry['POST /storages']).toEqual({
+        expect(SecurityRegistry['POST /storages/warehouses']).toEqual({
+          action: SystemAction.STORAGE_CREATE,
+        });
+        expect(SecurityRegistry['POST /storages/custom-rooms']).toEqual({
+          action: SystemAction.STORAGE_CREATE,
+        });
+        expect(SecurityRegistry['POST /storages/store-rooms']).toEqual({
           action: SystemAction.STORAGE_CREATE,
         });
         expect(SecurityRegistry['GET /storages']).toEqual({
@@ -109,7 +115,13 @@ describe('SecurityRegistry', () => {
         expect(SecurityRegistry['GET /storages/:uuid']).toEqual({
           action: SystemAction.STORAGE_READ,
         });
-        expect(SecurityRegistry['PATCH /storages/:uuid']).toEqual({
+        expect(SecurityRegistry['PATCH /storages/warehouses/:uuid']).toEqual({
+          action: SystemAction.STORAGE_UPDATE,
+        });
+        expect(SecurityRegistry['PATCH /storages/custom-rooms/:uuid']).toEqual({
+          action: SystemAction.STORAGE_UPDATE,
+        });
+        expect(SecurityRegistry['PATCH /storages/store-rooms/:uuid']).toEqual({
           action: SystemAction.STORAGE_UPDATE,
         });
         expect(SecurityRegistry['DELETE /storages/:uuid']).toEqual({
