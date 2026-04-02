@@ -2,6 +2,8 @@ import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { getStorageWorkerApp, truncateStorageWorkerTables } from '@test/storage-worker-app';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -79,15 +81,22 @@ async function setTenantToStarter(dataSource: DataSource, tenantName: string): P
   );
 }
 
+const STORAGE_ROUTES: Record<string, string> = {
+  WAREHOUSE: '/api/storages/warehouses',
+  CUSTOM_ROOM: '/api/storages/custom-rooms',
+  STORE_ROOM: '/api/storages/store-rooms',
+};
+
 async function createStorage(
   app: INestApplication,
   token: string,
-  payload: { type: string; name: string; address?: string; roomType?: string },
+  payload: { type: string; name: string; address?: string; roomType?: string; icon?: string; color?: string },
 ): Promise<string> {
+  const { type, ...body } = payload;
   const res = await request(app.getHttpServer())
-    .post('/api/storages')
+    .post(STORAGE_ROUTES[type])
     .set('Authorization', `Bearer ${token}`)
-    .send(payload);
+    .send({ icon: 'default-icon', color: '#AABBCC', address: '100 Test St', ...body });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
@@ -169,21 +178,21 @@ describe('List Storages — GET /api/storages (e2e)', () => {
 
   describe('Given a tenant with one active warehouse and one archived custom room', () => {
     describe('When GET /api/storages is called without filters', () => {
-      it('Then it returns all storages with pagination metadata', async () => {
+      it('Then it returns only ACTIVE storages (default status filter) with pagination metadata', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages')
           .set('Authorization', `Bearer ${ownerAToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(Array.isArray(res.body.items)).toBe(true);
-        expect(res.body.items).toHaveLength(2);
-        expect(res.body.total).toBe(2);
+        // Default status=ACTIVE — only the active warehouse is returned (archived custom room is excluded)
+        expect(res.body.items).toHaveLength(1);
+        expect(res.body.total).toBe(1);
         expect(res.body.page).toBe(1);
         expect(res.body.totalPages).toBe(1);
 
         const uuids: string[] = res.body.items.map((s: { uuid: string }) => s.uuid);
         expect(uuids).toContain(warehouseUUID);
-        expect(uuids).toContain(customRoomUUID);
       });
     });
   });
@@ -291,9 +300,8 @@ describe('List Storages — GET /api/storages (e2e)', () => {
         const uuidsA: string[] = resA.body.items.map((s: { uuid: string }) => s.uuid);
         const uuidsB: string[] = resB.body.items.map((s: { uuid: string }) => s.uuid);
 
-        // Tenant A's storages are only their own
+        // Tenant A's active storages are only their own (archived items not included in default ACTIVE filter)
         expect(uuidsA).toContain(warehouseUUID);
-        expect(uuidsA).toContain(customRoomUUID);
 
         // No overlap between tenants
         const overlap = uuidsA.filter((uuid) => uuidsB.includes(uuid));
@@ -331,6 +339,33 @@ describe('List Storages — GET /api/storages (e2e)', () => {
         expect(res.body.total).toBeGreaterThanOrEqual(1);
         expect(res.body.page).toBe(1);
         expect(res.body.limit).toBe(1);
+      });
+    });
+  });
+
+  // ── Repository: no status filter → all storages regardless of status ──────
+  // The HTTP controller always provides a status default (ACTIVE), so the
+  // repository's "no status filter" path is only reachable via direct call.
+
+  describe('Given storages of multiple statuses exist for a tenant', () => {
+    describe('When the repository is called with no status filter', () => {
+      it('Then it returns all storages regardless of status', async () => {
+        const rows: Array<{ uuid: string }> = await dataSource.query(
+          `SELECT t.uuid FROM "tenants"."tenants" t
+           JOIN "tenants"."tenant_members" tm ON tm.tenant_id = t.id
+           JOIN "accounts"."credential_accounts" ca ON LOWER(ca.email) = LOWER($1)
+           JOIN "identity"."users" u ON u.id = ca.account_id AND u.id = tm.user_id
+           LIMIT 1`,
+          [OWNER_A_EMAIL],
+        );
+        const tenantUUID: string = rows[0].uuid;
+
+        const repo = app.get<IStorageRepository>(INJECTION_TOKENS.STORAGE_CONTRACT);
+        // Call with empty filters — status is undefined, no filter applied
+        const page = await repo.findAll(tenantUUID, {}, { page: 1, limit: 50 });
+
+        // Tenant A has 1 active warehouse + 1 archived custom room = 2 total
+        expect(page.total).toBeGreaterThanOrEqual(2);
       });
     });
   });

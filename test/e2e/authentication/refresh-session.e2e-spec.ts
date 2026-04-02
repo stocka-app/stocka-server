@@ -263,6 +263,39 @@ describe('Refresh Session (e2e)', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Branch coverage — user without a personal profile (username resolves to null)
+  // ---------------------------------------------------------------------------
+
+  describe('Given a user whose personal profile has been removed', () => {
+    describe('When they call the refresh-session endpoint', () => {
+      it('Then the response is 201 and username is null', async () => {
+        const email = 'noprofile.refresh@example.com';
+        const { cookie } = await signUpAndGetCookie(email, 'noprofilerefuser');
+
+        // Remove personal profile so findUsernameByUUID returns null
+        await dataSource.query(
+          `DELETE FROM "profiles"."personal_profiles"
+           WHERE profile_id IN (
+             SELECT pp.id FROM "profiles"."profiles" pp
+             JOIN "identity"."users" u ON pp.user_id = u.id
+             JOIN "accounts"."accounts" a ON a.user_id = u.id
+             JOIN "accounts"."credential_accounts" ca ON ca.account_id = a.id
+             WHERE LOWER(ca.email) = LOWER($1)
+           )`,
+          [email],
+        );
+
+        const res = await request(app.getHttpServer())
+          .post('/api/authentication/refresh-session')
+          .set('Cookie', cookie);
+
+        expect(res.status).toBe(HttpStatus.CREATED);
+        expect(res.body.username).toBeNull();
+      });
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Branch coverage — reusing a consumed refresh token
   // ---------------------------------------------------------------------------
 

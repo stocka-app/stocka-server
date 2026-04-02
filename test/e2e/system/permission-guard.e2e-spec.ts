@@ -262,14 +262,14 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
   // POST /api/storages — requires STORAGE_CREATE (STARTER tier required)
   // ══════════════════════════════════════════════════════════════════════════
 
-  describe('Given POST /api/storages (STORAGE_CREATE action, STARTER tier threshold)', () => {
-    const validStorageBody = { type: 'STORE_ROOM', name: 'Test Storage Room' };
+  describe('Given POST /api/storages/store-rooms (STORAGE_CREATE action, STARTER tier threshold)', () => {
+    const validStorageBody = { name: 'Test Storage Room', icon: 'default-icon', color: '#AABBCC', address: '100 Test St' };
 
     describe('When the tenant is on FREE tier', () => {
       describe('When an OWNER tries to create a storage', () => {
         it('Then SecurityGuard blocks with 403 TIER_LIMIT_REACHED (FREE tier storage cap is 0)', async () => {
           const res = await request(app.getHttpServer())
-            .post('/api/storages')
+            .post('/api/storages/store-rooms')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send(validStorageBody);
 
@@ -287,7 +287,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
       describe('When a WAREHOUSE_KEEPER (role lacks STORAGE_CREATE) tries to create a storage', () => {
         it('Then SecurityGuard blocks with 403 ACTION_NOT_ALLOWED', async () => {
           const res = await request(app.getHttpServer())
-            .post('/api/storages')
+            .post('/api/storages/store-rooms')
             .set('Authorization', `Bearer ${warehouseKeeperToken}`)
             .send(validStorageBody);
 
@@ -305,7 +305,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
         describe('When an OWNER (role has STORAGE_CREATE) tries to create another storage', () => {
           it('Then SecurityGuard blocks with 403 TIER_LIMIT_REACHED', async () => {
             const res = await request(app.getHttpServer())
-              .post('/api/storages')
+              .post('/api/storages/store-rooms')
               .set('Authorization', `Bearer ${ownerToken}`)
               .send(validStorageBody);
 
@@ -324,7 +324,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
         describe('When the OWNER sends a valid create storage request', () => {
           it('Then SecurityGuard passes and the storage is created successfully', async () => {
             const res = await request(app.getHttpServer())
-              .post('/api/storages')
+              .post('/api/storages/store-rooms')
               .set('Authorization', `Bearer ${ownerToken}`)
               .send(validStorageBody);
 
@@ -417,8 +417,8 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
     });
   });
 
-  describe('Given POST /api/storages (STORAGE_CREATE) requires GROWTH tier', () => {
-    const validBody = { type: 'STORE_ROOM', name: 'Growth-tier Storage' };
+  describe('Given POST /api/storages/store-rooms (STORAGE_CREATE) requires GROWTH tier', () => {
+    const validBody = { name: 'Growth-tier Storage', icon: 'default-icon', color: '#AABBCC', address: '100 Test St' };
 
     beforeAll(async () => {
       // Seed: STORAGE_CREATE disabled on FREE and STARTER — requires GROWTH+
@@ -442,7 +442,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
       describe('When an OWNER (role has STORAGE_CREATE) tries to create a storage', () => {
         it('Then SecurityGuard blocks with 403 PLAN_UPGRADE_REQUIRED', async () => {
           const res = await request(app.getHttpServer())
-            .post('/api/storages')
+            .post('/api/storages/store-rooms')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send(validBody);
 
@@ -461,7 +461,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
       describe('When an OWNER (role has STORAGE_CREATE) tries to create a storage', () => {
         it('Then SecurityGuard still blocks with 403 PLAN_UPGRADE_REQUIRED (STARTER is also below GROWTH)', async () => {
           const res = await request(app.getHttpServer())
-            .post('/api/storages')
+            .post('/api/storages/store-rooms')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send(validBody);
 
@@ -489,7 +489,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
       describe('When an OWNER (role has STORAGE_CREATE, below GROWTH limit) creates a storage', () => {
         it('Then SecurityGuard passes and the storage is created', async () => {
           const res = await request(app.getHttpServer())
-            .post('/api/storages')
+            .post('/api/storages/store-rooms')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send(validBody);
 

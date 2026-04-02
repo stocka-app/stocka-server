@@ -2,6 +2,8 @@ import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { getTenantWorkerApp, truncateTenantWorkerTables } from '@test/tenant-worker-app';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -174,6 +176,40 @@ describe('GET /api/tenants/me/capabilities (e2e)', () => {
       expect(res1.status).toBe(HttpStatus.OK);
       expect(res2.status).toBe(HttpStatus.OK);
       expect(res1.body.tier).toBe(res2.body.tier);
+    });
+  });
+
+  // ── getTierNumericLimits ?? fallbacks (L110-112) ──────────────────────────
+  // The ?? fallbacks for max_warehouses/max_users/max_products are only used
+  // when the tier_plans row has NULL for those columns (e.g. an unlimited tier).
+
+  describe('Given a tier with all NULL numeric limits in tier_plans', () => {
+    const NULL_TIER = 'NULL_LIMIT_TEST';
+
+    beforeAll(async () => {
+      await dataSource.query(`
+        INSERT INTO "tiers"."tier_plans" (tier, name, policy_version, max_products, max_users, max_warehouses)
+        VALUES ($1, 'NULL Limit Test Tier', NOW(), NULL, NULL, NULL)
+        ON CONFLICT (tier) DO NOTHING
+      `, [NULL_TIER]);
+    });
+
+    afterAll(async () => {
+      await dataSource.query(`DELETE FROM "tiers"."tier_plans" WHERE tier = $1`, [NULL_TIER]);
+    });
+
+    describe('When getTierNumericLimits is called for that tier', () => {
+      it('Then it returns the ?? fallback values: storageCount=0, memberCount=1, productCount=100', async () => {
+        // Clear cache to force a fresh DB read
+        app.get<any>(INJECTION_TOKENS.RBAC_POLICY_PORT).cache.clear();
+
+        const rbacPort = app.get<IRbacPolicyPort>(INJECTION_TOKENS.RBAC_POLICY_PORT);
+        const limits = await rbacPort.getTierNumericLimits(NULL_TIER);
+
+        expect(limits.storageCount).toBe(0);    // max_warehouses ?? 0
+        expect(limits.memberCount).toBe(1);     // max_users ?? 1
+        expect(limits.productCount).toBe(100);  // max_products ?? 100
+      });
     });
   });
 });

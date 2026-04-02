@@ -69,15 +69,22 @@ async function setTenantToStarter(dataSource: DataSource, tenantName: string): P
   );
 }
 
+const STORAGE_ROUTES: Record<string, string> = {
+  WAREHOUSE: '/api/storages/warehouses',
+  CUSTOM_ROOM: '/api/storages/custom-rooms',
+  STORE_ROOM: '/api/storages/store-rooms',
+};
+
 async function createStorage(
   app: INestApplication,
   token: string,
   payload: Record<string, unknown>,
 ): Promise<request.Response> {
+  const { type, ...body } = payload as { type: string } & Record<string, unknown>;
   return request(app.getHttpServer())
-    .post('/api/storages')
+    .post(STORAGE_ROUTES[type])
     .set('Authorization', `Bearer ${token}`)
-    .send(payload);
+    .send({ icon: 'default-icon', color: '#AABBCC', address: '100 Test St', ...body });
 }
 
 async function getStorage(
@@ -171,7 +178,7 @@ describe('Storage BC — Sprint 2 Schema (sub-table fields)', () => {
         const childRes = await createStorage(app, token, {
           type: 'STORE_ROOM',
           name: 'Child Store Room',
-          parentId: parentUUID,
+          parentUUID: parentUUID,
         });
         expect(childRes.status).toBe(HttpStatus.CREATED);
         const childUUID = (childRes.body as CreateStorageResponse).storageUUID;
