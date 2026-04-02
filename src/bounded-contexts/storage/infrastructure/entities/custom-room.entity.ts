@@ -22,11 +22,29 @@ export class CustomRoomEntity {
   @Column({ name: 'storage_id', type: 'int' })
   storageId!: number;
 
+  @Column({ type: 'varchar', length: 100 })
+  name!: string;
+
+  @Column({ type: 'varchar', length: 300, nullable: true, default: null })
+  description!: string | null;
+
   @Column({ name: 'room_type', type: 'varchar', length: 50 })
   roomType!: string;
 
-  @Column({ type: 'text', nullable: true })
-  address!: string | null;
+  @Column({ type: 'text' })
+  address!: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  icon!: string;
+
+  @Column({ type: 'varchar', length: 20 })
+  color!: string;
+
+  @Column({ name: 'frozen_at', type: 'timestamptz', nullable: true, default: null })
+  frozenAt!: Date | null;
+
+  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true, default: null })
+  archivedAt!: Date | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;

@@ -1,26 +1,23 @@
-export class RoomTypeNameVO {
-  private readonly _value: string;
+import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
 
-  private constructor(value: string) {
-    this._value = value;
+export class RoomTypeNameVO extends StringVO {
+  private static readonly MAX_LENGTH = 50;
+
+  constructor(value: string) {
+    super(value);
+    this.ensureValid();
   }
 
-  static create(raw: string): RoomTypeNameVO {
-    const trimmed = raw.trim();
-    if (trimmed.length === 0) {
+  static create(value: string): RoomTypeNameVO {
+    return new RoomTypeNameVO(value.trim());
+  }
+
+  protected ensureValid(): void {
+    if (this.value.length === 0) {
       throw new Error('Room type name cannot be empty');
     }
-    if (trimmed.length > 50) {
-      throw new Error('Room type name cannot exceed 50 characters');
+    if (this.value.length > RoomTypeNameVO.MAX_LENGTH) {
+      throw new Error(`Room type name cannot exceed ${RoomTypeNameVO.MAX_LENGTH} characters`);
     }
-    return new RoomTypeNameVO(trimmed);
-  }
-
-  toString(): string {
-    return this._value;
-  }
-
-  equals(other: RoomTypeNameVO): boolean {
-    return this._value === other._value;
   }
 }

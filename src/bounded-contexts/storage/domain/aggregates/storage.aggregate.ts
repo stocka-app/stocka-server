@@ -9,16 +9,17 @@ import { StorageUpdatedEvent } from '@storage/domain/events/storage-updated.even
 import { StorageArchivedEvent } from '@storage/domain/events/storage-archived.event';
 import { v7 as uuidV7 } from 'uuid';
 
+export type StorageSubModel =
+  | { type: StorageType.CUSTOM_ROOM; model: CustomRoomModel }
+  | { type: StorageType.STORE_ROOM; model: StoreRoomModel }
+  | { type: StorageType.WAREHOUSE; model: WarehouseModel };
+
 export interface StorageAggregateReconstituteProps extends AggregateRootProps {
   id: number;
   uuid: string;
   tenantUUID: string;
-  type: StorageType;
-  name: string;
-  description: string | null;
-  customRoom: CustomRoomModel | null;
-  storeRoom: StoreRoomModel | null;
-  warehouse: WarehouseModel | null;
+  parentUUID: string | null;
+  sub: StorageSubModel;
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Date | null;
@@ -27,49 +28,43 @@ export interface StorageAggregateReconstituteProps extends AggregateRootProps {
 
 export class StorageAggregate extends AggregateRoot {
   private readonly _tenantUUID: string;
-  private readonly _type: StorageType;
-  private _name: string;
-  private _description: string | null;
-  private readonly _customRoom: CustomRoomModel | null;
-  private readonly _storeRoom: StoreRoomModel | null;
-  private readonly _warehouse: WarehouseModel | null;
+  private readonly _parentUUID: string | null;
+  private _sub: StorageSubModel;
   private _frozenAt: Date | null;
 
   private constructor(
     props: AggregateRootProps & {
       tenantUUID: string;
-      type: StorageType;
-      name: string;
-      description: string | null;
-      customRoom: CustomRoomModel | null;
-      storeRoom: StoreRoomModel | null;
-      warehouse: WarehouseModel | null;
+      parentUUID: string | null;
+      sub: StorageSubModel;
       frozenAt?: Date | null;
     },
   ) {
     super(props);
     this._tenantUUID = props.tenantUUID;
-    this._type = props.type;
-    this._name = props.name;
-    this._description = props.description;
-    this._customRoom = props.customRoom;
-    this._storeRoom = props.storeRoom;
-    this._warehouse = props.warehouse;
+    this._parentUUID = props.parentUUID;
+    this._sub = props.sub;
     this._frozenAt = props.frozenAt ?? null;
   }
 
   static createCustomRoom(props: {
     tenantUUID: string;
     name: string;
-    description?: string;
     roomType: string;
-    address?: string;
+    icon: string;
+    color: string;
+    address: string;
+    description?: string;
+    parentUUID?: string;
   }): StorageAggregate {
     const storageUUID = uuidV7();
-    const subUUID = uuidV7();
 
-    const customRoom = CustomRoomModel.create({
-      uuid: subUUID,
+    const model = CustomRoomModel.create({
+      uuid: uuidV7(),
+      name: props.name,
+      description: props.description,
+      icon: props.icon,
+      color: props.color,
       roomType: props.roomType,
       address: props.address,
     });
@@ -77,12 +72,8 @@ export class StorageAggregate extends AggregateRoot {
     const aggregate = new StorageAggregate({
       uuid: storageUUID,
       tenantUUID: props.tenantUUID,
-      type: StorageType.CUSTOM_ROOM,
-      name: props.name,
-      description: props.description ?? null,
-      customRoom,
-      storeRoom: null,
-      warehouse: null,
+      parentUUID: props.parentUUID ?? null,
+      sub: { type: StorageType.CUSTOM_ROOM, model },
     });
 
     aggregate.apply(
@@ -95,26 +86,28 @@ export class StorageAggregate extends AggregateRoot {
   static createStoreRoom(props: {
     tenantUUID: string;
     name: string;
+    icon: string;
+    color: string;
+    address: string;
     description?: string;
-    address?: string;
+    parentUUID?: string;
   }): StorageAggregate {
     const storageUUID = uuidV7();
-    const subUUID = uuidV7();
 
-    const storeRoom = StoreRoomModel.create({
-      uuid: subUUID,
+    const model = StoreRoomModel.create({
+      uuid: uuidV7(),
+      name: props.name,
+      description: props.description,
+      icon: props.icon,
+      color: props.color,
       address: props.address,
     });
 
     const aggregate = new StorageAggregate({
       uuid: storageUUID,
       tenantUUID: props.tenantUUID,
-      type: StorageType.STORE_ROOM,
-      name: props.name,
-      description: props.description ?? null,
-      customRoom: null,
-      storeRoom,
-      warehouse: null,
+      parentUUID: props.parentUUID ?? null,
+      sub: { type: StorageType.STORE_ROOM, model },
     });
 
     aggregate.apply(
@@ -128,25 +121,26 @@ export class StorageAggregate extends AggregateRoot {
     tenantUUID: string;
     name: string;
     description?: string;
+    icon: string;
+    color: string;
     address: string;
   }): StorageAggregate {
     const storageUUID = uuidV7();
-    const subUUID = uuidV7();
 
-    const warehouseModel = WarehouseModel.create({
-      uuid: subUUID,
+    const model = WarehouseModel.create({
+      uuid: uuidV7(),
+      name: props.name,
+      description: props.description,
+      icon: props.icon,
+      color: props.color,
       address: props.address,
     });
 
     const aggregate = new StorageAggregate({
       uuid: storageUUID,
       tenantUUID: props.tenantUUID,
-      type: StorageType.WAREHOUSE,
-      name: props.name,
-      description: props.description ?? null,
-      customRoom: null,
-      storeRoom: null,
-      warehouse: warehouseModel,
+      parentUUID: null,
+      sub: { type: StorageType.WAREHOUSE, model },
     });
 
     aggregate.apply(
@@ -165,17 +159,41 @@ export class StorageAggregate extends AggregateRoot {
       archivedAt: props.archivedAt,
       frozenAt: props.frozenAt,
       tenantUUID: props.tenantUUID,
-      type: props.type,
-      name: props.name,
-      description: props.description,
-      customRoom: props.customRoom,
-      storeRoom: props.storeRoom,
-      warehouse: props.warehouse,
+      parentUUID: props.parentUUID,
+      sub: props.sub,
     });
   }
 
   get tenantUUID(): string {
     return this._tenantUUID;
+  }
+
+  get type(): StorageType {
+    return this._sub.type;
+  }
+
+  get parentUUID(): string | null {
+    return this._parentUUID;
+  }
+
+  get name(): string {
+    return this._sub.model.name.getValue();
+  }
+
+  get description(): string | null {
+    return this._sub.model.description?.getValue() ?? null;
+  }
+
+  get icon(): string {
+    return this._sub.model.icon.getValue();
+  }
+
+  get color(): string {
+    return this._sub.model.color.getValue();
+  }
+
+  get address(): string {
+    return this._sub.model.address.getValue();
   }
 
   get status(): StorageStatus {
@@ -192,39 +210,58 @@ export class StorageAggregate extends AggregateRoot {
     return this._frozenAt !== null && this._archivedAt === null;
   }
 
-  get type(): StorageType {
-    return this._type;
-  }
-
-  get name(): string {
-    return this._name;
-  }
-
-  get description(): string | null {
-    return this._description;
+  get sub(): StorageSubModel {
+    return this._sub;
   }
 
   get customRoom(): CustomRoomModel | null {
-    return this._customRoom;
+    return this._sub.type === StorageType.CUSTOM_ROOM ? this._sub.model : null;
   }
 
   get storeRoom(): StoreRoomModel | null {
-    return this._storeRoom;
+    return this._sub.type === StorageType.STORE_ROOM ? this._sub.model : null;
   }
 
   get warehouse(): WarehouseModel | null {
-    return this._warehouse;
+    return this._sub.type === StorageType.WAREHOUSE ? this._sub.model : null;
   }
 
-  get address(): string | null {
-    if (this._customRoom) return this._customRoom.address;
-    if (this._storeRoom) return this._storeRoom.address;
-    if (this._warehouse) return this._warehouse.address;
-    return null;
+  updateCustomRoom(props: {
+    name?: string;
+    description?: string | null;
+    icon?: string;
+    color?: string;
+    address?: string;
+    roomType?: string;
+  }): void {
+    if (this._sub.type !== StorageType.CUSTOM_ROOM) return;
+    this._sub = { type: StorageType.CUSTOM_ROOM, model: this._sub.model.update(props) };
+    this.touch();
+    this.apply(new StorageUpdatedEvent(this.uuid, this._tenantUUID));
   }
 
-  updateName(newName: string): void {
-    this._name = newName;
+  updateStoreRoom(props: {
+    name?: string;
+    description?: string | null;
+    icon?: string;
+    color?: string;
+    address?: string;
+  }): void {
+    if (this._sub.type !== StorageType.STORE_ROOM) return;
+    this._sub = { type: StorageType.STORE_ROOM, model: this._sub.model.update(props) };
+    this.touch();
+    this.apply(new StorageUpdatedEvent(this.uuid, this._tenantUUID));
+  }
+
+  updateWarehouse(props: {
+    name?: string;
+    description?: string | null;
+    icon?: string;
+    color?: string;
+    address?: string;
+  }): void {
+    if (this._sub.type !== StorageType.WAREHOUSE) return;
+    this._sub = { type: StorageType.WAREHOUSE, model: this._sub.model.update(props) };
     this.touch();
     this.apply(new StorageUpdatedEvent(this.uuid, this._tenantUUID));
   }

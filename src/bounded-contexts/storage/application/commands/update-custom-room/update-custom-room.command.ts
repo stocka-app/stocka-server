@@ -1,0 +1,12 @@
+export class UpdateCustomRoomCommand {
+  constructor(
+    public readonly storageUUID: string,
+    public readonly tenantUUID: string,
+    public readonly name?: string,
+    public readonly description?: string | null,
+    public readonly icon?: string,
+    public readonly color?: string,
+    public readonly address?: string,
+    public readonly roomType?: string,
+  ) {}
+}

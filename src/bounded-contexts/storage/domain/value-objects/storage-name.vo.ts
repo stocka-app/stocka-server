@@ -1,26 +1,31 @@
-export class StorageNameVO {
-  private readonly _value: string;
+import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
 
-  private constructor(value: string) {
-    this._value = value;
+export class StorageNameVO extends StringVO {
+  private static readonly MAX_LENGTH = 100;
+
+  constructor(value: string) {
+    super(value);
+    this.ensureValid();
   }
 
-  static create(raw: string): StorageNameVO {
-    const trimmed = raw.trim();
-    if (trimmed.length === 0) {
+  static create(value: string): StorageNameVO {
+    return new StorageNameVO(value.trim());
+  }
+
+  protected ensureValid(): void {
+    if (this.value.length === 0) {
       throw new Error('Storage name cannot be empty');
     }
-    if (trimmed.length > 100) {
-      throw new Error('Storage name cannot exceed 100 characters');
+    if (this.value.length > StorageNameVO.MAX_LENGTH) {
+      throw new Error(`Storage name cannot exceed ${StorageNameVO.MAX_LENGTH} characters`);
     }
-    return new StorageNameVO(trimmed);
-  }
-
-  toString(): string {
-    return this._value;
   }
 
   equals(other: StorageNameVO): boolean {
-    return this._value.toLowerCase() === other._value.toLowerCase();
+    return this.value.toLowerCase() === other.getValue().toLowerCase();
+  }
+
+  toString(): string {
+    return this.value;
   }
 }

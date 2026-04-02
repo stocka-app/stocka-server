@@ -11,12 +11,14 @@ export interface StoragePagination {
   limit: number;
 }
 
+export type StorageSortOrder = 'ASC' | 'DESC';
+
 export class ListStoragesQuery {
   constructor(
     public readonly tenantUUID: string,
-    public readonly filters?: StorageFilters,
-    public readonly pagination: StoragePagination = { page: 1, limit: 50 },
+    public readonly filters: StorageFilters,
+    public readonly pagination: StoragePagination,
+    public readonly sortOrder: StorageSortOrder,
     public readonly search?: string,
-    public readonly sortOrder: 'ASC' | 'DESC' = 'ASC',
   ) {}
 }

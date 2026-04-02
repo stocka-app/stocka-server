@@ -18,6 +18,7 @@ const NULL_TENANT_FACADE: ITenantFacade = {
   getActiveMembership: (): Promise<null> => Promise.resolve(null),
   getMembershipContext: (): Promise<null> => Promise.resolve(null),
   getTierLimits: (): Promise<null> => Promise.resolve(null),
+  getTierLimitsByTenantUUID: (): Promise<null> => Promise.resolve(null),
   createTenantForUser: (): Promise<never> =>
     Promise.reject(new Error('TenantFacade not available in this context')),
 };
