@@ -41,15 +41,8 @@ export class GetMyTenantController {
       new GetMyTenantQuery(member.tenantId),
     );
 
-    return result.match(
-      async (tenant) => {
-        const config = await this.configContract.findByTenantId(member.tenantId);
-        return GetMyTenantOutDto.fromAggregate(tenant, config);
-      },
-      /* istanbul ignore next */
-      (error) => {
-        throw error;
-      },
-    );
+    const tenant = result._unsafeUnwrap();
+    const config = await this.configContract.findByTenantId(member.tenantId);
+    return GetMyTenantOutDto.fromAggregate(tenant, config);
   }
 }
