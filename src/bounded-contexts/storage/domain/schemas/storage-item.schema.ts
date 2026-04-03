@@ -1,0 +1,24 @@
+import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
+import { StorageType } from '@storage/domain/enums/storage-type.enum';
+
+export interface StorageItemView {
+  uuid: string;
+  type: StorageType;
+  name: string;
+  description: string | null;
+  icon: string;
+  color: string;
+  address: string;
+  parentUUID: string | null;
+  archivedAt: Date | null;
+  frozenAt: Date | null;
+  status: StorageStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  roomType: string | null;
+}
+
+export interface StorageItemPage {
+  items: StorageItemView[];
+  total: number;
+}

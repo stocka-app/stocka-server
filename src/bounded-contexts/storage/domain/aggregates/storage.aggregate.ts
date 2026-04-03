@@ -1,5 +1,4 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
-import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StoreRoomModel } from '@storage/domain/models/store-room.model';
@@ -7,147 +6,52 @@ import { WarehouseModel } from '@storage/domain/models/warehouse.model';
 import { StorageCreatedEvent } from '@storage/domain/events/storage-created.event';
 import { StorageUpdatedEvent } from '@storage/domain/events/storage-updated.event';
 import { StorageArchivedEvent } from '@storage/domain/events/storage-archived.event';
-import { v7 as uuidV7 } from 'uuid';
-
-export type StorageSubModel =
-  | { type: StorageType.CUSTOM_ROOM; model: CustomRoomModel }
-  | { type: StorageType.STORE_ROOM; model: StoreRoomModel }
-  | { type: StorageType.WAREHOUSE; model: WarehouseModel };
+import { StorageItemView } from '@storage/domain/schemas';
+import {
+  UpdateWarehouseProps,
+  UpdateStoreRoomProps,
+  UpdateCustomRoomProps,
+} from '@storage/domain/schemas';
 
 export interface StorageAggregateReconstituteProps extends AggregateRootProps {
   id: number;
   uuid: string;
   tenantUUID: string;
-  parentUUID: string | null;
-  sub: StorageSubModel;
+  warehouses: WarehouseModel[];
+  storeRooms: StoreRoomModel[];
+  customRooms: CustomRoomModel[];
   createdAt: Date;
   updatedAt: Date;
-  archivedAt: Date | null;
-  frozenAt: Date | null;
 }
 
 export class StorageAggregate extends AggregateRoot {
   private readonly _tenantUUID: string;
-  private readonly _parentUUID: string | null;
-  private _sub: StorageSubModel;
-  private _frozenAt: Date | null;
+  private _warehouses: WarehouseModel[];
+  private _storeRooms: StoreRoomModel[];
+  private _customRooms: CustomRoomModel[];
 
   private constructor(
     props: AggregateRootProps & {
       tenantUUID: string;
-      parentUUID: string | null;
-      sub: StorageSubModel;
-      frozenAt?: Date | null;
+      warehouses: WarehouseModel[];
+      storeRooms: StoreRoomModel[];
+      customRooms: CustomRoomModel[];
     },
   ) {
     super(props);
     this._tenantUUID = props.tenantUUID;
-    this._parentUUID = props.parentUUID;
-    this._sub = props.sub;
-    this._frozenAt = props.frozenAt ?? null;
+    this._warehouses = props.warehouses;
+    this._storeRooms = props.storeRooms;
+    this._customRooms = props.customRooms;
   }
 
-  static createCustomRoom(props: {
-    tenantUUID: string;
-    name: string;
-    roomType: string;
-    icon: string;
-    color: string;
-    address: string;
-    description?: string;
-    parentUUID?: string;
-  }): StorageAggregate {
-    const storageUUID = uuidV7();
-
-    const model = CustomRoomModel.create({
-      uuid: uuidV7(),
-      name: props.name,
-      description: props.description,
-      icon: props.icon,
-      color: props.color,
-      roomType: props.roomType,
-      address: props.address,
-    });
-
-    const aggregate = new StorageAggregate({
-      uuid: storageUUID,
+  static create(props: { tenantUUID: string }): StorageAggregate {
+    return new StorageAggregate({
       tenantUUID: props.tenantUUID,
-      parentUUID: props.parentUUID ?? null,
-      sub: { type: StorageType.CUSTOM_ROOM, model },
+      warehouses: [],
+      storeRooms: [],
+      customRooms: [],
     });
-
-    aggregate.apply(
-      new StorageCreatedEvent(storageUUID, props.tenantUUID, StorageType.CUSTOM_ROOM, props.name),
-    );
-
-    return aggregate;
-  }
-
-  static createStoreRoom(props: {
-    tenantUUID: string;
-    name: string;
-    icon: string;
-    color: string;
-    address: string;
-    description?: string;
-    parentUUID?: string;
-  }): StorageAggregate {
-    const storageUUID = uuidV7();
-
-    const model = StoreRoomModel.create({
-      uuid: uuidV7(),
-      name: props.name,
-      description: props.description,
-      icon: props.icon,
-      color: props.color,
-      address: props.address,
-    });
-
-    const aggregate = new StorageAggregate({
-      uuid: storageUUID,
-      tenantUUID: props.tenantUUID,
-      parentUUID: props.parentUUID ?? null,
-      sub: { type: StorageType.STORE_ROOM, model },
-    });
-
-    aggregate.apply(
-      new StorageCreatedEvent(storageUUID, props.tenantUUID, StorageType.STORE_ROOM, props.name),
-    );
-
-    return aggregate;
-  }
-
-  static createWarehouse(props: {
-    tenantUUID: string;
-    name: string;
-    description?: string;
-    icon: string;
-    color: string;
-    address: string;
-  }): StorageAggregate {
-    const storageUUID = uuidV7();
-
-    const model = WarehouseModel.create({
-      uuid: uuidV7(),
-      name: props.name,
-      description: props.description,
-      icon: props.icon,
-      color: props.color,
-      address: props.address,
-    });
-
-    const aggregate = new StorageAggregate({
-      uuid: storageUUID,
-      tenantUUID: props.tenantUUID,
-      parentUUID: null,
-      sub: { type: StorageType.WAREHOUSE, model },
-    });
-
-    aggregate.apply(
-      new StorageCreatedEvent(storageUUID, props.tenantUUID, StorageType.WAREHOUSE, props.name),
-    );
-
-    return aggregate;
   }
 
   static reconstitute(props: StorageAggregateReconstituteProps): StorageAggregate {
@@ -156,118 +60,202 @@ export class StorageAggregate extends AggregateRoot {
       uuid: props.uuid,
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
-      archivedAt: props.archivedAt,
-      frozenAt: props.frozenAt,
       tenantUUID: props.tenantUUID,
-      parentUUID: props.parentUUID,
-      sub: props.sub,
+      warehouses: props.warehouses,
+      storeRooms: props.storeRooms,
+      customRooms: props.customRooms,
     });
   }
+
+  // ── Add items ──────────────────────────────────────────────────────────
+
+  addWarehouse(model: WarehouseModel): void {
+    this._warehouses.push(model);
+    this.apply(
+      new StorageCreatedEvent(
+        model.uuid.toString(),
+        this._tenantUUID,
+        StorageType.WAREHOUSE,
+        model.name.getValue(),
+      ),
+    );
+  }
+
+  addStoreRoom(model: StoreRoomModel): void {
+    this._storeRooms.push(model);
+    this.apply(
+      new StorageCreatedEvent(
+        model.uuid.toString(),
+        this._tenantUUID,
+        StorageType.STORE_ROOM,
+        model.name.getValue(),
+      ),
+    );
+  }
+
+  addCustomRoom(model: CustomRoomModel): void {
+    this._customRooms.push(model);
+    this.apply(
+      new StorageCreatedEvent(
+        model.uuid.toString(),
+        this._tenantUUID,
+        StorageType.CUSTOM_ROOM,
+        model.name.getValue(),
+      ),
+    );
+  }
+
+  // ── Find items ─────────────────────────────────────────────────────────
+
+  findWarehouse(uuid: string): WarehouseModel | null {
+    return this._warehouses.find((w) => w.uuid.toString() === uuid) ?? null;
+  }
+
+  findStoreRoom(uuid: string): StoreRoomModel | null {
+    return this._storeRooms.find((s) => s.uuid.toString() === uuid) ?? null;
+  }
+
+  findCustomRoom(uuid: string): CustomRoomModel | null {
+    return this._customRooms.find((c) => c.uuid.toString() === uuid) ?? null;
+  }
+
+  // ── Update items ───────────────────────────────────────────────────────
+
+  updateWarehouse(uuid: string, props: UpdateWarehouseProps): void {
+    const idx = this._warehouses.findIndex((w) => w.uuid.toString() === uuid);
+    if (idx === -1) return;
+    this._warehouses[idx] = this._warehouses[idx].update(props);
+    this.touch();
+    this.apply(new StorageUpdatedEvent(uuid, this._tenantUUID));
+  }
+
+  updateStoreRoom(uuid: string, props: UpdateStoreRoomProps): void {
+    const idx = this._storeRooms.findIndex((s) => s.uuid.toString() === uuid);
+    if (idx === -1) return;
+    this._storeRooms[idx] = this._storeRooms[idx].update(props);
+    this.touch();
+    this.apply(new StorageUpdatedEvent(uuid, this._tenantUUID));
+  }
+
+  updateCustomRoom(uuid: string, props: UpdateCustomRoomProps): void {
+    const idx = this._customRooms.findIndex((c) => c.uuid.toString() === uuid);
+    if (idx === -1) return;
+    this._customRooms[idx] = this._customRooms[idx].update(props);
+    this.touch();
+    this.apply(new StorageUpdatedEvent(uuid, this._tenantUUID));
+  }
+
+  // ── Archive items ──────────────────────────────────────────────────────
+
+  archiveWarehouse(uuid: string): void {
+    const idx = this._warehouses.findIndex((w) => w.uuid.toString() === uuid);
+    if (idx === -1) return;
+    this._warehouses[idx] = this._warehouses[idx].markArchived();
+    this.touch();
+    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID));
+  }
+
+  archiveStoreRoom(uuid: string): void {
+    const idx = this._storeRooms.findIndex((s) => s.uuid.toString() === uuid);
+    if (idx === -1) return;
+    this._storeRooms[idx] = this._storeRooms[idx].markArchived();
+    this.touch();
+    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID));
+  }
+
+  archiveCustomRoom(uuid: string): void {
+    const idx = this._customRooms.findIndex((c) => c.uuid.toString() === uuid);
+    if (idx === -1) return;
+    this._customRooms[idx] = this._customRooms[idx].markArchived();
+    this.touch();
+    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID));
+  }
+
+  // ── Views ──────────────────────────────────────────────────────────────
+
+  findItemView(uuid: string): StorageItemView | null {
+    const all = this.listItemViews();
+    return all.find((v) => v.uuid === uuid) ?? null;
+  }
+
+  listItemViews(): StorageItemView[] {
+    const views: StorageItemView[] = [];
+
+    for (const w of this._warehouses) {
+      views.push({
+        uuid: w.uuid.toString(),
+        type: StorageType.WAREHOUSE,
+        name: w.name.getValue(),
+        description: w.description?.getValue() ?? null,
+        icon: w.icon.getValue(),
+        color: w.color.getValue(),
+        address: w.address.getValue(),
+        parentUUID: null,
+        archivedAt: w.archivedAt,
+        frozenAt: w.frozenAt,
+        status: w.status,
+        createdAt: w.createdAt,
+        updatedAt: w.updatedAt,
+        roomType: null,
+      });
+    }
+
+    for (const s of this._storeRooms) {
+      views.push({
+        uuid: s.uuid.toString(),
+        type: StorageType.STORE_ROOM,
+        name: s.name.getValue(),
+        description: s.description?.getValue() ?? null,
+        icon: s.icon.getValue(),
+        color: s.color.getValue(),
+        address: s.address.getValue(),
+        parentUUID: s.parentUUID,
+        archivedAt: s.archivedAt,
+        frozenAt: s.frozenAt,
+        status: s.status,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+        roomType: null,
+      });
+    }
+
+    for (const c of this._customRooms) {
+      views.push({
+        uuid: c.uuid.toString(),
+        type: StorageType.CUSTOM_ROOM,
+        name: c.name.getValue(),
+        description: c.description?.getValue() ?? null,
+        icon: c.icon.getValue(),
+        color: c.color.getValue(),
+        address: c.address.getValue(),
+        parentUUID: c.parentUUID?.toString() ?? null,
+        archivedAt: c.archivedAt,
+        frozenAt: c.frozenAt,
+        status: c.status,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        roomType: c.roomType.getValue(),
+      });
+    }
+
+    return views;
+  }
+
+  // ── Getters ────────────────────────────────────────────────────────────
 
   get tenantUUID(): string {
     return this._tenantUUID;
   }
 
-  get type(): StorageType {
-    return this._sub.type;
+  get warehouses(): readonly WarehouseModel[] {
+    return this._warehouses;
   }
 
-  get parentUUID(): string | null {
-    return this._parentUUID;
+  get storeRooms(): readonly StoreRoomModel[] {
+    return this._storeRooms;
   }
 
-  get name(): string {
-    return this._sub.model.name.getValue();
-  }
-
-  get description(): string | null {
-    return this._sub.model.description?.getValue() ?? null;
-  }
-
-  get icon(): string {
-    return this._sub.model.icon.getValue();
-  }
-
-  get color(): string {
-    return this._sub.model.color.getValue();
-  }
-
-  get address(): string {
-    return this._sub.model.address.getValue();
-  }
-
-  get status(): StorageStatus {
-    if (this._archivedAt !== null) return StorageStatus.ARCHIVED;
-    if (this._frozenAt !== null) return StorageStatus.FROZEN;
-    return StorageStatus.ACTIVE;
-  }
-
-  get frozenAt(): Date | null {
-    return this._frozenAt;
-  }
-
-  isFrozen(): boolean {
-    return this._frozenAt !== null && this._archivedAt === null;
-  }
-
-  get sub(): StorageSubModel {
-    return this._sub;
-  }
-
-  get customRoom(): CustomRoomModel | null {
-    return this._sub.type === StorageType.CUSTOM_ROOM ? this._sub.model : null;
-  }
-
-  get storeRoom(): StoreRoomModel | null {
-    return this._sub.type === StorageType.STORE_ROOM ? this._sub.model : null;
-  }
-
-  get warehouse(): WarehouseModel | null {
-    return this._sub.type === StorageType.WAREHOUSE ? this._sub.model : null;
-  }
-
-  updateCustomRoom(props: {
-    name?: string;
-    description?: string | null;
-    icon?: string;
-    color?: string;
-    address?: string;
-    roomType?: string;
-  }): void {
-    if (this._sub.type !== StorageType.CUSTOM_ROOM) return;
-    this._sub = { type: StorageType.CUSTOM_ROOM, model: this._sub.model.update(props) };
-    this.touch();
-    this.apply(new StorageUpdatedEvent(this.uuid, this._tenantUUID));
-  }
-
-  updateStoreRoom(props: {
-    name?: string;
-    description?: string | null;
-    icon?: string;
-    color?: string;
-    address?: string;
-  }): void {
-    if (this._sub.type !== StorageType.STORE_ROOM) return;
-    this._sub = { type: StorageType.STORE_ROOM, model: this._sub.model.update(props) };
-    this.touch();
-    this.apply(new StorageUpdatedEvent(this.uuid, this._tenantUUID));
-  }
-
-  updateWarehouse(props: {
-    name?: string;
-    description?: string | null;
-    icon?: string;
-    color?: string;
-    address?: string;
-  }): void {
-    if (this._sub.type !== StorageType.WAREHOUSE) return;
-    this._sub = { type: StorageType.WAREHOUSE, model: this._sub.model.update(props) };
-    this.touch();
-    this.apply(new StorageUpdatedEvent(this.uuid, this._tenantUUID));
-  }
-
-  markArchived(): void {
-    this.archive();
-    this.apply(new StorageArchivedEvent(this.uuid, this._tenantUUID));
+  get customRooms(): readonly CustomRoomModel[] {
+    return this._customRooms;
   }
 }
