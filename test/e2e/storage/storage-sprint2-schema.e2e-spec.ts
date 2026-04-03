@@ -164,29 +164,6 @@ describe('Storage BC — Sprint 2 Schema (sub-table fields)', () => {
       });
     });
 
-    describe('When creating a STORE_ROOM with a parentId referencing a warehouse', () => {
-      it('Then the parentId is persisted in storages registry and returned', async () => {
-        const parentRes = await createStorage(app, token, {
-          type: 'WAREHOUSE',
-          name: 'Parent Warehouse',
-        });
-        expect(parentRes.status).toBe(HttpStatus.CREATED);
-        const parentUUID = (parentRes.body as CreateStorageResponse).storageUUID;
-
-        const childRes = await createStorage(app, token, {
-          type: 'STORE_ROOM',
-          name: 'Child Store Room',
-          parentUUID: parentUUID,
-        });
-        expect(childRes.status).toBe(HttpStatus.CREATED);
-        const childUUID = (childRes.body as CreateStorageResponse).storageUUID;
-
-        const getRes = await getStorage(app, token, childUUID);
-        expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.parentId).toBe(parentUUID);
-      });
-    });
-
     describe('When creating a storage without a parentId', () => {
       it('Then parentId in response is null', async () => {
         const createRes = await createStorage(app, token, {

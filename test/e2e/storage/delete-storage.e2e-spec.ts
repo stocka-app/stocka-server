@@ -147,7 +147,7 @@ describe('DELETE /api/storages/:uuid (e2e)', () => {
     });
   });
 
-  describe('Given a tenant with an active storage', () => {
+  describe('Given a tenant with an active custom room', () => {
     let storageToArchiveUUID: string;
 
     beforeAll(async () => {
@@ -173,6 +173,36 @@ describe('DELETE /api/storages/:uuid (e2e)', () => {
       expect(getRes.body.uuid).toBe(storageToArchiveUUID);
       expect(getRes.body.archivedAt).not.toBeNull();
       expect(getRes.body.status).toBe('ARCHIVED');
+    });
+  });
+
+  describe('Given a tenant with an active warehouse', () => {
+    let warehouseUUID: string;
+
+    beforeAll(async () => {
+      warehouseUUID = await createStorage(app, ownerToken, {
+        type: 'WAREHOUSE',
+        name: 'DeleteStorage Warehouse To Archive',
+      });
+    });
+
+    describe('When DELETE /api/storages/:uuid is called on a warehouse', () => {
+      it('Then it returns 204 and the warehouse is archived', async () => {
+        const deleteRes = await request(app.getHttpServer())
+          .delete(`/api/storages/${warehouseUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        expect(deleteRes.status).toBe(HttpStatus.NO_CONTENT);
+
+        const getRes = await request(app.getHttpServer())
+          .get(`/api/storages/${warehouseUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        expect(getRes.status).toBe(HttpStatus.OK);
+        expect(getRes.body.archivedAt).not.toBeNull();
+        expect(getRes.body.status).toBe('ARCHIVED');
+        expect(getRes.body.type).toBe('WAREHOUSE');
+      });
     });
   });
 

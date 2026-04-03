@@ -26,112 +26,137 @@ import { GetStorageQuery } from '@storage/application/queries/get-storage/get-st
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
 import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
+import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
+import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { ITenantCapabilitiesPort, TenantCapabilities } from '@storage/application/ports/tenant-capabilities.port';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
 import { WarehouseModel } from '@storage/domain/models/warehouse.model';
+import { StoreRoomModel } from '@storage/domain/models/store-room.model';
+import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageAlreadyArchivedError } from '@storage/domain/errors/storage-already-archived.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { CustomRoomLimitReachedError } from '@storage/application/errors/custom-room-limit-reached.error';
 import { StoreRoomLimitReachedError } from '@storage/application/errors/store-room-limit-reached.error';
 import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { StorageNameVO } from '@storage/domain/value-objects/storage-name.vo';
+import { StorageDescriptionVO } from '@storage/domain/value-objects/storage-description.vo';
+import { StorageIconVO } from '@storage/domain/value-objects/storage-icon.vo';
+import { StorageColorVO } from '@storage/domain/value-objects/storage-color.vo';
+import { StorageAddressVO } from '@storage/domain/value-objects/storage-address.vo';
+import { RoomTypeNameVO } from '@storage/domain/value-objects/room-type-name.vo';
 
 const TENANT_UUID = '019538a0-0000-7000-8000-000000000001';
-const STORAGE_UUID = '019538a0-0000-7000-8000-000000000010';
+const WH_UUID = '019538a0-0000-7000-8000-000000000010';
+const SR_UUID = '019538a0-0000-7000-8000-000000000020';
+const CR_UUID = '019538a0-0000-7000-8000-000000000030';
 
-function makeCustomRoomAggregate(archivedAt: Date | null = null): StorageAggregate {
-  return StorageAggregate.reconstitute({
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function makeWarehouse(uuid: string, overrides: Partial<{ archivedAt: Date | null }> = {}): WarehouseModel {
+  return WarehouseModel.reconstitute({
     id: 1,
-    uuid: STORAGE_UUID,
+    uuid: new UUIDVO(uuid),
     tenantUUID: TENANT_UUID,
-    parentUUID: null,
-    sub: {
-      type: StorageType.CUSTOM_ROOM,
-      model: CustomRoomModel.create({
-        uuid: '019538a0-0000-7000-8000-000000000098',
-        name: 'Existing Room',
-        roomType: 'Office',
-        icon: 'icon-1',
-        color: '#AABBCC',
-        address: '123 Main St',
-      }),
-    },
+    name: new StorageNameVO('Existing WH'),
+    description: null,
+    icon: new StorageIconVO('warehouse'),
+    color: new StorageColorVO('#3b82f6'),
+    address: new StorageAddressVO('789 Industrial'),
+    archivedAt: overrides.archivedAt ?? null,
+    frozenAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    archivedAt,
-    frozenAt: null,
   });
 }
 
-function makeStoreRoomAggregate(archivedAt: Date | null = null): StorageAggregate {
-  return StorageAggregate.reconstitute({
+function makeStoreRoom(uuid: string, overrides: Partial<{ archivedAt: Date | null }> = {}): StoreRoomModel {
+  return StoreRoomModel.reconstitute({
     id: 2,
-    uuid: STORAGE_UUID,
+    uuid: new UUIDVO(uuid),
     tenantUUID: TENANT_UUID,
     parentUUID: null,
-    sub: {
-      type: StorageType.STORE_ROOM,
-      model: StoreRoomModel.create({
-        uuid: '019538a0-0000-7000-8000-000000000097',
-        name: 'Existing Store',
-        icon: 'store-icon',
-        color: '#334455',
-        address: '456 Oak Ave',
-      }),
-    },
+    name: new StorageNameVO('Existing Store'),
+    description: null,
+    icon: new StorageIconVO('inventory_2'),
+    color: new StorageColorVO('#d97706'),
+    address: new StorageAddressVO('456 Oak Ave'),
+    archivedAt: overrides.archivedAt ?? null,
+    frozenAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    archivedAt,
-    frozenAt: null,
   });
 }
 
-function makeWarehouseAggregate(archivedAt: Date | null = null): StorageAggregate {
-  return StorageAggregate.reconstitute({
+function makeCustomRoom(uuid: string, overrides: Partial<{ archivedAt: Date | null }> = {}): CustomRoomModel {
+  return CustomRoomModel.reconstitute({
     id: 3,
-    uuid: STORAGE_UUID,
+    uuid: new UUIDVO(uuid),
     tenantUUID: TENANT_UUID,
     parentUUID: null,
-    sub: {
-      type: StorageType.WAREHOUSE,
-      model: WarehouseModel.reconstitute({
-        id: 3,
-        uuid: { toString: () => '019538a0-0000-7000-8000-000000000096' } as never,
-        name: { getValue: () => 'Existing WH' } as never,
-        description: null,
-        icon: { getValue: () => 'wh-icon' } as never,
-        color: { getValue: () => '#667788' } as never,
-        address: { getValue: () => '789 Industrial' } as never,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }),
-    },
+    name: StorageNameVO.create('Existing Room'),
+    description: null,
+    icon: StorageIconVO.create('other_houses'),
+    color: StorageColorVO.create('#6b7280'),
+    roomType: RoomTypeNameVO.create('Office'),
+    address: StorageAddressVO.create('123 Main St'),
+    archivedAt: overrides.archivedAt ?? null,
+    frozenAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    archivedAt,
-    frozenAt: null,
+  });
+}
+
+function makeAggregate(opts: {
+  warehouses?: WarehouseModel[];
+  storeRooms?: StoreRoomModel[];
+  customRooms?: CustomRoomModel[];
+} = {}): StorageAggregate {
+  return StorageAggregate.reconstitute({
+    id: 42,
+    uuid: '019538a0-0000-7000-8000-000000000099',
+    tenantUUID: TENANT_UUID,
+    warehouses: opts.warehouses ?? [],
+    storeRooms: opts.storeRooms ?? [],
+    customRooms: opts.customRooms ?? [],
+    createdAt: new Date(),
+    updatedAt: new Date(),
   });
 }
 
 // ── Shared mocks ────────────────────────────────────────────────────────────────
 
 let mockStorageRepository: jest.Mocked<IStorageRepository>;
+let mockWarehouseRepository: jest.Mocked<IWarehouseRepository>;
+let mockStoreRoomRepository: jest.Mocked<IStoreRoomRepository>;
+let mockCustomRoomRepository: jest.Mocked<ICustomRoomRepository>;
 let mockCapabilitiesPort: jest.Mocked<ITenantCapabilitiesPort>;
 let mockEventPublisher: jest.Mocked<EventPublisher>;
 let mockCapabilities: jest.Mocked<TenantCapabilities>;
 
 beforeEach(() => {
   mockStorageRepository = {
-    findByUUID: jest.fn(),
-    findAll: jest.fn(),
-    countActiveByType: jest.fn(),
+    findOrCreate: jest.fn(),
     existsActiveName: jest.fn(),
+  };
+
+  mockWarehouseRepository = {
+    countActive: jest.fn(),
     save: jest.fn(),
-    archive: jest.fn(),
+  };
+
+  mockStoreRoomRepository = {
+    countActive: jest.fn(),
+    save: jest.fn(),
+  };
+
+  mockCustomRoomRepository = {
+    countActive: jest.fn(),
+    save: jest.fn(),
   };
 
   mockCapabilities = {
@@ -158,6 +183,7 @@ describe('CreateCustomRoomHandler', () => {
   beforeEach(() => {
     handler = new CreateCustomRoomHandler(
       mockStorageRepository,
+      mockCustomRoomRepository,
       mockCapabilitiesPort,
       mockEventPublisher,
     );
@@ -165,61 +191,39 @@ describe('CreateCustomRoomHandler', () => {
 
   describe('Given a tenant with available custom room capacity', () => {
     beforeEach(() => {
-      mockStorageRepository.countActiveByType.mockResolvedValue(0);
+      mockCustomRoomRepository.countActive.mockResolvedValue(0);
       mockStorageRepository.existsActiveName.mockResolvedValue(false);
+      const aggregate = makeAggregate();
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockCustomRoomRepository.save.mockImplementation(async (model) => model);
     });
 
     describe('When the storage name is unique and no icon or color is provided', () => {
-      it('Then creates the storage with default icon and color, returning the UUID', async () => {
-        const savedAggregate = StorageAggregate.createCustomRoom({
-          tenantUUID: TENANT_UUID,
-          name: 'New Room',
-          roomType: 'Office',
-          icon: CUSTOM_ROOM_DEFAULT_ICON,
-          color: CUSTOM_ROOM_DEFAULT_COLOR,
-          address: '123 Main St',
-        });
-        jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(savedAggregate);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
-
+      it('Then creates the custom room with default icon and color, returning the UUID', async () => {
         const command = new CreateCustomRoomCommand(TENANT_UUID, 'New Room', 'Office', '123 Main St');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap().storageUUID).toBe(savedAggregate.uuid);
-        expect(mockStorageRepository.save).toHaveBeenCalledTimes(1);
-        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
-        expect(createdAggregate.icon).toBe(CUSTOM_ROOM_DEFAULT_ICON);
-        expect(createdAggregate.color).toBe(CUSTOM_ROOM_DEFAULT_COLOR);
-        expect(savedAggregate.commit).toHaveBeenCalled();
+        expect(result._unsafeUnwrap().storageUUID).toBeDefined();
+        expect(mockCustomRoomRepository.save).toHaveBeenCalledTimes(1);
+        const savedModel = mockCustomRoomRepository.save.mock.calls[0][0];
+        expect(savedModel.icon.getValue()).toBe(CUSTOM_ROOM_DEFAULT_ICON);
+        expect(savedModel.color.getValue()).toBe(CUSTOM_ROOM_DEFAULT_COLOR);
       });
     });
 
     describe('When the storage name is unique and a custom icon and color are provided', () => {
-      it('Then creates the storage with the provided icon and color', async () => {
-        const savedAggregate = StorageAggregate.createCustomRoom({
-          tenantUUID: TENANT_UUID,
-          name: 'Styled Room',
-          roomType: 'Kitchen',
-          icon: 'kitchen',
-          color: '#A855F7',
-          address: '99 Custom Blvd',
-        });
-        jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(savedAggregate);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
-
+      it('Then creates the custom room with the provided icon and color', async () => {
         const command = new CreateCustomRoomCommand(
           TENANT_UUID, 'Styled Room', 'Kitchen', '99 Custom Blvd',
-          undefined, undefined, 'kitchen', '#A855F7',
+          undefined, 'kitchen', '#A855F7',
         );
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
-        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
-        expect(createdAggregate.icon).toBe('kitchen');
-        expect(createdAggregate.color).toBe('#A855F7');
+        const savedModel = mockCustomRoomRepository.save.mock.calls[0][0];
+        expect(savedModel.icon.getValue()).toBe('kitchen');
+        expect(savedModel.color.getValue()).toBe('#A855F7');
       });
     });
 
@@ -232,7 +236,7 @@ describe('CreateCustomRoomHandler', () => {
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
-        expect(mockStorageRepository.save).not.toHaveBeenCalled();
+        expect(mockCustomRoomRepository.save).not.toHaveBeenCalled();
       });
     });
   });
@@ -240,7 +244,7 @@ describe('CreateCustomRoomHandler', () => {
   describe('Given a tenant that has reached the custom room limit', () => {
     describe('When create custom room is requested', () => {
       it('Then returns CustomRoomLimitReachedError', async () => {
-        mockStorageRepository.countActiveByType.mockResolvedValue(3);
+        mockCustomRoomRepository.countActive.mockResolvedValue(3);
         mockCapabilities.canCreateMoreCustomRooms.mockReturnValue(false);
 
         const command = new CreateCustomRoomCommand(TENANT_UUID, 'Over Limit', 'Office', '123 St');
@@ -248,10 +252,11 @@ describe('CreateCustomRoomHandler', () => {
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(CustomRoomLimitReachedError);
-        expect(mockStorageRepository.save).not.toHaveBeenCalled();
+        expect(mockCustomRoomRepository.save).not.toHaveBeenCalled();
       });
     });
   });
+
 });
 
 // ── CreateStoreRoomHandler ──────────────────────────────────────────────────────
@@ -262,6 +267,7 @@ describe('CreateStoreRoomHandler', () => {
   beforeEach(() => {
     handler = new CreateStoreRoomHandler(
       mockStorageRepository,
+      mockStoreRoomRepository,
       mockCapabilitiesPort,
       mockEventPublisher,
     );
@@ -269,31 +275,23 @@ describe('CreateStoreRoomHandler', () => {
 
   describe('Given a tenant with available store room capacity', () => {
     beforeEach(() => {
-      mockStorageRepository.countActiveByType.mockResolvedValue(1);
+      mockStoreRoomRepository.countActive.mockResolvedValue(1);
       mockStorageRepository.existsActiveName.mockResolvedValue(false);
+      const aggregate = makeAggregate();
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockStoreRoomRepository.save.mockImplementation(async (model) => model);
     });
 
     describe('When the storage name is unique', () => {
-      it('Then creates and saves the storage with fixed store room icon and color, returning the UUID', async () => {
-        const savedAggregate = StorageAggregate.createStoreRoom({
-          tenantUUID: TENANT_UUID,
-          name: 'New Bodega',
-          icon: STORE_ROOM_DEFAULT_ICON,
-          color: STORE_ROOM_DEFAULT_COLOR,
-          address: '456 Ave',
-        });
-        jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(savedAggregate);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
-
+      it('Then creates and saves the store room with fixed icon and color, returning the UUID', async () => {
         const command = new CreateStoreRoomCommand(TENANT_UUID, 'New Bodega', '456 Ave');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap().storageUUID).toBe(savedAggregate.uuid);
-        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
-        expect(createdAggregate.icon).toBe(STORE_ROOM_DEFAULT_ICON);
-        expect(createdAggregate.color).toBe(STORE_ROOM_DEFAULT_COLOR);
+        expect(result._unsafeUnwrap().storageUUID).toBeDefined();
+        const savedModel = mockStoreRoomRepository.save.mock.calls[0][0];
+        expect(savedModel.icon.getValue()).toBe(STORE_ROOM_DEFAULT_ICON);
+        expect(savedModel.color.getValue()).toBe(STORE_ROOM_DEFAULT_COLOR);
       });
     });
 
@@ -313,7 +311,7 @@ describe('CreateStoreRoomHandler', () => {
   describe('Given a tenant that has reached the store room limit', () => {
     describe('When create store room is requested', () => {
       it('Then returns StoreRoomLimitReachedError', async () => {
-        mockStorageRepository.countActiveByType.mockResolvedValue(5);
+        mockStoreRoomRepository.countActive.mockResolvedValue(5);
         mockCapabilities.canCreateMoreStoreRooms.mockReturnValue(false);
 
         const command = new CreateStoreRoomCommand(TENANT_UUID, 'Over Limit', '123 St');
@@ -324,6 +322,7 @@ describe('CreateStoreRoomHandler', () => {
       });
     });
   });
+
 });
 
 // ── CreateWarehouseHandler ──────────────────────────────────────────────────────
@@ -334,6 +333,7 @@ describe('CreateWarehouseHandler', () => {
   beforeEach(() => {
     handler = new CreateWarehouseHandler(
       mockStorageRepository,
+      mockWarehouseRepository,
       mockCapabilitiesPort,
       mockEventPublisher,
     );
@@ -341,31 +341,23 @@ describe('CreateWarehouseHandler', () => {
 
   describe('Given a tenant on STARTER tier with warehouse capacity', () => {
     beforeEach(() => {
-      mockStorageRepository.countActiveByType.mockResolvedValue(0);
+      mockWarehouseRepository.countActive.mockResolvedValue(0);
       mockStorageRepository.existsActiveName.mockResolvedValue(false);
+      const aggregate = makeAggregate();
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockWarehouseRepository.save.mockImplementation(async (model) => model);
     });
 
     describe('When the warehouse name is unique', () => {
       it('Then creates and saves the warehouse with fixed icon and color, returning the UUID', async () => {
-        const savedAggregate = StorageAggregate.createWarehouse({
-          tenantUUID: TENANT_UUID,
-          name: 'Main WH',
-          icon: WAREHOUSE_DEFAULT_ICON,
-          color: WAREHOUSE_DEFAULT_COLOR,
-          address: '789 Industrial',
-        });
-        jest.spyOn(savedAggregate, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(savedAggregate);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(savedAggregate as never);
-
         const command = new CreateWarehouseCommand(TENANT_UUID, 'Main WH', '789 Industrial');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap().storageUUID).toBe(savedAggregate.uuid);
-        const createdAggregate = mockStorageRepository.save.mock.calls[0][0];
-        expect(createdAggregate.icon).toBe(WAREHOUSE_DEFAULT_ICON);
-        expect(createdAggregate.color).toBe(WAREHOUSE_DEFAULT_COLOR);
+        expect(result._unsafeUnwrap().storageUUID).toBeDefined();
+        const savedModel = mockWarehouseRepository.save.mock.calls[0][0];
+        expect(savedModel.icon.getValue()).toBe(WAREHOUSE_DEFAULT_ICON);
+        expect(savedModel.color.getValue()).toBe(WAREHOUSE_DEFAULT_COLOR);
       });
     });
 
@@ -392,7 +384,7 @@ describe('CreateWarehouseHandler', () => {
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
-        expect(mockStorageRepository.countActiveByType).not.toHaveBeenCalled();
+        expect(mockWarehouseRepository.countActive).not.toHaveBeenCalled();
       });
     });
   });
@@ -400,7 +392,7 @@ describe('CreateWarehouseHandler', () => {
   describe('Given a tenant that has reached the warehouse limit', () => {
     describe('When warehouse creation is attempted', () => {
       it('Then returns WarehouseRequiresTierUpgradeError', async () => {
-        mockStorageRepository.countActiveByType.mockResolvedValue(3);
+        mockWarehouseRepository.countActive.mockResolvedValue(3);
         mockCapabilities.canCreateMoreWarehouses.mockReturnValue(false);
 
         const command = new CreateWarehouseCommand(TENANT_UUID, 'Over Limit WH', '123 St');
@@ -419,41 +411,36 @@ describe('UpdateCustomRoomHandler', () => {
   let handler: UpdateCustomRoomHandler;
 
   beforeEach(() => {
-    handler = new UpdateCustomRoomHandler(mockStorageRepository, mockEventPublisher);
+    handler = new UpdateCustomRoomHandler(
+      mockStorageRepository,
+      mockCustomRoomRepository,
+      mockEventPublisher,
+    );
   });
 
-  describe('Given a custom room storage that exists and is active', () => {
-    let existing: StorageAggregate;
-
+  describe('Given a custom room that exists and is active', () => {
     beforeEach(() => {
-      existing = makeCustomRoomAggregate();
-      mockStorageRepository.findByUUID.mockResolvedValue(existing);
+      const aggregate = makeAggregate({ customRooms: [makeCustomRoom(CR_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockCustomRoomRepository.save.mockImplementation(async (model) => model);
     });
 
     describe('When updating with a new unique name', () => {
-      it('Then updates the storage and returns the UUID', async () => {
+      it('Then updates the custom room and returns the UUID', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(false);
-        const saved = makeCustomRoomAggregate();
-        jest.spyOn(saved, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(saved);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(saved as never);
 
-        const command = new UpdateCustomRoomCommand(STORAGE_UUID, TENANT_UUID, 'Updated Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Updated Name');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
+        expect(result._unsafeUnwrap().storageUUID).toBe(CR_UUID);
         expect(mockStorageRepository.existsActiveName).toHaveBeenCalledWith(TENANT_UUID, 'Updated Name');
       });
     });
 
     describe('When updating with the same name', () => {
       it('Then skips the name uniqueness check and updates successfully', async () => {
-        const saved = makeCustomRoomAggregate();
-        jest.spyOn(saved, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(saved);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(saved as never);
-
-        const command = new UpdateCustomRoomCommand(STORAGE_UUID, TENANT_UUID, 'Existing Room');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Existing Room');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -463,12 +450,7 @@ describe('UpdateCustomRoomHandler', () => {
 
     describe('When no name is provided', () => {
       it('Then skips the name uniqueness check', async () => {
-        const saved = makeCustomRoomAggregate();
-        jest.spyOn(saved, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(saved);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(saved as never);
-
-        const command = new UpdateCustomRoomCommand(STORAGE_UUID, TENANT_UUID, undefined, 'New desc');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, undefined, 'New desc');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -480,7 +462,7 @@ describe('UpdateCustomRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new UpdateCustomRoomCommand(STORAGE_UUID, TENANT_UUID, 'Taken Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Taken Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -489,12 +471,13 @@ describe('UpdateCustomRoomHandler', () => {
     });
   });
 
-  describe('Given the storage UUID does not exist', () => {
+  describe('Given the custom room UUID does not exist in the aggregate', () => {
     describe('When update is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(null);
+        const aggregate = makeAggregate();
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateCustomRoomCommand(STORAGE_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -503,26 +486,15 @@ describe('UpdateCustomRoomHandler', () => {
     });
   });
 
-  describe('Given the storage is of a different type (STORE_ROOM)', () => {
-    describe('When update custom room is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(makeStoreRoomAggregate());
-
-        const command = new UpdateCustomRoomCommand(STORAGE_UUID, TENANT_UUID, 'Name');
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
-    });
-  });
-
-  describe('Given the custom room storage is archived', () => {
+  describe('Given the custom room is archived', () => {
     describe('When update is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(makeCustomRoomAggregate(new Date()));
+        const aggregate = makeAggregate({
+          customRooms: [makeCustomRoom(CR_UUID, { archivedAt: new Date() })],
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateCustomRoomCommand(STORAGE_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -538,23 +510,25 @@ describe('UpdateStoreRoomHandler', () => {
   let handler: UpdateStoreRoomHandler;
 
   beforeEach(() => {
-    handler = new UpdateStoreRoomHandler(mockStorageRepository, mockEventPublisher);
+    handler = new UpdateStoreRoomHandler(
+      mockStorageRepository,
+      mockStoreRoomRepository,
+      mockEventPublisher,
+    );
   });
 
-  describe('Given a store room storage that exists and is active', () => {
+  describe('Given a store room that exists and is active', () => {
     beforeEach(() => {
-      mockStorageRepository.findByUUID.mockResolvedValue(makeStoreRoomAggregate());
+      const aggregate = makeAggregate({ storeRooms: [makeStoreRoom(SR_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockStoreRoomRepository.save.mockImplementation(async (model) => model);
     });
 
     describe('When updating with a new unique name', () => {
-      it('Then updates the storage and returns the UUID', async () => {
+      it('Then updates the store room and returns the UUID', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(false);
-        const saved = makeStoreRoomAggregate();
-        jest.spyOn(saved, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(saved);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(saved as never);
 
-        const command = new UpdateStoreRoomCommand(STORAGE_UUID, TENANT_UUID, 'New Store Name');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'New Store Name');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -565,7 +539,7 @@ describe('UpdateStoreRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new UpdateStoreRoomCommand(STORAGE_UUID, TENANT_UUID, 'Taken');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'Taken');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -574,12 +548,13 @@ describe('UpdateStoreRoomHandler', () => {
     });
   });
 
-  describe('Given the storage does not exist', () => {
+  describe('Given the store room does not exist in the aggregate', () => {
     describe('When update store room is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(null);
+        const aggregate = makeAggregate();
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateStoreRoomCommand(STORAGE_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -588,26 +563,15 @@ describe('UpdateStoreRoomHandler', () => {
     });
   });
 
-  describe('Given the storage is of a different type (CUSTOM_ROOM)', () => {
-    describe('When update store room is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(makeCustomRoomAggregate());
-
-        const command = new UpdateStoreRoomCommand(STORAGE_UUID, TENANT_UUID, 'Name');
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
-    });
-  });
-
-  describe('Given the store room storage is archived', () => {
+  describe('Given the store room is archived', () => {
     describe('When update is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(makeStoreRoomAggregate(new Date()));
+        const aggregate = makeAggregate({
+          storeRooms: [makeStoreRoom(SR_UUID, { archivedAt: new Date() })],
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateStoreRoomCommand(STORAGE_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -623,23 +587,25 @@ describe('UpdateWarehouseHandler', () => {
   let handler: UpdateWarehouseHandler;
 
   beforeEach(() => {
-    handler = new UpdateWarehouseHandler(mockStorageRepository, mockEventPublisher);
+    handler = new UpdateWarehouseHandler(
+      mockStorageRepository,
+      mockWarehouseRepository,
+      mockEventPublisher,
+    );
   });
 
-  describe('Given a warehouse storage that exists and is active', () => {
+  describe('Given a warehouse that exists and is active', () => {
     beforeEach(() => {
-      mockStorageRepository.findByUUID.mockResolvedValue(makeWarehouseAggregate());
+      const aggregate = makeAggregate({ warehouses: [makeWarehouse(WH_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockWarehouseRepository.save.mockImplementation(async (model) => model);
     });
 
     describe('When updating with a new unique name', () => {
       it('Then updates the warehouse and returns the UUID', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(false);
-        const saved = makeWarehouseAggregate();
-        jest.spyOn(saved, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.save.mockResolvedValue(saved);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(saved as never);
 
-        const command = new UpdateWarehouseCommand(STORAGE_UUID, TENANT_UUID, 'New WH Name');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'New WH Name');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -650,7 +616,7 @@ describe('UpdateWarehouseHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new UpdateWarehouseCommand(STORAGE_UUID, TENANT_UUID, 'Taken WH');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'Taken WH');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -659,12 +625,13 @@ describe('UpdateWarehouseHandler', () => {
     });
   });
 
-  describe('Given the storage does not exist', () => {
+  describe('Given the warehouse does not exist in the aggregate', () => {
     describe('When update warehouse is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(null);
+        const aggregate = makeAggregate();
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateWarehouseCommand(STORAGE_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -673,26 +640,15 @@ describe('UpdateWarehouseHandler', () => {
     });
   });
 
-  describe('Given the storage is of a different type (STORE_ROOM)', () => {
-    describe('When update warehouse is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(makeStoreRoomAggregate());
-
-        const command = new UpdateWarehouseCommand(STORAGE_UUID, TENANT_UUID, 'Name');
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
-    });
-  });
-
-  describe('Given the warehouse storage is archived', () => {
+  describe('Given the warehouse is archived', () => {
     describe('When update is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(makeWarehouseAggregate(new Date()));
+        const aggregate = makeAggregate({
+          warehouses: [makeWarehouse(WH_UUID, { archivedAt: new Date() })],
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateWarehouseCommand(STORAGE_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -708,41 +664,75 @@ describe('ArchiveStorageHandler', () => {
   let handler: ArchiveStorageHandler;
 
   beforeEach(() => {
-    handler = new ArchiveStorageHandler(mockStorageRepository, mockEventPublisher);
+    handler = new ArchiveStorageHandler(
+      mockStorageRepository,
+      mockWarehouseRepository,
+      mockStoreRoomRepository,
+      mockCustomRoomRepository,
+      mockEventPublisher,
+    );
   });
 
-  describe('Given an active storage', () => {
+  describe('Given an active warehouse', () => {
     describe('When archive is requested', () => {
-      it('Then archives the storage and returns ok(undefined)', async () => {
-        const existing = makeCustomRoomAggregate();
-        jest.spyOn(existing, 'commit').mockImplementation(() => void 0);
-        mockStorageRepository.findByUUID.mockResolvedValue(existing);
-        mockStorageRepository.archive.mockResolvedValue(undefined);
-        mockEventPublisher.mergeObjectContext.mockReturnValue(existing as never);
+      it('Then archives the warehouse and returns ok(undefined)', async () => {
+        const aggregate = makeAggregate({ warehouses: [makeWarehouse(WH_UUID)] });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+        mockWarehouseRepository.save.mockImplementation(async (model) => model);
 
-        const command = new ArchiveStorageCommand(STORAGE_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID);
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
         expect(result._unsafeUnwrap()).toBeUndefined();
-        expect(mockStorageRepository.archive).toHaveBeenCalledWith(existing);
-        expect(existing.isArchived()).toBe(true);
-        expect(existing.commit).toHaveBeenCalled();
+        expect(mockWarehouseRepository.save).toHaveBeenCalledTimes(1);
       });
     });
   });
 
-  describe('Given the storage does not exist', () => {
+  describe('Given an active store room', () => {
+    describe('When archive is requested', () => {
+      it('Then archives the store room via storeRoomRepository', async () => {
+        const aggregate = makeAggregate({ storeRooms: [makeStoreRoom(SR_UUID)] });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+        mockStoreRoomRepository.save.mockImplementation(async (model) => model);
+
+        const command = new ArchiveStorageCommand(SR_UUID, TENANT_UUID);
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(mockStoreRoomRepository.save).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('Given an active custom room', () => {
+    describe('When archive is requested', () => {
+      it('Then archives the custom room via customRoomRepository', async () => {
+        const aggregate = makeAggregate({ customRooms: [makeCustomRoom(CR_UUID)] });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+        mockCustomRoomRepository.save.mockImplementation(async (model) => model);
+
+        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID);
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(mockCustomRoomRepository.save).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('Given the storage does not exist in the aggregate', () => {
     describe('When archive is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(null);
+        const aggregate = makeAggregate();
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new ArchiveStorageCommand(STORAGE_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-        expect(mockStorageRepository.archive).not.toHaveBeenCalled();
       });
     });
   });
@@ -750,14 +740,16 @@ describe('ArchiveStorageHandler', () => {
   describe('Given the storage is already archived', () => {
     describe('When archive is requested again', () => {
       it('Then returns StorageAlreadyArchivedError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(makeCustomRoomAggregate(new Date()));
+        const aggregate = makeAggregate({
+          customRooms: [makeCustomRoom(CR_UUID, { archivedAt: new Date() })],
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new ArchiveStorageCommand(STORAGE_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyArchivedError);
-        expect(mockStorageRepository.archive).not.toHaveBeenCalled();
       });
     });
   });
@@ -772,18 +764,20 @@ describe('GetStorageHandler', () => {
     handler = new GetStorageHandler(mockStorageRepository);
   });
 
-  describe('Given a storage that exists', () => {
+  describe('Given a storage that exists in the aggregate', () => {
     describe('When the storage UUID and tenant UUID match', () => {
-      it('Then returns the storage aggregate', async () => {
-        const existing = makeCustomRoomAggregate();
-        mockStorageRepository.findByUUID.mockResolvedValue(existing);
+      it('Then returns the storage item view', async () => {
+        const aggregate = makeAggregate({ customRooms: [makeCustomRoom(CR_UUID)] });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const query = new GetStorageQuery(STORAGE_UUID, TENANT_UUID);
+        const query = new GetStorageQuery(CR_UUID, TENANT_UUID);
         const result = await handler.execute(query);
 
         expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap()).toBe(existing);
-        expect(mockStorageRepository.findByUUID).toHaveBeenCalledWith(STORAGE_UUID, TENANT_UUID);
+        const view = result._unsafeUnwrap();
+        expect(view.uuid).toBe(CR_UUID);
+        expect(view.type).toBe(StorageType.CUSTOM_ROOM);
+        expect(view.name).toBe('Existing Room');
       });
     });
   });
@@ -791,9 +785,10 @@ describe('GetStorageHandler', () => {
   describe('Given the storage does not exist for the tenant', () => {
     describe('When get is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        mockStorageRepository.findByUUID.mockResolvedValue(null);
+        const aggregate = makeAggregate();
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const query = new GetStorageQuery(STORAGE_UUID, TENANT_UUID);
+        const query = new GetStorageQuery(CR_UUID, TENANT_UUID);
         const result = await handler.execute(query);
 
         expect(result.isErr()).toBe(true);
@@ -812,48 +807,134 @@ describe('ListStoragesHandler', () => {
     handler = new ListStoragesHandler(mockStorageRepository);
   });
 
-  describe('Given a tenant with storages', () => {
-    describe('When list is requested with filters and pagination', () => {
-      it('Then delegates to the repository and returns the page', async () => {
-        const page = { items: [makeCustomRoomAggregate()], total: 1 };
-        mockStorageRepository.findAll.mockResolvedValue(page);
+  describe('Given a tenant with storages of multiple types and statuses', () => {
+    let aggregate: StorageAggregate;
 
+    beforeEach(() => {
+      aggregate = makeAggregate({
+        warehouses: [makeWarehouse(WH_UUID)],
+        storeRooms: [makeStoreRoom(SR_UUID)],
+        customRooms: [
+          makeCustomRoom(CR_UUID),
+          makeCustomRoom('019538a0-0000-7000-8000-000000000031', { archivedAt: new Date() }),
+        ],
+      });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+    });
+
+    describe('When list is requested with ACTIVE status filter', () => {
+      it('Then returns only active items', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
-          { status: StorageStatus.ACTIVE, type: StorageType.CUSTOM_ROOM },
+          { status: StorageStatus.ACTIVE },
           { page: 1, limit: 50 },
           'ASC',
-          'Office',
         );
         const result = await handler.execute(query);
 
-        expect(result).toEqual(page);
-        expect(mockStorageRepository.findAll).toHaveBeenCalledWith(
-          TENANT_UUID,
-          { status: StorageStatus.ACTIVE, type: StorageType.CUSTOM_ROOM },
-          { page: 1, limit: 50 },
-          'Office',
-          'ASC',
-        );
+        expect(result.items).toHaveLength(3);
+        expect(result.total).toBe(3);
+        result.items.forEach((item) => {
+          expect(item.archivedAt).toBeNull();
+          expect(item.frozenAt).toBeNull();
+        });
       });
     });
 
-    describe('When list is requested without filters', () => {
-      it('Then delegates to the repository with undefined filters', async () => {
-        const page = { items: [], total: 0 };
-        mockStorageRepository.findAll.mockResolvedValue(page);
-
-        const query = new ListStoragesQuery(TENANT_UUID, undefined, { page: 1, limit: 50 }, 'DESC');
+    describe('When list is requested with ARCHIVED status filter', () => {
+      it('Then returns only archived items', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          { status: StorageStatus.ARCHIVED },
+          { page: 1, limit: 50 },
+          'ASC',
+        );
         const result = await handler.execute(query);
 
-        expect(result).toEqual(page);
-        expect(mockStorageRepository.findAll).toHaveBeenCalledWith(
+        expect(result.items).toHaveLength(1);
+        expect(result.items[0].archivedAt).not.toBeNull();
+      });
+    });
+
+    describe('When list is requested with type=WAREHOUSE filter', () => {
+      it('Then returns only warehouse items', async () => {
+        const query = new ListStoragesQuery(
           TENANT_UUID,
-          undefined,
+          { type: StorageType.WAREHOUSE },
           { page: 1, limit: 50 },
-          undefined,
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.items[0].type).toBe(StorageType.WAREHOUSE);
+      });
+    });
+
+    describe('When list is requested with search term', () => {
+      it('Then filters by name containing the search term', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          {},
+          { page: 1, limit: 50 },
+          'ASC',
+          'Existing WH',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.items[0].name).toBe('Existing WH');
+      });
+    });
+
+    describe('When list is requested with pagination', () => {
+      it('Then returns the correct page of items', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          {},
+          { page: 1, limit: 2 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(2);
+        expect(result.total).toBe(4);
+      });
+    });
+
+    describe('When list is requested with DESC sort order', () => {
+      it('Then items are sorted by name descending', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          {},
+          { page: 1, limit: 50 },
           'DESC',
         );
+        const result = await handler.execute(query);
+
+        for (let i = 0; i < result.items.length - 1; i++) {
+          expect(result.items[i].name.localeCompare(result.items[i + 1].name)).toBeGreaterThanOrEqual(0);
+        }
+      });
+    });
+  });
+
+  describe('Given a tenant with no storages', () => {
+    describe('When list is requested', () => {
+      it('Then returns an empty page', async () => {
+        const aggregate = makeAggregate();
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          {},
+          { page: 1, limit: 50 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(0);
+        expect(result.total).toBe(0);
       });
     });
   });

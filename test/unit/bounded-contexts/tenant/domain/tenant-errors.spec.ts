@@ -4,6 +4,8 @@ import { MemberNotFoundError } from '@tenant/domain/errors/member-not-found.erro
 import { MemberAlreadyExistsError } from '@tenant/domain/errors/member-already-exists.error';
 import { CannotRemoveLastOwnerError } from '@tenant/domain/errors/cannot-remove-last-owner.error';
 import { TenantLimitExceededError } from '@tenant/domain/errors/tenant-limit-exceeded.error';
+import { TenantSlugTakenError } from '@tenant/domain/errors/tenant-slug-taken.error';
+import { TenantOwnerNotFoundError } from '@tenant/domain/errors/tenant-owner-not-found.error';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 describe('Tenant Domain Errors', () => {
@@ -69,6 +71,28 @@ describe('Tenant Domain Errors', () => {
         expect(error.message).toContain('maxUsers');
         expect(error.details).toHaveLength(1);
         expect(error.details[0].field).toBe('maxUsers');
+      });
+    });
+  });
+
+  describe('Given TenantSlugTakenError', () => {
+    describe('When instantiated with a slug', () => {
+      it('Then it has the correct error code and includes the slug', () => {
+        const error = new TenantSlugTakenError('my-business');
+        expect(error).toBeInstanceOf(DomainException);
+        expect(error.errorCode).toBe('TENANT_SLUG_TAKEN');
+        expect(error.message).toContain('my-business');
+      });
+    });
+  });
+
+  describe('Given TenantOwnerNotFoundError', () => {
+    describe('When instantiated with a user UUID', () => {
+      it('Then it has the correct error code and includes the UUID', () => {
+        const error = new TenantOwnerNotFoundError('user-uuid-abc');
+        expect(error).toBeInstanceOf(DomainException);
+        expect(error.errorCode).toBe('TENANT_OWNER_NOT_FOUND');
+        expect(error.message).toContain('user-uuid-abc');
       });
     });
   });

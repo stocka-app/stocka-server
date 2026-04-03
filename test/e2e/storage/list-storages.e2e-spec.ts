@@ -1,9 +1,12 @@
 import { INestApplication, HttpStatus } from '@nestjs/common';
 import request from 'supertest';
 import { DataSource } from 'typeorm';
+import { QueryBus } from '@nestjs/cqrs';
 import { getStorageWorkerApp, truncateStorageWorkerTables } from '@test/storage-worker-app';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
+import { StorageItemPage } from '@storage/domain/schemas';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -104,6 +107,13 @@ async function archiveStorage(app: INestApplication, token: string, uuid: string
   await request(app.getHttpServer())
     .delete(`/api/storages/${uuid}`)
     .set('Authorization', `Bearer ${token}`);
+}
+
+async function freezeStoreRoom(dataSource: DataSource, uuid: string): Promise<void> {
+  await dataSource.query(
+    `UPDATE storage.store_rooms SET frozen_at = NOW() WHERE uuid = $1`,
+    [uuid],
+  );
 }
 
 // ─── Spec ─────────────────────────────────────────────────────────────────────
@@ -310,6 +320,54 @@ describe('List Storages — GET /api/storages (e2e)', () => {
     });
   });
 
+  // ── sortOrder=DESC ────────────────────────────────────────────────────────
+
+  describe('Given a tenant with two archived storages and sortOrder=DESC', () => {
+    let firstUUID: string;
+    let secondUUID: string;
+
+    beforeAll(async () => {
+      firstUUID = await createStorage(app, ownerAToken, {
+        type: 'STORE_ROOM',
+        name: 'Alpha Store Room',
+      });
+      secondUUID = await createStorage(app, ownerAToken, {
+        type: 'STORE_ROOM',
+        name: 'Zeta Store Room',
+      });
+      await archiveStorage(app, ownerAToken, firstUUID);
+      await archiveStorage(app, ownerAToken, secondUUID);
+    });
+
+    describe('When GET /api/storages?status=ARCHIVED&sortOrder=DESC is called', () => {
+      it('Then it returns archived storages with Zeta before Alpha', async () => {
+        const res = await request(app.getHttpServer())
+          .get('/api/storages?status=ARCHIVED&sortOrder=DESC')
+          .set('Authorization', `Bearer ${ownerAToken}`);
+
+        expect(res.status).toBe(HttpStatus.OK);
+        const names: string[] = res.body.items.map((s: { name: string }) => s.name);
+        const zetaIdx = names.findIndex((n) => n === 'Zeta Store Room');
+        const alphaIdx = names.findIndex((n) => n === 'Alpha Store Room');
+        expect(zetaIdx).toBeLessThan(alphaIdx);
+      });
+    });
+
+    describe('When GET /api/storages?status=ARCHIVED&sortOrder=ASC is called', () => {
+      it('Then it returns archived storages with Alpha before Zeta', async () => {
+        const res = await request(app.getHttpServer())
+          .get('/api/storages?status=ARCHIVED&sortOrder=ASC')
+          .set('Authorization', `Bearer ${ownerAToken}`);
+
+        expect(res.status).toBe(HttpStatus.OK);
+        const names: string[] = res.body.items.map((s: { name: string }) => s.name);
+        const alphaIdx = names.findIndex((n) => n === 'Alpha Store Room');
+        const zetaIdx = names.findIndex((n) => n === 'Zeta Store Room');
+        expect(alphaIdx).toBeLessThan(zetaIdx);
+      });
+    });
+  });
+
   // ── Invalid query param ───────────────────────────────────────────────────
 
   describe('Given a request with an invalid status value', () => {
@@ -361,11 +419,75 @@ describe('List Storages — GET /api/storages (e2e)', () => {
         const tenantUUID: string = rows[0].uuid;
 
         const repo = app.get<IStorageRepository>(INJECTION_TOKENS.STORAGE_CONTRACT);
-        // Call with empty filters — status is undefined, no filter applied
-        const page = await repo.findAll(tenantUUID, {}, { page: 1, limit: 50 });
+        // Call findOrCreate and list all items — no filter applied
+        const aggregate = await repo.findOrCreate(tenantUUID);
+        const items = aggregate.listItemViews();
 
         // Tenant A has 1 active warehouse + 1 archived custom room = 2 total
-        expect(page.total).toBeGreaterThanOrEqual(2);
+        expect(items.length).toBeGreaterThanOrEqual(2);
+      });
+    });
+  });
+
+  // ── Frozen storage: FROZEN filter with real frozen items ─────────────────
+  // Sets frozen_at directly via SQL (no HTTP freeze endpoint exists yet).
+  // Covers the FROZEN else-if body in list-storages.handler.ts, including
+  // both sides of the `frozenAt !== null && archivedAt === null` expression.
+
+  describe('Given a tenant has a frozen storage', () => {
+    let frozenStoreRoomUUID: string;
+
+    beforeAll(async () => {
+      frozenStoreRoomUUID = await createStorage(app, ownerAToken, {
+        type: 'STORE_ROOM',
+        name: 'Cryo Store Room',
+      });
+      await freezeStoreRoom(dataSource, frozenStoreRoomUUID);
+    });
+
+    describe('When GET /api/storages?status=FROZEN is called', () => {
+      it('Then it returns only frozen storages (excluding archived ones)', async () => {
+        const res = await request(app.getHttpServer())
+          .get('/api/storages?status=FROZEN')
+          .set('Authorization', `Bearer ${ownerAToken}`);
+
+        expect(res.status).toBe(HttpStatus.OK);
+        const uuids: string[] = res.body.items.map((s: { uuid: string }) => s.uuid);
+        expect(uuids).toContain(frozenStoreRoomUUID);
+        const frozenItem = res.body.items.find(
+          (s: { uuid: string }) => s.uuid === frozenStoreRoomUUID,
+        );
+        expect(frozenItem.frozenAt).not.toBeNull();
+        expect(frozenItem.archivedAt).toBeNull();
+      });
+    });
+  });
+
+  // ── QueryBus: no status filter → handler returns all items unfiltered ────
+  // The HTTP layer always provides a default status, so the "no status"
+  // handler path (else-if FROZEN = false) is only reachable via direct
+  // QueryBus dispatch with filters: {}.
+
+  describe('Given the ListStoragesQuery is dispatched without a status filter', () => {
+    describe('When the QueryBus executes the query with no status in filters', () => {
+      it('Then it returns all storages for the tenant regardless of status', async () => {
+        const rows: Array<{ uuid: string }> = await dataSource.query(
+          `SELECT t.uuid FROM "tenants"."tenants" t
+           JOIN "tenants"."tenant_members" tm ON tm.tenant_id = t.id
+           JOIN "accounts"."credential_accounts" ca ON LOWER(ca.email) = LOWER($1)
+           JOIN "identity"."users" u ON u.id = ca.account_id AND u.id = tm.user_id
+           LIMIT 1`,
+          [OWNER_A_EMAIL],
+        );
+        const tenantUUID: string = rows[0].uuid;
+
+        const queryBus = app.get<QueryBus>(QueryBus);
+        const result = await queryBus.execute<ListStoragesQuery, StorageItemPage>(
+          new ListStoragesQuery(tenantUUID, {}, { page: 1, limit: 50 }, 'ASC'),
+        );
+
+        // No status filter — all items (active + archived + frozen) are returned
+        expect(result.total).toBeGreaterThanOrEqual(3);
       });
     });
   });

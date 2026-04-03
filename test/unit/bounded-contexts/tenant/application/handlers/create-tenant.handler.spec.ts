@@ -1,6 +1,6 @@
 import { EventPublisher } from '@nestjs/cqrs';
-import { NotFoundException } from '@nestjs/common';
 import { CreateTenantHandler } from '@tenant/application/commands/create-tenant/create-tenant.handler';
+import { TenantOwnerNotFoundError } from '@tenant/domain/errors/tenant-owner-not-found.error';
 import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
@@ -110,11 +110,11 @@ describe('CreateTenantHandler', () => {
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue(null);
       });
 
-      it('Then it returns a NotFoundException error', async () => {
+      it('Then it returns a TenantOwnerNotFoundError error', async () => {
         const result = await handler.execute(buildCommand());
 
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(NotFoundException);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(TenantOwnerNotFoundError);
       });
     });
   });

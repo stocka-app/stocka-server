@@ -299,6 +299,17 @@ describe('TypeOrmTierDataProvider', () => {
           [SystemAction.MEMBER_INVITE]: 'members',
         });
       });
+
+      it('Then the second call returns from the in-memory cache without hitting the DB again', async () => {
+        await provider.getActionModuleMap();
+        const second = await provider.getActionModuleMap();
+
+        expect(catalogActionRepo.find).toHaveBeenCalledTimes(1);
+        expect(second).toEqual({
+          [SystemAction.STORAGE_CREATE]: 'storage',
+          [SystemAction.MEMBER_INVITE]: 'members',
+        });
+      });
     });
   });
 });

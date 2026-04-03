@@ -21,9 +21,8 @@ class TestDomainException extends DomainException {
 
 function buildCtx(): SignInSagaContext {
   return {
-    email: 'test@example.com',
+    emailOrUsername: 'test@example.com',
     password: 'Password1!',
-    ipAddress: '127.0.0.1',
   } as SignInSagaContext;
 }
 
@@ -124,6 +123,28 @@ describe('SignInSaga', () => {
         const result = await saga.execute(buildCtx());
 
         expect(result.isOk()).toBe(true);
+      });
+    });
+  });
+
+  describe('Given the saga run resolves but a step failed to populate required output fields', () => {
+    describe('When execute is called', () => {
+      it('Then it throws an internal error about missing output fields', async () => {
+        const saga = new SignInSaga(
+          uow,
+          buildNoop() as never,
+          buildNoop() as never,
+          buildNoop() as never,
+          buildNoop() as never,
+        );
+
+        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
+          buildCtx() as SignInSagaContext, // no user / credential / tokens populated
+        );
+
+        await expect(saga.execute(buildCtx())).rejects.toThrow(
+          'SignInSaga completed without required output fields',
+        );
       });
     });
   });

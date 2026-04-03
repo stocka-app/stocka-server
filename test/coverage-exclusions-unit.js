@@ -82,6 +82,7 @@ module.exports = [
   // Re-include repositories with unit test coverage
   'src/bounded-contexts/authorization/infrastructure/persistence/repositories/typeorm-tier-data-provider.ts',
   'src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
+  'src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant.repository.ts',
 
   // ── E2E-ONLY: Application facades (cross-BC orchestration via contracts) ──
   // Facades inject contracts backed by TypeORM repos; need real DB.
