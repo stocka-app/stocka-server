@@ -1,9 +1,11 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { v7 as uuidV7 } from 'uuid';
 import { CreateCustomRoomCommand } from '@storage/application/commands/create-custom-room/create-custom-room.command';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
-import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import {
   resolveStorageIcon,
@@ -22,6 +24,8 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
   constructor(
     @Inject(INJECTION_TOKENS.STORAGE_CONTRACT)
     private readonly storageRepository: IStorageRepository,
+    @Inject(INJECTION_TOKENS.CUSTOM_ROOM_CONTRACT)
+    private readonly customRoomRepository: ICustomRoomRepository,
     @Inject(INJECTION_TOKENS.TENANT_CAPABILITIES_PORT)
     private readonly capabilitiesPort: ITenantCapabilitiesPort,
     private readonly eventPublisher: EventPublisher,
@@ -30,10 +34,7 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
   async execute(command: CreateCustomRoomCommand): Promise<CreateCustomRoomResult> {
     const capabilities = await this.capabilitiesPort.getCapabilities(command.tenantUUID);
 
-    const currentCount = await this.storageRepository.countActiveByType(
-      command.tenantUUID,
-      StorageType.CUSTOM_ROOM,
-    );
+    const currentCount = await this.customRoomRepository.countActive(command.tenantUUID);
 
     if (!capabilities.canCreateMoreCustomRooms(currentCount)) {
       return err(new CustomRoomLimitReachedError());
@@ -48,7 +49,10 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
       return err(new StorageNameAlreadyExistsError(command.name));
     }
 
-    const aggregate = StorageAggregate.createCustomRoom({
+    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+
+    const model = CustomRoomModel.create({
+      uuid: uuidV7(),
       tenantUUID: command.tenantUUID,
       name: command.name,
       roomType: command.roomType,
@@ -56,14 +60,15 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
       icon: resolveStorageIcon(StorageType.CUSTOM_ROOM, command.icon),
       color: resolveStorageColor(StorageType.CUSTOM_ROOM, command.color),
       address: command.address,
-      parentUUID: command.parentUUID,
     });
 
-    const saved = await this.storageRepository.save(aggregate);
+    aggregate.addCustomRoom(model);
 
-    this.eventPublisher.mergeObjectContext(saved);
-    saved.commit();
+    await this.customRoomRepository.save(model, aggregate.id!);
 
-    return ok({ storageUUID: saved.uuid });
+    this.eventPublisher.mergeObjectContext(aggregate);
+    aggregate.commit();
+
+    return ok({ storageUUID: model.uuid.toString() });
   }
 }

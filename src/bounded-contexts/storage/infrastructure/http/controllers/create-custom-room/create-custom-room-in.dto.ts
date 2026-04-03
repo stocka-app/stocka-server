@@ -3,7 +3,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
   Matches,
   MaxLength,
   MinLength,
@@ -34,11 +33,6 @@ export class CreateCustomRoomInDto {
   @MinLength(5)
   @MaxLength(300)
   description?: string;
-
-  @ApiPropertyOptional({ description: 'Parent storage UUID (for hierarchy)' })
-  @IsOptional()
-  @IsUUID()
-  parentUUID?: string;
 
   @ApiPropertyOptional({ description: 'Icon identifier', maxLength: 100 })
   @IsOptional()

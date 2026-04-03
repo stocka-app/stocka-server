@@ -12,29 +12,37 @@ export class StoreRoomMapper {
     return StoreRoomModel.reconstitute({
       id: entity.id,
       uuid: new UUIDVO(entity.uuid),
+      tenantUUID: entity.tenantUUID,
+      parentUUID: entity.parentUUID,
       name: new StorageNameVO(entity.name),
       description: entity.description ? new StorageDescriptionVO(entity.description) : null,
       icon: new StorageIconVO(entity.icon),
       color: new StorageColorVO(entity.color),
       address: new StorageAddressVO(entity.address),
+      frozenAt: entity.frozenAt,
+      archivedAt: entity.archivedAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
   }
 
-  static toEntity(model: StoreRoomModel): Partial<StoreRoomEntity> {
+  static toEntity(model: StoreRoomModel, storageId?: number): Partial<StoreRoomEntity> {
     const entity: Partial<StoreRoomEntity> = {
+      id: model.id,
       uuid: model.uuid.toString(),
+      tenantUUID: model.tenantUUID,
+      parentUUID: model.parentUUID,
       name: model.name.getValue(),
       description: model.description?.getValue() ?? null,
       icon: model.icon.getValue(),
       color: model.color.getValue(),
       address: model.address.getValue(),
+      frozenAt: model.frozenAt,
+      archivedAt: model.archivedAt,
     };
 
-    /* istanbul ignore next */
-    if (model.id !== undefined) {
-      entity.id = model.id;
+    if (storageId !== undefined) {
+      entity.storageId = storageId;
     }
 
     return entity;

@@ -2,13 +2,13 @@ import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { GetStorageQuery } from '@storage/application/queries/get-storage/get-storage.query';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import { StorageItemView } from '@storage/domain/schemas';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
 
-export type GetStorageResult = Result<StorageAggregate, DomainException>;
+export type GetStorageResult = Result<StorageItemView, DomainException>;
 
 @QueryHandler(GetStorageQuery)
 export class GetStorageHandler implements IQueryHandler<GetStorageQuery> {
@@ -18,12 +18,13 @@ export class GetStorageHandler implements IQueryHandler<GetStorageQuery> {
   ) {}
 
   async execute(query: GetStorageQuery): Promise<GetStorageResult> {
-    const storage = await this.storageRepository.findByUUID(query.storageUUID, query.tenantUUID);
+    const aggregate = await this.storageRepository.findOrCreate(query.tenantUUID);
+    const view = aggregate.findItemView(query.storageUUID);
 
-    if (!storage) {
+    if (!view) {
       return err(new StorageNotFoundError(query.storageUUID));
     }
 
-    return ok(storage);
+    return ok(view);
   }
 }

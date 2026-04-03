@@ -13,31 +13,39 @@ export class CustomRoomMapper {
     return CustomRoomModel.reconstitute({
       id: entity.id,
       uuid: new UUIDVO(entity.uuid),
+      tenantUUID: entity.tenantUUID,
+      parentUUID: entity.parentUUID,
       name: StorageNameVO.create(entity.name),
       description: entity.description ? StorageDescriptionVO.create(entity.description) : null,
       icon: StorageIconVO.create(entity.icon),
       color: StorageColorVO.create(entity.color),
       roomType: RoomTypeNameVO.create(entity.roomType),
       address: StorageAddressVO.create(entity.address),
+      frozenAt: entity.frozenAt,
+      archivedAt: entity.archivedAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
   }
 
-  static toEntity(model: CustomRoomModel): Partial<CustomRoomEntity> {
+  static toEntity(model: CustomRoomModel, storageId?: number): Partial<CustomRoomEntity> {
     const entity: Partial<CustomRoomEntity> = {
+      id: model.id,
       uuid: model.uuid.toString(),
+      tenantUUID: model.tenantUUID,
+      parentUUID: model.parentUUID,
       name: model.name.getValue(),
       description: model.description?.getValue() ?? null,
       icon: model.icon.getValue(),
       color: model.color.getValue(),
       roomType: model.roomType.getValue(),
       address: model.address.getValue(),
+      frozenAt: model.frozenAt,
+      archivedAt: model.archivedAt,
     };
 
-    /* istanbul ignore next */
-    if (model.id !== undefined) {
-      entity.id = model.id;
+    if (storageId !== undefined) {
+      entity.storageId = storageId;
     }
 
     return entity;

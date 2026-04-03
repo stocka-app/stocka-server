@@ -4,7 +4,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
-import { StoragePage } from '@storage/domain/contracts/storage.repository.contract';
+import { StorageItemPage } from '@storage/domain/schemas';
 import { ListStoragesInDto } from '@storage/infrastructure/http/controllers/list-storages/list-storages-in.dto';
 import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';
 import { StoragePageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-page.out.dto';
@@ -36,9 +36,9 @@ export class ListStoragesController {
       queryDto.search,
     );
 
-    const result = await this.queryBus.execute<ListStoragesQuery, StoragePage>(query);
+    const result = await this.queryBus.execute<ListStoragesQuery, StorageItemPage>(query);
 
-    const items = result.items.map((s) => StorageOutDto.fromAggregate(s));
+    const items = result.items.map((s) => StorageOutDto.fromItem(s));
     return StoragePageOutDto.from(items, result.total, pagination.page, pagination.limit);
   }
 }

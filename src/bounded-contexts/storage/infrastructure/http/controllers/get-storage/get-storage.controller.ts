@@ -27,7 +27,7 @@ export class GetStorageController {
     const result = await this.queryBus.execute<GetStorageQuery, GetStorageResult>(query);
 
     return result.match(
-      (storage) => StorageOutDto.fromAggregate(storage),
+      (view) => StorageOutDto.fromItem(view),
       (error) => {
         throw error;
       },

@@ -12,29 +12,35 @@ export class WarehouseMapper {
     return WarehouseModel.reconstitute({
       id: entity.id,
       uuid: new UUIDVO(entity.uuid),
+      tenantUUID: entity.tenantUUID,
       name: new StorageNameVO(entity.name),
       description: entity.description ? new StorageDescriptionVO(entity.description) : null,
       icon: new StorageIconVO(entity.icon),
       color: new StorageColorVO(entity.color),
       address: new StorageAddressVO(entity.address),
+      frozenAt: entity.frozenAt,
+      archivedAt: entity.archivedAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
   }
 
-  static toEntity(model: WarehouseModel): Partial<WarehouseEntity> {
+  static toEntity(model: WarehouseModel, storageId?: number): Partial<WarehouseEntity> {
     const entity: Partial<WarehouseEntity> = {
+      id: model.id,
       uuid: model.uuid.toString(),
+      tenantUUID: model.tenantUUID,
       name: model.name.toString(),
       description: model.description?.toString() ?? null,
       icon: model.icon.toString(),
       color: model.color.toString(),
       address: model.address.toString(),
+      frozenAt: model.frozenAt,
+      archivedAt: model.archivedAt,
     };
 
-    /* istanbul ignore next */
-    if (model.id > 0) {
-      entity.id = model.id;
+    if (storageId !== undefined) {
+      entity.storageId = storageId;
     }
 
     return entity;

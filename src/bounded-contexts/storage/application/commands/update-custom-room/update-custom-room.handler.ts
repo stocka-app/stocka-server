@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { UpdateCustomRoomCommand } from '@storage/application/commands/update-custom-room/update-custom-room.command';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
+import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -16,20 +16,21 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
   constructor(
     @Inject(INJECTION_TOKENS.STORAGE_CONTRACT)
     private readonly storageRepository: IStorageRepository,
+    @Inject(INJECTION_TOKENS.CUSTOM_ROOM_CONTRACT)
+    private readonly customRoomRepository: ICustomRoomRepository,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: UpdateCustomRoomCommand): Promise<UpdateCustomRoomResult> {
-    const storage = await this.storageRepository.findByUUID(
-      command.storageUUID,
-      command.tenantUUID,
-    );
+    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
 
-    if (!storage || storage.type !== StorageType.CUSTOM_ROOM || storage.isArchived()) {
+    const customRoom = aggregate.findCustomRoom(command.storageUUID);
+
+    if (!customRoom || customRoom.isArchived()) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 
-    if (command.name !== undefined && command.name !== storage.name) {
+    if (command.name !== undefined && command.name !== customRoom.name.getValue()) {
       const nameExists = await this.storageRepository.existsActiveName(
         command.tenantUUID,
         command.name,
@@ -39,7 +40,7 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
       }
     }
 
-    storage.updateCustomRoom({
+    aggregate.updateCustomRoom(command.storageUUID, {
       name: command.name,
       description: command.description,
       icon: command.icon,
@@ -48,11 +49,12 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
       roomType: command.roomType,
     });
 
-    const saved = await this.storageRepository.save(storage);
+    const updated = aggregate.findCustomRoom(command.storageUUID)!;
+    await this.customRoomRepository.save(updated, aggregate.id!);
 
-    this.eventPublisher.mergeObjectContext(saved);
-    saved.commit();
+    this.eventPublisher.mergeObjectContext(aggregate);
+    aggregate.commit();
 
-    return ok({ storageUUID: saved.uuid });
+    return ok({ storageUUID: command.storageUUID });
   }
 }

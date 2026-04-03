@@ -1,26 +1,17 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  OneToOne,
-  JoinColumn,
-  BeforeInsert,
-} from 'typeorm';
-import { v7 as uuidV7 } from 'uuid';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
+import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 
 @Entity({ name: 'store_rooms', schema: 'storage' })
-export class StoreRoomEntity {
-  @PrimaryGeneratedColumn()
-  id!: number;
-
-  @Column({ type: 'uuid', unique: true })
-  uuid!: string;
-
+export class StoreRoomEntity extends BaseEntity {
   @Column({ name: 'storage_id', type: 'int' })
   storageId!: number;
+
+  @Column({ name: 'parent_uuid', type: 'uuid', nullable: true, default: null })
+  parentUUID!: string | null;
+
+  @Column({ name: 'tenant_uuid', type: 'uuid' })
+  tenantUUID!: string;
 
   @Column({ type: 'varchar', length: 100 })
   name!: string;
@@ -40,23 +31,7 @@ export class StoreRoomEntity {
   @Column({ name: 'frozen_at', type: 'timestamptz', nullable: true, default: null })
   frozenAt!: Date | null;
 
-  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true, default: null })
-  archivedAt!: Date | null;
-
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
-  updatedAt!: Date;
-
-  @OneToOne(() => StorageEntity, (s) => s.storeRoom, { onDelete: 'CASCADE' })
+  @ManyToOne(() => StorageEntity, (s) => s.storeRooms, { onDelete: 'CASCADE', nullable: false })
   @JoinColumn({ name: 'storage_id' })
   storage!: StorageEntity;
-
-  @BeforeInsert()
-  generateUUID(): void {
-    if (!this.uuid) {
-      this.uuid = uuidV7();
-    }
-  }
 }

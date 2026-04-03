@@ -5,7 +5,6 @@ export class CreateCustomRoomCommand {
     public readonly roomType: string,
     public readonly address: string,
     public readonly description?: string,
-    public readonly parentUUID?: string,
     public readonly icon?: string,
     public readonly color?: string,
   ) {}
