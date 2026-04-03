@@ -61,9 +61,9 @@ export class RefreshSessionSaga extends Saga<RefreshSessionSagaContext> {
     input: RefreshSessionSagaContext,
   ): Promise<Result<RefreshSessionSagaOutput, DomainException>> {
     try {
-      const ctx = await this.run(input);
+      const ctx = await this.runWithTimeout(input);
 
-      /* istanbul ignore next */
+      /* istanbul ignore next — defensive guard: saga steps always populate required fields before completing */
       if (!ctx.accessToken || !ctx.newRefreshToken) {
         throw new Error('RefreshSessionSaga completed without required output fields');
       }
@@ -77,7 +77,6 @@ export class RefreshSessionSaga extends Saga<RefreshSessionSagaContext> {
         avatarUrl: ctx.avatarUrl ?? null,
         onboardingStatus: ctx.onboardingStatus ?? null,
       });
-    /* istanbul ignore next */
     } catch (error) {
       if (error instanceof DomainException) return err(error);
       throw error;

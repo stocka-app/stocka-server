@@ -3,6 +3,7 @@ import { ProcessState, ProcessStatus } from '@shared/domain/process-manager/proc
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { InMemoryProcessStateContract } from '@shared/infrastructure/process-manager/in-memory-process-state';
 import { withRetry } from '@shared/domain/utils/with-retry';
+import { SagaTimeoutException } from '@shared/domain/exceptions/saga-timeout.exception';
 import { v7 as uuidv7 } from 'uuid';
 import { SagaStepConfig } from '@shared/domain/saga/saga-step-config.contract';
 
@@ -47,6 +48,13 @@ import { SagaStepConfig } from '@shared/domain/saga/saga-step-config.contract';
  * ```
  */
 export abstract class Saga<TCtx = Record<string, unknown>> extends ProcessManager<TCtx> {
+  /**
+   * Override in concrete sagas to change the default timeout.
+   * The saga keeps running to allow clean transaction rollback — the timeout
+   * only rejects the caller's awaited result, not the underlying execution.
+   */
+  protected readonly sagaTimeoutMs: number = 30_000;
+
   constructor(protected readonly uow: IUnitOfWork) {
     super(new InMemoryProcessStateContract());
   }
@@ -115,6 +123,28 @@ export abstract class Saga<TCtx = Record<string, unknown>> extends ProcessManage
       return ctx;
     } finally {
       await this.cleanupProcess(hasOpenTransaction, processId);
+    }
+  }
+
+  /**
+   * Wraps `run()` with a timeout. If the timeout fires, the caller receives
+   * a `SagaTimeoutException`. The underlying execution continues to its natural
+   * end to ensure the open transaction is committed or rolled back cleanly.
+   */
+  protected async runWithTimeout(ctx: TCtx): Promise<TCtx> {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(
+        () => reject(new SagaTimeoutException(this.processName, this.sagaTimeoutMs)),
+        this.sagaTimeoutMs,
+      );
+    });
+
+    try {
+      return await Promise.race([this.run(ctx), timeoutPromise]);
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
