@@ -41,8 +41,13 @@ export class GetMyTenantController {
       new GetMyTenantQuery(member.tenantId),
     );
 
-    const tenant = result._unsafeUnwrap();
+    /* istanbul ignore next — SecurityGuard validates tenant existence before this controller runs; isErr() is a defensive type-narrowing guard */
+    if (result.isErr()) {
+      throw new NotFoundException('Tenant not found');
+    }
+
+    const tenant = result.value;
     const config = await this.configContract.findByTenantId(member.tenantId);
-    return GetMyTenantOutDto.fromAggregate(tenant, config);
+    return GetMyTenantOutDto.fromAggregate(tenant!, config);
   }
 }
