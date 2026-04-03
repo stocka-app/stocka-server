@@ -30,6 +30,20 @@ export interface CredentialAccountReconstitueProps extends BaseModelProps {
   archivedAt: Date | null;
 }
 
+/** Internal constructor props — DB-assigned fields are optional for new models. */
+interface CredentialAccountCtorProps extends BaseModelProps {
+  accountId: number;
+  email: string;
+  passwordHash: string | null;
+  status: string;
+  emailVerifiedAt: Date | null;
+  verificationBlockedUntil: Date | null;
+  createdWith: string;
+  createdAt: Date;
+  updatedAt: Date;
+  archivedAt: Date | null;
+}
+
 export class CredentialAccountModel extends BaseModel {
   private readonly _accountId: number;
   private _email: EmailVO;
@@ -39,14 +53,8 @@ export class CredentialAccountModel extends BaseModel {
   private _verificationBlockedUntil: Date | null;
   private readonly _createdWith: string;
 
-  private constructor(props: CredentialAccountReconstitueProps) {
-    super({
-      id: props.id,
-      uuid: props.uuid,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
-      archivedAt: props.archivedAt,
-    });
+  private constructor(props: CredentialAccountCtorProps) {
+    super(props);
     this._accountId = props.accountId;
     this._email = new EmailVO(props.email);
     this._passwordHash = props.passwordHash;
@@ -63,8 +71,6 @@ export class CredentialAccountModel extends BaseModel {
     createdWith: string;
   }): CredentialAccountModel {
     return new CredentialAccountModel({
-      id: undefined as unknown as number,
-      uuid: undefined as unknown as string,
       accountId: props.accountId,
       email: props.email,
       passwordHash: props.passwordHash,
@@ -84,8 +90,6 @@ export class CredentialAccountModel extends BaseModel {
     provider: string;
   }): CredentialAccountModel {
     return new CredentialAccountModel({
-      id: undefined as unknown as number,
-      uuid: undefined as unknown as string,
       accountId: props.accountId,
       email: props.email,
       passwordHash: null,

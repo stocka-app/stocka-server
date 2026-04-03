@@ -124,7 +124,6 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
               'General',
               'Pendiente',
               'Pendiente',
-              undefined,
               'box',
               '#6366F1',
             ),
