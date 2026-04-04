@@ -24,8 +24,7 @@ export class RbacValidator {
 
     if (result.isErr()) {
       this.logger.warn('RBAC access denied', {
-        userId: membershipContext.userId,
-        tenantId: membershipContext.tenantId,
+        tenantUUID: membershipContext.tenantUUID,
         action,
         tier: membershipContext.tier,
         role: membershipContext.role,
