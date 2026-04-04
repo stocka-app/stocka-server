@@ -2,7 +2,6 @@ import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StoreRoomModel } from '@storage/domain/models/store-room.model';
 import { WarehouseModel } from '@storage/domain/models/warehouse.model';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageNameVO } from '@storage/domain/value-objects/storage-name.vo';
 import { StorageDescriptionVO } from '@storage/domain/value-objects/storage-description.vo';
@@ -274,7 +273,7 @@ describe('CustomRoomModel', () => {
 // ── StoreRoomModel ──────────────────────────────────────────────────────────────
 
 describe('StoreRoomModel', () => {
-  describe('Given StoreRoomModel.create() is called with valid props and no parent', () => {
+  describe('Given StoreRoomModel.create() is called with valid props', () => {
     describe('When creating a store room with all fields', () => {
       it('Then all properties are set correctly', () => {
         const model = StoreRoomModel.create({
@@ -731,31 +730,3 @@ describe('WarehouseModel', () => {
     });
   });
 });
-
-// ── canBeParentOf — hierarchy rules per model ───────────────────────────────────
-
-describe('WarehouseModel.canBeParentOf()', () => {
-  const model = WarehouseModel.create({
-    uuid: '019538a0-0000-7000-8000-000000000050',
-    tenantUUID: TENANT_UUID,
-    name: 'Test Warehouse',
-    icon: 'warehouse',
-    color: '#3b82f6',
-    address: '1 Industrial Ave',
-  });
-
-  describe('Given a WAREHOUSE as potential parent', () => {
-    it('Then it can be parent of STORE_ROOM (only valid child in Sprint 2)', () => {
-      expect(model.canBeParentOf(StorageType.STORE_ROOM)).toBe(true);
-    });
-
-    it('Then it cannot be parent of WAREHOUSE', () => {
-      expect(model.canBeParentOf(StorageType.WAREHOUSE)).toBe(false);
-    });
-
-    it('Then it cannot be parent of CUSTOM_ROOM (deferred to future sprint)', () => {
-      expect(model.canBeParentOf(StorageType.CUSTOM_ROOM)).toBe(false);
-    });
-  });
-});
-

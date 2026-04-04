@@ -4,7 +4,6 @@ import { StorageDescriptionVO } from '@storage/domain/value-objects/storage-desc
 import { StorageIconVO } from '@storage/domain/value-objects/storage-icon.vo';
 import { StorageColorVO } from '@storage/domain/value-objects/storage-color.vo';
 import { StorageAddressVO } from '@storage/domain/value-objects/storage-address.vo';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import {
   CreateWarehouseProps,
@@ -134,10 +133,6 @@ export class WarehouseModel {
     return this.evolveTransition({
       frozenAt: null,
     });
-  }
-
-  canBeParentOf(childType: StorageType): boolean {
-    return childType === StorageType.STORE_ROOM;
   }
 
   private toProps(): WarehouseModelProps {
