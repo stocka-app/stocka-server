@@ -28,7 +28,6 @@ export class CustomRoomModel {
     return new CustomRoomModel({
       uuid: new UUIDVO(props.uuid),
       tenantUUID: props.tenantUUID,
-      parentUUID: null,
       name: StorageNameVO.create(props.name),
       description: props.description ? StorageDescriptionVO.create(props.description) : null,
       icon: StorageIconVO.create(props.icon),
@@ -52,10 +51,6 @@ export class CustomRoomModel {
 
   get tenantUUID(): string {
     return this.attrs.tenantUUID;
-  }
-
-  get parentUUID(): string | null {
-    return this.attrs.parentUUID;
   }
 
   get name(): StorageNameVO {
@@ -166,7 +161,6 @@ export class CustomRoomModel {
     return {
       uuid: props.uuid,
       tenantUUID: props.tenantUUID,
-      parentUUID: props.parentUUID,
       name: props.name,
       description: props.description,
       icon: props.icon,

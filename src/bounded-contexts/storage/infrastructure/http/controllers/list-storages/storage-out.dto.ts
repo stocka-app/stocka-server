@@ -24,9 +24,6 @@ export class StorageOutDto {
   @ApiProperty({ description: 'Color hex code' })
   color!: string;
 
-  @ApiPropertyOptional({ description: 'Parent storage UUID (null if root)' })
-  parentId!: string | null;
-
   @ApiProperty({ description: 'Address' })
   address!: string;
 
@@ -54,7 +51,6 @@ export class StorageOutDto {
     dto.description = view.description;
     dto.icon = view.icon;
     dto.color = view.color;
-    dto.parentId = view.parentUUID;
     dto.address = view.address;
     dto.roomType = view.roomType;
     dto.createdAt = view.createdAt;

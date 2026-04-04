@@ -42,7 +42,6 @@ function makeStoreRoom(uuid: string = SR_UUID, overrides: Partial<{ archivedAt: 
     id: 2,
     uuid: new UUIDVO(uuid),
     tenantUUID: TENANT_UUID,
-    parentUUID: null,
     name: new StorageNameVO('Main Bodega'),
     description: null,
     icon: new StorageIconVO('inventory_2'),
@@ -60,7 +59,6 @@ function makeCustomRoom(uuid: string = CR_UUID, overrides: Partial<{ archivedAt:
     id: 3,
     uuid: new UUIDVO(uuid),
     tenantUUID: TENANT_UUID,
-    parentUUID: null,
     name: StorageNameVO.create('Office Room'),
     description: StorageDescriptionVO.create('Main office space'),
     icon: StorageIconVO.create('other_houses'),
@@ -563,7 +561,6 @@ describe('StorageAggregate — view methods', () => {
         expect(whView.icon).toBe('warehouse');
         expect(whView.color).toBe('#3b82f6');
         expect(whView.address).toBe('789 Industrial Blvd');
-        expect(whView.parentUUID).toBeNull();
         expect(whView.archivedAt).toBeNull();
         expect(whView.frozenAt).toBeNull();
         expect(whView.status).toBe(StorageStatus.ACTIVE);

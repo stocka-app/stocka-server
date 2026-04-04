@@ -9,7 +9,6 @@ export interface StorageItemView {
   icon: string;
   color: string;
   address: string;
-  parentUUID: string | null;
   archivedAt: Date | null;
   frozenAt: Date | null;
   status: StorageStatus;

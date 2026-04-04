@@ -28,7 +28,6 @@ describe('CustomRoomMapper', () => {
           id: 1,
           uuid: '019538a0-0000-7000-8000-000000000010',
           tenantUUID: TENANT_UUID,
-          parentUUID: null,
           storageId: 1,
           name: 'Office Room',
           description: 'Main office space',
@@ -45,7 +44,6 @@ describe('CustomRoomMapper', () => {
         const model = CustomRoomMapper.toDomain(entity);
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000010');
         expect(model.tenantUUID).toBe(TENANT_UUID);
-        expect(model.parentUUID).toBeNull();
         expect(model.name.getValue()).toBe('Office Room');
         expect(model.description?.getValue()).toBe('Main office space');
         expect(model.icon.getValue()).toBe('office-icon');
@@ -62,7 +60,6 @@ describe('CustomRoomMapper', () => {
           id: 2,
           uuid: '019538a0-0000-7000-8000-000000000019',
           tenantUUID: TENANT_UUID,
-          parentUUID: null,
           storageId: 2,
           name: 'No Desc Room',
           description: null,
@@ -99,7 +96,6 @@ describe('CustomRoomMapper', () => {
         const entity = CustomRoomMapper.toEntity(model);
         expect(entity.uuid).toBeDefined();
         expect(entity.tenantUUID).toBe(TENANT_UUID);
-        expect(entity.parentUUID).toBeNull();
         expect(entity.name).toBe('Test Room');
         expect(entity.description).toBe('A test room');
         expect(entity.icon).toBe('test-icon');
@@ -153,7 +149,6 @@ describe('StoreRoomMapper', () => {
           id: 2,
           uuid: '019538a0-0000-7000-8000-000000000020',
           tenantUUID: TENANT_UUID,
-          parentUUID: null,
           storageId: 2,
           name: 'Main Bodega',
           description: 'Primary storage',
@@ -169,7 +164,6 @@ describe('StoreRoomMapper', () => {
         const model = StoreRoomMapper.toDomain(entity);
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000020');
         expect(model.tenantUUID).toBe(TENANT_UUID);
-        expect(model.parentUUID).toBeNull();
         expect(model.name.getValue()).toBe('Main Bodega');
         expect(model.description?.getValue()).toBe('Primary storage');
         expect(model.icon.getValue()).toBe('store-icon');
@@ -184,7 +178,6 @@ describe('StoreRoomMapper', () => {
           id: 3,
           uuid: '019538a0-0000-7000-8000-000000000029',
           tenantUUID: TENANT_UUID,
-          parentUUID: null,
           storageId: 3,
           name: 'No Desc Store',
           description: null,
@@ -219,7 +212,6 @@ describe('StoreRoomMapper', () => {
         const entity = StoreRoomMapper.toEntity(model);
         expect(entity.uuid).toBeDefined();
         expect(entity.tenantUUID).toBe(TENANT_UUID);
-        expect(entity.parentUUID).toBeNull();
         expect(entity.name).toBe('Bodega Test');
         expect(entity.description).toBe('Test bodega');
         expect(entity.icon).toBe('bodega-icon');

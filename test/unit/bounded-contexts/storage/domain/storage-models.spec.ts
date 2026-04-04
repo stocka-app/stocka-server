@@ -38,7 +38,6 @@ describe('CustomRoomModel', () => {
         expect(model.color.getValue()).toBe('#AABBCC');
         expect(model.roomType.getValue()).toBe('Office');
         expect(model.address.getValue()).toBe('123 Main St');
-        expect(model.parentUUID).toBeNull();
         expect(model.archivedAt).toBeNull();
         expect(model.frozenAt).toBeNull();
         expect(model.createdAt).toBeInstanceOf(Date);
@@ -86,7 +85,6 @@ describe('CustomRoomModel', () => {
         expect(updated.icon.getValue()).toBe('icon-1');
         expect(updated.color.getValue()).toBe('#AABBCC');
         expect(updated.address.getValue()).toBe('100 Main St');
-        expect(updated.parentUUID).toBeNull();
       });
     });
 
@@ -226,7 +224,6 @@ describe('CustomRoomModel', () => {
         const model = CustomRoomModel.reconstitute({
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000012'),
           tenantUUID: TENANT_UUID,
-          parentUUID: null,
           name: StorageNameVO.create('Restored Room'),
           description: StorageDescriptionVO.create('A restored room'),
           icon: StorageIconVO.create('icon-x'),
@@ -255,7 +252,6 @@ describe('CustomRoomModel', () => {
         const model = CustomRoomModel.reconstitute({
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000018'),
           tenantUUID: TENANT_UUID,
-          parentUUID: null,
           name: StorageNameVO.create('Frozen Room'),
           description: null,
           icon: StorageIconVO.create('icon-1'),
@@ -298,7 +294,6 @@ describe('StoreRoomModel', () => {
         expect(model.icon.getValue()).toBe('store-icon');
         expect(model.color.getValue()).toBe('#DDEEFF');
         expect(model.address.getValue()).toBe('789 Elm Rd');
-        expect(model.parentUUID).toBeNull();
         expect(model.archivedAt).toBeNull();
         expect(model.frozenAt).toBeNull();
         expect(model.createdAt).toBeInstanceOf(Date);
@@ -485,7 +480,6 @@ describe('StoreRoomModel', () => {
         const model = StoreRoomModel.reconstitute({
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000030'),
           tenantUUID: TENANT_UUID,
-          parentUUID: '019538a0-0000-7000-8000-000000000099',
           name: StorageNameVO.create('Restored Store'),
           description: null,
           icon: StorageIconVO.create('store-icon'),
@@ -501,7 +495,7 @@ describe('StoreRoomModel', () => {
         expect(model.name.getValue()).toBe('Restored Store');
         expect(model.description).toBeNull();
         expect(model.address.getValue()).toBe('100 Industrial');
-        expect(model.parentUUID).toBe('019538a0-0000-7000-8000-000000000099');
+        expect(model.createdAt).toEqual(now);
       });
     });
   });

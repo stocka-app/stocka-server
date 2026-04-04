@@ -16,9 +16,6 @@ export class CustomRoomEntity extends BaseEntity {
   @Column({ name: 'storage_id', type: 'int' })
   storageId!: number;
 
-  @Column({ name: 'parent_uuid', type: 'uuid', nullable: true, default: null })
-  parentUUID!: string | null;
-
   @Column({ type: 'varchar', length: 100 })
   name!: string;
 

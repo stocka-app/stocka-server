@@ -27,7 +27,6 @@ export class StoreRoomModel {
     return new StoreRoomModel({
       uuid: new UUIDVO(props.uuid),
       tenantUUID: props.tenantUUID,
-      parentUUID: null,
       name: StorageNameVO.create(props.name),
       description: props.description ? StorageDescriptionVO.create(props.description) : null,
       icon: StorageIconVO.create(props.icon),
@@ -50,10 +49,6 @@ export class StoreRoomModel {
 
   get tenantUUID(): string {
     return this.attrs.tenantUUID;
-  }
-
-  get parentUUID(): string | null {
-    return this.attrs.parentUUID;
   }
 
   get name(): StorageNameVO {
@@ -147,7 +142,6 @@ export class StoreRoomModel {
     return {
       uuid: props.uuid,
       tenantUUID: props.tenantUUID,
-      parentUUID: props.parentUUID,
       name: props.name,
       description: props.description,
       icon: props.icon,

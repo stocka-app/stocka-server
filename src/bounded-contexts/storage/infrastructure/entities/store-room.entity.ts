@@ -7,9 +7,6 @@ export class StoreRoomEntity extends BaseEntity {
   @Column({ name: 'storage_id', type: 'int' })
   storageId!: number;
 
-  @Column({ name: 'parent_uuid', type: 'uuid', nullable: true, default: null })
-  parentUUID!: string | null;
-
   @Column({ name: 'tenant_uuid', type: 'uuid' })
   tenantUUID!: string;
 

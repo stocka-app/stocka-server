@@ -137,7 +137,6 @@ describe('Storage BC — Sprint 2 Schema (sub-table fields)', () => {
         expect(getRes.body.icon).toBe('warehouse');
         expect(getRes.body.color).toBe('#3b82f6');
         expect(getRes.body.description).toBe('A warehouse for schema validation');
-        expect(getRes.body.parentId).toBeNull();
       });
     });
 
@@ -160,22 +159,6 @@ describe('Storage BC — Sprint 2 Schema (sub-table fields)', () => {
         expect(getRes.body.icon).toBe('room-icon');
         expect(getRes.body.color).toBe('#AABBCC');
         expect(getRes.body.description).toBe('Custom room with all fields');
-        expect(getRes.body.parentId).toBeNull();
-      });
-    });
-
-    describe('When creating a storage without a parentId', () => {
-      it('Then parentId in response is null', async () => {
-        const createRes = await createStorage(app, token, {
-          type: 'CUSTOM_ROOM',
-          name: 'No Parent Room',
-          roomType: 'Storage',
-        });
-        expect(createRes.status).toBe(HttpStatus.CREATED);
-
-        const getRes = await getStorage(app, token, (createRes.body as CreateStorageResponse).storageUUID);
-        expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.parentId).toBeNull();
       });
     });
 
