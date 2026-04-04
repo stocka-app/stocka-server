@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
-import { Inject, NotFoundException } from '@nestjs/common';
+import { Inject } from '@nestjs/common';
 import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
@@ -12,6 +12,7 @@ import { TenantConfigModel } from '@tenant/domain/models/tenant-config.model';
 import { SlugVO } from '@tenant/domain/value-objects/slug.vo';
 import { BusinessTypeVO } from '@tenant/domain/value-objects/business-type.vo';
 import { OnboardingAlreadyCompletedError } from '@tenant/domain/errors/onboarding-already-completed.error';
+import { TenantOwnerNotFoundError } from '@tenant/domain/errors/tenant-owner-not-found.error';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { ok, err } from '@shared/domain/result';
@@ -39,9 +40,9 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
   async execute(command: CreateTenantCommand): Promise<CreateTenantResult> {
     const userAggregate = await this.mediator.user.findByUUID(command.userUUID);
 
-    /* istanbul ignore next */
+    /* istanbul ignore next — JWT SecurityGuard ensures the user exists before the command handler runs */
     if (!userAggregate) {
-      return err(new NotFoundException('User not found'));
+      return err(new TenantOwnerNotFoundError(command.userUUID));
     }
 
     const existingMember = await this.memberContract.findActiveByUserUUID(command.userUUID);

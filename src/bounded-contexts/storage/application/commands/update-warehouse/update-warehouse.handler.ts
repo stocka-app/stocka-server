@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { UpdateWarehouseCommand } from '@storage/application/commands/update-warehouse/update-warehouse.command';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
+import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -16,20 +16,21 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
   constructor(
     @Inject(INJECTION_TOKENS.STORAGE_CONTRACT)
     private readonly storageRepository: IStorageRepository,
+    @Inject(INJECTION_TOKENS.WAREHOUSE_CONTRACT)
+    private readonly warehouseRepository: IWarehouseRepository,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: UpdateWarehouseCommand): Promise<UpdateWarehouseResult> {
-    const storage = await this.storageRepository.findByUUID(
-      command.storageUUID,
-      command.tenantUUID,
-    );
+    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
 
-    if (!storage || storage.type !== StorageType.WAREHOUSE || storage.isArchived()) {
+    const warehouse = aggregate.findWarehouse(command.storageUUID);
+
+    if (!warehouse || warehouse.isArchived()) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 
-    if (command.name !== undefined && command.name !== storage.name) {
+    if (command.name !== undefined && command.name !== warehouse.name.getValue()) {
       const nameExists = await this.storageRepository.existsActiveName(
         command.tenantUUID,
         command.name,
@@ -39,17 +40,18 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
       }
     }
 
-    storage.updateWarehouse({
+    aggregate.updateWarehouse(command.storageUUID, {
       name: command.name,
       description: command.description,
       address: command.address,
     });
 
-    const saved = await this.storageRepository.save(storage);
+    const updated = aggregate.findWarehouse(command.storageUUID)!;
+    await this.warehouseRepository.save(updated, aggregate.id!);
 
-    this.eventPublisher.mergeObjectContext(saved);
-    saved.commit();
+    this.eventPublisher.mergeObjectContext(aggregate);
+    aggregate.commit();
 
-    return ok({ storageUUID: saved.uuid });
+    return ok({ storageUUID: command.storageUUID });
   }
 }

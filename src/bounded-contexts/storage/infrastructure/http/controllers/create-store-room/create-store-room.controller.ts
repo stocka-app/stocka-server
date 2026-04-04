@@ -29,7 +29,6 @@ export class CreateStoreRoomController {
         dto.name,
         dto.address,
         dto.description,
-        dto.parentUUID,
       ),
     );
 

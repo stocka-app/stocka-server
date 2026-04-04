@@ -1,9 +1,11 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { v7 as uuidV7 } from 'uuid';
 import { CreateWarehouseCommand } from '@storage/application/commands/create-warehouse/create-warehouse.command';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
-import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import { WarehouseModel } from '@storage/domain/models/warehouse.model';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import {
   resolveStorageIcon,
@@ -22,6 +24,8 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
   constructor(
     @Inject(INJECTION_TOKENS.STORAGE_CONTRACT)
     private readonly storageRepository: IStorageRepository,
+    @Inject(INJECTION_TOKENS.WAREHOUSE_CONTRACT)
+    private readonly warehouseRepository: IWarehouseRepository,
     @Inject(INJECTION_TOKENS.TENANT_CAPABILITIES_PORT)
     private readonly capabilitiesPort: ITenantCapabilitiesPort,
     private readonly eventPublisher: EventPublisher,
@@ -34,10 +38,7 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       return err(new WarehouseRequiresTierUpgradeError());
     }
 
-    const currentCount = await this.storageRepository.countActiveByType(
-      command.tenantUUID,
-      StorageType.WAREHOUSE,
-    );
+    const currentCount = await this.warehouseRepository.countActive(command.tenantUUID);
 
     if (!capabilities.canCreateMoreWarehouses(currentCount)) {
       return err(new WarehouseRequiresTierUpgradeError());
@@ -52,7 +53,10 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       return err(new StorageNameAlreadyExistsError(command.name));
     }
 
-    const aggregate = StorageAggregate.createWarehouse({
+    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+
+    const model = WarehouseModel.create({
+      uuid: uuidV7(),
       tenantUUID: command.tenantUUID,
       name: command.name,
       description: command.description,
@@ -61,11 +65,13 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       address: command.address,
     });
 
-    const saved = await this.storageRepository.save(aggregate);
+    aggregate.addWarehouse(model);
 
-    this.eventPublisher.mergeObjectContext(saved);
-    saved.commit();
+    await this.warehouseRepository.save(model, aggregate.id!);
 
-    return ok({ storageUUID: saved.uuid });
+    this.eventPublisher.mergeObjectContext(aggregate);
+    aggregate.commit();
+
+    return ok({ storageUUID: model.uuid.toString() });
   }
 }

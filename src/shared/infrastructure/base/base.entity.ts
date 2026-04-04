@@ -1,13 +1,14 @@
 import {
   PrimaryGeneratedColumn,
   Column,
+  BeforeInsert,
   CreateDateColumn,
   UpdateDateColumn,
-  BeforeInsert,
+  DeleteDateColumn,
 } from 'typeorm';
 import { v7 as uuidV7 } from 'uuid';
 
-export abstract class BaseEntity {
+export class BaseEntity {
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -27,6 +28,6 @@ export abstract class BaseEntity {
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt!: Date;
 
-  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true, default: null })
+  @DeleteDateColumn({ name: 'archived_at', type: 'timestamptz', nullable: true, default: null })
   archivedAt!: Date | null;
 }

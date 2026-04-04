@@ -62,7 +62,7 @@ export class ResetPasswordSaga extends Saga<ResetPasswordSagaContext> {
     input: ResetPasswordSagaContext,
   ): Promise<Result<ResetPasswordSagaOutput, DomainException>> {
     try {
-      await this.run(input);
+      await this.runWithTimeout(input);
       return ok({ message: 'Password has been reset successfully' });
     } catch (error) {
       if (error instanceof DomainException) return err(error);

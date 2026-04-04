@@ -1,11 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
+import { QueryFailedError, Repository, EntityManager } from 'typeorm';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { TenantEntity } from '@tenant/infrastructure/entities/tenant.entity';
 import { TenantMapper } from '@tenant/infrastructure/mappers/tenant.mapper';
+import { TenantSlugTakenError } from '@tenant/domain/errors/tenant-slug-taken.error';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -48,7 +49,17 @@ export class TypeOrmTenantRepository implements ITenantContract {
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(TenantEntity)
       : this.repository;
-    const savedEntity = await repo.save(entityData);
-    return TenantMapper.toDomain(savedEntity as TenantEntity) as Persisted<TenantAggregate>;
+    try {
+      const savedEntity = await repo.save(entityData);
+      return TenantMapper.toDomain(savedEntity as TenantEntity) as Persisted<TenantAggregate>;
+    } catch (error) {
+      // Race-condition defense: CreateTenantHandler deduplicates the slug via findBySlug
+      // before reaching persist(). This catch handles the TOCTOU window where two concurrent
+      // requests pass the check simultaneously and one hits the unique constraint.
+      if (error instanceof QueryFailedError && (error as QueryFailedError & { code: string }).code === '23505') {
+        throw new TenantSlugTakenError(entityData.slug ?? '');
+      }
+      throw error;
+    }
   }
 }

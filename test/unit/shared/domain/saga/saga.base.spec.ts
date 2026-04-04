@@ -3,6 +3,7 @@ import { Saga } from '@shared/domain/saga/saga.base';
 import { ISagaStepHandler } from '@shared/domain/saga/saga-step-handler.contract';
 import { SagaStepConfig } from '@shared/domain/saga/saga-step-config.contract';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
+import { SagaTimeoutException } from '@shared/domain/exceptions/saga-timeout.exception';
 
 interface TestContext {
   input: string;
@@ -34,6 +35,14 @@ class TestSaga extends Saga<TestContext> {
 
   protected defineSteps(): SagaStepConfig<TestContext>[] {
     return this.steps;
+  }
+
+  executeWithTimeout(ctx: TestContext): Promise<TestContext> {
+    return this.runWithTimeout(ctx);
+  }
+
+  setTimeoutMs(ms: number): void {
+    (this as unknown as Record<string, unknown>).sagaTimeoutMs = ms;
   }
 }
 
@@ -466,6 +475,53 @@ describe('Saga Base', () => {
       // After run completes, in-memory state should be cleaned up
       const state = await saga.findByCorrelationId('any');
       expect(state).toBeNull();
+    });
+  });
+
+  describe('runWithTimeout()', () => {
+    describe('Given the saga completes before the timeout', () => {
+      it('Then it resolves with the mutated context', async () => {
+        saga.setSteps([
+          {
+            name: 'fast-step',
+            handler: handler((ctx) => {
+              ctx.step1Done = true;
+            }),
+          },
+        ]);
+
+        const ctx = await saga.executeWithTimeout({ input: 'test' });
+
+        expect(ctx.step1Done).toBe(true);
+      });
+    });
+
+    describe('Given the saga exceeds the configured timeout', () => {
+      it('Then it rejects with SagaTimeoutException', async () => {
+        // Step whose promise never resolves — the timeout must win the race
+        saga.setSteps([
+          {
+            name: 'hanging-step',
+            handler: { execute: () => new Promise<void>(() => {}) },
+          },
+        ]);
+        saga.setTimeoutMs(20);
+
+        await expect(saga.executeWithTimeout({ input: 'test' })).rejects.toThrow(
+          SagaTimeoutException,
+        );
+      }, 5000);
+    });
+  });
+
+  describe('SagaTimeoutException', () => {
+    describe('Given a timeout occurred for a named saga', () => {
+      it('Then it contains the process name and timeout in the error message', () => {
+        const error = new SagaTimeoutException('my-saga', 5000);
+
+        expect(error.message).toContain('my-saga');
+        expect(error.message).toContain('5000');
+      });
     });
   });
 });

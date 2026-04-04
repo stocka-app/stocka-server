@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
-import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import { StorageItemView } from '@storage/domain/schemas';
 
 export class StorageOutDto {
   @ApiProperty({ description: 'Storage UUID' })
@@ -24,9 +24,6 @@ export class StorageOutDto {
   @ApiProperty({ description: 'Color hex code' })
   color!: string;
 
-  @ApiPropertyOptional({ description: 'Parent storage UUID (null if root)' })
-  parentId!: string | null;
-
   @ApiProperty({ description: 'Address' })
   address!: string;
 
@@ -45,22 +42,21 @@ export class StorageOutDto {
   @ApiPropertyOptional({ description: 'Frozen date (null if not frozen)' })
   frozenAt!: Date | null;
 
-  static fromAggregate(aggregate: StorageAggregate): StorageOutDto {
+  static fromItem(view: StorageItemView): StorageOutDto {
     const dto = new StorageOutDto();
-    dto.uuid = aggregate.uuid;
-    dto.status = aggregate.status;
-    dto.type = aggregate.type;
-    dto.name = aggregate.name;
-    dto.description = aggregate.description;
-    dto.icon = aggregate.icon;
-    dto.color = aggregate.color;
-    dto.parentId = aggregate.parentUUID;
-    dto.address = aggregate.address;
-    dto.roomType = aggregate.customRoom?.roomType.getValue() ?? null;
-    dto.createdAt = aggregate.createdAt;
-    dto.updatedAt = aggregate.updatedAt;
-    dto.archivedAt = aggregate.archivedAt;
-    dto.frozenAt = aggregate.frozenAt;
+    dto.uuid = view.uuid;
+    dto.status = view.status;
+    dto.type = view.type;
+    dto.name = view.name;
+    dto.description = view.description;
+    dto.icon = view.icon;
+    dto.color = view.color;
+    dto.address = view.address;
+    dto.roomType = view.roomType;
+    dto.createdAt = view.createdAt;
+    dto.updatedAt = view.updatedAt;
+    dto.archivedAt = view.archivedAt;
+    dto.frozenAt = view.frozenAt;
     return dto;
   }
 }

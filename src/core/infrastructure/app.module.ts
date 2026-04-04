@@ -64,6 +64,14 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
   ],
   controllers: [AppController],
   providers: [
+    // Guard execution order (NestJS applies them in declaration order):
+    // 1. ThrottlerGuard  — IP-based rate limit (rejects before any auth processing)
+    // 2. RateLimitGuard  — identifier-based progressive blocking (sign-in abuse, etc.)
+    // 3. SecurityGuard   — JWT validation + @Secure() enforcement
+    //
+    // Intentionally placing throttle guards before SecurityGuard so that
+    // burst traffic from unauthenticated sources is cut early without
+    // incurring the cost of JWT verification per request.
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

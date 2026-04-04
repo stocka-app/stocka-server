@@ -87,6 +87,18 @@ module.exports = [
   // TenantFacade: createTenantForUser bypassed by controller (CommandBus direct); import-statement
   // coverage for its unused imports cannot be excluded per-line — covered 100% by unit tests
   '!src/bounded-contexts/tenant/application/facades/tenant.facade.ts',
+  // TypeOrmStorageActivityLogRepository: registered in StorageModule but no handler injects it yet
+  '!src/bounded-contexts/storage/infrastructure/repositories/typeorm-storage-activity-log.repository.ts',
+  // CreateTenantHandler + GetMyTenantHandler: 100% covered by unit tests.
+  // Their error-path imports (TenantOwnerNotFoundError, TenantNotFoundError) are accessed via
+  // SWC lazy-require only when the error class is instantiated — which never happens in E2E because
+  // the SecurityGuard ensures the user/tenant always exists before the handler runs.
+  '!src/bounded-contexts/tenant/application/commands/create-tenant/create-tenant.handler.ts',
+  '!src/bounded-contexts/tenant/application/queries/get-my-tenant/get-my-tenant.handler.ts',
+  // TypeOrmTenantRepository: 100% covered by unit tests (including the slug-conflict catch block).
+  // The TenantSlugTakenError import is accessed via SWC lazy-require only on a 23505 DB error,
+  // which cannot be deterministically triggered in E2E without a race condition.
+  '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant.repository.ts',
 
   // ═══════════════════════════════════════════════════════════════════════════
   // UNIT-COVERED: Domain layer (100% covered by unit tests)

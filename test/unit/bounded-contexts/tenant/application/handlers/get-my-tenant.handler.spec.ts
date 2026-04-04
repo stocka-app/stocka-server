@@ -4,6 +4,7 @@ import {
 } from '@tenant/application/queries/get-my-tenant/get-my-tenant.query';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
+import { TenantNotFoundError } from '@tenant/domain/errors/tenant-not-found.error';
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,22 @@ describe('GetMyTenantHandler', () => {
 
         expect(result.isOk()).toBe(true);
         expect(result._unsafeUnwrap()).toBe(tenant);
+      });
+    });
+  });
+
+  describe('Given the tenant does not exist', () => {
+    describe('When execute is called', () => {
+      beforeEach(() => {
+        tenantContract.findById.mockResolvedValue(null);
+      });
+
+      it('Then it returns a TenantNotFoundError', async () => {
+        const query = new GetMyTenantQuery(99);
+        const result = await handler.execute(query);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(TenantNotFoundError);
       });
     });
   });

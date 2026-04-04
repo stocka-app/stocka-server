@@ -1,17 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, Index, BeforeInsert } from 'typeorm';
-import { v7 as uuidV7 } from 'uuid';
+import { Entity, Column, Index } from 'typeorm';
+import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 
 @Entity({ name: 'storage_activity_log', schema: 'storage' })
 @Index('idx_activity_log_storage_uuid', ['storageUUID'])
 @Index('idx_activity_log_tenant_uuid', ['tenantUUID'])
 @Index('idx_activity_log_storage_occurred', ['storageUUID', 'occurredAt'])
-export class StorageActivityLogEntity {
-  @PrimaryGeneratedColumn()
-  id!: number;
-
-  @Column({ type: 'uuid', unique: true })
-  uuid!: string;
-
+export class StorageActivityLogEntity extends BaseEntity {
   @Column({ name: 'storage_uuid', type: 'uuid' })
   storageUUID!: string;
 
@@ -32,11 +26,4 @@ export class StorageActivityLogEntity {
 
   @Column({ name: 'occurred_at', type: 'timestamptz', default: () => 'NOW()' })
   occurredAt!: Date;
-
-  @BeforeInsert()
-  generateUUID(): void {
-    if (!this.uuid) {
-      this.uuid = uuidV7();
-    }
-  }
 }

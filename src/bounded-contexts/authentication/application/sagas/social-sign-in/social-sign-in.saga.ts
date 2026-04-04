@@ -57,9 +57,9 @@ export class SocialSignInSaga extends Saga<SocialSignInSagaContext> {
   async execute(
     input: SocialSignInSagaContext,
   ): Promise<Result<SocialSignInSagaOutput, DomainException>> {
-    const ctx = await this.run(input);
+    const ctx = await this.runWithTimeout(input);
 
-    /* istanbul ignore next */
+    /* istanbul ignore next — defensive guard: saga steps always populate required fields before completing */
     if (!ctx.user || !ctx.credential || !ctx.accessToken || !ctx.refreshToken) {
       throw new Error('SocialSignInSaga completed without required output fields');
     }

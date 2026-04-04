@@ -1,9 +1,11 @@
 import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { v7 as uuidV7 } from 'uuid';
 import { CreateStoreRoomCommand } from '@storage/application/commands/create-store-room/create-store-room.command';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
-import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import { StoreRoomModel } from '@storage/domain/models/store-room.model';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import {
   resolveStorageIcon,
@@ -22,6 +24,8 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
   constructor(
     @Inject(INJECTION_TOKENS.STORAGE_CONTRACT)
     private readonly storageRepository: IStorageRepository,
+    @Inject(INJECTION_TOKENS.STORE_ROOM_CONTRACT)
+    private readonly storeRoomRepository: IStoreRoomRepository,
     @Inject(INJECTION_TOKENS.TENANT_CAPABILITIES_PORT)
     private readonly capabilitiesPort: ITenantCapabilitiesPort,
     private readonly eventPublisher: EventPublisher,
@@ -30,10 +34,7 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
   async execute(command: CreateStoreRoomCommand): Promise<CreateStoreRoomResult> {
     const capabilities = await this.capabilitiesPort.getCapabilities(command.tenantUUID);
 
-    const currentCount = await this.storageRepository.countActiveByType(
-      command.tenantUUID,
-      StorageType.STORE_ROOM,
-    );
+    const currentCount = await this.storeRoomRepository.countActive(command.tenantUUID);
 
     if (!capabilities.canCreateMoreStoreRooms(currentCount)) {
       return err(new StoreRoomLimitReachedError());
@@ -48,21 +49,25 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
       return err(new StorageNameAlreadyExistsError(command.name));
     }
 
-    const aggregate = StorageAggregate.createStoreRoom({
+    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+
+    const model = StoreRoomModel.create({
+      uuid: uuidV7(),
       tenantUUID: command.tenantUUID,
       name: command.name,
       description: command.description,
       icon: resolveStorageIcon(StorageType.STORE_ROOM),
       color: resolveStorageColor(StorageType.STORE_ROOM),
       address: command.address,
-      parentUUID: command.parentUUID,
     });
 
-    const saved = await this.storageRepository.save(aggregate);
+    aggregate.addStoreRoom(model);
 
-    this.eventPublisher.mergeObjectContext(saved);
-    saved.commit();
+    await this.storeRoomRepository.save(model, aggregate.id!);
 
-    return ok({ storageUUID: saved.uuid });
+    this.eventPublisher.mergeObjectContext(aggregate);
+    aggregate.commit();
+
+    return ok({ storageUUID: model.uuid.toString() });
   }
 }

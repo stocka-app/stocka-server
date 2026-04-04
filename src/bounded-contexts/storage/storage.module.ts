@@ -8,6 +8,9 @@ import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.ent
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
 import { StorageActivityLogEntity } from '@storage/infrastructure/entities/storage-activity-log.entity';
 import { TypeOrmStorageRepository } from '@storage/infrastructure/repositories/typeorm-storage.repository';
+import { TypeOrmWarehouseRepository } from '@storage/infrastructure/repositories/typeorm-warehouse.repository';
+import { TypeOrmStoreRoomRepository } from '@storage/infrastructure/repositories/typeorm-store-room.repository';
+import { TypeOrmCustomRoomRepository } from '@storage/infrastructure/repositories/typeorm-custom-room.repository';
 import { TypeOrmStorageActivityLogRepository } from '@storage/infrastructure/repositories/typeorm-storage-activity-log.repository';
 import { TenantCapabilitiesAdapter } from '@storage/infrastructure/adapters/tenant-capabilities.adapter';
 import { CreateCustomRoomHandler } from '@storage/application/commands/create-custom-room/create-custom-room.handler';
@@ -55,12 +58,18 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
   ],
   providers: [
     { provide: INJECTION_TOKENS.STORAGE_CONTRACT, useClass: TypeOrmStorageRepository },
+    { provide: INJECTION_TOKENS.WAREHOUSE_CONTRACT, useClass: TypeOrmWarehouseRepository },
+    { provide: INJECTION_TOKENS.STORE_ROOM_CONTRACT, useClass: TypeOrmStoreRoomRepository },
+    { provide: INJECTION_TOKENS.CUSTOM_ROOM_CONTRACT, useClass: TypeOrmCustomRoomRepository },
     {
       provide: INJECTION_TOKENS.STORAGE_ACTIVITY_LOG_CONTRACT,
       useClass: TypeOrmStorageActivityLogRepository,
     },
     { provide: INJECTION_TOKENS.TENANT_CAPABILITIES_PORT, useClass: TenantCapabilitiesAdapter },
     TypeOrmStorageRepository,
+    TypeOrmWarehouseRepository,
+    TypeOrmStoreRoomRepository,
+    TypeOrmCustomRoomRepository,
     TypeOrmStorageActivityLogRepository,
     TenantCapabilitiesAdapter,
     CreateCustomRoomHandler,

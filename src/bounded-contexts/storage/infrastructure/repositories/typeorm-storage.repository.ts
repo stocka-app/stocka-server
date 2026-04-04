@@ -1,16 +1,16 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import {
-  IStorageRepository,
-  StoragePage,
-} from '@storage/domain/contracts/storage.repository.contract';
-import { StorageFilters } from '@storage/application/queries/list-storages/list-storages.query';
+import { Repository } from 'typeorm';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
-import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
+import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
+import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
+import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.entity';
 import { StorageMapper } from '@storage/infrastructure/mappers/storage.mapper';
+import { WarehouseMapper } from '@storage/infrastructure/mappers/warehouse.mapper';
+import { StoreRoomMapper } from '@storage/infrastructure/mappers/store-room.mapper';
+import { CustomRoomMapper } from '@storage/infrastructure/mappers/custom-room.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -18,124 +18,66 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 export class TypeOrmStorageRepository implements IStorageRepository {
   constructor(
     @InjectRepository(StorageEntity)
-    private readonly repository: Repository<StorageEntity>,
+    private readonly storageRepository: Repository<StorageEntity>,
+    @InjectRepository(WarehouseEntity)
+    private readonly warehouseRepository: Repository<WarehouseEntity>,
+    @InjectRepository(StoreRoomEntity)
+    private readonly storeRoomRepository: Repository<StoreRoomEntity>,
+    @InjectRepository(CustomRoomEntity)
+    private readonly customRoomRepository: Repository<CustomRoomEntity>,
     @Inject(INJECTION_TOKENS.UNIT_OF_WORK)
     private readonly uow: IUnitOfWork,
   ) {}
 
-  /* istanbul ignore next */
-  private getRepo(): Repository<StorageEntity> {
-    if (this.uow.isActive()) {
-      return (this.uow.getManager() as EntityManager).getRepository(StorageEntity);
-    }
-    return this.repository;
-  }
+  async findOrCreate(tenantUUID: string): Promise<StorageAggregate> {
+    let storageEntity = await this.storageRepository.findOne({ where: { tenantUUID } });
 
-  async findByUUID(uuid: string, tenantUUID: string): Promise<StorageAggregate | null> {
-    const entity = await this.repository.findOne({
-      where: { uuid, tenantUUID },
-      relations: ['customRoom', 'storeRoom', 'warehouse'],
-    });
-
-    /* istanbul ignore next */
-    return entity ? StorageMapper.toDomain(entity) : null;
-  }
-
-  async findAll(
-    tenantUUID: string,
-    filters?: StorageFilters,
-    /* istanbul ignore next */
-    pagination: { page: number; limit: number } = { page: 1, limit: 50 },
-    search?: string,
-    /* istanbul ignore next */
-    sortOrder: 'ASC' | 'DESC' = 'ASC',
-  ): Promise<StoragePage> {
-    const qb = this.repository
-      .createQueryBuilder('s')
-      .leftJoinAndSelect('s.customRoom', 'customRoom')
-      .leftJoinAndSelect('s.storeRoom', 'storeRoom')
-      .leftJoinAndSelect('s.warehouse', 'warehouse')
-      .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
-      .orderBy('s.id', sortOrder);
-
-    if (filters?.type) {
-      qb.andWhere('s.type = :type', { type: filters.type });
+    if (!storageEntity) {
+      const newEntity = this.storageRepository.create({ tenantUUID });
+      storageEntity = await this.storageRepository.save(newEntity);
     }
 
-    if (filters?.status === StorageStatus.ACTIVE) {
-      qb.andWhere(
-        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
-      ).andWhere(
-        'COALESCE(customRoom.frozen_at, storeRoom.frozen_at, warehouse.frozen_at) IS NULL',
-      );
-    } else if (filters?.status === StorageStatus.ARCHIVED) {
-      qb.andWhere(
-        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NOT NULL',
-      );
-    } else if (filters?.status === StorageStatus.FROZEN) {
-      qb.andWhere(
-        'COALESCE(customRoom.frozen_at, storeRoom.frozen_at, warehouse.frozen_at) IS NOT NULL',
-      ).andWhere(
-        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
-      );
-    }
+    // NOTE (scalability): This loads ALL sub-spaces for the tenant in a single shot.
+    // For the current scale (small businesses, < 20 spaces per tenant) this is fine.
+    // If tenants with hundreds of spaces become common, consider lazy-loading sub-spaces
+    // per type on demand rather than eagerly loading all three collections.
+    const [warehouseEntities, storeRoomEntities, customRoomEntities] = await Promise.all([
+      this.warehouseRepository.find({ where: { tenantUUID }, withDeleted: true }),
+      this.storeRoomRepository.find({ where: { tenantUUID }, withDeleted: true }),
+      this.customRoomRepository.find({ where: { tenantUUID }, withDeleted: true }),
+    ]);
 
-    if (search) {
-      qb.andWhere('COALESCE(customRoom.name, storeRoom.name, warehouse.name) ILIKE :search', {
-        search: `%${search}%`,
-      });
-    }
+    const warehouses = warehouseEntities.map((e) => WarehouseMapper.toDomain(e));
+    const storeRooms = storeRoomEntities.map((e) => StoreRoomMapper.toDomain(e));
+    const customRooms = customRoomEntities.map((e) => CustomRoomMapper.toDomain(e));
 
-    const skip = (pagination.page - 1) * pagination.limit;
-    qb.skip(skip).take(pagination.limit);
-
-    const [entities, total] = await qb.getManyAndCount();
-    return { items: entities.map((e) => StorageMapper.toDomain(e)), total };
-  }
-
-  async countActiveByType(tenantUUID: string, type: StorageType): Promise<number> {
-    const qb = this.repository
-      .createQueryBuilder('s')
-      .leftJoin('s.customRoom', 'customRoom')
-      .leftJoin('s.storeRoom', 'storeRoom')
-      .leftJoin('s.warehouse', 'warehouse')
-      .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
-      .andWhere('s.type = :type', { type })
-      .andWhere(
-        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
-      );
-
-    return qb.getCount();
+    return StorageMapper.toDomain(storageEntity, warehouses, storeRooms, customRooms);
   }
 
   async existsActiveName(tenantUUID: string, name: string): Promise<boolean> {
-    const count = await this.repository
-      .createQueryBuilder('s')
-      .leftJoin('s.customRoom', 'customRoom')
-      .leftJoin('s.storeRoom', 'storeRoom')
-      .leftJoin('s.warehouse', 'warehouse')
-      .where('s.tenant_uuid = :tenantUUID', { tenantUUID })
-      .andWhere('LOWER(COALESCE(customRoom.name, storeRoom.name, warehouse.name)) = LOWER(:name)', {
-        name,
-      })
-      .andWhere(
-        'COALESCE(customRoom.archived_at, storeRoom.archived_at, warehouse.archived_at) IS NULL',
-      )
-      .getCount();
+    const lowerName = name.toLowerCase();
 
-    return count > 0;
-  }
+    const [whCount, srCount, crCount] = await Promise.all([
+      this.warehouseRepository
+        .createQueryBuilder('w')
+        .where('w.tenant_uuid = :tenantUUID', { tenantUUID })
+        .andWhere('LOWER(w.name) = :name', { name: lowerName })
+        .andWhere('w.archived_at IS NULL')
+        .getCount(),
+      this.storeRoomRepository
+        .createQueryBuilder('sr')
+        .where('sr.tenant_uuid = :tenantUUID', { tenantUUID })
+        .andWhere('LOWER(sr.name) = :name', { name: lowerName })
+        .andWhere('sr.archived_at IS NULL')
+        .getCount(),
+      this.customRoomRepository
+        .createQueryBuilder('cr')
+        .where('cr.tenant_uuid = :tenantUUID', { tenantUUID })
+        .andWhere('LOWER(cr.name) = :name', { name: lowerName })
+        .andWhere('cr.archived_at IS NULL')
+        .getCount(),
+    ]);
 
-  async save(storage: StorageAggregate): Promise<StorageAggregate> {
-    const entityData = StorageMapper.toEntity(storage);
-    const repo = this.getRepo();
-    const savedEntity = await repo.save(entityData);
-    return StorageMapper.toDomain(savedEntity as StorageEntity);
-  }
-
-  async archive(storage: StorageAggregate): Promise<void> {
-    const entityData = StorageMapper.toEntity(storage);
-    const repo = this.getRepo();
-    await repo.save(entityData);
+    return whCount + srCount + crCount > 0;
   }
 }

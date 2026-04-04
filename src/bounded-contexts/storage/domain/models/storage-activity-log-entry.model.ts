@@ -1,50 +1,21 @@
 import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { StorageActivityAction } from '@storage/domain/enums/storage-activity-action.enum';
 import { v7 as uuidV7 } from 'uuid';
-
-export interface StorageActivityLogEntryProps {
-  id?: number;
-  uuid: UUIDVO;
-  storageUUID: UUIDVO;
-  tenantUUID: UUIDVO;
-  actorUUID: UUIDVO;
-  action: StorageActivityAction;
-  previousValue: Record<string, unknown> | null;
-  newValue: Record<string, unknown> | null;
-  occurredAt: Date;
-}
+import type {
+  StorageActivityLogCreateProps,
+  StorageActivityLogEntryAttrs,
+  StorageActivityLogEntryProps,
+  StorageActivityLogReconstituteProps,
+} from '@storage/domain/schemas/storage-activity-log.schema';
 
 export class StorageActivityLogEntry {
-  readonly id: number | undefined;
-  readonly uuid: UUIDVO;
-  readonly storageUUID: UUIDVO;
-  readonly tenantUUID: UUIDVO;
-  readonly actorUUID: UUIDVO;
-  readonly action: StorageActivityAction;
-  readonly previousValue: Record<string, unknown> | null;
-  readonly newValue: Record<string, unknown> | null;
-  readonly occurredAt: Date;
+  private readonly attrs: StorageActivityLogEntryAttrs;
 
   private constructor(props: StorageActivityLogEntryProps) {
-    this.id = props.id;
-    this.uuid = props.uuid;
-    this.storageUUID = props.storageUUID;
-    this.tenantUUID = props.tenantUUID;
-    this.actorUUID = props.actorUUID;
-    this.action = props.action;
-    this.previousValue = props.previousValue;
-    this.newValue = props.newValue;
-    this.occurredAt = props.occurredAt;
+    this.attrs = StorageActivityLogEntry.normalizeProps(props);
   }
 
-  static create(props: {
-    storageUUID: string;
-    tenantUUID: string;
-    actorUUID: string;
-    action: StorageActivityAction;
-    previousValue?: Record<string, unknown> | null;
-    newValue?: Record<string, unknown> | null;
-  }): StorageActivityLogEntry {
+  static create(props: StorageActivityLogCreateProps): StorageActivityLogEntry {
     return new StorageActivityLogEntry({
       uuid: new UUIDVO(uuidV7()),
       storageUUID: new UUIDVO(props.storageUUID),
@@ -57,7 +28,57 @@ export class StorageActivityLogEntry {
     });
   }
 
-  static reconstitute(props: StorageActivityLogEntryProps): StorageActivityLogEntry {
+  static reconstitute(props: StorageActivityLogReconstituteProps): StorageActivityLogEntry {
     return new StorageActivityLogEntry(props);
+  }
+
+  get id(): number | undefined {
+    return this.attrs.id;
+  }
+
+  get uuid(): UUIDVO {
+    return this.attrs.uuid;
+  }
+
+  get storageUUID(): UUIDVO {
+    return this.attrs.storageUUID;
+  }
+
+  get tenantUUID(): UUIDVO {
+    return this.attrs.tenantUUID;
+  }
+
+  get actorUUID(): UUIDVO {
+    return this.attrs.actorUUID;
+  }
+
+  get action(): StorageActivityAction {
+    return this.attrs.action;
+  }
+
+  get previousValue(): Record<string, unknown> | null {
+    return this.attrs.previousValue;
+  }
+
+  get newValue(): Record<string, unknown> | null {
+    return this.attrs.newValue;
+  }
+
+  get occurredAt(): Date {
+    return this.attrs.occurredAt;
+  }
+
+  private static normalizeProps(props: StorageActivityLogEntryProps): StorageActivityLogEntryAttrs {
+    return {
+      id: props.id,
+      uuid: props.uuid,
+      storageUUID: props.storageUUID,
+      tenantUUID: props.tenantUUID,
+      actorUUID: props.actorUUID,
+      action: props.action,
+      previousValue: props.previousValue,
+      newValue: props.newValue,
+      occurredAt: props.occurredAt,
+    };
   }
 }

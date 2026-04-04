@@ -13,6 +13,18 @@ export interface SocialAccountReconstitueProps extends BaseModelProps {
   archivedAt: Date | null;
 }
 
+/** Internal constructor props — DB-assigned fields are optional for new models. */
+interface SocialAccountCtorProps extends BaseModelProps {
+  accountId: number;
+  provider: string;
+  providerId: string;
+  providerEmail: string | null;
+  linkedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  archivedAt: Date | null;
+}
+
 export class SocialAccountModel extends BaseModel {
   private readonly _accountId: number;
   private readonly _provider: string;
@@ -20,14 +32,8 @@ export class SocialAccountModel extends BaseModel {
   private readonly _providerEmail: string | null;
   private readonly _linkedAt: Date;
 
-  private constructor(props: SocialAccountReconstitueProps) {
-    super({
-      id: props.id,
-      uuid: props.uuid,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
-      archivedAt: props.archivedAt,
-    });
+  private constructor(props: SocialAccountCtorProps) {
+    super(props);
     this._accountId = props.accountId;
     this._provider = props.provider;
     this._providerId = props.providerId;
@@ -42,8 +48,6 @@ export class SocialAccountModel extends BaseModel {
     providerEmail?: string | null;
   }): SocialAccountModel {
     return new SocialAccountModel({
-      id: undefined as unknown as number,
-      uuid: undefined as unknown as string,
       accountId: props.accountId,
       provider: props.provider,
       providerId: props.providerId,

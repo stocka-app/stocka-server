@@ -30,7 +30,6 @@ export class CreateCustomRoomController {
         dto.roomType,
         dto.address,
         dto.description,
-        dto.parentUUID,
         dto.icon,
         dto.color,
       ),

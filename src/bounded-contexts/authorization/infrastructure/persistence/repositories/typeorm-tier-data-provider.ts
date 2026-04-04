@@ -20,6 +20,13 @@ import { CapabilityCacheEntity } from '@authorization/infrastructure/persistence
 
 @Injectable()
 export class TypeOrmTierDataProvider implements ITierDataProvider {
+  /**
+   * In-memory cache for the action→module mapping.
+   * This map is static for the lifetime of a server instance (only changes with deploys),
+   * so a singleton cache is safe. Avoids a full table scan on every RBAC evaluation.
+   */
+  private actionModuleMapCache: Record<string, string> | null = null;
+
   constructor(
     @InjectRepository(TierPlanEntity)
     private readonly tierPlanRepo: Repository<TierPlanEntity>,
@@ -96,6 +103,10 @@ export class TypeOrmTierDataProvider implements ITierDataProvider {
   }
 
   async getActionModuleMap(): Promise<Record<string, string>> {
+    if (this.actionModuleMapCache !== null) {
+      return this.actionModuleMapCache;
+    }
+
     const actions = await this.catalogActionRepo.find({
       relations: ['module'],
     });
@@ -104,6 +115,8 @@ export class TypeOrmTierDataProvider implements ITierDataProvider {
     for (const action of actions) {
       map[action.key] = action.module.key;
     }
+
+    this.actionModuleMapCache = map;
     return map;
   }
 }

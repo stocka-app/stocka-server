@@ -7,6 +7,15 @@ import { AccountDeactivatedException } from '@authentication/domain/exceptions/a
 import { EmailNotVerifiedException } from '@authentication/domain/exceptions/email-not-verified.exception';
 import { SignInSagaContext } from '@authentication/application/sagas/sign-in/sign-in.saga-context';
 
+/**
+ * Pre-computed bcrypt hash used when the user is not found.
+ * Running a full bcrypt compare ensures constant response time regardless
+ * of whether the identifier maps to a real account, preventing user enumeration
+ * via timing differences.
+ */
+const TIMING_SAFE_DUMMY_HASH =
+  '$2b$12$KIXeWNxKrZlGLzFPmwpMfuNhYFxR7J3v5rRBqZK0kH8CdlIuGkEYi';
+
 @Injectable()
 export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaContext> {
   constructor(private readonly mediator: MediatorService) {}
@@ -15,6 +24,8 @@ export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaConte
     const result = await this.mediator.user.findUserByEmailOrUsername(ctx.emailOrUsername);
 
     if (!result || !result.credential.hasPassword()) {
+      // Always run bcrypt to prevent timing-based user enumeration
+      await AuthenticationDomainService.comparePasswords(ctx.password, TIMING_SAFE_DUMMY_HASH);
       throw new InvalidCredentialsException();
     }
 

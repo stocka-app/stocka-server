@@ -91,4 +91,27 @@ describe('SocialSignInSaga', () => {
       });
     });
   });
+
+  describe('Given the saga run resolves but a step failed to populate required output fields', () => {
+    describe('When execute is called', () => {
+      it('Then it throws an internal error about missing output fields', async () => {
+        const saga = new SocialSignInSaga(
+          uow,
+          buildNoop() as never,
+          buildNoop() as never,
+          buildNoop() as never,
+          buildNoop() as never,
+          buildNoop() as never,
+        );
+
+        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
+          buildCtx() as SocialSignInSagaContext, // no user / credential / tokens populated
+        );
+
+        await expect(saga.execute(buildCtx())).rejects.toThrow(
+          'SocialSignInSaga completed without required output fields',
+        );
+      });
+    });
+  });
 });

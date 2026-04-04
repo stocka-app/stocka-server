@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { IUserFacade } from '@shared/domain/contracts/user-facade.contract';
 import { ITenantFacade } from '@tenant/domain/contracts/tenant-facade.contract';
@@ -25,6 +25,8 @@ const NULL_TENANT_FACADE: ITenantFacade = {
 
 @Injectable()
 export class MediatorService implements OnModuleInit {
+  private readonly logger = new Logger(MediatorService.name);
+
   private _userFacade: IUserFacade | undefined;
   private _tenantFacade: ITenantFacade | undefined;
   private _onboardingFacade: IOnboardingFacade | undefined;
@@ -42,6 +44,9 @@ export class MediatorService implements OnModuleInit {
         strict: false,
       });
     } catch {
+      this.logger.warn(
+        'TenantFacade not available in this context — cross-BC tenant calls will use NULL_TENANT_FACADE',
+      );
       this._tenantFacade = undefined;
     }
     try {
@@ -52,6 +57,9 @@ export class MediatorService implements OnModuleInit {
         },
       );
     } catch {
+      this.logger.warn(
+        'OnboardingFacade not available in this context — onboarding status calls will return null',
+      );
       this._onboardingFacade = undefined;
     }
   }

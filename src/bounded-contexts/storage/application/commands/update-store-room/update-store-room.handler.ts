@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { UpdateStoreRoomCommand } from '@storage/application/commands/update-store-room/update-store-room.command';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
+import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -16,20 +16,21 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
   constructor(
     @Inject(INJECTION_TOKENS.STORAGE_CONTRACT)
     private readonly storageRepository: IStorageRepository,
+    @Inject(INJECTION_TOKENS.STORE_ROOM_CONTRACT)
+    private readonly storeRoomRepository: IStoreRoomRepository,
     private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: UpdateStoreRoomCommand): Promise<UpdateStoreRoomResult> {
-    const storage = await this.storageRepository.findByUUID(
-      command.storageUUID,
-      command.tenantUUID,
-    );
+    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
 
-    if (!storage || storage.type !== StorageType.STORE_ROOM || storage.isArchived()) {
+    const storeRoom = aggregate.findStoreRoom(command.storageUUID);
+
+    if (!storeRoom || storeRoom.isArchived()) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 
-    if (command.name !== undefined && command.name !== storage.name) {
+    if (command.name !== undefined && command.name !== storeRoom.name.getValue()) {
       const nameExists = await this.storageRepository.existsActiveName(
         command.tenantUUID,
         command.name,
@@ -39,17 +40,18 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
       }
     }
 
-    storage.updateStoreRoom({
+    aggregate.updateStoreRoom(command.storageUUID, {
       name: command.name,
       description: command.description,
       address: command.address,
     });
 
-    const saved = await this.storageRepository.save(storage);
+    const updated = aggregate.findStoreRoom(command.storageUUID)!;
+    await this.storeRoomRepository.save(updated, aggregate.id!);
 
-    this.eventPublisher.mergeObjectContext(saved);
-    saved.commit();
+    this.eventPublisher.mergeObjectContext(aggregate);
+    aggregate.commit();
 
-    return ok({ storageUUID: saved.uuid });
+    return ok({ storageUUID: command.storageUUID });
   }
 }
