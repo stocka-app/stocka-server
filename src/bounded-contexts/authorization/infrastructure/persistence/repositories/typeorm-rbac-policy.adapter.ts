@@ -95,8 +95,11 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
       max_products: number | null;
       max_users: number | null;
       max_warehouses: number | null;
+      max_custom_rooms: number | null;
+      max_store_rooms: number | null;
     }> = await this.dataSource.query(
-      `SELECT max_products, max_users, max_warehouses FROM tiers.tier_plans WHERE tier = $1`,
+      `SELECT max_products, max_users, max_warehouses, max_custom_rooms, max_store_rooms
+       FROM tiers.tier_plans WHERE tier = $1`,
       [tier],
     );
 
@@ -106,8 +109,17 @@ export class TypeOrmRbacPolicyAdapter implements IRbacPolicyPort {
     }
 
     const row = rows[0];
+    const wh = row.max_warehouses;
+    const cr = row.max_custom_rooms;
+    const sr = row.max_store_rooms;
+    // NULL or -1 on any storage type means the total is unlimited
+    const storageCount =
+      wh === null || cr === null || sr === null || wh === -1 || cr === -1 || sr === -1
+        ? -1
+        : wh + cr + sr;
+
     const result: Record<string, number> = {
-      storageCount: row.max_warehouses ?? 0,
+      storageCount,
       memberCount: row.max_users ?? 1,
       productCount: row.max_products ?? 100,
     };
