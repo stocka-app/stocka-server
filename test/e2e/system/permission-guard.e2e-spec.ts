@@ -262,16 +262,43 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
   // POST /api/storages — requires STORAGE_CREATE (STARTER tier required)
   // ══════════════════════════════════════════════════════════════════════════
 
-  describe('Given POST /api/storages/store-rooms (STORAGE_CREATE action, STARTER tier threshold)', () => {
+  describe('Given POST /api/storages/store-rooms (STORAGE_CREATE action)', () => {
     const validStorageBody = { name: 'Test Storage Room', address: '100 Test St' };
 
-    describe('When the tenant is on FREE tier', () => {
-      describe('When an OWNER tries to create a storage', () => {
-        it('Then SecurityGuard blocks with 403 TIER_LIMIT_REACHED (FREE tier storage cap is 0)', async () => {
+    describe('When the tenant is on FREE tier and has not reached the combined storage limit (2)', () => {
+      beforeAll(async () => {
+        await setStorageCount(dataSource, tenantId, 0);
+      });
+
+      describe('When an OWNER tries to create a store room', () => {
+        it('Then SecurityGuard passes and the store room is created (FREE allows store rooms)', async () => {
           const res = await request(app.getHttpServer())
             .post('/api/storages/store-rooms')
             .set('Authorization', `Bearer ${ownerToken}`)
             .send(validStorageBody);
+
+          expect(res.status).toBe(HttpStatus.CREATED);
+          expect(res.body).toMatchObject({ storageUUID: expect.any(String) });
+        });
+      });
+    });
+
+    describe('When the tenant is on FREE tier and has reached the combined storage limit (2 out of 2)', () => {
+      beforeAll(async () => {
+        // Simulate having used both FREE storage slots (1 custom + 1 store room = 2)
+        await setStorageCount(dataSource, tenantId, 2);
+      });
+
+      afterAll(async () => {
+        await setStorageCount(dataSource, tenantId, 0);
+      });
+
+      describe('When an OWNER tries to create another storage', () => {
+        it('Then SecurityGuard blocks with 403 TIER_LIMIT_REACHED', async () => {
+          const res = await request(app.getHttpServer())
+            .post('/api/storages/store-rooms')
+            .set('Authorization', `Bearer ${ownerToken}`)
+            .send({ name: 'Another Storage Room', address: '200 Test St' });
 
           expect(res.status).toBe(HttpStatus.FORBIDDEN);
           expect(res.body.error).toBe('TIER_LIMIT_REACHED');
@@ -282,6 +309,7 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
     describe('When the tenant tier is upgraded to STARTER', () => {
       beforeAll(async () => {
         await setTenantTier(dataSource, tenantId, 'STARTER');
+        await setStorageCount(dataSource, tenantId, 0);
       });
 
       describe('When a WAREHOUSE_KEEPER (role lacks STORAGE_CREATE) tries to create a storage', () => {
@@ -296,10 +324,10 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
         });
       });
 
-      describe('When the STARTER storage limit is fully consumed (3 out of 3)', () => {
+      describe('When the STARTER storage limit is fully consumed (9 out of 9)', () => {
         beforeAll(async () => {
-          // Simulate tenant having reached the STARTER storage limit
-          await setStorageCount(dataSource, tenantId, 3);
+          // STARTER combined limit: 3 warehouses + 3 custom rooms + 3 store rooms = 9
+          await setStorageCount(dataSource, tenantId, 9);
         });
 
         describe('When an OWNER (role has STORAGE_CREATE) tries to create another storage', () => {
