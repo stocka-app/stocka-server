@@ -2,7 +2,7 @@ import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageItemPage, StorageItemView } from '@storage/domain/schemas';
+import { StorageItemPage, StorageItemView, StorageStatusSummary } from '@storage/domain/schemas';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -17,9 +17,18 @@ export class ListStoragesHandler implements IQueryHandler<ListStoragesQuery> {
     const aggregate = await this.storageRepository.findOrCreate(query.tenantUUID);
     let items: StorageItemView[] = aggregate.listItemViews();
 
+    // Apply type filter first — summary is scoped to this type view
     if (query.filters?.type) {
       items = items.filter((i) => i.type === query.filters.type);
     }
+
+    // Compute summary before status/search filters so it always reflects
+    // the full count within the current type scope (not just the filtered page).
+    const summary: StorageStatusSummary = {
+      active: items.filter((i) => i.archivedAt === null && i.frozenAt === null).length,
+      frozen: items.filter((i) => i.frozenAt !== null && i.archivedAt === null).length,
+      archived: items.filter((i) => i.archivedAt !== null).length,
+    };
 
     if (query.filters?.status === StorageStatus.ACTIVE) {
       items = items.filter((i) => i.archivedAt === null && i.frozenAt === null);
@@ -43,6 +52,6 @@ export class ListStoragesHandler implements IQueryHandler<ListStoragesQuery> {
     const { page, limit } = query.pagination;
     const skip = (page - 1) * limit;
 
-    return { items: items.slice(skip, skip + limit), total };
+    return { items: items.slice(skip, skip + limit), total, summary };
   }
 }

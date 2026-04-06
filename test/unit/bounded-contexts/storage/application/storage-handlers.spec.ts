@@ -57,7 +57,7 @@ const CR_UUID = '019538a0-0000-7000-8000-000000000030';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function makeWarehouse(uuid: string, overrides: Partial<{ archivedAt: Date | null }> = {}): WarehouseModel {
+function makeWarehouse(uuid: string, overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {}): WarehouseModel {
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(uuid),
@@ -68,7 +68,7 @@ function makeWarehouse(uuid: string, overrides: Partial<{ archivedAt: Date | nul
     color: new StorageColorVO('#3b82f6'),
     address: new StorageAddressVO('789 Industrial'),
     archivedAt: overrides.archivedAt ?? null,
-    frozenAt: null,
+    frozenAt: overrides.frozenAt ?? null,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -806,6 +806,8 @@ describe('ListStoragesHandler', () => {
   });
 
   describe('Given a tenant with storages of multiple types and statuses', () => {
+    // Aggregate: 1 WH (active) + 1 SR (active) + 1 CR (active) + 1 CR (archived)
+    // → full summary: { active: 3, frozen: 0, archived: 1 }
     let aggregate: StorageAggregate;
 
     beforeEach(() => {
@@ -821,7 +823,7 @@ describe('ListStoragesHandler', () => {
     });
 
     describe('When list is requested with ACTIVE status filter', () => {
-      it('Then returns only active items', async () => {
+      it('Then returns only active items and summary reflects the full type scope', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           { status: StorageStatus.ACTIVE },
@@ -836,11 +838,13 @@ describe('ListStoragesHandler', () => {
           expect(item.archivedAt).toBeNull();
           expect(item.frozenAt).toBeNull();
         });
+        // Summary is not filtered by status — shows full tenant counts
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with ARCHIVED status filter', () => {
-      it('Then returns only archived items', async () => {
+      it('Then returns only archived items and summary still reflects the full type scope', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           { status: StorageStatus.ARCHIVED },
@@ -851,11 +855,12 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(1);
         expect(result.items[0].archivedAt).not.toBeNull();
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with type=WAREHOUSE filter', () => {
-      it('Then returns only warehouse items', async () => {
+      it('Then returns only warehouse items and summary is scoped to warehouses', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           { type: StorageType.WAREHOUSE },
@@ -866,11 +871,13 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(1);
         expect(result.items[0].type).toBe(StorageType.WAREHOUSE);
+        // Summary scoped to warehouses only: 1 active, 0 frozen, 0 archived
+        expect(result.summary).toEqual({ active: 1, frozen: 0, archived: 0 });
       });
     });
 
     describe('When list is requested with search term', () => {
-      it('Then filters by name containing the search term', async () => {
+      it('Then filters by name containing the search term and summary reflects the full type scope', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           {},
@@ -882,11 +889,13 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(1);
         expect(result.items[0].name).toBe('Existing WH');
+        // Summary is computed before search filter
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with pagination', () => {
-      it('Then returns the correct page of items', async () => {
+      it('Then returns the correct page of items and summary reflects all items', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           {},
@@ -897,6 +906,8 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(2);
         expect(result.total).toBe(4);
+        // Summary covers all 4 items, not just the 2 on this page
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
       });
     });
 
@@ -913,13 +924,73 @@ describe('ListStoragesHandler', () => {
         for (let i = 0; i < result.items.length - 1; i++) {
           expect(result.items[i].name.localeCompare(result.items[i + 1].name)).toBeGreaterThanOrEqual(0);
         }
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
+      });
+    });
+  });
+
+  describe('Given a tenant with warehouses in different statuses (active, frozen, archived)', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({
+        warehouses: [
+          makeWarehouse(WH_UUID),
+          makeWarehouse('019538a0-0000-7000-8000-000000000011', { frozenAt: new Date() }),
+          makeWarehouse('019538a0-0000-7000-8000-000000000012', { archivedAt: new Date() }),
+        ],
+        storeRooms: [makeStoreRoom(SR_UUID)],
+        customRooms: [],
+      });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+    });
+
+    describe('When list is requested with FROZEN status filter', () => {
+      it('Then returns only frozen items', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          { status: StorageStatus.FROZEN },
+          { page: 1, limit: 50 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.items[0].frozenAt).not.toBeNull();
+      });
+    });
+
+    describe('When list is requested with type=WAREHOUSE and no status filter', () => {
+      it('Then summary reflects all three warehouse statuses', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          { type: StorageType.WAREHOUSE },
+          { page: 1, limit: 50 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.summary).toEqual({ active: 1, frozen: 1, archived: 1 });
+      });
+    });
+
+    describe('When list is requested with type=WAREHOUSE and status=ACTIVE filter', () => {
+      it('Then items are filtered by status but summary still reflects all warehouse statuses', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          { type: StorageType.WAREHOUSE, status: StorageStatus.ACTIVE },
+          { page: 1, limit: 50 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.summary).toEqual({ active: 1, frozen: 1, archived: 1 });
       });
     });
   });
 
   describe('Given a tenant with no storages', () => {
     describe('When list is requested', () => {
-      it('Then returns an empty page', async () => {
+      it('Then returns an empty page with zero summary counts', async () => {
         const aggregate = makeAggregate();
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
@@ -933,6 +1004,7 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(0);
         expect(result.total).toBe(0);
+        expect(result.summary).toEqual({ active: 0, frozen: 0, archived: 0 });
       });
     });
   });
