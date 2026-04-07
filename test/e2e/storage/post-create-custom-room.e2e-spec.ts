@@ -45,14 +45,35 @@ async function completeOnboarding(
   tenantName: string,
 ): Promise<void> {
   await request(app.getHttpServer())
-    .post('/api/tenant/onboarding/complete')
+    .post('/api/onboarding/start')
+    .set('Authorization', `Bearer ${token}`);
+
+  await request(app.getHttpServer())
+    .patch('/api/onboarding/progress')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ section: 'preferences', data: { locale: 'es', currency: 'MXN' } });
+
+  await request(app.getHttpServer())
+    .patch('/api/onboarding/progress')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ section: 'path', data: { path: 'CREATE' } });
+
+  await request(app.getHttpServer())
+    .patch('/api/onboarding/progress')
     .set('Authorization', `Bearer ${token}`)
     .send({
-      name: tenantName,
-      businessType: 'retail',
-      country: 'MX',
-      timezone: 'America/Mexico_City',
+      section: 'businessProfile',
+      data: {
+        name: tenantName,
+        businessType: 'retail',
+        country: 'MX',
+        timezone: 'America/Mexico_City',
+      },
     });
+
+  await request(app.getHttpServer())
+    .post('/api/onboarding/complete')
+    .set('Authorization', `Bearer ${token}`);
 }
 
 async function setTenantToStarter(dataSource: DataSource, tenantName: string): Promise<void> {
@@ -112,8 +133,8 @@ describe('POST /api/storages/custom-rooms (e2e)', () => {
       await setTenantToStarter(dataSource, 'PostCreateCustomRoom Starter Limit Biz');
       starterToken = await signIn(app, EMAIL);
 
-      // Fill up to 3 custom rooms (the STARTER limit)
-      await createCustomRoom(app, starterToken, 'Custom Room Limit 1');
+      // Onboarding already created 1 custom room (Tienda Principal for retail).
+      // Create 2 more to reach the STARTER limit of 3.
       await createCustomRoom(app, starterToken, 'Custom Room Limit 2');
       await createCustomRoom(app, starterToken, 'Custom Room Limit 3');
     });
@@ -167,6 +188,39 @@ describe('POST /api/storages/custom-rooms (e2e)', () => {
 
         expect(res.status).toBe(HttpStatus.CONFLICT);
         expect(res.body.error).toBe('STORAGE_NAME_ALREADY_EXISTS');
+      });
+    });
+  });
+
+  describe('Given a STARTER tenant with available custom room capacity', () => {
+    let ownerToken: string;
+
+    beforeAll(async () => {
+      const EMAIL = 'postcreatecustomroom.happy@example.com';
+      const USERNAME = 'postcreatecustomroomhappy';
+      await signUp(app, dataSource, EMAIL, USERNAME);
+      const tempToken = await signIn(app, EMAIL);
+      await completeOnboarding(app, tempToken, 'PostCreateCustomRoom Happy Path Biz');
+      ownerToken = await signIn(app, EMAIL);
+      await setTenantToStarter(dataSource, 'PostCreateCustomRoom Happy Path Biz');
+      ownerToken = await signIn(app, EMAIL);
+    });
+
+    describe('When POST /api/storages/custom-rooms is called with valid data', () => {
+      it('Then it returns 201 and a storageUUID', async () => {
+        const res = await request(app.getHttpServer())
+          .post('/api/storages/custom-rooms')
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({
+            name: 'Happy Path Custom Room',
+            roomType: 'General',
+            icon: 'box',
+            color: '#6366F1',
+            address: '123 Main St',
+          });
+
+        expect(res.status).toBe(HttpStatus.CREATED);
+        expect(res.body.storageUUID).toBeDefined();
       });
     });
   });

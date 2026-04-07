@@ -15,6 +15,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthenticationModule } from '@authentication/infrastructure/authentication.module';
 import { UserModule } from '@user/infrastructure/user.module';
 import { TenantModule } from '@tenant/tenant.module';
+import { OnboardingModule } from '@onboarding/onboarding.module';
 import { StorageModule } from '@storage/storage.module';
 import { UnitOfWorkModule } from '@shared/infrastructure/database/unit-of-work.module';
 import { MediatorModule } from '@shared/infrastructure/mediator/mediator.module';
@@ -46,6 +47,8 @@ const TRUNCATE_TABLES = [
   '"accounts"."credential_accounts"',
   '"accounts"."accounts"',
   '"identity"."users"',
+  // Onboarding tables
+  '"onboarding"."onboarding_sessions"',
   // Tenant tables
   '"tenants"."tenant_invitations"',
   '"tenants"."tenant_members"',
@@ -105,6 +108,7 @@ async function bootstrap(): Promise<StorageWorkerApp> {
       UserModule,
       AuthenticationModule,
       TenantModule,
+      OnboardingModule,
       StorageModule,
       AuthorizationModule,
       SecurityModule,
