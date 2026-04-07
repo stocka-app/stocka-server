@@ -620,6 +620,31 @@ describe('UpdateStoreRoomHandler', () => {
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
       });
     });
+
+    describe('When updating with the same name as the current one', () => {
+      it('Then skips the name uniqueness check and updates successfully', async () => {
+        const command = new UpdateStoreRoomCommand(
+          SR_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          'Existing Store',
+        );
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(mockStorageRepository.existsActiveName).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('When no name is provided', () => {
+      it('Then skips the name uniqueness check and updates successfully', async () => {
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, undefined);
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(mockStorageRepository.existsActiveName).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('Given the store room does not exist in the aggregate', () => {
@@ -695,6 +720,26 @@ describe('UpdateWarehouseHandler', () => {
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
+      });
+    });
+
+    describe('When updating with the same name as the current one', () => {
+      it('Then skips the name uniqueness check and updates successfully', async () => {
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'Existing WH');
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(mockStorageRepository.existsActiveName).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('When no name is provided', () => {
+      it('Then skips the name uniqueness check and updates successfully', async () => {
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, undefined);
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(mockStorageRepository.existsActiveName).not.toHaveBeenCalled();
       });
     });
   });
