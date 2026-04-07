@@ -22,21 +22,27 @@ export class TypeOrmPasswordResetTokenRepository implements IPasswordResetTokenC
     const entity = await this.repository.findOne({
       where: { id, archivedAt: IsNull() },
     });
-    return entity ? PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel> : null;
+    return entity
+      ? (PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel>)
+      : null;
   }
 
   async findByUUID(uuid: string): Promise<Persisted<PasswordResetTokenModel> | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: IsNull() },
     });
-    return entity ? PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel> : null;
+    return entity
+      ? (PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel>)
+      : null;
   }
 
   async findByTokenHash(tokenHash: string): Promise<Persisted<PasswordResetTokenModel> | null> {
     const entity = await this.repository.findOne({
       where: { tokenHash, archivedAt: IsNull() },
     });
-    return entity ? PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel> : null;
+    return entity
+      ? (PasswordResetTokenMapper.toDomain(entity) as Persisted<PasswordResetTokenModel>)
+      : null;
   }
 
   async persist(token: PasswordResetTokenModel): Promise<Persisted<PasswordResetTokenModel>> {
@@ -45,7 +51,9 @@ export class TypeOrmPasswordResetTokenRepository implements IPasswordResetTokenC
       ? (this.uow.getManager() as EntityManager).getRepository(PasswordResetTokenEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return PasswordResetTokenMapper.toDomain(savedEntity as PasswordResetTokenEntity) as Persisted<PasswordResetTokenModel>;
+    return PasswordResetTokenMapper.toDomain(
+      savedEntity as PasswordResetTokenEntity,
+    ) as Persisted<PasswordResetTokenModel>;
   }
 
   async archive(uuid: string): Promise<void> {

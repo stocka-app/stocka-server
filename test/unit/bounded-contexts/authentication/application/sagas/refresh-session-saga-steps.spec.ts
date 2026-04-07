@@ -51,9 +51,9 @@ describe('ArchiveOldSessionStep', () => {
   describe('Given the ctx is missing oldSessionUUID', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing oldSessionUUID', async () => {
-        await expect(
-          step.execute(baseCtx({ oldSessionUUID: undefined })),
-        ).rejects.toThrow('ctx.oldSessionUUID not set');
+        await expect(step.execute(baseCtx({ oldSessionUUID: undefined }))).rejects.toThrow(
+          'ctx.oldSessionUUID not set',
+        );
       });
     });
   });
@@ -73,9 +73,9 @@ describe('CreateNewSessionStep', () => {
   describe('Given the ctx is missing user', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing user', async () => {
-        await expect(
-          step.execute(baseCtx({ user: undefined })),
-        ).rejects.toThrow('ctx.user not set');
+        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow(
+          'ctx.user not set',
+        );
       });
     });
   });
@@ -121,7 +121,9 @@ describe('GenerateRefreshTokensStep', () => {
   describe('Given the ctx is missing user', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing user', async () => {
-        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow('ctx.user not set');
+        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow(
+          'ctx.user not set',
+        );
       });
     });
   });
@@ -201,9 +203,8 @@ describe('ValidateRefreshTokenStep', () => {
       });
 
       it('Then it throws TokenExpiredException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         await expect(step.execute(baseCtx())).rejects.toBeInstanceOf(TokenExpiredException);
       });
     });
@@ -216,14 +217,15 @@ describe('ValidateRefreshTokenStep', () => {
           uuid: 'sess-uuid',
           accountId: 5,
           isValid: jest.fn().mockReturnValue(true),
-        } as unknown as ReturnType<typeof sessionContract.findByTokenHash> extends Promise<infer T> ? T : never);
+        } as unknown as ReturnType<typeof sessionContract.findByTokenHash> extends Promise<infer T>
+          ? T
+          : never);
         jwtService.verifyAsync.mockRejectedValue(new Error('jwt expired'));
       });
 
       it('Then it throws TokenExpiredException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         await expect(step.execute(baseCtx())).rejects.toBeInstanceOf(TokenExpiredException);
       });
     });
@@ -236,15 +238,16 @@ describe('ValidateRefreshTokenStep', () => {
           uuid: 'sess-uuid',
           accountId: 5,
           isValid: jest.fn().mockReturnValue(true),
-        } as unknown as ReturnType<typeof sessionContract.findByTokenHash> extends Promise<infer T> ? T : never);
+        } as unknown as ReturnType<typeof sessionContract.findByTokenHash> extends Promise<infer T>
+          ? T
+          : never);
         jwtService.verifyAsync.mockResolvedValue({});
         jwtService.decode.mockReturnValue(null); // invalid payload
       });
 
       it('Then it throws TokenExpiredException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         await expect(step.execute(baseCtx())).rejects.toBeInstanceOf(TokenExpiredException);
       });
     });
@@ -257,16 +260,17 @@ describe('ValidateRefreshTokenStep', () => {
           uuid: 'sess-uuid',
           accountId: 5,
           isValid: jest.fn().mockReturnValue(true),
-        } as unknown as ReturnType<typeof sessionContract.findByTokenHash> extends Promise<infer T> ? T : never);
+        } as unknown as ReturnType<typeof sessionContract.findByTokenHash> extends Promise<infer T>
+          ? T
+          : never);
         jwtService.verifyAsync.mockResolvedValue({});
         jwtService.decode.mockReturnValue({ sub: 'user-uuid-xyz', email: 'test@test.com' });
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue(null);
       });
 
       it('Then it throws TokenExpiredException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         await expect(step.execute(baseCtx())).rejects.toBeInstanceOf(TokenExpiredException);
       });
     });

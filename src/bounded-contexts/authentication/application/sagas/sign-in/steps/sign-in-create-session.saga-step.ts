@@ -24,8 +24,7 @@ export class CreateSignInSessionStep implements ISagaStepHandler<SignInSagaConte
     if (!ctx.credential)
       throw new Error('CreateSignInSessionStep: ctx.credential not set by prior step');
     /* istanbul ignore next */
-    if (!ctx.credential.id)
-      throw new Error('CreateSignInSessionStep: ctx.credential has no id');
+    if (!ctx.credential.id) throw new Error('CreateSignInSessionStep: ctx.credential has no id');
 
     const tokenHash = AuthenticationDomainService.hashToken(ctx.refreshToken);
     const expiresAt = new Date();

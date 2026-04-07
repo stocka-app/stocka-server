@@ -16,7 +16,11 @@ import { PasswordResetTokenModel } from '@authentication/domain/models/password-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function baseCtx(overrides: Partial<ResetPasswordSagaContext> = {}): ResetPasswordSagaContext {
-  return { token: 'reset-token', newPassword: 'NewPass1!', ...overrides } as ResetPasswordSagaContext;
+  return {
+    token: 'reset-token',
+    newPassword: 'NewPass1!',
+    ...overrides,
+  } as ResetPasswordSagaContext;
 }
 
 function buildSessionContract(): jest.Mocked<ISessionContract> {
@@ -38,9 +42,11 @@ function buildPrtContract(): jest.Mocked<IPasswordResetTokenContract> {
   } as unknown as jest.Mocked<IPasswordResetTokenContract>;
 }
 
-function buildResetToken(overrides: {
-  isValid?: boolean;
-} = {}): PasswordResetTokenModel {
+function buildResetToken(
+  overrides: {
+    isValid?: boolean;
+  } = {},
+): PasswordResetTokenModel {
   return {
     id: 1,
     credentialAccountId: 10,
@@ -64,9 +70,9 @@ describe('ArchiveUserSessionsStep', () => {
   describe('Given the ctx is missing resetToken', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing resetToken', async () => {
-        await expect(
-          step.execute(baseCtx({ resetToken: undefined })),
-        ).rejects.toThrow('ctx.resetToken not set');
+        await expect(step.execute(baseCtx({ resetToken: undefined }))).rejects.toThrow(
+          'ctx.resetToken not set',
+        );
       });
     });
   });
@@ -86,9 +92,9 @@ describe('MarkTokenUsedStep', () => {
   describe('Given the ctx is missing resetToken', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing resetToken', async () => {
-        await expect(
-          step.execute(baseCtx({ resetToken: undefined })),
-        ).rejects.toThrow('ctx.resetToken not set');
+        await expect(step.execute(baseCtx({ resetToken: undefined }))).rejects.toThrow(
+          'ctx.resetToken not set',
+        );
       });
     });
   });
@@ -113,9 +119,9 @@ describe('PublishResetPasswordEventsStep', () => {
   describe('Given the ctx is missing resetToken', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing resetToken', () => {
-        expect(() =>
-          step.execute(baseCtx({ resetToken: undefined })),
-        ).toThrow('ctx.resetToken not set');
+        expect(() => step.execute(baseCtx({ resetToken: undefined }))).toThrow(
+          'ctx.resetToken not set',
+        );
       });
     });
   });
@@ -149,9 +155,8 @@ describe('ValidateResetTokenStep', () => {
       });
 
       it('Then it throws TokenExpiredException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         await expect(step.execute(baseCtx())).rejects.toBeInstanceOf(TokenExpiredException);
       });
     });
@@ -164,9 +169,8 @@ describe('ValidateResetTokenStep', () => {
       });
 
       it('Then it throws TokenExpiredException', async () => {
-        const { TokenExpiredException } = await import(
-          '@authentication/domain/exceptions/token-expired.exception'
-        );
+        const { TokenExpiredException } =
+          await import('@authentication/domain/exceptions/token-expired.exception');
         await expect(step.execute(baseCtx())).rejects.toBeInstanceOf(TokenExpiredException);
       });
     });

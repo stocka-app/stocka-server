@@ -180,7 +180,9 @@ describe('TenantFacade', () => {
     describe('When all data is present', () => {
       beforeEach(() => {
         memberContract.findActiveByUserUUID.mockResolvedValue(buildActiveMember(1));
-        tenantContract.findById.mockResolvedValue(buildTenant({ uuid: 'tenant-uuid-abc', status: 'active' }));
+        tenantContract.findById.mockResolvedValue(
+          buildTenant({ uuid: 'tenant-uuid-abc', status: 'active' }),
+        );
         configContract.findByTenantId.mockResolvedValue(buildConfig(1));
       });
 
@@ -315,7 +317,9 @@ describe('TenantFacade', () => {
 
     describe('When the command succeeds', () => {
       beforeEach(() => {
-        commandBus.execute.mockResolvedValue(ok({ tenantId: 'new-tenant-uuid', name: 'My Business' }));
+        commandBus.execute.mockResolvedValue(
+          ok({ tenantId: 'new-tenant-uuid', name: 'My Business' }),
+        );
       });
 
       it('Then it returns the tenantUUID from the result', async () => {
@@ -333,7 +337,9 @@ describe('TenantFacade', () => {
       };
 
       beforeEach(() => {
-        commandBus.execute.mockResolvedValue(ok({ tenantId: 'new-tenant-uuid', name: 'My Business' }));
+        commandBus.execute.mockResolvedValue(
+          ok({ tenantId: 'new-tenant-uuid', name: 'My Business' }),
+        );
       });
 
       it('Then it uses MX as default country and Mexico City as default timezone', async () => {

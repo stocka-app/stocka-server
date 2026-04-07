@@ -29,7 +29,6 @@ function buildUser(id?: number): UserAggregate {
   return { id, uuid: 'user-uuid-123' } as unknown as UserAggregate;
 }
 
-
 function buildSavedTenant(): TenantAggregate {
   return {
     id: 1,
@@ -129,7 +128,11 @@ describe('CreateTenantHandler', () => {
           userId: 42,
           isActive: jest.fn().mockReturnValue(true),
           role: { toString: () => 'OWNER' },
-        } as unknown as ReturnType<typeof memberContract.findActiveByUserUUID> extends Promise<infer T> ? T : never);
+        } as unknown as ReturnType<typeof memberContract.findActiveByUserUUID> extends Promise<
+          infer T
+        >
+          ? T
+          : never);
       });
 
       it('Then it returns an OnboardingAlreadyCompletedError', async () => {
@@ -167,9 +170,15 @@ describe('CreateTenantHandler', () => {
         memberContract.findActiveByUserUUID.mockResolvedValue(null);
         tenantContract.findBySlug.mockResolvedValue(null); // slug is unique
         tenantContract.persist.mockResolvedValue(savedTenant);
-        memberContract.persist.mockResolvedValue({} as ReturnType<typeof memberContract.persist> extends Promise<infer T> ? T : never);
-        profileContract.persist.mockResolvedValue({} as ReturnType<typeof profileContract.persist> extends Promise<infer T> ? T : never);
-        configContract.persist.mockResolvedValue({} as ReturnType<typeof configContract.persist> extends Promise<infer T> ? T : never);
+        memberContract.persist.mockResolvedValue(
+          {} as ReturnType<typeof memberContract.persist> extends Promise<infer T> ? T : never,
+        );
+        profileContract.persist.mockResolvedValue(
+          {} as ReturnType<typeof profileContract.persist> extends Promise<infer T> ? T : never,
+        );
+        configContract.persist.mockResolvedValue(
+          {} as ReturnType<typeof configContract.persist> extends Promise<infer T> ? T : never,
+        );
         uow.begin.mockResolvedValue(undefined);
         uow.commit.mockResolvedValue(undefined);
       });
@@ -197,9 +206,15 @@ describe('CreateTenantHandler', () => {
         memberContract.findActiveByUserUUID.mockResolvedValue(null);
         tenantContract.findBySlug.mockResolvedValue({} as TenantAggregate); // slug taken
         tenantContract.persist.mockResolvedValue(savedTenant);
-        memberContract.persist.mockResolvedValue({} as ReturnType<typeof memberContract.persist> extends Promise<infer T> ? T : never);
-        profileContract.persist.mockResolvedValue({} as ReturnType<typeof profileContract.persist> extends Promise<infer T> ? T : never);
-        configContract.persist.mockResolvedValue({} as ReturnType<typeof configContract.persist> extends Promise<infer T> ? T : never);
+        memberContract.persist.mockResolvedValue(
+          {} as ReturnType<typeof memberContract.persist> extends Promise<infer T> ? T : never,
+        );
+        profileContract.persist.mockResolvedValue(
+          {} as ReturnType<typeof profileContract.persist> extends Promise<infer T> ? T : never,
+        );
+        configContract.persist.mockResolvedValue(
+          {} as ReturnType<typeof configContract.persist> extends Promise<infer T> ? T : never,
+        );
         uow.begin.mockResolvedValue(undefined);
         uow.commit.mockResolvedValue(undefined);
       });

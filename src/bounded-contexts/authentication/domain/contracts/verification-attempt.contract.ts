@@ -29,7 +29,10 @@ export interface IVerificationAttemptContract {
   ): Promise<number>;
 
   // For analysis
-  findRecentByUserUUID(userUUID: string, limit: number): Promise<Persisted<VerificationAttemptModel>[]>;
+  findRecentByUserUUID(
+    userUUID: string,
+    limit: number,
+  ): Promise<Persisted<VerificationAttemptModel>[]>;
 
   // Cleanup
   archiveOlderThan(date: Date): Promise<number>;

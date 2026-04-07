@@ -85,11 +85,11 @@ describe('TenantCapabilitiesAdapter', () => {
         const adapter = new TenantCapabilitiesAdapter(makeMediator(null));
         const caps = await adapter.getCapabilities(TENANT_UUID);
 
-        expect(caps.canCreateWarehouse()).toBe(false);        // maxWarehouses = 0
-        expect(caps.canCreateMoreCustomRooms(0)).toBe(true);  // maxCustomRooms = 1 → 0 < 1
+        expect(caps.canCreateWarehouse()).toBe(false); // maxWarehouses = 0
+        expect(caps.canCreateMoreCustomRooms(0)).toBe(true); // maxCustomRooms = 1 → 0 < 1
         expect(caps.canCreateMoreCustomRooms(1)).toBe(false); // 1 < 1 = false
-        expect(caps.canCreateMoreStoreRooms(0)).toBe(true);   // maxStoreRooms = 1 → 0 < 1
-        expect(caps.canCreateMoreStoreRooms(1)).toBe(false);  // 1 < 1 = false
+        expect(caps.canCreateMoreStoreRooms(0)).toBe(true); // maxStoreRooms = 1 → 0 < 1
+        expect(caps.canCreateMoreStoreRooms(1)).toBe(false); // 1 < 1 = false
       });
     });
   });

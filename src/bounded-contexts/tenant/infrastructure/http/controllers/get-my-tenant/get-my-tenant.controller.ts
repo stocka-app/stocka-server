@@ -48,6 +48,6 @@ export class GetMyTenantController {
 
     const tenant = result.value;
     const config = await this.configContract.findByTenantId(member.tenantId);
-    return GetMyTenantOutDto.fromAggregate(tenant!, config);
+    return GetMyTenantOutDto.fromAggregate(tenant, config);
   }
 }

@@ -20,12 +20,12 @@ export class TypeOrmUserRepository implements IUserContract {
 
   async findById(id: number): Promise<Persisted<UserAggregate> | null> {
     const entity = await this.repository.findOne({ where: { id }, withDeleted: true });
-    return entity ? UserMapper.toDomain(entity) as Persisted<UserAggregate> : null;
+    return entity ? (UserMapper.toDomain(entity) as Persisted<UserAggregate>) : null;
   }
 
   async findByUUID(uuid: string): Promise<Persisted<UserAggregate> | null> {
     const entity = await this.repository.findOne({ where: { uuid }, withDeleted: true });
-    return entity ? UserMapper.toDomain(entity) as Persisted<UserAggregate> : null;
+    return entity ? (UserMapper.toDomain(entity) as Persisted<UserAggregate>) : null;
   }
 
   existsByUsername(_username: string): Promise<boolean> {

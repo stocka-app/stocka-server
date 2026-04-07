@@ -19,7 +19,11 @@ import { SessionAggregate } from '@user/account/session/domain/session.aggregate
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function baseCtx(overrides: Partial<SignInSagaContext> = {}): SignInSagaContext {
-  return { emailOrUsername: 'test@example.com', password: 'pass', ...overrides } as SignInSagaContext;
+  return {
+    emailOrUsername: 'test@example.com',
+    password: 'pass',
+    ...overrides,
+  } as SignInSagaContext;
 }
 
 function buildUser(): UserAggregate {
@@ -77,7 +81,9 @@ describe('CreateSignInSessionStep', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing credential', async () => {
         await expect(
-          step.execute(baseCtx({ user: buildUser(), refreshToken: 'token', credential: undefined })),
+          step.execute(
+            baseCtx({ user: buildUser(), refreshToken: 'token', credential: undefined }),
+          ),
         ).rejects.toThrow('ctx.credential not set');
       });
     });
@@ -155,9 +161,9 @@ describe('PublishSignInEventsStep', () => {
   describe('Given the ctx is missing session', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing session', () => {
-        expect(() =>
-          step.execute(baseCtx({ user: buildUser(), session: undefined })),
-        ).toThrow('ctx.session not set');
+        expect(() => step.execute(baseCtx({ user: buildUser(), session: undefined }))).toThrow(
+          'ctx.session not set',
+        );
       });
     });
   });

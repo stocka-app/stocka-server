@@ -51,9 +51,10 @@ export class UserFacade implements IUserFacade {
     return profile?.username ?? null;
   }
 
-  async findUserByUUIDWithCredential(
-    uuid: string,
-  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null> {
+  async findUserByUUIDWithCredential(uuid: string): Promise<{
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+  } | null> {
     const user = await this.userContract.findByUUID(uuid);
     if (!user) return null;
 
@@ -64,9 +65,10 @@ export class UserFacade implements IUserFacade {
     return { user, credential: credential! };
   }
 
-  async findUserByEmail(
-    email: string,
-  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null> {
+  async findUserByEmail(email: string): Promise<{
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+  } | null> {
     const credential = await this.credentialAccountContract.findByEmail(email);
     if (!credential) return null;
 
@@ -77,9 +79,10 @@ export class UserFacade implements IUserFacade {
     return { user: user!, credential };
   }
 
-  async findUserByEmailOrUsername(
-    identifier: string,
-  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null> {
+  async findUserByEmailOrUsername(identifier: string): Promise<{
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+  } | null> {
     const credential = await this.credentialAccountContract.findByEmailOrUsername(identifier);
     if (!credential) return null;
 

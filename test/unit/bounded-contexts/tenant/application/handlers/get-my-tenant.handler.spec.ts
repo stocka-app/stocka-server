@@ -1,7 +1,5 @@
 import { GetMyTenantHandler } from '@tenant/application/queries/get-my-tenant/get-my-tenant.handler';
-import {
-  GetMyTenantQuery,
-} from '@tenant/application/queries/get-my-tenant/get-my-tenant.query';
+import { GetMyTenantQuery } from '@tenant/application/queries/get-my-tenant/get-my-tenant.query';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
 import { TenantNotFoundError } from '@tenant/domain/errors/tenant-not-found.error';

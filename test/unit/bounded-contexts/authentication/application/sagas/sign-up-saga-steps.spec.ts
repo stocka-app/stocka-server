@@ -109,9 +109,9 @@ describe('GenerateTokensStep', () => {
   describe('Given the ctx is missing credential', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing credential', async () => {
-        await expect(step.execute(baseCtx({ user: buildUser(), credential: undefined }))).rejects.toThrow(
-          'ctx.credential not set',
-        );
+        await expect(
+          step.execute(baseCtx({ user: buildUser(), credential: undefined })),
+        ).rejects.toThrow('ctx.credential not set');
       });
     });
   });
@@ -160,7 +160,9 @@ describe('CreateSessionStep (sign-up)', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing refreshToken', async () => {
         await expect(
-          step.execute(baseCtx({ user: buildUser(), credential: buildCredential(), refreshToken: undefined })),
+          step.execute(
+            baseCtx({ user: buildUser(), credential: buildCredential(), refreshToken: undefined }),
+          ),
         ).rejects.toThrow('ctx.refreshToken not set');
       });
     });
@@ -267,9 +269,9 @@ describe('SendVerificationEmailStep', () => {
   describe('Given the ctx is missing user', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing user', async () => {
-        await expect(
-          step.execute(baseCtx({ user: undefined })),
-        ).rejects.toThrow('ctx.user not set');
+        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow(
+          'ctx.user not set',
+        );
       });
     });
   });
@@ -289,7 +291,11 @@ describe('SendVerificationEmailStep', () => {
       it('Then it throws an error about missing verificationCode', async () => {
         await expect(
           step.execute(
-            baseCtx({ user: buildUser(), credential: buildCredential(), verificationCode: undefined }),
+            baseCtx({
+              user: buildUser(),
+              credential: buildCredential(),
+              verificationCode: undefined,
+            }),
           ),
         ).rejects.toThrow('ctx.verificationCode not set');
       });

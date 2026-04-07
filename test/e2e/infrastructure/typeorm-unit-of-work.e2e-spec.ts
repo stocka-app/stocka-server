@@ -40,9 +40,7 @@ describe('TypeOrmUnitOfWork edge cases (e2e)', () => {
     describe('Given execute() is called with a callback that throws', () => {
       it('Then it rolls back the transaction and re-throws the error', async () => {
         const error = new Error('callback failed');
-        await expect(
-          uow.execute(() => Promise.reject(error)),
-        ).rejects.toThrow('callback failed');
+        await expect(uow.execute(() => Promise.reject(error))).rejects.toThrow('callback failed');
       });
     });
 

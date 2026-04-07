@@ -232,7 +232,13 @@ describe('POST /api/onboarding/complete (e2e)', () => {
       await setTenantToStarter(dataSource, OWNER_EMAIL);
       ownerToken = await signIn(app, OWNER_EMAIL);
 
-      invitationToken = await createInvitation(app, dataSource, ownerToken, INVITEE_EMAIL, 'VIEWER');
+      invitationToken = await createInvitation(
+        app,
+        dataSource,
+        ownerToken,
+        INVITEE_EMAIL,
+        'VIEWER',
+      );
 
       await signUp(app, dataSource, INVITEE_EMAIL, INVITEE_USERNAME);
       inviteeToken = await signIn(app, INVITEE_EMAIL);

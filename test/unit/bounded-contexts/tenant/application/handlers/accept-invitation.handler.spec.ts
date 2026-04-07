@@ -1,6 +1,4 @@
-import {
-  AcceptInvitationHandler,
-} from '@tenant/application/commands/accept-invitation/accept-invitation.handler';
+import { AcceptInvitationHandler } from '@tenant/application/commands/accept-invitation/accept-invitation.handler';
 import { AcceptInvitationCommand } from '@tenant/application/commands/accept-invitation/accept-invitation.command';
 import { ITenantInvitationContract } from '@tenant/domain/contracts/tenant-invitation.contract';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
@@ -19,11 +17,13 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildCommand(overrides: Partial<{
-  token: string;
-  userUUID: string;
-  userEmail: string;
-}> = {}): AcceptInvitationCommand {
+function buildCommand(
+  overrides: Partial<{
+    token: string;
+    userUUID: string;
+    userEmail: string;
+  }> = {},
+): AcceptInvitationCommand {
   return new AcceptInvitationCommand(
     overrides.token ?? 'invite-token-abc',
     overrides.userUUID ?? 'user-uuid-456',
@@ -31,15 +31,17 @@ function buildCommand(overrides: Partial<{
   );
 }
 
-function buildInvitation(overrides: {
-  isAlreadyAccepted?: boolean;
-  isExpired?: boolean;
-  emailMatches?: boolean;
-  tenantId?: number;
-  tenantUUID?: string;
-  tenantName?: string;
-  role?: 'OWNER' | 'PARTNER' | 'MANAGER' | 'BUYER' | 'WAREHOUSE_KEEPER' | 'SALES_REP' | 'VIEWER';
-} = {}): TenantInvitationModel {
+function buildInvitation(
+  overrides: {
+    isAlreadyAccepted?: boolean;
+    isExpired?: boolean;
+    emailMatches?: boolean;
+    tenantId?: number;
+    tenantUUID?: string;
+    tenantName?: string;
+    role?: 'OWNER' | 'PARTNER' | 'MANAGER' | 'BUYER' | 'WAREHOUSE_KEEPER' | 'SALES_REP' | 'VIEWER';
+  } = {},
+): TenantInvitationModel {
   return {
     id: 1,
     tenantId: overrides.tenantId ?? 10,
@@ -148,9 +150,7 @@ describe('AcceptInvitationHandler', () => {
   describe('Given the invitation email does not match the user email', () => {
     describe('When execute is called', () => {
       beforeEach(() => {
-        invitationContract.findByToken.mockResolvedValue(
-          buildInvitation({ emailMatches: false }),
-        );
+        invitationContract.findByToken.mockResolvedValue(buildInvitation({ emailMatches: false }));
       });
 
       it('Then it returns an InvitationEmailMismatchError', async () => {
@@ -165,13 +165,15 @@ describe('AcceptInvitationHandler', () => {
   describe('Given the user is already a member of the same tenant', () => {
     describe('When execute is called', () => {
       beforeEach(() => {
-        invitationContract.findByToken.mockResolvedValue(
-          buildInvitation({ tenantId: 10 }),
-        );
+        invitationContract.findByToken.mockResolvedValue(buildInvitation({ tenantId: 10 }));
         memberContract.findActiveByUserUUID.mockResolvedValue({
           tenantId: 10,
           isActive: jest.fn().mockReturnValue(true),
-        } as unknown as ReturnType<typeof memberContract.findActiveByUserUUID> extends Promise<infer T> ? T : never);
+        } as unknown as ReturnType<typeof memberContract.findActiveByUserUUID> extends Promise<
+          infer T
+        >
+          ? T
+          : never);
       });
 
       it('Then it returns a MemberAlreadyExistsError', async () => {
@@ -191,7 +193,9 @@ describe('AcceptInvitationHandler', () => {
         );
         memberContract.findActiveByUserUUID.mockResolvedValue(null);
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue(buildUserAggregate(42));
-        memberContract.persist.mockResolvedValue({} as ReturnType<typeof memberContract.persist> extends Promise<infer T> ? T : never);
+        memberContract.persist.mockResolvedValue(
+          {} as ReturnType<typeof memberContract.persist> extends Promise<infer T> ? T : never,
+        );
         invitationContract.markAccepted.mockResolvedValue(undefined);
       });
 

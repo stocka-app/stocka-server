@@ -13,7 +13,6 @@ describe('User domain exceptions', () => {
       });
     });
   });
-
 });
 
 describe('User domain events', () => {

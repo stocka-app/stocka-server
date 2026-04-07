@@ -155,7 +155,9 @@ describe('CapabilityService', () => {
         const snapshot = await service.buildSnapshotForTenant(TierEnum.STARTER);
 
         expect(snapshot[SystemAction.STORAGE_CREATE].enabled).toBe(false);
-        expect(snapshot[SystemAction.STORAGE_CREATE].reason).toContain("Module 'storage' is disabled");
+        expect(snapshot[SystemAction.STORAGE_CREATE].reason).toContain(
+          "Module 'storage' is disabled",
+        );
         expect(snapshot[SystemAction.STORAGE_READ].enabled).toBe(false);
       });
     });

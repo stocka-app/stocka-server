@@ -2,7 +2,12 @@ import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageItemPage, StorageItemView, StorageStatusSummary, StorageTypeSummary } from '@storage/domain/schemas';
+import {
+  StorageItemPage,
+  StorageItemView,
+  StorageStatusSummary,
+  StorageTypeSummary,
+} from '@storage/domain/schemas';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';

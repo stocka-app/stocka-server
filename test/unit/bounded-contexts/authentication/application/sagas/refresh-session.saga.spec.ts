@@ -57,9 +57,9 @@ describe('RefreshSessionSaga', () => {
           buildNoop() as never,
         );
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new TestDomainException(),
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockRejectedValue(new TestDomainException());
 
         const result = await saga.execute(buildCtx());
 
@@ -81,9 +81,9 @@ describe('RefreshSessionSaga', () => {
           buildNoop() as never,
         );
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new Error('Unexpected DB failure'),
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockRejectedValue(new Error('Unexpected DB failure'));
 
         await expect(saga.execute(buildCtx())).rejects.toThrow('Unexpected DB failure');
       });
@@ -107,9 +107,9 @@ describe('RefreshSessionSaga', () => {
           newRefreshToken: 'new-refresh-token',
         };
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          completedCtx as RefreshSessionSagaContext,
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockResolvedValue(completedCtx as RefreshSessionSagaContext);
 
         const result = await saga.execute(buildCtx());
 
@@ -131,7 +131,7 @@ describe('RefreshSessionSaga', () => {
         );
 
         jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          buildCtx() as RefreshSessionSagaContext, // no accessToken / newRefreshToken populated
+          buildCtx(), // no accessToken / newRefreshToken populated
         );
 
         await expect(saga.execute(buildCtx())).rejects.toThrow(

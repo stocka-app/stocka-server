@@ -26,14 +26,16 @@ function buildUser(): UserAggregate {
   return { uuid: 'user-uuid-123' } as unknown as UserAggregate;
 }
 
-function buildCredential(overrides: {
-  id?: number | null;
-  requiresEmailVerification?: boolean;
-} = {}): CredentialAccountModel {
+function buildCredential(
+  overrides: {
+    id?: number | null;
+    requiresEmailVerification?: boolean;
+  } = {},
+): CredentialAccountModel {
   const obj: Record<string, unknown> = {
-    requiresEmailVerification: jest.fn().mockReturnValue(
-      overrides.requiresEmailVerification ?? true,
-    ),
+    requiresEmailVerification: jest
+      .fn()
+      .mockReturnValue(overrides.requiresEmailVerification ?? true),
   };
   if ('id' in overrides) {
     obj.id = overrides.id;
@@ -43,12 +45,14 @@ function buildCredential(overrides: {
   return obj as unknown as CredentialAccountModel;
 }
 
-function buildToken(overrides: {
-  canResend?: boolean;
-  secondsUntilCanResend?: number;
-  remainingResends?: number;
-  currentCooldownSeconds?: number;
-} = {}): EmailVerificationTokenModel {
+function buildToken(
+  overrides: {
+    canResend?: boolean;
+    secondsUntilCanResend?: number;
+    remainingResends?: number;
+    currentCooldownSeconds?: number;
+  } = {},
+): EmailVerificationTokenModel {
   return {
     canResend: jest.fn().mockReturnValue(overrides.canResend ?? true),
     getSecondsUntilCanResend: jest.fn().mockReturnValue(overrides.secondsUntilCanResend ?? 0),

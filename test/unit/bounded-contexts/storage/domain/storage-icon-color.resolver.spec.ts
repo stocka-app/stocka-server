@@ -48,7 +48,9 @@ describe('StorageIconColorResolver', () => {
 
     describe('When resolveStorageIcon is called with a custom icon', () => {
       it('Then it ignores the input and returns the fixed store room icon', () => {
-        expect(resolveStorageIcon(StorageType.STORE_ROOM, 'any-icon')).toBe(STORE_ROOM_DEFAULT_ICON);
+        expect(resolveStorageIcon(StorageType.STORE_ROOM, 'any-icon')).toBe(
+          STORE_ROOM_DEFAULT_ICON,
+        );
       });
     });
 
@@ -60,7 +62,9 @@ describe('StorageIconColorResolver', () => {
 
     describe('When resolveStorageColor is called with a custom color', () => {
       it('Then it ignores the input and returns the fixed store room color', () => {
-        expect(resolveStorageColor(StorageType.STORE_ROOM, '#00FF00')).toBe(STORE_ROOM_DEFAULT_COLOR);
+        expect(resolveStorageColor(StorageType.STORE_ROOM, '#00FF00')).toBe(
+          STORE_ROOM_DEFAULT_COLOR,
+        );
       });
     });
   });

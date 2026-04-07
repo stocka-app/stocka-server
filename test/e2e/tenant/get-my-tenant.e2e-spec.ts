@@ -11,7 +11,12 @@ interface SignInResponse {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-async function signUp(app: INestApplication, dataSource: DataSource, email: string, username: string): Promise<void> {
+async function signUp(
+  app: INestApplication,
+  dataSource: DataSource,
+  email: string,
+  username: string,
+): Promise<void> {
   await request(app.getHttpServer())
     .post('/api/authentication/sign-up')
     .send({ email, username, password: 'SecurePass1!' });

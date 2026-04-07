@@ -21,13 +21,17 @@ export class TypeOrmCredentialAccountRepository implements ICredentialAccountCon
   async findById(id: number): Promise<Persisted<CredentialAccountModel> | null> {
     const entity = await this.repository.findOne({ where: { id } });
     /* istanbul ignore next */
-    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
+    return entity
+      ? (CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel>)
+      : null;
   }
 
   async findByAccountId(accountId: number): Promise<Persisted<CredentialAccountModel> | null> {
     const entity = await this.repository.findOne({ where: { accountId } });
     /* istanbul ignore next */
-    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
+    return entity
+      ? (CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel>)
+      : null;
   }
 
   async findByEmail(email: string): Promise<Persisted<CredentialAccountModel> | null> {
@@ -36,10 +40,14 @@ export class TypeOrmCredentialAccountRepository implements ICredentialAccountCon
       .where('LOWER(ca.email) = LOWER(:email)', { email })
       .andWhere('ca.archivedAt IS NULL')
       .getOne();
-    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
+    return entity
+      ? (CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel>)
+      : null;
   }
 
-  async findByEmailOrUsername(identifier: string): Promise<Persisted<CredentialAccountModel> | null> {
+  async findByEmailOrUsername(
+    identifier: string,
+  ): Promise<Persisted<CredentialAccountModel> | null> {
     const isEmail = identifier.includes('@');
 
     if (isEmail) {
@@ -57,7 +65,9 @@ export class TypeOrmCredentialAccountRepository implements ICredentialAccountCon
       .getOne();
 
     /* istanbul ignore next */
-    return entity ? CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel> : null;
+    return entity
+      ? (CredentialAccountMapper.toDomain(entity) as Persisted<CredentialAccountModel>)
+      : null;
   }
 
   async persist(model: CredentialAccountModel): Promise<Persisted<CredentialAccountModel>> {
@@ -66,7 +76,9 @@ export class TypeOrmCredentialAccountRepository implements ICredentialAccountCon
       ? (this.uow.getManager() as EntityManager).getRepository(CredentialAccountEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return CredentialAccountMapper.toDomain(savedEntity as CredentialAccountEntity) as Persisted<CredentialAccountModel>;
+    return CredentialAccountMapper.toDomain(
+      savedEntity as CredentialAccountEntity,
+    ) as Persisted<CredentialAccountModel>;
   }
 
   /* istanbul ignore next */

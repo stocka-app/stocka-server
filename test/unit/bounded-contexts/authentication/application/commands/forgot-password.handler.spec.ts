@@ -21,11 +21,13 @@ function buildUser(): UserAggregate {
   return { uuid: 'user-uuid-123' } as unknown as UserAggregate;
 }
 
-function buildCredential(overrides: {
-  id?: number | null;
-  hasPassword?: boolean;
-  createdWith?: string;
-} = {}): CredentialAccountModel {
+function buildCredential(
+  overrides: {
+    id?: number | null;
+    hasPassword?: boolean;
+    createdWith?: string;
+  } = {},
+): CredentialAccountModel {
   const obj: Record<string, unknown> = {
     hasPassword: jest.fn().mockReturnValue(overrides.hasPassword ?? true),
     createdWith: overrides.createdWith ?? null,

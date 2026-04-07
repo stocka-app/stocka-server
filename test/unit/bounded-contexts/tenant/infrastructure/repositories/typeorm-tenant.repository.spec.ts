@@ -104,7 +104,9 @@ describe('TypeOrmTenantRepository', () => {
         jest.spyOn(TenantMapper, 'toEntity').mockReturnValue({ slug: 'test' });
         ormRepo.save.mockRejectedValue(dbError);
 
-        await expect(repository.persist({} as TenantAggregate)).rejects.toThrow('Connection timeout');
+        await expect(repository.persist({} as TenantAggregate)).rejects.toThrow(
+          'Connection timeout',
+        );
       });
     });
   });

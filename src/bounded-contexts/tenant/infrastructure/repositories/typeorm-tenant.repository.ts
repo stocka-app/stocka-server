@@ -27,20 +27,20 @@ export class TypeOrmTenantRepository implements ITenantContract {
   async findById(id: number): Promise<Persisted<TenantAggregate> | null> {
     const entity = await this.repository.findOne({ where: { id } });
     /* istanbul ignore next */
-    return entity ? TenantMapper.toDomain(entity) as Persisted<TenantAggregate> : null;
+    return entity ? (TenantMapper.toDomain(entity) as Persisted<TenantAggregate>) : null;
   }
 
   /* istanbul ignore next */
   async findByUUID(uuid: string): Promise<Persisted<TenantAggregate> | null> {
     const entity = await this.repository.findOne({ where: { uuid } });
     /* istanbul ignore next */
-    return entity ? TenantMapper.toDomain(entity) as Persisted<TenantAggregate> : null;
+    return entity ? (TenantMapper.toDomain(entity) as Persisted<TenantAggregate>) : null;
   }
 
   async findBySlug(slug: string): Promise<Persisted<TenantAggregate> | null> {
     const entity = await this.repository.findOne({ where: { slug } });
     /* istanbul ignore next */
-    return entity ? TenantMapper.toDomain(entity) as Persisted<TenantAggregate> : null;
+    return entity ? (TenantMapper.toDomain(entity) as Persisted<TenantAggregate>) : null;
   }
 
   async persist(tenant: TenantAggregate): Promise<Persisted<TenantAggregate>> {
@@ -56,7 +56,10 @@ export class TypeOrmTenantRepository implements ITenantContract {
       // Race-condition defense: CreateTenantHandler deduplicates the slug via findBySlug
       // before reaching persist(). This catch handles the TOCTOU window where two concurrent
       // requests pass the check simultaneously and one hits the unique constraint.
-      if (error instanceof QueryFailedError && (error as QueryFailedError & { code: string }).code === '23505') {
+      if (
+        error instanceof QueryFailedError &&
+        (error as QueryFailedError & { code: string }).code === '23505'
+      ) {
         throw new TenantSlugTakenError(entityData.slug ?? '');
       }
       throw error;

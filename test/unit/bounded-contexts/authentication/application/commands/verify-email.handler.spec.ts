@@ -25,20 +25,24 @@ function buildUser(): UserAggregate {
   return { uuid: 'user-uuid-123' } as unknown as UserAggregate;
 }
 
-function buildCredential(overrides: {
-  requiresEmailVerification?: boolean;
-} = {}): CredentialAccountModel {
+function buildCredential(
+  overrides: {
+    requiresEmailVerification?: boolean;
+  } = {},
+): CredentialAccountModel {
   return {
     id: 10,
-    requiresEmailVerification: jest.fn().mockReturnValue(
-      overrides.requiresEmailVerification ?? true,
-    ),
+    requiresEmailVerification: jest
+      .fn()
+      .mockReturnValue(overrides.requiresEmailVerification ?? true),
   } as unknown as CredentialAccountModel;
 }
 
-function buildToken(overrides: {
-  codeHash?: string;
-} = {}): EmailVerificationTokenModel {
+function buildToken(
+  overrides: {
+    codeHash?: string;
+  } = {},
+): EmailVerificationTokenModel {
   return {
     codeHash: overrides.codeHash ?? 'hashed-ABC123',
     markAsUsed: jest.fn(),

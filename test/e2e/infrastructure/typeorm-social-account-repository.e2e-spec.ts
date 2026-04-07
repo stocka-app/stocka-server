@@ -43,18 +43,16 @@ describe('TypeOrmSocialAccountRepository (e2e)', () => {
     await truncateWorkerTables(dataSource);
   });
 
-  async function buildPersistedUserWithCredential(
-    overrides: { email?: string } = {},
-  ): Promise<{
+  async function buildPersistedUserWithCredential(overrides: { email?: string } = {}): Promise<{
     user: UserAggregate;
     account: AccountAggregate;
     credential: CredentialAccountModel;
   }> {
     const user = await userRepo.persist(UserAggregate.create());
-    const account = await accountRepo.persist(AccountAggregate.create({ userId: user.id! }));
+    const account = await accountRepo.persist(AccountAggregate.create({ userId: user.id }));
     const credential = await credentialAccountRepo.persist(
       CredentialAccountModel.create({
-        accountId: account.id!,
+        accountId: account.id,
         email: overrides.email ?? `test-${uuidv4()}@example.com`,
         passwordHash: '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.z9OYHvJpzZ9y7u',
         createdWith: 'email',

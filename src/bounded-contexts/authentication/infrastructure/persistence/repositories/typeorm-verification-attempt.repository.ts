@@ -20,12 +20,16 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
 
   async findById(id: number): Promise<Persisted<VerificationAttemptModel> | null> {
     const entity = await this.repository.findOne({ where: { id } });
-    return entity ? VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel> : null;
+    return entity
+      ? (VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel>)
+      : null;
   }
 
   async findByUUID(uuid: string): Promise<Persisted<VerificationAttemptModel> | null> {
     const entity = await this.repository.findOne({ where: { uuid } });
-    return entity ? VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel> : null;
+    return entity
+      ? (VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel>)
+      : null;
   }
 
   async persist(attempt: VerificationAttemptModel): Promise<Persisted<VerificationAttemptModel>> {
@@ -35,7 +39,9 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
       : this.repository;
 
     const savedEntity = await repo.save(entityData);
-    return VerificationAttemptMapper.toDomain(savedEntity as VerificationAttemptEntity) as Persisted<VerificationAttemptModel>;
+    return VerificationAttemptMapper.toDomain(
+      savedEntity as VerificationAttemptEntity,
+    ) as Persisted<VerificationAttemptModel>;
   }
 
   async countFailedByUserUUIDInLastHour(userUUID: string): Promise<number> {
@@ -82,14 +88,19 @@ export class TypeOrmVerificationAttemptRepository implements IVerificationAttemp
       .getCount();
   }
 
-  async findRecentByUserUUID(userUUID: string, limit: number): Promise<Persisted<VerificationAttemptModel>[]> {
+  async findRecentByUserUUID(
+    userUUID: string,
+    limit: number,
+  ): Promise<Persisted<VerificationAttemptModel>[]> {
     const entities = await this.repository.find({
       where: { userUUID },
       order: { attemptedAt: 'DESC' },
       take: limit,
     });
 
-    return entities.map((entity) => VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel>);
+    return entities.map(
+      (entity) => VerificationAttemptMapper.toDomain(entity) as Persisted<VerificationAttemptModel>,
+    );
   }
 
   async archiveOlderThan(date: Date): Promise<number> {
