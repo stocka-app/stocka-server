@@ -29,6 +29,7 @@ export class CreateCustomRoomController {
         dto.name,
         dto.roomType,
         dto.address,
+        user.uuid,
         dto.description,
         dto.icon,
         dto.color,

@@ -22,6 +22,16 @@ import { UpdateWarehouseHandler } from '@storage/application/commands/update-war
 import { ArchiveStorageHandler } from '@storage/application/commands/archive-storage/archive-storage.handler';
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
 import { GetStorageHandler } from '@storage/application/queries/get-storage/get-storage.handler';
+import { StorageCreatedEventHandler } from '@storage/application/event-handlers/storage-created.event-handler';
+import { StorageNameChangedEventHandler } from '@storage/application/event-handlers/storage-name-changed.event-handler';
+import { StorageDescriptionChangedEventHandler } from '@storage/application/event-handlers/storage-description-changed.event-handler';
+import { StorageAddressChangedEventHandler } from '@storage/application/event-handlers/storage-address-changed.event-handler';
+import { StorageIconChangedEventHandler } from '@storage/application/event-handlers/storage-icon-changed.event-handler';
+import { StorageColorChangedEventHandler } from '@storage/application/event-handlers/storage-color-changed.event-handler';
+import { StorageTypeChangedEventHandler } from '@storage/application/event-handlers/storage-type-changed.event-handler';
+import { StorageArchivedEventHandler } from '@storage/application/event-handlers/storage-archived.event-handler';
+import { StorageFrozenEventHandler } from '@storage/application/event-handlers/storage-frozen.event-handler';
+import { StorageReactivatedEventHandler } from '@storage/application/event-handlers/storage-reactivated.event-handler';
 import { CreateCustomRoomController } from '@storage/infrastructure/http/controllers/create-custom-room/create-custom-room.controller';
 import { CreateStoreRoomController } from '@storage/infrastructure/http/controllers/create-store-room/create-store-room.controller';
 import { CreateWarehouseController } from '@storage/infrastructure/http/controllers/create-warehouse/create-warehouse.controller';
@@ -81,6 +91,16 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     ArchiveStorageHandler,
     ListStoragesHandler,
     GetStorageHandler,
+    StorageCreatedEventHandler,
+    StorageNameChangedEventHandler,
+    StorageDescriptionChangedEventHandler,
+    StorageAddressChangedEventHandler,
+    StorageIconChangedEventHandler,
+    StorageColorChangedEventHandler,
+    StorageTypeChangedEventHandler,
+    StorageArchivedEventHandler,
+    StorageFrozenEventHandler,
+    StorageReactivatedEventHandler,
   ],
   exports: [INJECTION_TOKENS.STORAGE_CONTRACT],
 })

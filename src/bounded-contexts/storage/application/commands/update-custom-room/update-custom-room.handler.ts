@@ -40,14 +40,18 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
       }
     }
 
-    aggregate.updateCustomRoom(command.storageUUID, {
-      name: command.name,
-      description: command.description,
-      icon: command.icon,
-      color: command.color,
-      address: command.address,
-      roomType: command.roomType,
-    });
+    aggregate.updateCustomRoom(
+      command.storageUUID,
+      {
+        name: command.name,
+        description: command.description,
+        icon: command.icon,
+        color: command.color,
+        address: command.address,
+        roomType: command.roomType,
+      },
+      command.actorUUID,
+    );
 
     const updated = aggregate.findCustomRoom(command.storageUUID)!;
     await this.customRoomRepository.save(updated, aggregate.id!);

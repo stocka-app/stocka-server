@@ -29,6 +29,7 @@ export class UpdateWarehouseController {
       new UpdateWarehouseCommand(
         uuid,
         user.tenantId as string,
+        user.uuid,
         dto.name,
         dto.description,
         dto.address,

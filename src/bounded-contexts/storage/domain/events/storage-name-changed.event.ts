@@ -1,12 +1,12 @@
 import { DomainEvent } from '@shared/domain/base/domain-event';
 
-export class StorageCreatedEvent extends DomainEvent {
+export class StorageNameChangedEvent extends DomainEvent {
   constructor(
     public readonly storageUUID: string,
     public readonly tenantUUID: string,
     public readonly actorUUID: string,
-    public readonly type: string,
-    public readonly name: string,
+    public readonly previousName: string,
+    public readonly newName: string,
   ) {
     super();
   }

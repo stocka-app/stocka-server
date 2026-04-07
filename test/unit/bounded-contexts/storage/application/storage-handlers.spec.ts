@@ -51,13 +51,14 @@ import { StorageAddressVO } from '@storage/domain/value-objects/storage-address.
 import { RoomTypeNameVO } from '@storage/domain/value-objects/room-type-name.vo';
 
 const TENANT_UUID = '019538a0-0000-7000-8000-000000000001';
+const ACTOR_UUID = '019538a0-0000-7000-8000-000000000099';
 const WH_UUID = '019538a0-0000-7000-8000-000000000010';
 const SR_UUID = '019538a0-0000-7000-8000-000000000020';
 const CR_UUID = '019538a0-0000-7000-8000-000000000030';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function makeWarehouse(uuid: string, overrides: Partial<{ archivedAt: Date | null }> = {}): WarehouseModel {
+function makeWarehouse(uuid: string, overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {}): WarehouseModel {
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(uuid),
@@ -68,7 +69,7 @@ function makeWarehouse(uuid: string, overrides: Partial<{ archivedAt: Date | nul
     color: new StorageColorVO('#3b82f6'),
     address: new StorageAddressVO('789 Industrial'),
     archivedAt: overrides.archivedAt ?? null,
-    frozenAt: null,
+    frozenAt: overrides.frozenAt ?? null,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -143,17 +144,17 @@ beforeEach(() => {
   };
 
   mockWarehouseRepository = {
-    countActive: jest.fn(),
+    count: jest.fn(),
     save: jest.fn(),
   };
 
   mockStoreRoomRepository = {
-    countActive: jest.fn(),
+    count: jest.fn(),
     save: jest.fn(),
   };
 
   mockCustomRoomRepository = {
-    countActive: jest.fn(),
+    count: jest.fn(),
     save: jest.fn(),
   };
 
@@ -189,7 +190,7 @@ describe('CreateCustomRoomHandler', () => {
 
   describe('Given a tenant with available custom room capacity', () => {
     beforeEach(() => {
-      mockCustomRoomRepository.countActive.mockResolvedValue(0);
+      mockCustomRoomRepository.count.mockResolvedValue(0);
       mockStorageRepository.existsActiveName.mockResolvedValue(false);
       const aggregate = makeAggregate();
       mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
@@ -198,7 +199,7 @@ describe('CreateCustomRoomHandler', () => {
 
     describe('When the storage name is unique and no icon or color is provided', () => {
       it('Then creates the custom room with default icon and color, returning the UUID', async () => {
-        const command = new CreateCustomRoomCommand(TENANT_UUID, 'New Room', 'Office', '123 Main St');
+        const command = new CreateCustomRoomCommand(TENANT_UUID, 'New Room', 'Office', '123 Main St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -214,7 +215,7 @@ describe('CreateCustomRoomHandler', () => {
       it('Then creates the custom room with the provided icon and color', async () => {
         const command = new CreateCustomRoomCommand(
           TENANT_UUID, 'Styled Room', 'Kitchen', '99 Custom Blvd',
-          undefined, 'kitchen', '#A855F7',
+          ACTOR_UUID, undefined, 'kitchen', '#A855F7',
         );
         const result = await handler.execute(command);
 
@@ -229,7 +230,7 @@ describe('CreateCustomRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new CreateCustomRoomCommand(TENANT_UUID, 'Taken Name', 'Office', '123 St');
+        const command = new CreateCustomRoomCommand(TENANT_UUID, 'Taken Name', 'Office', '123 St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -242,10 +243,10 @@ describe('CreateCustomRoomHandler', () => {
   describe('Given a tenant that has reached the custom room limit', () => {
     describe('When create custom room is requested', () => {
       it('Then returns CustomRoomLimitReachedError', async () => {
-        mockCustomRoomRepository.countActive.mockResolvedValue(3);
+        mockCustomRoomRepository.count.mockResolvedValue(3);
         mockCapabilities.canCreateMoreCustomRooms.mockReturnValue(false);
 
-        const command = new CreateCustomRoomCommand(TENANT_UUID, 'Over Limit', 'Office', '123 St');
+        const command = new CreateCustomRoomCommand(TENANT_UUID, 'Over Limit', 'Office', '123 St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -273,7 +274,7 @@ describe('CreateStoreRoomHandler', () => {
 
   describe('Given a tenant with available store room capacity', () => {
     beforeEach(() => {
-      mockStoreRoomRepository.countActive.mockResolvedValue(1);
+      mockStoreRoomRepository.count.mockResolvedValue(1);
       mockStorageRepository.existsActiveName.mockResolvedValue(false);
       const aggregate = makeAggregate();
       mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
@@ -282,7 +283,7 @@ describe('CreateStoreRoomHandler', () => {
 
     describe('When the storage name is unique', () => {
       it('Then creates and saves the store room with fixed icon and color, returning the UUID', async () => {
-        const command = new CreateStoreRoomCommand(TENANT_UUID, 'New Bodega', '456 Ave');
+        const command = new CreateStoreRoomCommand(TENANT_UUID, 'New Bodega', '456 Ave', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -297,7 +298,7 @@ describe('CreateStoreRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new CreateStoreRoomCommand(TENANT_UUID, 'Taken Name', '123 St');
+        const command = new CreateStoreRoomCommand(TENANT_UUID, 'Taken Name', '123 St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -309,10 +310,10 @@ describe('CreateStoreRoomHandler', () => {
   describe('Given a tenant that has reached the store room limit', () => {
     describe('When create store room is requested', () => {
       it('Then returns StoreRoomLimitReachedError', async () => {
-        mockStoreRoomRepository.countActive.mockResolvedValue(5);
+        mockStoreRoomRepository.count.mockResolvedValue(5);
         mockCapabilities.canCreateMoreStoreRooms.mockReturnValue(false);
 
-        const command = new CreateStoreRoomCommand(TENANT_UUID, 'Over Limit', '123 St');
+        const command = new CreateStoreRoomCommand(TENANT_UUID, 'Over Limit', '123 St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -339,7 +340,7 @@ describe('CreateWarehouseHandler', () => {
 
   describe('Given a tenant on STARTER tier with warehouse capacity', () => {
     beforeEach(() => {
-      mockWarehouseRepository.countActive.mockResolvedValue(0);
+      mockWarehouseRepository.count.mockResolvedValue(0);
       mockStorageRepository.existsActiveName.mockResolvedValue(false);
       const aggregate = makeAggregate();
       mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
@@ -348,7 +349,7 @@ describe('CreateWarehouseHandler', () => {
 
     describe('When the warehouse name is unique', () => {
       it('Then creates and saves the warehouse with fixed icon and color, returning the UUID', async () => {
-        const command = new CreateWarehouseCommand(TENANT_UUID, 'Main WH', '789 Industrial');
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'Main WH', '789 Industrial', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -363,7 +364,7 @@ describe('CreateWarehouseHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new CreateWarehouseCommand(TENANT_UUID, 'Taken WH', '123 St');
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'Taken WH', '123 St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -377,12 +378,12 @@ describe('CreateWarehouseHandler', () => {
       it('Then returns WarehouseRequiresTierUpgradeError', async () => {
         mockCapabilities.canCreateWarehouse.mockReturnValue(false);
 
-        const command = new CreateWarehouseCommand(TENANT_UUID, 'WH', '123 St');
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'WH', '123 St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
-        expect(mockWarehouseRepository.countActive).not.toHaveBeenCalled();
+        expect(mockWarehouseRepository.count).not.toHaveBeenCalled();
       });
     });
   });
@@ -390,10 +391,10 @@ describe('CreateWarehouseHandler', () => {
   describe('Given a tenant that has reached the warehouse limit', () => {
     describe('When warehouse creation is attempted', () => {
       it('Then returns WarehouseRequiresTierUpgradeError', async () => {
-        mockWarehouseRepository.countActive.mockResolvedValue(3);
+        mockWarehouseRepository.count.mockResolvedValue(3);
         mockCapabilities.canCreateMoreWarehouses.mockReturnValue(false);
 
-        const command = new CreateWarehouseCommand(TENANT_UUID, 'Over Limit WH', '123 St');
+        const command = new CreateWarehouseCommand(TENANT_UUID, 'Over Limit WH', '123 St', ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -427,7 +428,7 @@ describe('UpdateCustomRoomHandler', () => {
       it('Then updates the custom room and returns the UUID', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(false);
 
-        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Updated Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Updated Name');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -438,7 +439,7 @@ describe('UpdateCustomRoomHandler', () => {
 
     describe('When updating with the same name', () => {
       it('Then skips the name uniqueness check and updates successfully', async () => {
-        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Existing Room');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Existing Room');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -448,7 +449,7 @@ describe('UpdateCustomRoomHandler', () => {
 
     describe('When no name is provided', () => {
       it('Then skips the name uniqueness check', async () => {
-        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, undefined, 'New desc');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, undefined, 'New desc');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -460,7 +461,7 @@ describe('UpdateCustomRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Taken Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Taken Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -475,7 +476,7 @@ describe('UpdateCustomRoomHandler', () => {
         const aggregate = makeAggregate();
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -492,7 +493,7 @@ describe('UpdateCustomRoomHandler', () => {
         });
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -526,7 +527,7 @@ describe('UpdateStoreRoomHandler', () => {
       it('Then updates the store room and returns the UUID', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(false);
 
-        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'New Store Name');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'New Store Name');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -537,7 +538,7 @@ describe('UpdateStoreRoomHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'Taken');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'Taken');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -552,7 +553,7 @@ describe('UpdateStoreRoomHandler', () => {
         const aggregate = makeAggregate();
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -569,7 +570,7 @@ describe('UpdateStoreRoomHandler', () => {
         });
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -603,7 +604,7 @@ describe('UpdateWarehouseHandler', () => {
       it('Then updates the warehouse and returns the UUID', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(false);
 
-        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'New WH Name');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'New WH Name');
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -614,7 +615,7 @@ describe('UpdateWarehouseHandler', () => {
       it('Then returns StorageNameAlreadyExistsError', async () => {
         mockStorageRepository.existsActiveName.mockResolvedValue(true);
 
-        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'Taken WH');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'Taken WH');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -629,7 +630,7 @@ describe('UpdateWarehouseHandler', () => {
         const aggregate = makeAggregate();
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -646,7 +647,7 @@ describe('UpdateWarehouseHandler', () => {
         });
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, 'Name');
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -678,7 +679,7 @@ describe('ArchiveStorageHandler', () => {
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
         mockWarehouseRepository.save.mockImplementation(async (model) => model);
 
-        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID, ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -695,7 +696,7 @@ describe('ArchiveStorageHandler', () => {
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
         mockStoreRoomRepository.save.mockImplementation(async (model) => model);
 
-        const command = new ArchiveStorageCommand(SR_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(SR_UUID, TENANT_UUID, ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -711,7 +712,7 @@ describe('ArchiveStorageHandler', () => {
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
         mockCustomRoomRepository.save.mockImplementation(async (model) => model);
 
-        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID, ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -726,7 +727,7 @@ describe('ArchiveStorageHandler', () => {
         const aggregate = makeAggregate();
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID, ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -743,7 +744,7 @@ describe('ArchiveStorageHandler', () => {
         });
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID);
+        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID, ACTOR_UUID);
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -806,6 +807,8 @@ describe('ListStoragesHandler', () => {
   });
 
   describe('Given a tenant with storages of multiple types and statuses', () => {
+    // Aggregate: 1 WH (active) + 1 SR (active) + 1 CR (active) + 1 CR (archived)
+    // → full summary: { active: 3, frozen: 0, archived: 1 }
     let aggregate: StorageAggregate;
 
     beforeEach(() => {
@@ -821,7 +824,7 @@ describe('ListStoragesHandler', () => {
     });
 
     describe('When list is requested with ACTIVE status filter', () => {
-      it('Then returns only active items', async () => {
+      it('Then returns only active items, summary reflects full type scope, and typeSummary shows per-type counts', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           { status: StorageStatus.ACTIVE },
@@ -836,11 +839,17 @@ describe('ListStoragesHandler', () => {
           expect(item.archivedAt).toBeNull();
           expect(item.frozenAt).toBeNull();
         });
+        // Summary is not filtered by status — shows full tenant counts
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
+        // typeSummary is computed from ALL items before any filter
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 1, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with ARCHIVED status filter', () => {
-      it('Then returns only archived items', async () => {
+      it('Then returns only archived items and typeSummary still reflects all items unfiltered', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           { status: StorageStatus.ARCHIVED },
@@ -851,11 +860,16 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(1);
         expect(result.items[0].archivedAt).not.toBeNull();
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
+        // typeSummary unaffected by status filter
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 1, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with type=WAREHOUSE filter', () => {
-      it('Then returns only warehouse items', async () => {
+      it('Then returns only warehouse items and typeSummary shows all types regardless of type filter', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           { type: StorageType.WAREHOUSE },
@@ -866,11 +880,17 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(1);
         expect(result.items[0].type).toBe(StorageType.WAREHOUSE);
+        // Summary scoped to warehouses only: 1 active, 0 frozen, 0 archived
+        expect(result.summary).toEqual({ active: 1, frozen: 0, archived: 0 });
+        // typeSummary always reflects ALL items before any filter
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 1, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with search term', () => {
-      it('Then filters by name containing the search term', async () => {
+      it('Then filters by name and typeSummary reflects full pre-search counts', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           {},
@@ -882,11 +902,17 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(1);
         expect(result.items[0].name).toBe('Existing WH');
+        // Summary is computed before search filter
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
+        // typeSummary computed from all items before search
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 1, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with pagination', () => {
-      it('Then returns the correct page of items', async () => {
+      it('Then returns the correct page and typeSummary covers all items across pages', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           {},
@@ -897,11 +923,17 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(2);
         expect(result.total).toBe(4);
+        // Summary covers all 4 items, not just the 2 on this page
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
+        // typeSummary unaffected by pagination
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 1, frozen: 0, archived: 1 });
       });
     });
 
     describe('When list is requested with DESC sort order', () => {
-      it('Then items are sorted by name descending', async () => {
+      it('Then items are sorted by name descending and typeSummary reflects all items', async () => {
         const query = new ListStoragesQuery(
           TENANT_UUID,
           {},
@@ -913,13 +945,86 @@ describe('ListStoragesHandler', () => {
         for (let i = 0; i < result.items.length - 1; i++) {
           expect(result.items[i].name.localeCompare(result.items[i + 1].name)).toBeGreaterThanOrEqual(0);
         }
+        expect(result.summary).toEqual({ active: 3, frozen: 0, archived: 1 });
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 1, frozen: 0, archived: 1 });
+      });
+    });
+  });
+
+  describe('Given a tenant with warehouses in different statuses (active, frozen, archived)', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({
+        warehouses: [
+          makeWarehouse(WH_UUID),
+          makeWarehouse('019538a0-0000-7000-8000-000000000011', { frozenAt: new Date() }),
+          makeWarehouse('019538a0-0000-7000-8000-000000000012', { archivedAt: new Date() }),
+        ],
+        storeRooms: [makeStoreRoom(SR_UUID)],
+        customRooms: [],
+      });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+    });
+
+    describe('When list is requested with FROZEN status filter', () => {
+      it('Then returns only frozen items and typeSummary reflects all warehouse statuses', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          { status: StorageStatus.FROZEN },
+          { page: 1, limit: 50 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.items[0].frozenAt).not.toBeNull();
+        // typeSummary: 3 warehouses (active+frozen+archived), 1 store room, 0 custom rooms
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 1, archived: 1 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
+      });
+    });
+
+    describe('When list is requested with type=WAREHOUSE and no status filter', () => {
+      it('Then summary reflects all three warehouse statuses and typeSummary covers all types', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          { type: StorageType.WAREHOUSE },
+          { page: 1, limit: 50 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.summary).toEqual({ active: 1, frozen: 1, archived: 1 });
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 1, archived: 1 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
+      });
+    });
+
+    describe('When list is requested with type=WAREHOUSE and status=ACTIVE filter', () => {
+      it('Then items are filtered by status but typeSummary still reflects all types unfiltered', async () => {
+        const query = new ListStoragesQuery(
+          TENANT_UUID,
+          { type: StorageType.WAREHOUSE, status: StorageStatus.ACTIVE },
+          { page: 1, limit: 50 },
+          'ASC',
+        );
+        const result = await handler.execute(query);
+
+        expect(result.items).toHaveLength(1);
+        expect(result.summary).toEqual({ active: 1, frozen: 1, archived: 1 });
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 1, archived: 1 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
       });
     });
   });
 
   describe('Given a tenant with no storages', () => {
     describe('When list is requested', () => {
-      it('Then returns an empty page', async () => {
+      it('Then returns an empty page with zero summary and typeSummary counts', async () => {
         const aggregate = makeAggregate();
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
@@ -933,6 +1038,10 @@ describe('ListStoragesHandler', () => {
 
         expect(result.items).toHaveLength(0);
         expect(result.total).toBe(0);
+        expect(result.summary).toEqual({ active: 0, frozen: 0, archived: 0 });
+        expect(result.typeSummary.WAREHOUSE).toEqual({ active: 0, frozen: 0, archived: 0 });
+        expect(result.typeSummary.STORE_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
+        expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
       });
     });
   });

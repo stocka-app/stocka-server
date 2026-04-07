@@ -308,7 +308,16 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
 
     describe('When the tenant tier is upgraded to STARTER', () => {
       beforeAll(async () => {
-        await setTenantTier(dataSource, tenantId, 'STARTER');
+        // Upgrade tier AND set capacity columns to match STARTER limits.
+        // setTenantTier() alone only updates the tier column — capacity columns
+        // (max_store_rooms, max_warehouses, max_custom_rooms) must also be updated
+        // so the create handlers enforce the correct per-type limits.
+        await dataSource.query(
+          `UPDATE "tenants"."tenant_config"
+           SET tier = 'STARTER', max_warehouses = 3, max_custom_rooms = 3, max_store_rooms = 3, max_users = 5
+           WHERE tenant_id = $1`,
+          [tenantId],
+        );
         await setStorageCount(dataSource, tenantId, 0);
       });
 
@@ -351,10 +360,11 @@ describe('SecurityGuard — real business endpoint enforcement (e2e)', () => {
 
         describe('When the OWNER sends a valid create storage request', () => {
           it('Then SecurityGuard passes and the storage is created successfully', async () => {
+            // Use a unique name — 'Test Storage Room' was already created in the FREE tier test
             const res = await request(app.getHttpServer())
               .post('/api/storages/store-rooms')
               .set('Authorization', `Bearer ${ownerToken}`)
-              .send(validStorageBody);
+              .send({ name: 'Starter Capacity Test Room', address: '100 Test St' });
 
             // Guard passed — handler ran and created the storage
             expect(res.status).toBe(HttpStatus.CREATED);

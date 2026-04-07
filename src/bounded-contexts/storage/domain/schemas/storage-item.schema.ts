@@ -17,7 +17,21 @@ export interface StorageItemView {
   roomType: string | null;
 }
 
+export interface StorageStatusSummary {
+  active: number;
+  frozen: number;
+  archived: number;
+}
+
+export interface StorageTypeSummary {
+  WAREHOUSE: StorageStatusSummary;
+  STORE_ROOM: StorageStatusSummary;
+  CUSTOM_ROOM: StorageStatusSummary;
+}
+
 export interface StorageItemPage {
   items: StorageItemView[];
   total: number;
+  summary: StorageStatusSummary;
+  typeSummary: StorageTypeSummary;
 }

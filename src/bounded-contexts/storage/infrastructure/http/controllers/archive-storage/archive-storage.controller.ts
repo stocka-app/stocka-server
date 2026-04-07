@@ -21,7 +21,7 @@ export class ArchiveStorageController {
   @ApiResponse({ status: 404, description: 'Storage not found' })
   @ApiResponse({ status: 409, description: 'Already archived' })
   async handle(@Param('uuid') uuid: string, @CurrentUser() user: JwtPayload): Promise<void> {
-    const command = new ArchiveStorageCommand(uuid, user.tenantId as string);
+    const command = new ArchiveStorageCommand(uuid, user.tenantId as string, user.uuid);
 
     const result = await this.commandBus.execute<ArchiveStorageCommand, ArchiveStorageResult>(
       command,

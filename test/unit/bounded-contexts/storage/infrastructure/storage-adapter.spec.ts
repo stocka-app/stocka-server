@@ -79,6 +79,21 @@ describe('TenantCapabilitiesAdapter', () => {
     });
   });
 
+  describe('Given no tier limits are available (tenant has no config)', () => {
+    describe('When getCapabilities is called', () => {
+      it('Then it returns conservative defaults: warehouse=0, customRoom=1, storeRoom=1', async () => {
+        const adapter = new TenantCapabilitiesAdapter(makeMediator(null));
+        const caps = await adapter.getCapabilities(TENANT_UUID);
+
+        expect(caps.canCreateWarehouse()).toBe(false);        // maxWarehouses = 0
+        expect(caps.canCreateMoreCustomRooms(0)).toBe(true);  // maxCustomRooms = 1 → 0 < 1
+        expect(caps.canCreateMoreCustomRooms(1)).toBe(false); // 1 < 1 = false
+        expect(caps.canCreateMoreStoreRooms(0)).toBe(true);   // maxStoreRooms = 1 → 0 < 1
+        expect(caps.canCreateMoreStoreRooms(1)).toBe(false);  // 1 < 1 = false
+      });
+    });
+  });
+
   describe('Given a tenant on ENTERPRISE tier with unlimited quotas (-1)', () => {
     let caps: Awaited<ReturnType<TenantCapabilitiesAdapter['getCapabilities']>>;
 

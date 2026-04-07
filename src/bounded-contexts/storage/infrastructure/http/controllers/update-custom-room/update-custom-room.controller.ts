@@ -29,6 +29,7 @@ export class UpdateCustomRoomController {
       new UpdateCustomRoomCommand(
         uuid,
         user.tenantId as string,
+        user.uuid,
         dto.name,
         dto.description,
         dto.icon,

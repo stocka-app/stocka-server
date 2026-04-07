@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, IsNull } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { WarehouseModel } from '@storage/domain/models/warehouse.model';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
@@ -25,8 +25,8 @@ export class TypeOrmWarehouseRepository implements IWarehouseRepository {
     return this.repo;
   }
 
-  async countActive(tenantUUID: string): Promise<number> {
-    return this.repo.countBy({ tenantUUID, archivedAt: IsNull() });
+  async count(tenantUUID: string): Promise<number> {
+    return this.repo.countBy({ tenantUUID });
   }
 
   async save(model: WarehouseModel, storageId: number): Promise<WarehouseModel> {
