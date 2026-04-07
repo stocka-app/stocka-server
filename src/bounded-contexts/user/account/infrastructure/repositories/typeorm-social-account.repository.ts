@@ -29,7 +29,7 @@ export class TypeOrmSocialAccountRepository implements ISocialAccountContract {
     providerId: string,
   ): Promise<Persisted<SocialAccountModel> | null> {
     const entity = await this.repository.findOne({ where: { provider, providerId } });
-    return entity ? SocialAccountMapper.toDomain(entity) as Persisted<SocialAccountModel> : null;
+    return entity ? (SocialAccountMapper.toDomain(entity) as Persisted<SocialAccountModel>) : null;
   }
 
   async persist(model: SocialAccountModel): Promise<Persisted<SocialAccountModel>> {
@@ -38,6 +38,8 @@ export class TypeOrmSocialAccountRepository implements ISocialAccountContract {
       ? (this.uow.getManager() as EntityManager).getRepository(SocialAccountEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return SocialAccountMapper.toDomain(savedEntity as SocialAccountEntity) as Persisted<SocialAccountModel>;
+    return SocialAccountMapper.toDomain(
+      savedEntity as SocialAccountEntity,
+    ) as Persisted<SocialAccountModel>;
   }
 }

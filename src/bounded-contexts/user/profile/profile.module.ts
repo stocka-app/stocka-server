@@ -8,13 +8,7 @@ import { TypeOrmProfileRepository } from '@user/profile/infrastructure/repositor
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      ProfileEntity,
-      PersonalProfileEntity,
-      SocialProfileEntity,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([ProfileEntity, PersonalProfileEntity, SocialProfileEntity])],
   providers: [
     { provide: INJECTION_TOKENS.PROFILE_CONTRACT, useClass: TypeOrmProfileRepository },
     TypeOrmProfileRepository,

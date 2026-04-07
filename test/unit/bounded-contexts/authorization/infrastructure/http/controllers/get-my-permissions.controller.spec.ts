@@ -1,7 +1,10 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { GetMyPermissionsController } from '@authorization/infrastructure/http/controllers/get-my-permissions/get-my-permissions.controller';
-import { ITenantFacade, TenantMembershipContext } from '@tenant/domain/contracts/tenant-facade.contract';
+import {
+  ITenantFacade,
+  TenantMembershipContext,
+} from '@tenant/domain/contracts/tenant-facade.contract';
 import { IRbacPolicyPort } from '@authorization/domain/contracts/rbac-policy.port';
 import { JwtPayload } from '@common/decorators/current-user.decorator';
 

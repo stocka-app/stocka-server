@@ -24,7 +24,13 @@ export class CreateWarehouseController {
     @CurrentUser() user: JwtPayload,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<CreateWarehouseCommand, CreateWarehouseResult>(
-      new CreateWarehouseCommand(user.tenantId as string, dto.name, dto.address, user.uuid, dto.description),
+      new CreateWarehouseCommand(
+        user.tenantId as string,
+        dto.name,
+        dto.address,
+        user.uuid,
+        dto.description,
+      ),
     );
 
     return result.match(

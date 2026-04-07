@@ -59,14 +59,17 @@ describe('StorageCreatedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry).toBeInstanceOf(StorageActivityLogEntry);
         expect(savedEntry.action).toBe(StorageActivityAction.CREATED);
         expect(savedEntry.storageUUID.toString()).toBe(STORAGE_UUID);
         expect(savedEntry.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
         expect(savedEntry.previousValue).toBeNull();
-        expect(savedEntry.newValue).toEqual({ type: StorageType.WAREHOUSE, name: 'Main Warehouse' });
+        expect(savedEntry.newValue).toEqual({
+          type: StorageType.WAREHOUSE,
+          name: 'Main Warehouse',
+        });
       });
     });
   });
@@ -95,7 +98,7 @@ describe('StorageNameChangedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry).toBeInstanceOf(StorageActivityLogEntry);
         expect(savedEntry.action).toBe(StorageActivityAction.NAME_CHANGED);
         expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
@@ -129,7 +132,7 @@ describe('StorageDescriptionChangedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.DESCRIPTION_CHANGED);
         expect(savedEntry.previousValue).toEqual({ description: 'Old description' });
         expect(savedEntry.newValue).toEqual({ description: 'New description' });
@@ -150,7 +153,7 @@ describe('StorageDescriptionChangedEventHandler', () => {
 
         await handler.handle(event);
 
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.previousValue).toEqual({ description: 'Had a description' });
         expect(savedEntry.newValue).toEqual({ description: null });
       });
@@ -181,7 +184,7 @@ describe('StorageAddressChangedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.ADDRESS_CHANGED);
         expect(savedEntry.previousValue).toEqual({ address: '100 Old Street' });
         expect(savedEntry.newValue).toEqual({ address: '200 New Avenue' });
@@ -214,7 +217,7 @@ describe('StorageIconChangedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.ICON_CHANGED);
         expect(savedEntry.previousValue).toEqual({ icon: 'warehouse' });
         expect(savedEntry.newValue).toEqual({ icon: 'inventory_2' });
@@ -246,7 +249,7 @@ describe('StorageColorChangedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.COLOR_CHANGED);
         expect(savedEntry.previousValue).toEqual({ color: '#3b82f6' });
         expect(savedEntry.newValue).toEqual({ color: '#a855f7' });
@@ -278,7 +281,7 @@ describe('StorageTypeChangedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.TYPE_CHANGED);
         expect(savedEntry.previousValue).toEqual({ type: 'Office' });
         expect(savedEntry.newValue).toEqual({ type: 'Workshop' });
@@ -305,7 +308,7 @@ describe('StorageArchivedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.ARCHIVED);
         expect(savedEntry.storageUUID.toString()).toBe(STORAGE_UUID);
         expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
@@ -333,7 +336,7 @@ describe('StorageFrozenEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.FROZEN);
         expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
         expect(savedEntry.previousValue).toBeNull();
@@ -360,7 +363,7 @@ describe('StorageReactivatedEventHandler', () => {
         await handler.handle(event);
 
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
-        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0] as StorageActivityLogEntry;
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.REACTIVATED);
         expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
         expect(savedEntry.previousValue).toBeNull();

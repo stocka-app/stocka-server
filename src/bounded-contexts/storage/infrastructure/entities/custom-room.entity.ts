@@ -1,15 +1,9 @@
-import {
-  Entity,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
 import { BaseEntity } from '@shared/infrastructure/base/base.entity';
 
 @Entity({ name: 'custom_rooms', schema: 'storage' })
 export class CustomRoomEntity extends BaseEntity {
-
   @Column({ name: 'tenant_uuid', type: 'uuid' })
   tenantUUID!: string;
 

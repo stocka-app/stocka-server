@@ -27,7 +27,7 @@ export class TypeOrmTenantProfileRepository implements ITenantProfileContract {
   async findByTenantId(tenantId: number): Promise<Persisted<TenantProfileModel> | null> {
     const entity = await this.repository.findOne({ where: { tenantId } });
     /* istanbul ignore next */
-    return entity ? TenantProfileMapper.toDomain(entity) as Persisted<TenantProfileModel> : null;
+    return entity ? (TenantProfileMapper.toDomain(entity) as Persisted<TenantProfileModel>) : null;
   }
 
   async persist(profile: TenantProfileModel): Promise<Persisted<TenantProfileModel>> {
@@ -37,6 +37,8 @@ export class TypeOrmTenantProfileRepository implements ITenantProfileContract {
       ? (this.uow.getManager() as EntityManager).getRepository(TenantProfileEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return TenantProfileMapper.toDomain(savedEntity as TenantProfileEntity) as Persisted<TenantProfileModel>;
+    return TenantProfileMapper.toDomain(
+      savedEntity as TenantProfileEntity,
+    ) as Persisted<TenantProfileModel>;
   }
 }

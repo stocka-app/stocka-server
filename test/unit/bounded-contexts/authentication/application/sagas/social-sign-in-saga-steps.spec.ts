@@ -73,7 +73,9 @@ describe('CreateSocialSessionStep', () => {
   describe('Given the ctx is missing user', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing user', async () => {
-        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow('ctx.user not set');
+        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow(
+          'ctx.user not set',
+        );
       });
     });
   });
@@ -92,7 +94,14 @@ describe('CreateSocialSessionStep', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing socialAccountId', async () => {
         await expect(
-          step.execute(baseCtx({ user: buildUser(), refreshToken: 'token', accountId: 5, socialAccountId: undefined })),
+          step.execute(
+            baseCtx({
+              user: buildUser(),
+              refreshToken: 'token',
+              accountId: 5,
+              socialAccountId: undefined,
+            }),
+          ),
         ).rejects.toThrow('ctx.socialAccountId not set');
       });
     });
@@ -124,7 +133,9 @@ describe('GenerateSocialTokensStep', () => {
   describe('Given the ctx is missing user', () => {
     describe('When execute is called', () => {
       it('Then it throws an error about missing user', async () => {
-        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow('ctx.user not set');
+        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow(
+          'ctx.user not set',
+        );
       });
     });
   });
@@ -159,7 +170,9 @@ describe('PublishSocialSignInEventsStep', () => {
   describe('Given the ctx is missing user', () => {
     describe('When execute is called', () => {
       it('Then it rejects with an error about missing user', async () => {
-        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow('ctx.user not set');
+        await expect(step.execute(baseCtx({ user: undefined }))).rejects.toThrow(
+          'ctx.user not set',
+        );
       });
     });
   });

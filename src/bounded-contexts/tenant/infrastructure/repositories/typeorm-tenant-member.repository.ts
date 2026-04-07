@@ -24,10 +24,13 @@ export class TypeOrmTenantMemberRepository implements ITenantMemberContract {
   }
 
   /* istanbul ignore next -- no handler or controller calls this method yet */
-  async findByTenantAndUserId(tenantId: number, userId: number): Promise<Persisted<TenantMemberModel> | null> {
+  async findByTenantAndUserId(
+    tenantId: number,
+    userId: number,
+  ): Promise<Persisted<TenantMemberModel> | null> {
     const entity = await this.repository.findOne({ where: { tenantId, userId } });
     /* istanbul ignore next */
-    return entity ? TenantMemberMapper.toDomain(entity) as Persisted<TenantMemberModel> : null;
+    return entity ? (TenantMemberMapper.toDomain(entity) as Persisted<TenantMemberModel>) : null;
   }
 
   async findActiveByUserUUID(userUUID: string): Promise<Persisted<TenantMemberModel> | null> {
@@ -35,13 +38,15 @@ export class TypeOrmTenantMemberRepository implements ITenantMemberContract {
       where: { userUUID, status: 'active' },
     });
     /* istanbul ignore next */
-    return entity ? TenantMemberMapper.toDomain(entity) as Persisted<TenantMemberModel> : null;
+    return entity ? (TenantMemberMapper.toDomain(entity) as Persisted<TenantMemberModel>) : null;
   }
 
   /* istanbul ignore next -- only called by GetTenantMembersHandler which has no endpoint yet */
   async findAllByTenantId(tenantId: number): Promise<Persisted<TenantMemberModel>[]> {
     const entities = await this.repository.find({ where: { tenantId } });
-    return entities.map((entity) => TenantMemberMapper.toDomain(entity) as Persisted<TenantMemberModel>);
+    return entities.map(
+      (entity) => TenantMemberMapper.toDomain(entity) as Persisted<TenantMemberModel>,
+    );
   }
 
   async persist(member: TenantMemberModel): Promise<Persisted<TenantMemberModel>> {
@@ -50,6 +55,8 @@ export class TypeOrmTenantMemberRepository implements ITenantMemberContract {
       ? (this.uow.getManager() as EntityManager).getRepository(TenantMemberEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return TenantMemberMapper.toDomain(savedEntity as TenantMemberEntity) as Persisted<TenantMemberModel>;
+    return TenantMemberMapper.toDomain(
+      savedEntity as TenantMemberEntity,
+    ) as Persisted<TenantMemberModel>;
   }
 }

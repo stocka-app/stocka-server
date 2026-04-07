@@ -100,11 +100,15 @@ describe('SaveOnboardingStepController', () => {
         commandBus.execute.mockResolvedValue(
           ok({ status: 'in_progress', currentStep: 1, path: null }),
         );
-        (mediator.user.updateLocale as jest.Mock).mockRejectedValue(new Error('locale update failed'));
+        (mediator.user.updateLocale as jest.Mock).mockRejectedValue(
+          new Error('locale update failed'),
+        );
       });
 
       it('Then it propagates the error', async () => {
-        await expect(controller.handle(buildDto(), buildUser(), 'en-US')).rejects.toThrow('locale update failed');
+        await expect(controller.handle(buildDto(), buildUser(), 'en-US')).rejects.toThrow(
+          'locale update failed',
+        );
       });
     });
 

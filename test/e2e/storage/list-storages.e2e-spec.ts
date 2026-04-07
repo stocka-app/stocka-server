@@ -93,7 +93,14 @@ const STORAGE_ROUTES: Record<string, string> = {
 async function createStorage(
   app: INestApplication,
   token: string,
-  payload: { type: string; name: string; address?: string; roomType?: string; icon?: string; color?: string },
+  payload: {
+    type: string;
+    name: string;
+    address?: string;
+    roomType?: string;
+    icon?: string;
+    color?: string;
+  },
 ): Promise<string> {
   const { type, ...body } = payload;
   const res = await request(app.getHttpServer())
@@ -110,10 +117,9 @@ async function archiveStorage(app: INestApplication, token: string, uuid: string
 }
 
 async function freezeStoreRoom(dataSource: DataSource, uuid: string): Promise<void> {
-  await dataSource.query(
-    `UPDATE storage.store_rooms SET frozen_at = NOW() WHERE uuid = $1`,
-    [uuid],
-  );
+  await dataSource.query(`UPDATE storage.store_rooms SET frozen_at = NOW() WHERE uuid = $1`, [
+    uuid,
+  ]);
 }
 
 // ─── Spec ─────────────────────────────────────────────────────────────────────

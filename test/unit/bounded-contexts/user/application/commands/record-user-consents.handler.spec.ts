@@ -1,13 +1,13 @@
 import { Repository } from 'typeorm';
 import { RecordUserConsentsHandler } from '@user/application/commands/record-user-consents/record-user-consents.handler';
-import {
-  RecordUserConsentsCommand,
-} from '@user/application/commands/record-user-consents/record-user-consents.command';
+import { RecordUserConsentsCommand } from '@user/application/commands/record-user-consents/record-user-consents.command';
 import { UserConsentEntity } from '@user/infrastructure/persistence/entities/user-consent.entity';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildCommand(overrides: Partial<RecordUserConsentsCommand> = {}): RecordUserConsentsCommand {
+function buildCommand(
+  overrides: Partial<RecordUserConsentsCommand> = {},
+): RecordUserConsentsCommand {
   return {
     userUUID: 'user-uuid-123',
     consents: {
@@ -65,5 +65,4 @@ describe('RecordUserConsentsHandler', () => {
       });
     });
   });
-
 });

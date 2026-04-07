@@ -190,9 +190,7 @@ describe('UserFacade', () => {
       });
 
       it('Then it throws an error mentioning the credentialAccountId', async () => {
-        await expect(facade.verifyEmail(999)).rejects.toThrow(
-          'credentialAccount not found id=999',
-        );
+        await expect(facade.verifyEmail(999)).rejects.toThrow('credentialAccount not found id=999');
       });
     });
 
@@ -327,11 +325,11 @@ describe('UserFacade', () => {
       beforeEach(() => {
         userContract.findByUUID.mockResolvedValue(buildUser(42));
         profileContract.findByUserId.mockResolvedValue(buildProfileAggregate(5, 42));
-        profileContract.upsertSocialProfile.mockResolvedValue({} as ReturnType<
-          typeof profileContract.upsertSocialProfile
-        > extends Promise<infer T>
-          ? T
-          : never);
+        profileContract.upsertSocialProfile.mockResolvedValue(
+          {} as ReturnType<typeof profileContract.upsertSocialProfile> extends Promise<infer T>
+            ? T
+            : never,
+        );
       });
 
       it('Then it upserts the social profile', async () => {
@@ -395,6 +393,5 @@ describe('UserFacade', () => {
         expect(result).toEqual({ givenName: null, familyName: null, avatarUrl: null });
       });
     });
-
   });
 });

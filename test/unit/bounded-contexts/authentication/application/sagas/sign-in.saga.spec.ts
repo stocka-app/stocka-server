@@ -65,9 +65,9 @@ describe('SignInSaga', () => {
         );
 
         // Spy on run() to avoid full saga machinery
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new TestDomainException(),
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockRejectedValue(new TestDomainException());
 
         const result = await saga.execute(buildCtx());
 
@@ -88,9 +88,9 @@ describe('SignInSaga', () => {
           buildNoop() as never,
         );
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new Error('Unexpected DB failure'),
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockRejectedValue(new Error('Unexpected DB failure'));
 
         await expect(saga.execute(buildCtx())).rejects.toThrow('Unexpected DB failure');
       });
@@ -116,9 +116,9 @@ describe('SignInSaga', () => {
           username: 'testuser',
         };
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          completedCtx as SignInSagaContext,
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockResolvedValue(completedCtx as SignInSagaContext);
 
         const result = await saga.execute(buildCtx());
 
@@ -139,7 +139,7 @@ describe('SignInSaga', () => {
         );
 
         jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          buildCtx() as SignInSagaContext, // no user / credential / tokens populated
+          buildCtx(), // no user / credential / tokens populated
         );
 
         await expect(saga.execute(buildCtx())).rejects.toThrow(

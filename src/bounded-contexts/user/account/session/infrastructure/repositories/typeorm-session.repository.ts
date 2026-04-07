@@ -30,17 +30,17 @@ export class TypeOrmSessionRepository implements ISessionContract {
 
   async findById(id: number): Promise<Persisted<SessionAggregate> | null> {
     const entity = await this.repository.findOne({ where: { id, archivedAt: IsNull() } });
-    return entity ? SessionMapper.toDomain(entity) as Persisted<SessionAggregate> : null;
+    return entity ? (SessionMapper.toDomain(entity) as Persisted<SessionAggregate>) : null;
   }
 
   async findByUUID(uuid: string): Promise<Persisted<SessionAggregate> | null> {
     const entity = await this.repository.findOne({ where: { uuid, archivedAt: IsNull() } });
-    return entity ? SessionMapper.toDomain(entity) as Persisted<SessionAggregate> : null;
+    return entity ? (SessionMapper.toDomain(entity) as Persisted<SessionAggregate>) : null;
   }
 
   async findByTokenHash(tokenHash: string): Promise<Persisted<SessionAggregate> | null> {
     const entity = await this.repository.findOne({ where: { tokenHash, archivedAt: IsNull() } });
-    return entity ? SessionMapper.toDomain(entity) as Persisted<SessionAggregate> : null;
+    return entity ? (SessionMapper.toDomain(entity) as Persisted<SessionAggregate>) : null;
   }
 
   async findActiveByAccountId(accountId: number): Promise<Persisted<SessionAggregate>[]> {

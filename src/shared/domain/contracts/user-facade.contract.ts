@@ -22,15 +22,18 @@ export interface IUserFacade {
   findByUUID(uuid: string): Promise<Persisted<UserAggregate> | null>;
   findByAccountId(accountId: number): Promise<Persisted<UserAggregate> | null>;
   findUsernameByUUID(uuid: string): Promise<string | null>;
-  findUserByUUIDWithCredential(
-    uuid: string,
-  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null>;
-  findUserByEmail(
-    email: string,
-  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null>;
-  findUserByEmailOrUsername(
-    identifier: string,
-  ): Promise<{ user: Persisted<UserAggregate>; credential: Persisted<CredentialAccountModel> } | null>;
+  findUserByUUIDWithCredential(uuid: string): Promise<{
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+  } | null>;
+  findUserByEmail(email: string): Promise<{
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+  } | null>;
+  findUserByEmailOrUsername(identifier: string): Promise<{
+    user: Persisted<UserAggregate>;
+    credential: Persisted<CredentialAccountModel>;
+  } | null>;
   findUserBySocialProvider(
     provider: string,
     providerId: string,

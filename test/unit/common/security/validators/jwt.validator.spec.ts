@@ -43,7 +43,9 @@ describe('JwtValidator', () => {
         try {
           validator.validate(ctx);
         } catch (e) {
-          expect((e as UnauthorizedException).getResponse()).toEqual({ error: 'NOT_AUTHENTICATED' });
+          expect((e as UnauthorizedException).getResponse()).toEqual({
+            error: 'NOT_AUTHENTICATED',
+          });
         }
       });
     });

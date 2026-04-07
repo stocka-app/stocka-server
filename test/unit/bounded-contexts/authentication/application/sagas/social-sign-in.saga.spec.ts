@@ -53,9 +53,9 @@ describe('SocialSignInSaga', () => {
           buildNoop() as never,
         );
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new Error('Unexpected DB failure'),
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockRejectedValue(new Error('Unexpected DB failure'));
 
         await expect(saga.execute(buildCtx())).rejects.toThrow('Unexpected DB failure');
       });
@@ -81,9 +81,9 @@ describe('SocialSignInSaga', () => {
           refreshToken: 'refresh-token',
         };
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          completedCtx as SocialSignInSagaContext,
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockResolvedValue(completedCtx as SocialSignInSagaContext);
 
         const result = await saga.execute(buildCtx());
 
@@ -105,7 +105,7 @@ describe('SocialSignInSaga', () => {
         );
 
         jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          buildCtx() as SocialSignInSagaContext, // no user / credential / tokens populated
+          buildCtx(), // no user / credential / tokens populated
         );
 
         await expect(saga.execute(buildCtx())).rejects.toThrow(

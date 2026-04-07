@@ -28,7 +28,9 @@ class TestDomainException extends DomainException {
   }
 }
 
-function buildCommand(overrides: Partial<CompleteOnboardingCommand> = {}): CompleteOnboardingCommand {
+function buildCommand(
+  overrides: Partial<CompleteOnboardingCommand> = {},
+): CompleteOnboardingCommand {
   return {
     userUUID: 'user-uuid-123',
     userEmail: 'test@example.com',
@@ -55,11 +57,13 @@ function buildSession(overrides: {
   });
 }
 
-function buildInvitation(overrides: {
-  isAlreadyAccepted?: boolean;
-  isExpired?: boolean;
-  emailMatches?: boolean;
-} = {}): TenantInvitationModel {
+function buildInvitation(
+  overrides: {
+    isAlreadyAccepted?: boolean;
+    isExpired?: boolean;
+    emailMatches?: boolean;
+  } = {},
+): TenantInvitationModel {
   return {
     id: 'invitation-uuid',
     tenantId: 1,
@@ -428,7 +432,9 @@ describe('CompleteOnboardingHandler', () => {
             },
           }),
         );
-        commandBus.execute.mockResolvedValueOnce(ok({ tenantId: 'tenant-uuid-456', name: 'Test Biz' }));
+        commandBus.execute.mockResolvedValueOnce(
+          ok({ tenantId: 'tenant-uuid-456', name: 'Test Biz' }),
+        );
       });
 
       it('Then it returns ok without creating a default storage', async () => {
@@ -516,9 +522,7 @@ describe('CompleteOnboardingHandler', () => {
         sessionContract.findByUserUUID.mockResolvedValue(
           buildSession({ path: OnboardingPath.JOIN, invitationCode: 'inv-token-xyz' }),
         );
-        invitationContract.findByToken.mockResolvedValue(
-          buildInvitation({ emailMatches: false }),
-        );
+        invitationContract.findByToken.mockResolvedValue(buildInvitation({ emailMatches: false }));
       });
 
       it('Then it returns err with InvitationEmailMismatchError', async () => {
@@ -556,7 +560,10 @@ describe('CompleteOnboardingHandler', () => {
             buildSession({ path: OnboardingPath.JOIN, invitationCode: 'inv-token-xyz' }),
           );
         invitationContract.findByToken.mockResolvedValue(buildInvitation());
-        (mediator.user.findByUUID as jest.Mock).mockResolvedValue({ id: 42, uuid: 'user-uuid-123' });
+        (mediator.user.findByUUID as jest.Mock).mockResolvedValue({
+          id: 42,
+          uuid: 'user-uuid-123',
+        });
       });
 
       it('Then it returns ok with JOIN path and tenant info', async () => {
@@ -569,6 +576,5 @@ describe('CompleteOnboardingHandler', () => {
         expect(data.role).toBe('VIEWER');
       });
     });
-
   });
 });

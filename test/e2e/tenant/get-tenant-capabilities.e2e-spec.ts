@@ -189,11 +189,14 @@ describe('GET /api/tenants/me/capabilities (e2e)', () => {
     const NULL_TIER = 'NULL_LIMIT_TEST';
 
     beforeAll(async () => {
-      await dataSource.query(`
+      await dataSource.query(
+        `
         INSERT INTO "tiers"."tier_plans" (tier, name, policy_version, max_products, max_users, max_warehouses)
         VALUES ($1, 'NULL Limit Test Tier', NOW(), NULL, NULL, NULL)
         ON CONFLICT (tier) DO NOTHING
-      `, [NULL_TIER]);
+      `,
+        [NULL_TIER],
+      );
     });
 
     afterAll(async () => {

@@ -26,13 +26,13 @@ export class TypeOrmAccountRepository implements IAccountContract {
   async findById(id: number): Promise<Persisted<AccountAggregate> | null> {
     const entity = await this.repository.findOne({ where: { id } });
     /* istanbul ignore next */
-    return entity ? AccountMapper.toDomain(entity) as Persisted<AccountAggregate> : null;
+    return entity ? (AccountMapper.toDomain(entity) as Persisted<AccountAggregate>) : null;
   }
 
   async findByUserId(userId: number): Promise<Persisted<AccountAggregate> | null> {
     const entity = await this.repository.findOne({ where: { userId } });
     /* istanbul ignore next */
-    return entity ? AccountMapper.toDomain(entity) as Persisted<AccountAggregate> : null;
+    return entity ? (AccountMapper.toDomain(entity) as Persisted<AccountAggregate>) : null;
   }
 
   async persist(account: AccountAggregate): Promise<Persisted<AccountAggregate>> {

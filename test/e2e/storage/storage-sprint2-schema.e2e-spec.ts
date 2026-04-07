@@ -172,7 +172,11 @@ describe('Storage BC — Sprint 2 Schema (sub-table fields)', () => {
         });
         expect(createRes.status).toBe(HttpStatus.CREATED);
 
-        const getRes = await getStorage(app, token, (createRes.body as CreateStorageResponse).storageUUID);
+        const getRes = await getStorage(
+          app,
+          token,
+          (createRes.body as CreateStorageResponse).storageUUID,
+        );
         expect(getRes.status).toBe(HttpStatus.OK);
         expect(getRes.body.description).toBe('Room description text here');
       });

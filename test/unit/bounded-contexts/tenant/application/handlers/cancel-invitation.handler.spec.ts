@@ -9,20 +9,21 @@ import {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildCommand(overrides: Partial<{
-  invitationId: number;
-  tenantId: number;
-}> = {}): CancelInvitationCommand {
-  return new CancelInvitationCommand(
-    overrides.invitationId ?? 1,
-    overrides.tenantId ?? 10,
-  );
+function buildCommand(
+  overrides: Partial<{
+    invitationId: number;
+    tenantId: number;
+  }> = {},
+): CancelInvitationCommand {
+  return new CancelInvitationCommand(overrides.invitationId ?? 1, overrides.tenantId ?? 10);
 }
 
-function buildInvitation(overrides: {
-  tenantId?: number;
-  isAlreadyAccepted?: boolean;
-} = {}): TenantInvitationModel {
+function buildInvitation(
+  overrides: {
+    tenantId?: number;
+    isAlreadyAccepted?: boolean;
+  } = {},
+): TenantInvitationModel {
   return {
     id: 1,
     tenantId: overrides.tenantId ?? 10,

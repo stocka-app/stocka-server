@@ -20,5 +20,4 @@ export class CreateStoreRoomInDto {
   @MinLength(5)
   @MaxLength(300)
   description?: string;
-
 }

@@ -22,14 +22,18 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     const entity = await this.repository.findOne({
       where: { id, archivedAt: IsNull() },
     });
-    return entity ? EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel> : null;
+    return entity
+      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      : null;
   }
 
   async findByUUID(uuid: string): Promise<Persisted<EmailVerificationTokenModel> | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: IsNull() },
     });
-    return entity ? EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel> : null;
+    return entity
+      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      : null;
   }
 
   async findActiveByCredentialAccountId(
@@ -44,7 +48,9 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
       },
       order: { createdAt: 'DESC' },
     });
-    return entity ? EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel> : null;
+    return entity
+      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      : null;
   }
 
   async findByCodeHash(codeHash: string): Promise<Persisted<EmailVerificationTokenModel> | null> {
@@ -55,16 +61,22 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
         usedAt: IsNull(),
       },
     });
-    return entity ? EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel> : null;
+    return entity
+      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      : null;
   }
 
-  async persist(token: EmailVerificationTokenModel): Promise<Persisted<EmailVerificationTokenModel>> {
+  async persist(
+    token: EmailVerificationTokenModel,
+  ): Promise<Persisted<EmailVerificationTokenModel>> {
     const entityData = EmailVerificationTokenMapper.toEntity(token);
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(EmailVerificationTokenEntity)
       : this.repository;
     const savedEntity = await repo.save(entityData);
-    return EmailVerificationTokenMapper.toDomain(savedEntity as EmailVerificationTokenEntity) as Persisted<EmailVerificationTokenModel>;
+    return EmailVerificationTokenMapper.toDomain(
+      savedEntity as EmailVerificationTokenEntity,
+    ) as Persisted<EmailVerificationTokenModel>;
   }
 
   async archive(uuid: string): Promise<void> {

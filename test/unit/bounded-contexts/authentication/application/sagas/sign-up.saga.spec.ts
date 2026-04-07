@@ -65,9 +65,9 @@ describe('SignUpSaga', () => {
           buildNoop() as never,
         );
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new TestDomainException(),
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockRejectedValue(new TestDomainException());
 
         const result = await saga.execute(buildCtx());
 
@@ -92,9 +92,9 @@ describe('SignUpSaga', () => {
           buildNoop() as never,
         );
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockRejectedValue(
-          new Error('Unexpected DB failure'),
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockRejectedValue(new Error('Unexpected DB failure'));
 
         await expect(saga.execute(buildCtx())).rejects.toThrow('Unexpected DB failure');
       });
@@ -125,9 +125,9 @@ describe('SignUpSaga', () => {
           emailSent: true,
         };
 
-        jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          completedCtx as SignUpSagaContext,
-        );
+        jest
+          .spyOn(saga as unknown as { run: jest.Mock }, 'run')
+          .mockResolvedValue(completedCtx as SignUpSagaContext);
 
         const result = await saga.execute(buildCtx());
 
@@ -152,7 +152,7 @@ describe('SignUpSaga', () => {
         );
 
         jest.spyOn(saga as unknown as { run: jest.Mock }, 'run').mockResolvedValue(
-          buildCtx() as SignUpSagaContext, // no user / credential / tokens populated
+          buildCtx(), // no user / credential / tokens populated
         );
 
         await expect(saga.execute(buildCtx())).rejects.toThrow(

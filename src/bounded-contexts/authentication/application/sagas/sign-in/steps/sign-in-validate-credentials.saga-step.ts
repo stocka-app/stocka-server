@@ -13,8 +13,7 @@ import { SignInSagaContext } from '@authentication/application/sagas/sign-in/sig
  * of whether the identifier maps to a real account, preventing user enumeration
  * via timing differences.
  */
-const TIMING_SAFE_DUMMY_HASH =
-  '$2b$12$KIXeWNxKrZlGLzFPmwpMfuNhYFxR7J3v5rRBqZK0kH8CdlIuGkEYi';
+const TIMING_SAFE_DUMMY_HASH = '$2b$12$KIXeWNxKrZlGLzFPmwpMfuNhYFxR7J3v5rRBqZK0kH8CdlIuGkEYi';
 
 @Injectable()
 export class ValidateCredentialsStep implements ISagaStepHandler<SignInSagaContext> {

@@ -270,9 +270,7 @@ describe('StorageIconVO', () => {
   describe('Given an empty icon identifier', () => {
     describe('When create is called', () => {
       it('Then it throws an error', () => {
-        expect(() => StorageIconVO.create('')).toThrow(
-          'Storage icon identifier cannot be empty',
-        );
+        expect(() => StorageIconVO.create('')).toThrow('Storage icon identifier cannot be empty');
       });
     });
   });

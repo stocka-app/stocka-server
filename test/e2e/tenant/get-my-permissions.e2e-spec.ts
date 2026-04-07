@@ -298,7 +298,12 @@ describe('GET /api/rbac/my-permissions (e2e)', () => {
       const WAREHOUSE_KEEPER_USERNAME = 'mypermwarehousekeepere2e';
 
       await signUp(app, dataSource, WAREHOUSE_KEEPER_EMAIL, WAREHOUSE_KEEPER_USERNAME);
-      await insertMemberDirectly(dataSource, TENANT_NAME, WAREHOUSE_KEEPER_EMAIL, 'WAREHOUSE_KEEPER');
+      await insertMemberDirectly(
+        dataSource,
+        TENANT_NAME,
+        WAREHOUSE_KEEPER_EMAIL,
+        'WAREHOUSE_KEEPER',
+      );
       warehouseKeeperToken = await signIn(app, WAREHOUSE_KEEPER_EMAIL);
     });
 

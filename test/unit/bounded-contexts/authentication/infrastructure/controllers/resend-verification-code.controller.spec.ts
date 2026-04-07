@@ -7,12 +7,14 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildRequest(overrides: {
-  forwardedFor?: string | string[];
-  ip?: string;
-  remoteAddress?: string;
-  acceptLanguage?: string;
-} = {}): Request {
+function buildRequest(
+  overrides: {
+    forwardedFor?: string | string[];
+    ip?: string;
+    remoteAddress?: string;
+    acceptLanguage?: string;
+  } = {},
+): Request {
   return {
     headers: {
       'x-forwarded-for': overrides.forwardedFor,

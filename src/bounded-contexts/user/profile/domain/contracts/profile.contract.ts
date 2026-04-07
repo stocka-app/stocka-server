@@ -14,5 +14,7 @@ export interface IProfileContract {
     profileId: number,
     provider: string,
   ): Promise<Persisted<SocialProfileModel> | null>;
-  findFirstSocialProfileByProfileId(profileId: number): Promise<Persisted<SocialProfileModel> | null>;
+  findFirstSocialProfileByProfileId(
+    profileId: number,
+  ): Promise<Persisted<SocialProfileModel> | null>;
 }
