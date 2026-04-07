@@ -180,10 +180,12 @@ describe('GET /api/tenants/me/capabilities (e2e)', () => {
   });
 
   // ── getTierNumericLimits ?? fallbacks (L110-112) ──────────────────────────
-  // The ?? fallbacks for max_warehouses/max_users/max_products are only used
-  // when the tier_plans row has NULL for those columns (e.g. an unlimited tier).
+  // NULL on any storage-type column (max_warehouses, max_custom_rooms, max_store_rooms)
+  // means the storage type is unlimited. The storageCount field will be -1 in that case,
+  // which the CapabilityResolver treats as "no limit" (same as the -1 sentinel for ENTERPRISE).
+  // Non-storage NULL columns (max_users, max_products) fall back to conservative defaults.
 
-  describe('Given a tier with all NULL numeric limits in tier_plans', () => {
+  describe('Given a tier with NULL numeric limits in tier_plans', () => {
     const NULL_TIER = 'NULL_LIMIT_TEST';
 
     beforeAll(async () => {
@@ -199,16 +201,19 @@ describe('GET /api/tenants/me/capabilities (e2e)', () => {
     });
 
     describe('When getTierNumericLimits is called for that tier', () => {
-      it('Then it returns the ?? fallback values: storageCount=0, memberCount=1, productCount=100', async () => {
+      it('Then NULL storage columns map to -1 (unlimited), while NULL user/product columns use fallbacks', async () => {
         // Clear cache to force a fresh DB read
         app.get<any>(INJECTION_TOKENS.RBAC_POLICY_PORT).cache.clear();
 
         const rbacPort = app.get<IRbacPolicyPort>(INJECTION_TOKENS.RBAC_POLICY_PORT);
         const limits = await rbacPort.getTierNumericLimits(NULL_TIER);
 
-        expect(limits.storageCount).toBe(0);    // max_warehouses ?? 0
-        expect(limits.memberCount).toBe(1);     // max_users ?? 1
-        expect(limits.productCount).toBe(100);  // max_products ?? 100
+        // NULL max_warehouses → unlimited storage → storageCount = -1
+        expect(limits.storageCount).toBe(-1);
+        // NULL max_users → conservative fallback
+        expect(limits.memberCount).toBe(1);
+        // NULL max_products → conservative fallback
+        expect(limits.productCount).toBe(100);
       });
     });
   });

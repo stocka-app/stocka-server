@@ -184,25 +184,32 @@ describe('List Storages — GET /api/storages (e2e)', () => {
     await truncateStorageWorkerTables(dataSource);
   });
 
-  // ── E2E-L1: no filter → all states ──────────────────────────────────────
+  // ── E2E-L1: no filter → all statuses ────────────────────────────────────
 
   describe('Given a tenant with one active warehouse and one archived custom room', () => {
     describe('When GET /api/storages is called without filters', () => {
-      it('Then it returns only ACTIVE storages (default status filter) with pagination metadata', async () => {
+      it('Then it returns all storages with pagination metadata and typeSummary in the response', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/storages')
           .set('Authorization', `Bearer ${ownerAToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(Array.isArray(res.body.items)).toBe(true);
-        // Default status=ACTIVE — only the active warehouse is returned (archived custom room is excluded)
-        expect(res.body.items).toHaveLength(1);
-        expect(res.body.total).toBe(1);
+        // No status param → no filter applied → both ACTIVE and ARCHIVED storages are returned
+        expect(res.body.items).toHaveLength(2);
+        expect(res.body.total).toBe(2);
         expect(res.body.page).toBe(1);
         expect(res.body.totalPages).toBe(1);
 
         const uuids: string[] = res.body.items.map((s: { uuid: string }) => s.uuid);
         expect(uuids).toContain(warehouseUUID);
+        expect(uuids).toContain(customRoomUUID);
+
+        // typeSummary is always included in every list response
+        expect(res.body.typeSummary).toBeDefined();
+        expect(res.body.typeSummary.WAREHOUSE).toEqual({ active: 1, frozen: 0, archived: 0 });
+        expect(res.body.typeSummary.STORE_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
+        expect(res.body.typeSummary.CUSTOM_ROOM).toEqual({ active: 0, frozen: 0, archived: 1 });
       });
     });
   });
@@ -402,8 +409,6 @@ describe('List Storages — GET /api/storages (e2e)', () => {
   });
 
   // ── Repository: no status filter → all storages regardless of status ──────
-  // The HTTP controller always provides a status default (ACTIVE), so the
-  // repository's "no status filter" path is only reachable via direct call.
 
   describe('Given storages of multiple statuses exist for a tenant', () => {
     describe('When the repository is called with no status filter', () => {
@@ -464,13 +469,10 @@ describe('List Storages — GET /api/storages (e2e)', () => {
   });
 
   // ── QueryBus: no status filter → handler returns all items unfiltered ────
-  // The HTTP layer always provides a default status, so the "no status"
-  // handler path (else-if FROZEN = false) is only reachable via direct
-  // QueryBus dispatch with filters: {}.
 
   describe('Given the ListStoragesQuery is dispatched without a status filter', () => {
     describe('When the QueryBus executes the query with no status in filters', () => {
-      it('Then it returns all storages for the tenant regardless of status', async () => {
+      it('Then it returns all storages with typeSummary populated for each type', async () => {
         const rows: Array<{ uuid: string }> = await dataSource.query(
           `SELECT t.uuid FROM "tenants"."tenants" t
            JOIN "tenants"."tenant_members" tm ON tm.tenant_id = t.id
@@ -488,6 +490,18 @@ describe('List Storages — GET /api/storages (e2e)', () => {
 
         // No status filter — all items (active + archived + frozen) are returned
         expect(result.total).toBeGreaterThanOrEqual(3);
+
+        // typeSummary is always present in the result
+        expect(result.typeSummary).toBeDefined();
+        expect(result.typeSummary.WAREHOUSE).toBeDefined();
+        expect(result.typeSummary.STORE_ROOM).toBeDefined();
+        expect(result.typeSummary.CUSTOM_ROOM).toBeDefined();
+
+        // Each type bucket has the correct shape
+        const wh = result.typeSummary.WAREHOUSE;
+        expect(typeof wh.active).toBe('number');
+        expect(typeof wh.frozen).toBe('number');
+        expect(typeof wh.archived).toBe('number');
       });
     });
   });

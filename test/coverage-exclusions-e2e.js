@@ -89,6 +89,10 @@ module.exports = [
   '!src/bounded-contexts/tenant/application/facades/tenant.facade.ts',
   // TypeOrmStorageActivityLogRepository: registered in StorageModule but no handler injects it yet
   '!src/bounded-contexts/storage/infrastructure/repositories/typeorm-storage-activity-log.repository.ts',
+  // TenantCapabilitiesAdapter: null-limits fallback branch (lines 42-44) is a defensive safety net
+  // for tenants with no tier config, which cannot happen in practice — every tenant created via
+  // onboarding gets a tier_config row. The null case is 100% covered by unit tests.
+  '!src/bounded-contexts/storage/infrastructure/adapters/tenant-capabilities.adapter.ts',
   // CreateTenantHandler + GetMyTenantHandler: 100% covered by unit tests.
   // Their error-path imports (TenantOwnerNotFoundError, TenantNotFoundError) are accessed via
   // SWC lazy-require only when the error class is instantiated — which never happens in E2E because

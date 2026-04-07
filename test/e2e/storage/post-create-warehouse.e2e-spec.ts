@@ -130,7 +130,7 @@ describe('POST /api/storages/warehouses (e2e)', () => {
     });
 
     describe('When POST /api/storages/warehouses is called', () => {
-      it('Then it returns 403 because warehouses require STARTER tier or above', async () => {
+      it('Then it returns 403 because the FREE tier snapshot has max_warehouses = 0', async () => {
         const res = await request(app.getHttpServer())
           .post('/api/storages/warehouses')
           .set('Authorization', `Bearer ${freeOwnerToken}`)
