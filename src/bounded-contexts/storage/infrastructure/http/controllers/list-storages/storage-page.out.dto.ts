@@ -14,13 +14,22 @@ class StorageStatusSummaryOutDto {
 }
 
 class StorageTypeSummaryOutDto {
-  @ApiProperty({ type: StorageStatusSummaryOutDto, description: 'Counts for WAREHOUSE across all statuses' })
+  @ApiProperty({
+    type: StorageStatusSummaryOutDto,
+    description: 'Counts for WAREHOUSE across all statuses',
+  })
   WAREHOUSE!: StorageStatusSummaryOutDto;
 
-  @ApiProperty({ type: StorageStatusSummaryOutDto, description: 'Counts for STORE_ROOM across all statuses' })
+  @ApiProperty({
+    type: StorageStatusSummaryOutDto,
+    description: 'Counts for STORE_ROOM across all statuses',
+  })
   STORE_ROOM!: StorageStatusSummaryOutDto;
 
-  @ApiProperty({ type: StorageStatusSummaryOutDto, description: 'Counts for CUSTOM_ROOM across all statuses' })
+  @ApiProperty({
+    type: StorageStatusSummaryOutDto,
+    description: 'Counts for CUSTOM_ROOM across all statuses',
+  })
   CUSTOM_ROOM!: StorageStatusSummaryOutDto;
 }
 
@@ -48,7 +57,8 @@ export class StoragePageOutDto {
   summary!: StorageStatusSummaryOutDto;
 
   @ApiProperty({
-    description: 'Per-type status counts across ALL storages regardless of active filters — used for tab counts on the frontend',
+    description:
+      'Per-type status counts across ALL storages regardless of active filters — used for tab counts on the frontend',
     type: StorageTypeSummaryOutDto,
   })
   typeSummary!: StorageTypeSummaryOutDto;

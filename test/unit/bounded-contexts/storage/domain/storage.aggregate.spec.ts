@@ -21,7 +21,10 @@ const WH_UUID = '019538a0-0000-7000-8000-000000000010';
 const SR_UUID = '019538a0-0000-7000-8000-000000000020';
 const CR_UUID = '019538a0-0000-7000-8000-000000000030';
 
-function makeWarehouse(uuid: string = WH_UUID, overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {}): WarehouseModel {
+function makeWarehouse(
+  uuid: string = WH_UUID,
+  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {},
+): WarehouseModel {
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(uuid),
@@ -38,7 +41,10 @@ function makeWarehouse(uuid: string = WH_UUID, overrides: Partial<{ archivedAt: 
   });
 }
 
-function makeStoreRoom(uuid: string = SR_UUID, overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {}): StoreRoomModel {
+function makeStoreRoom(
+  uuid: string = SR_UUID,
+  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {},
+): StoreRoomModel {
   return StoreRoomModel.reconstitute({
     id: 2,
     uuid: new UUIDVO(uuid),
@@ -55,7 +61,10 @@ function makeStoreRoom(uuid: string = SR_UUID, overrides: Partial<{ archivedAt: 
   });
 }
 
-function makeCustomRoom(uuid: string = CR_UUID, overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {}): CustomRoomModel {
+function makeCustomRoom(
+  uuid: string = CR_UUID,
+  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null }> = {},
+): CustomRoomModel {
   return CustomRoomModel.reconstitute({
     id: 3,
     uuid: new UUIDVO(uuid),
@@ -352,7 +361,11 @@ describe('StorageAggregate — update items', () => {
 
     describe('When updateWarehouse is called with a non-existent UUID', () => {
       it('Then no event is emitted', () => {
-        aggregate.updateWarehouse('019538a0-0000-7000-8000-999999999999', { name: 'Nope' }, ACTOR_UUID);
+        aggregate.updateWarehouse(
+          '019538a0-0000-7000-8000-999999999999',
+          { name: 'Nope' },
+          ACTOR_UUID,
+        );
         expect(aggregate.getUncommittedEvents()).toHaveLength(0);
       });
     });
@@ -390,7 +403,11 @@ describe('StorageAggregate — update items', () => {
 
     describe('When updateStoreRoom is called with a non-existent UUID', () => {
       it('Then no event is emitted', () => {
-        aggregate.updateStoreRoom('019538a0-0000-7000-8000-999999999999', { name: 'Nope' }, ACTOR_UUID);
+        aggregate.updateStoreRoom(
+          '019538a0-0000-7000-8000-999999999999',
+          { name: 'Nope' },
+          ACTOR_UUID,
+        );
         expect(aggregate.getUncommittedEvents()).toHaveLength(0);
       });
     });
@@ -406,7 +423,11 @@ describe('StorageAggregate — update items', () => {
 
     describe('When updateCustomRoom is called with a new name and roomType', () => {
       beforeEach(() => {
-        aggregate.updateCustomRoom(CR_UUID, { name: 'Updated Office', roomType: 'Workshop' }, ACTOR_UUID);
+        aggregate.updateCustomRoom(
+          CR_UUID,
+          { name: 'Updated Office', roomType: 'Workshop' },
+          ACTOR_UUID,
+        );
       });
 
       it('Then the custom room name and roomType are updated', () => {
@@ -418,7 +439,9 @@ describe('StorageAggregate — update items', () => {
       it('Then StorageNameChangedEvent and StorageTypeChangedEvent are emitted', () => {
         const events = aggregate.getUncommittedEvents();
         expect(events).toHaveLength(2);
-        const nameEvent = events.find((e) => e instanceof StorageNameChangedEvent) as StorageNameChangedEvent;
+        const nameEvent = events.find(
+          (e) => e instanceof StorageNameChangedEvent,
+        ) as StorageNameChangedEvent;
         expect(nameEvent).toBeDefined();
         expect(nameEvent.previousName).toBe('Office Room');
         expect(nameEvent.newName).toBe('Updated Office');
@@ -428,7 +451,11 @@ describe('StorageAggregate — update items', () => {
 
     describe('When updateCustomRoom is called with a non-existent UUID', () => {
       it('Then no event is emitted', () => {
-        aggregate.updateCustomRoom('019538a0-0000-7000-8000-999999999999', { name: 'Nope' }, ACTOR_UUID);
+        aggregate.updateCustomRoom(
+          '019538a0-0000-7000-8000-999999999999',
+          { name: 'Nope' },
+          ACTOR_UUID,
+        );
         expect(aggregate.getUncommittedEvents()).toHaveLength(0);
       });
     });
@@ -448,7 +475,11 @@ describe('StorageAggregate — granular events on update', () => {
   describe('Given a warehouse update with name and address changing simultaneously', () => {
     describe('When updateWarehouse is called with both name and address', () => {
       it('Then exactly two events are emitted — one per changed field', () => {
-        aggregate.updateWarehouse(WH_UUID, { name: 'New Name', address: 'New Address' }, ACTOR_UUID);
+        aggregate.updateWarehouse(
+          WH_UUID,
+          { name: 'New Name', address: 'New Address' },
+          ACTOR_UUID,
+        );
         const events = aggregate.getUncommittedEvents();
         expect(events).toHaveLength(2);
         const types = events.map((e) => e.constructor.name);
@@ -528,7 +559,9 @@ describe('StorageAggregate — granular events on update', () => {
         // makePopulatedAggregate has description = 'Main warehouse'
         aggregate.updateWarehouse(WH_UUID, { description: 'Main warehouse' }, ACTOR_UUID);
         const events = aggregate.getUncommittedEvents();
-        const descEvents = events.filter((e) => e.constructor.name === 'StorageDescriptionChangedEvent');
+        const descEvents = events.filter(
+          (e) => e.constructor.name === 'StorageDescriptionChangedEvent',
+        );
         expect(descEvents).toHaveLength(0);
       });
     });

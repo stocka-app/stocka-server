@@ -8,9 +8,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Injectable()
 @EventsHandler(StorageDescriptionChangedEvent)
-export class StorageDescriptionChangedEventHandler
-  implements IEventHandler<StorageDescriptionChangedEvent>
-{
+export class StorageDescriptionChangedEventHandler implements IEventHandler<StorageDescriptionChangedEvent> {
   constructor(
     @Inject(INJECTION_TOKENS.STORAGE_ACTIVITY_LOG_CONTRACT)
     private readonly activityLogRepository: IStorageActivityLogRepository,

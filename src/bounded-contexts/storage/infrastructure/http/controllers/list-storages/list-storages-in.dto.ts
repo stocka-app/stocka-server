@@ -5,7 +5,10 @@ import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 
 export class ListStoragesInDto {
-  @ApiPropertyOptional({ enum: StorageStatus, description: 'Filter by storage status. Omit to return all statuses.' })
+  @ApiPropertyOptional({
+    enum: StorageStatus,
+    description: 'Filter by storage status. Omit to return all statuses.',
+  })
   @IsOptional()
   @IsEnum(StorageStatus)
   status?: StorageStatus;

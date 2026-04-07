@@ -161,10 +161,7 @@ export class StorageAggregate extends AggregateRoot {
 
     this.emitUpdateEvents(uuid, before, this._customRooms[idx], actorUUID, props);
 
-    if (
-      props.roomType !== undefined &&
-      props.roomType !== before.roomType.getValue()
-    ) {
+    if (props.roomType !== undefined && props.roomType !== before.roomType.getValue()) {
       this.apply(
         new StorageTypeChangedEvent(
           uuid,
@@ -314,13 +311,7 @@ export class StorageAggregate extends AggregateRoot {
       const nextDesc = after.description?.getValue() ?? null;
       if (prevDesc !== nextDesc) {
         this.apply(
-          new StorageDescriptionChangedEvent(
-            uuid,
-            this._tenantUUID,
-            actorUUID,
-            prevDesc,
-            nextDesc,
-          ),
+          new StorageDescriptionChangedEvent(uuid, this._tenantUUID, actorUUID, prevDesc, nextDesc),
         );
       }
     }
