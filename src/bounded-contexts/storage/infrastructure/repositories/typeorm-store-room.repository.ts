@@ -1,6 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager, IsNull } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { StoreRoomModel } from '@storage/domain/models/store-room.model';
 import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
@@ -25,8 +25,8 @@ export class TypeOrmStoreRoomRepository implements IStoreRoomRepository {
     return this.repo;
   }
 
-  async countActive(tenantUUID: string): Promise<number> {
-    return this.repo.countBy({ tenantUUID, archivedAt: IsNull() });
+  async count(tenantUUID: string): Promise<number> {
+    return this.repo.countBy({ tenantUUID });
   }
 
   async save(model: StoreRoomModel, storageId: number): Promise<StoreRoomModel> {

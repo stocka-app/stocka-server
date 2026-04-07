@@ -39,6 +39,6 @@ export class ListStoragesController {
     const result = await this.queryBus.execute<ListStoragesQuery, StorageItemPage>(query);
 
     const items = result.items.map((s) => StorageOutDto.fromItem(s));
-    return StoragePageOutDto.from(items, result.total, pagination.page, pagination.limit, result.summary);
+    return StoragePageOutDto.from(items, result.total, pagination.page, pagination.limit, result.summary, result.typeSummary);
   }
 }

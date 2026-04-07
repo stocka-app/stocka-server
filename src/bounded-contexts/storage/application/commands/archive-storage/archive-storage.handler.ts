@@ -42,15 +42,15 @@ export class ArchiveStorageHandler implements ICommandHandler<ArchiveStorageComm
     }
 
     if (view.type === StorageType.WAREHOUSE) {
-      aggregate.archiveWarehouse(command.storageUUID);
+      aggregate.archiveWarehouse(command.storageUUID, command.actorUUID);
       const updated = aggregate.findWarehouse(command.storageUUID)!;
       await this.warehouseRepository.save(updated, aggregate.id!);
     } else if (view.type === StorageType.STORE_ROOM) {
-      aggregate.archiveStoreRoom(command.storageUUID);
+      aggregate.archiveStoreRoom(command.storageUUID, command.actorUUID);
       const updated = aggregate.findStoreRoom(command.storageUUID)!;
       await this.storeRoomRepository.save(updated, aggregate.id!);
     } else {
-      aggregate.archiveCustomRoom(command.storageUUID);
+      aggregate.archiveCustomRoom(command.storageUUID, command.actorUUID);
       const updated = aggregate.findCustomRoom(command.storageUUID)!;
       await this.customRoomRepository.save(updated, aggregate.id!);
     }

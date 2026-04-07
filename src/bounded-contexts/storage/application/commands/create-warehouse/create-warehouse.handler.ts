@@ -38,7 +38,7 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       return err(new WarehouseRequiresTierUpgradeError());
     }
 
-    const currentCount = await this.warehouseRepository.countActive(command.tenantUUID);
+    const currentCount = await this.warehouseRepository.count(command.tenantUUID);
 
     if (!capabilities.canCreateMoreWarehouses(currentCount)) {
       return err(new WarehouseRequiresTierUpgradeError());
@@ -65,7 +65,7 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       address: command.address,
     });
 
-    aggregate.addWarehouse(model);
+    aggregate.addWarehouse(model, command.actorUUID);
 
     await this.warehouseRepository.save(model, aggregate.id!);
 

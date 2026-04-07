@@ -34,7 +34,7 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
   async execute(command: CreateCustomRoomCommand): Promise<CreateCustomRoomResult> {
     const capabilities = await this.capabilitiesPort.getCapabilities(command.tenantUUID);
 
-    const currentCount = await this.customRoomRepository.countActive(command.tenantUUID);
+    const currentCount = await this.customRoomRepository.count(command.tenantUUID);
 
     if (!capabilities.canCreateMoreCustomRooms(currentCount)) {
       return err(new CustomRoomLimitReachedError());
@@ -62,7 +62,7 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
       address: command.address,
     });
 
-    aggregate.addCustomRoom(model);
+    aggregate.addCustomRoom(model, command.actorUUID);
 
     await this.customRoomRepository.save(model, aggregate.id!);
 

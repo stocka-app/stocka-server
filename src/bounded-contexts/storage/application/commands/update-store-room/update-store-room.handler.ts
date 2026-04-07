@@ -40,11 +40,15 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
       }
     }
 
-    aggregate.updateStoreRoom(command.storageUUID, {
-      name: command.name,
-      description: command.description,
-      address: command.address,
-    });
+    aggregate.updateStoreRoom(
+      command.storageUUID,
+      {
+        name: command.name,
+        description: command.description,
+        address: command.address,
+      },
+      command.actorUUID,
+    );
 
     const updated = aggregate.findStoreRoom(command.storageUUID)!;
     await this.storeRoomRepository.save(updated, aggregate.id!);

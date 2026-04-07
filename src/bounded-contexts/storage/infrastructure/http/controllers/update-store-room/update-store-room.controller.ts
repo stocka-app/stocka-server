@@ -29,6 +29,7 @@ export class UpdateStoreRoomController {
       new UpdateStoreRoomCommand(
         uuid,
         user.tenantId as string,
+        user.uuid,
         dto.name,
         dto.description,
         dto.address,

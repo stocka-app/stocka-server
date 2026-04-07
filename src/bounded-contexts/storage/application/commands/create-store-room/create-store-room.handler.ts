@@ -34,7 +34,7 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
   async execute(command: CreateStoreRoomCommand): Promise<CreateStoreRoomResult> {
     const capabilities = await this.capabilitiesPort.getCapabilities(command.tenantUUID);
 
-    const currentCount = await this.storeRoomRepository.countActive(command.tenantUUID);
+    const currentCount = await this.storeRoomRepository.count(command.tenantUUID);
 
     if (!capabilities.canCreateMoreStoreRooms(currentCount)) {
       return err(new StoreRoomLimitReachedError());
@@ -61,7 +61,7 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
       address: command.address,
     });
 
-    aggregate.addStoreRoom(model);
+    aggregate.addStoreRoom(model, command.actorUUID);
 
     await this.storeRoomRepository.save(model, aggregate.id!);
 

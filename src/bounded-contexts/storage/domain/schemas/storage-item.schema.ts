@@ -23,8 +23,15 @@ export interface StorageStatusSummary {
   archived: number;
 }
 
+export interface StorageTypeSummary {
+  WAREHOUSE: StorageStatusSummary;
+  STORE_ROOM: StorageStatusSummary;
+  CUSTOM_ROOM: StorageStatusSummary;
+}
+
 export interface StorageItemPage {
   items: StorageItemView[];
   total: number;
   summary: StorageStatusSummary;
+  typeSummary: StorageTypeSummary;
 }

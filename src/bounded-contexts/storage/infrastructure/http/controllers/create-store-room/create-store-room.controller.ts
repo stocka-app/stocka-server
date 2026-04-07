@@ -28,6 +28,7 @@ export class CreateStoreRoomController {
         user.tenantId as string,
         dto.name,
         dto.address,
+        user.uuid,
         dto.description,
       ),
     );

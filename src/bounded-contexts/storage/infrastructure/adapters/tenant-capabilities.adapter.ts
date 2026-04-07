@@ -7,30 +7,26 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 
 class TenantCapabilitiesImpl implements TenantCapabilities {
   constructor(
-    private readonly tier: string,
     private readonly maxWarehouses: number,
     private readonly maxCustomRooms: number,
     private readonly maxStoreRooms: number,
   ) {}
 
   canCreateWarehouse(): boolean {
-    return this.tier !== 'FREE' && this.maxWarehouses !== 0;
+    return this.maxWarehouses !== 0;
   }
 
   canCreateMoreWarehouses(currentCount: number): boolean {
-    /* istanbul ignore next */
     if (this.maxWarehouses === -1) return true;
     return currentCount < this.maxWarehouses;
   }
 
   canCreateMoreCustomRooms(currentCount: number): boolean {
-    /* istanbul ignore next */
     if (this.maxCustomRooms === -1) return true;
     return currentCount < this.maxCustomRooms;
   }
 
   canCreateMoreStoreRooms(currentCount: number): boolean {
-    /* istanbul ignore next */
     if (this.maxStoreRooms === -1) return true;
     return currentCount < this.maxStoreRooms;
   }
@@ -43,13 +39,11 @@ export class TenantCapabilitiesAdapter implements ITenantCapabilitiesPort {
   async getCapabilities(tenantUUID: string): Promise<TenantCapabilities> {
     const limits = await this.mediator.tenant.getTierLimitsByTenantUUID(tenantUUID);
 
-    /* istanbul ignore next */
     if (!limits) {
-      return new TenantCapabilitiesImpl('FREE', 0, 1, 1);
+      return new TenantCapabilitiesImpl(0, 1, 1);
     }
 
     return new TenantCapabilitiesImpl(
-      limits.tier,
       limits.maxWarehouses,
       limits.maxCustomRooms,
       limits.maxStoreRooms,

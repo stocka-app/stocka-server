@@ -40,11 +40,15 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
       }
     }
 
-    aggregate.updateWarehouse(command.storageUUID, {
-      name: command.name,
-      description: command.description,
-      address: command.address,
-    });
+    aggregate.updateWarehouse(
+      command.storageUUID,
+      {
+        name: command.name,
+        description: command.description,
+        address: command.address,
+      },
+      command.actorUUID,
+    );
 
     const updated = aggregate.findWarehouse(command.storageUUID)!;
     await this.warehouseRepository.save(updated, aggregate.id!);
