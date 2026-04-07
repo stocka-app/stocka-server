@@ -123,6 +123,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
               storageName,
               'General',
               'Pendiente',
+              command.userUUID,
               'Pendiente',
               'box',
               '#6366F1',
