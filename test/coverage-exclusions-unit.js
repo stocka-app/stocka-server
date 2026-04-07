@@ -117,6 +117,16 @@ module.exports = [
   'src/bounded-contexts/tenant/application/queries/get-tenant-members/get-tenant-members.handler.ts',
   'src/bounded-contexts/user/application/commands/record-user-consents/record-user-consents.handler.ts',
   'src/bounded-contexts/onboarding/application/commands/complete-onboarding/complete-onboarding.handler.ts',
+  // Storage command/query handlers: fully unit-tested (no real DB needed — aggregate loaded in-memory)
+  'src/bounded-contexts/storage/application/commands/create-custom-room/create-custom-room.handler.ts',
+  'src/bounded-contexts/storage/application/commands/create-store-room/create-store-room.handler.ts',
+  'src/bounded-contexts/storage/application/commands/create-warehouse/create-warehouse.handler.ts',
+  'src/bounded-contexts/storage/application/commands/update-custom-room/update-custom-room.handler.ts',
+  'src/bounded-contexts/storage/application/commands/update-store-room/update-store-room.handler.ts',
+  'src/bounded-contexts/storage/application/commands/update-warehouse/update-warehouse.handler.ts',
+  'src/bounded-contexts/storage/application/commands/archive-storage/archive-storage.handler.ts',
+  'src/bounded-contexts/storage/application/queries/get-storage/get-storage.handler.ts',
+  'src/bounded-contexts/storage/application/queries/list-storages/list-storages.handler.ts',
 
   // ── CQRS DTOs (command/query classes — pure data carriers, no logic) ─────
   '!src/**/application/commands/**/*.command.ts',
