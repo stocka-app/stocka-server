@@ -579,6 +579,30 @@ describe('UpdateCustomRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the aggregate has no persisted id', () => {
+    describe('When update is requested', () => {
+      it('Then returns StorageNotFoundError as a safety guard', async () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: undefined as unknown as number,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          warehouses: [],
+          storeRooms: [],
+          customRooms: [makeCustomRoom(CR_UUID)],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'New Name');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 // ── UpdateStoreRoomHandler ──────────────────────────────────────────────────────
@@ -686,6 +710,30 @@ describe('UpdateStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the aggregate has no persisted id', () => {
+    describe('When update is requested', () => {
+      it('Then returns StorageNotFoundError as a safety guard', async () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: undefined as unknown as number,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          warehouses: [],
+          storeRooms: [makeStoreRoom(SR_UUID)],
+          customRooms: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'New Name');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 // ── UpdateWarehouseHandler ──────────────────────────────────────────────────────
@@ -780,6 +828,47 @@ describe('UpdateWarehouseHandler', () => {
 
         expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
+      });
+    });
+  });
+
+  describe('Given the aggregate has no persisted id', () => {
+    describe('When update is requested', () => {
+      it('Then returns StorageNotFoundError as a safety guard', async () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: undefined as unknown as number,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          warehouses: [makeWarehouse(WH_UUID)],
+          storeRooms: [],
+          customRooms: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'New Name');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given a warehouse with an empty address update', () => {
+    describe('When address is sent as empty string', () => {
+      it('Then returns StorageAddressRequiredForWarehouseError', async () => {
+        const aggregate = makeAggregate({
+          warehouses: [makeWarehouse(WH_UUID)],
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, undefined, undefined, '  ');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAddressRequiredForWarehouseError);
       });
     });
   });
