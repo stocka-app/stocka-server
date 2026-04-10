@@ -179,13 +179,13 @@ describe('PATCH /api/storages/custom-rooms/:uuid (e2e)', () => {
 
   describe('Given a tenant with an archived custom room', () => {
     describe('When PATCH /api/storages/custom-rooms/:archivedUUID is called', () => {
-      it('Then it returns 404 (archived storages are not updatable)', async () => {
+      it('Then it returns 409 (archived storages cannot be updated)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/storages/custom-rooms/${archivedCustomRoomUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Should Not Update Again' });
 
-        expect(res.status).toBe(HttpStatus.NOT_FOUND);
+        expect(res.status).toBe(HttpStatus.CONFLICT);
       });
     });
   });

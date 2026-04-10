@@ -42,6 +42,7 @@ import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageAlreadyArchivedError } from '@storage/domain/errors/storage-already-archived.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
+import { StorageArchivedCannotBeUpdatedError } from '@storage/domain/errors/storage-archived-cannot-be-updated.error';
 import { CustomRoomLimitReachedError } from '@storage/application/errors/custom-room-limit-reached.error';
 import { StoreRoomLimitReachedError } from '@storage/application/errors/store-room-limit-reached.error';
 import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
@@ -557,7 +558,7 @@ describe('UpdateCustomRoomHandler', () => {
 
   describe('Given the custom room is archived', () => {
     describe('When update is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
+      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
         const aggregate = makeAggregate({
           customRooms: [makeCustomRoom(CR_UUID, { archivedAt: new Date() })],
         });
@@ -567,7 +568,7 @@ describe('UpdateCustomRoomHandler', () => {
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
       });
     });
   });
@@ -664,7 +665,7 @@ describe('UpdateStoreRoomHandler', () => {
 
   describe('Given the store room is archived', () => {
     describe('When update is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
+      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
         const aggregate = makeAggregate({
           storeRooms: [makeStoreRoom(SR_UUID, { archivedAt: new Date() })],
         });
@@ -674,7 +675,7 @@ describe('UpdateStoreRoomHandler', () => {
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
       });
     });
   });
@@ -761,7 +762,7 @@ describe('UpdateWarehouseHandler', () => {
 
   describe('Given the warehouse is archived', () => {
     describe('When update is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
+      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
         const aggregate = makeAggregate({
           warehouses: [makeWarehouse(WH_UUID, { archivedAt: new Date() })],
         });
@@ -771,7 +772,7 @@ describe('UpdateWarehouseHandler', () => {
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
       });
     });
   });
