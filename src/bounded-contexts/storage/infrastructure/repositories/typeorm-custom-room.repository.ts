@@ -34,4 +34,8 @@ export class TypeOrmCustomRoomRepository implements ICustomRoomRepository {
     const saved = await this.getRepo().save(entity);
     return CustomRoomMapper.toDomain(saved as CustomRoomEntity);
   }
+
+  async deleteByUUID(uuid: string): Promise<void> {
+    await this.getRepo().delete({ uuid });
+  }
 }
