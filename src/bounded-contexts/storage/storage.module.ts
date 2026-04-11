@@ -19,6 +19,7 @@ import { CreateWarehouseHandler } from '@storage/application/commands/create-war
 import { UpdateCustomRoomHandler } from '@storage/application/commands/update-custom-room/update-custom-room.handler';
 import { UpdateStoreRoomHandler } from '@storage/application/commands/update-store-room/update-store-room.handler';
 import { UpdateWarehouseHandler } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
+import { ChangeStorageTypeHandler } from '@storage/application/commands/change-storage-type/change-storage-type.handler';
 import { ArchiveStorageHandler } from '@storage/application/commands/archive-storage/archive-storage.handler';
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
 import { GetStorageHandler } from '@storage/application/queries/get-storage/get-storage.handler';
@@ -40,6 +41,7 @@ import { UpdateStoreRoomController } from '@storage/infrastructure/http/controll
 import { UpdateWarehouseController } from '@storage/infrastructure/http/controllers/update-warehouse/update-warehouse.controller';
 import { ListStoragesController } from '@storage/infrastructure/http/controllers/list-storages/list-storages.controller';
 import { GetStorageController } from '@storage/infrastructure/http/controllers/get-storage/get-storage.controller';
+import { ChangeStorageTypeController } from '@storage/infrastructure/http/controllers/change-storage-type/change-storage-type.controller';
 import { ArchiveStorageController } from '@storage/infrastructure/http/controllers/archive-storage/archive-storage.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -64,6 +66,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     UpdateWarehouseController,
     ListStoragesController,
     GetStorageController,
+    ChangeStorageTypeController,
     ArchiveStorageController,
   ],
   providers: [
@@ -88,6 +91,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     UpdateCustomRoomHandler,
     UpdateStoreRoomHandler,
     UpdateWarehouseHandler,
+    ChangeStorageTypeHandler,
     ArchiveStorageHandler,
     ListStoragesHandler,
     GetStorageHandler,

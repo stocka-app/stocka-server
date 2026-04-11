@@ -13,6 +13,8 @@ import {
   CUSTOM_ROOM_DEFAULT_ICON,
   CUSTOM_ROOM_DEFAULT_COLOR,
 } from '@storage/domain/services/storage-icon-color.resolver';
+import { ChangeStorageTypeHandler } from '@storage/application/commands/change-storage-type/change-storage-type.handler';
+import { ChangeStorageTypeCommand } from '@storage/application/commands/change-storage-type/change-storage-type.command';
 import { UpdateCustomRoomHandler } from '@storage/application/commands/update-custom-room/update-custom-room.handler';
 import { UpdateCustomRoomCommand } from '@storage/application/commands/update-custom-room/update-custom-room.command';
 import { UpdateStoreRoomHandler } from '@storage/application/commands/update-store-room/update-store-room.handler';
@@ -42,6 +44,9 @@ import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageAlreadyArchivedError } from '@storage/domain/errors/storage-already-archived.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
+import { StorageArchivedCannotBeUpdatedError } from '@storage/domain/errors/storage-archived-cannot-be-updated.error';
+import { StorageTypeLockedWhileFrozenError } from '@storage/domain/errors/storage-type-locked-while-frozen.error';
+import { StorageAddressRequiredForWarehouseError } from '@storage/domain/errors/storage-address-required-for-warehouse.error';
 import { CustomRoomLimitReachedError } from '@storage/application/errors/custom-room-limit-reached.error';
 import { StoreRoomLimitReachedError } from '@storage/application/errors/store-room-limit-reached.error';
 import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
@@ -160,16 +165,19 @@ beforeEach(() => {
   mockWarehouseRepository = {
     count: jest.fn(),
     save: jest.fn(),
+    deleteByUUID: jest.fn(),
   };
 
   mockStoreRoomRepository = {
     count: jest.fn(),
     save: jest.fn(),
+    deleteByUUID: jest.fn(),
   };
 
   mockCustomRoomRepository = {
     count: jest.fn(),
     save: jest.fn(),
+    deleteByUUID: jest.fn(),
   };
 
   mockCapabilities = {
@@ -557,13 +565,37 @@ describe('UpdateCustomRoomHandler', () => {
 
   describe('Given the custom room is archived', () => {
     describe('When update is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
+      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
         const aggregate = makeAggregate({
           customRooms: [makeCustomRoom(CR_UUID, { archivedAt: new Date() })],
         });
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
         const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
+      });
+    });
+  });
+
+  describe('Given the aggregate has no persisted id', () => {
+    describe('When update is requested', () => {
+      it('Then returns StorageNotFoundError as a safety guard', async () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: undefined as unknown as number,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          warehouses: [],
+          storeRooms: [],
+          customRooms: [makeCustomRoom(CR_UUID)],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'New Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -664,13 +696,37 @@ describe('UpdateStoreRoomHandler', () => {
 
   describe('Given the store room is archived', () => {
     describe('When update is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
+      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
         const aggregate = makeAggregate({
           storeRooms: [makeStoreRoom(SR_UUID, { archivedAt: new Date() })],
         });
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
         const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
+      });
+    });
+  });
+
+  describe('Given the aggregate has no persisted id', () => {
+    describe('When update is requested', () => {
+      it('Then returns StorageNotFoundError as a safety guard', async () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: undefined as unknown as number,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          warehouses: [],
+          storeRooms: [makeStoreRoom(SR_UUID)],
+          customRooms: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'New Name');
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -761,7 +817,7 @@ describe('UpdateWarehouseHandler', () => {
 
   describe('Given the warehouse is archived', () => {
     describe('When update is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
+      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
         const aggregate = makeAggregate({
           warehouses: [makeWarehouse(WH_UUID, { archivedAt: new Date() })],
         });
@@ -771,7 +827,48 @@ describe('UpdateWarehouseHandler', () => {
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
+      });
+    });
+  });
+
+  describe('Given the aggregate has no persisted id', () => {
+    describe('When update is requested', () => {
+      it('Then returns StorageNotFoundError as a safety guard', async () => {
+        const aggregate = StorageAggregate.reconstitute({
+          id: undefined as unknown as number,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          warehouses: [makeWarehouse(WH_UUID)],
+          storeRooms: [],
+          customRooms: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'New Name');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given a warehouse with an empty address update', () => {
+    describe('When address is sent as empty string', () => {
+      it('Then returns StorageAddressRequiredForWarehouseError', async () => {
+        const aggregate = makeAggregate({
+          warehouses: [makeWarehouse(WH_UUID)],
+        });
+        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+
+        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, undefined, undefined, '  ');
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAddressRequiredForWarehouseError);
       });
     });
   });
@@ -1149,6 +1246,209 @@ describe('ListStoragesHandler', () => {
         expect(result.typeSummary.WAREHOUSE).toEqual({ active: 0, frozen: 0, archived: 0 });
         expect(result.typeSummary.STORE_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
         expect(result.typeSummary.CUSTOM_ROOM).toEqual({ active: 0, frozen: 0, archived: 0 });
+      });
+    });
+  });
+});
+
+// ── ChangeStorageTypeHandler ────────────────────────────────────────────────────
+
+describe('ChangeStorageTypeHandler', () => {
+  let handler: ChangeStorageTypeHandler;
+
+  beforeEach(() => {
+    handler = new ChangeStorageTypeHandler(
+      mockStorageRepository,
+      mockWarehouseRepository,
+      mockStoreRoomRepository,
+      mockCustomRoomRepository,
+      mockCapabilitiesPort,
+      mockEventPublisher,
+    );
+  });
+
+  // CT-1: custom room → STORE_ROOM (happy path)
+  describe('Given an active custom room', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({ customRooms: [makeCustomRoom(CR_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockCustomRoomRepository.deleteByUUID.mockResolvedValue(undefined);
+      mockStoreRoomRepository.count.mockResolvedValue(0);
+      mockStoreRoomRepository.save.mockImplementation(async (model) => model);
+    });
+
+    describe('When the type is changed to STORE_ROOM', () => {
+      it('Then deletes the custom room, creates a store room, and returns ok with the storage UUID', async () => {
+        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(result._unsafeUnwrap().storageUUID).toBe(CR_UUID);
+        expect(mockCustomRoomRepository.deleteByUUID).toHaveBeenCalledWith(CR_UUID);
+        expect(mockStoreRoomRepository.save).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    // CT-2: custom room → WAREHOUSE (custom room has address '123 Main St' → address is present → succeeds)
+    describe('When the type is changed to WAREHOUSE', () => {
+      beforeEach(() => {
+        mockWarehouseRepository.count.mockResolvedValue(0);
+        mockWarehouseRepository.save.mockImplementation(async (model) => model);
+      });
+
+      it('Then deletes the custom room, creates a warehouse, and returns ok with the storage UUID', async () => {
+        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.WAREHOUSE);
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(result._unsafeUnwrap().storageUUID).toBe(CR_UUID);
+        expect(mockCustomRoomRepository.deleteByUUID).toHaveBeenCalledWith(CR_UUID);
+        expect(mockWarehouseRepository.save).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  // CT-3: same-type change is a no-op
+  describe('Given a warehouse that is active', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({ warehouses: [makeWarehouse(WH_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+    });
+
+    describe('When the type is changed to the same type (WAREHOUSE)', () => {
+      it('Then returns ok immediately without deleting or creating anything', async () => {
+        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.WAREHOUSE);
+        const result = await handler.execute(command);
+
+        expect(result.isOk()).toBe(true);
+        expect(result._unsafeUnwrap().storageUUID).toBe(WH_UUID);
+        expect(mockWarehouseRepository.deleteByUUID).not.toHaveBeenCalled();
+        expect(mockWarehouseRepository.save).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // CT-4: storage UUID not found
+  describe('Given a storage UUID that does not exist in the aggregate', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate();
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+    });
+
+    describe('When a type change is requested', () => {
+      it('Then returns StorageNotFoundError', async () => {
+        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  // CT-5: archived storage cannot be updated
+  describe('Given a storage that is archived', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({
+        customRooms: [makeCustomRoom(CR_UUID, { archivedAt: new Date() })],
+      });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+    });
+
+    describe('When a type change is requested', () => {
+      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
+        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
+        expect(mockCustomRoomRepository.deleteByUUID).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // CT-6: frozen storage cannot change type
+  describe('Given a storage that is frozen', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({
+        warehouses: [makeWarehouse(WH_UUID, { frozenAt: new Date() })],
+      });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+    });
+
+    describe('When a type change is requested', () => {
+      it('Then returns StorageTypeLockedWhileFrozenError', async () => {
+        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageTypeLockedWhileFrozenError);
+        expect(mockWarehouseRepository.deleteByUUID).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // CT-7: tier does not allow warehouses
+  describe("Given a tenant whose tier does not include warehouse access", () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({ storeRooms: [makeStoreRoom(SR_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockCapabilities.canCreateWarehouse.mockReturnValue(false);
+    });
+
+    describe('When the type is changed to WAREHOUSE', () => {
+      it('Then returns WarehouseRequiresTierUpgradeError without touching repositories', async () => {
+        const command = new ChangeStorageTypeCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.WAREHOUSE);
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+        expect(mockStoreRoomRepository.deleteByUUID).not.toHaveBeenCalled();
+        expect(mockWarehouseRepository.save).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // CT-8: store room limit reached
+  describe('Given a tenant that has reached the store room limit', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({ warehouses: [makeWarehouse(WH_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockStoreRoomRepository.count.mockResolvedValue(5);
+      mockCapabilities.canCreateMoreStoreRooms.mockReturnValue(false);
+    });
+
+    describe('When the type is changed to STORE_ROOM', () => {
+      it('Then returns StoreRoomLimitReachedError without touching repositories', async () => {
+        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StoreRoomLimitReachedError);
+        expect(mockWarehouseRepository.deleteByUUID).not.toHaveBeenCalled();
+        expect(mockStoreRoomRepository.save).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  // CT-9: custom room limit reached
+  describe('Given a tenant that has reached the custom room limit', () => {
+    beforeEach(() => {
+      const aggregate = makeAggregate({ warehouses: [makeWarehouse(WH_UUID)] });
+      mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
+      mockCustomRoomRepository.count.mockResolvedValue(10);
+      mockCapabilities.canCreateMoreCustomRooms.mockReturnValue(false);
+    });
+
+    describe('When the type is changed to CUSTOM_ROOM', () => {
+      it('Then returns CustomRoomLimitReachedError without touching repositories', async () => {
+        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.CUSTOM_ROOM);
+        const result = await handler.execute(command);
+
+        expect(result.isErr()).toBe(true);
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(CustomRoomLimitReachedError);
+        expect(mockWarehouseRepository.deleteByUUID).not.toHaveBeenCalled();
+        expect(mockCustomRoomRepository.save).not.toHaveBeenCalled();
       });
     });
   });

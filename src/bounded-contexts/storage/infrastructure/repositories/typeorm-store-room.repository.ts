@@ -34,4 +34,8 @@ export class TypeOrmStoreRoomRepository implements IStoreRoomRepository {
     const saved = await this.getRepo().save(entity);
     return StoreRoomMapper.toDomain(saved as StoreRoomEntity);
   }
+
+  async deleteByUUID(uuid: string): Promise<void> {
+    await this.getRepo().delete({ uuid });
+  }
 }

@@ -177,13 +177,13 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
 
   describe('Given a tenant with an archived store-room', () => {
     describe('When PATCH /api/storages/store-rooms/:archivedUUID is called', () => {
-      it('Then it returns 404 (archived storages are not updatable)', async () => {
+      it('Then it returns 409 (archived storages cannot be updated)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/storages/store-rooms/${archivedStoreRoomUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'Should Not Update' });
 
-        expect(res.status).toBe(HttpStatus.NOT_FOUND);
+        expect(res.status).toBe(HttpStatus.CONFLICT);
       });
     });
   });

@@ -1,11 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateCustomRoomInDto {
-  @ApiPropertyOptional({ description: 'Room name', maxLength: 100 })
+  @ApiPropertyOptional({ description: 'Room name', minLength: 3, maxLength: 80 })
   @IsOptional()
   @IsString()
-  @MaxLength(100)
+  @Transform(({ value }: { value: string }) => value?.trim())
+  @MinLength(3)
+  @MaxLength(80)
   name?: string;
 
   @ApiPropertyOptional({ description: 'Room type category', maxLength: 50 })

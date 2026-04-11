@@ -100,18 +100,18 @@ async function archiveStorage(app: INestApplication, token: string, uuid: string
 
 // ─── Spec ─────────────────────────────────────────────────────────────────────
 
-describe('PATCH /api/storages/warehouses/:uuid (e2e)', () => {
+describe('PATCH /api/storages/:uuid/type (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
-  const TENANT_NAME = 'PatchWarehouse E2E Business';
-  const OWNER_EMAIL = 'patchwarehouse.owner@example.com';
-  const OWNER_USERNAME = 'patchwarehouseowner';
+  const TENANT_NAME = 'ChangeType E2E Business';
+  const OWNER_EMAIL = 'changetype.owner@example.com';
+  const OWNER_USERNAME = 'changetypeowner';
 
   let ownerToken: string;
-  let warehouseUUID: string;
+  let customRoomUUID: string;
   let storeRoomUUID: string;
-  let archivedCustomRoomUUID: string;
+  let archivedRoomUUID: string;
 
   beforeAll(async () => {
     const workerApp = await getStorageWorkerApp();
@@ -126,126 +126,135 @@ describe('PATCH /api/storages/warehouses/:uuid (e2e)', () => {
     await setTenantToStarter(dataSource, TENANT_NAME);
     ownerToken = await signIn(app, OWNER_EMAIL);
 
-    warehouseUUID = await createStorage(app, ownerToken, {
-      type: 'WAREHOUSE',
-      name: 'PatchWarehouse Alpha',
-      address: 'Av. Industrial 200, CDMX',
+    customRoomUUID = await createStorage(app, ownerToken, {
+      type: 'CUSTOM_ROOM',
+      name: 'ChangeType Custom Room',
+      roomType: 'Office',
+      address: 'Av. Reforma 100',
     });
 
     storeRoomUUID = await createStorage(app, ownerToken, {
       type: 'STORE_ROOM',
-      name: 'PatchWarehouse Store Room',
+      name: 'ChangeType Store Room',
+      address: 'Calle 5 de Mayo 200',
     });
 
-    archivedCustomRoomUUID = await createStorage(app, ownerToken, {
+    archivedRoomUUID = await createStorage(app, ownerToken, {
       type: 'CUSTOM_ROOM',
-      name: 'PatchWarehouse Archived Room',
+      name: 'ChangeType Archived Room',
       roomType: 'Archive',
+      address: 'Av. Juarez 300',
     });
-    await archiveStorage(app, ownerToken, archivedCustomRoomUUID);
+    await archiveStorage(app, ownerToken, archivedRoomUUID);
   });
 
   afterAll(async () => {
     await truncateStorageWorkerTables(dataSource);
   });
 
+  // ── Happy path ──────────────────────────────────────────────────────────────
+
+  describe('Given an active custom room with a valid address', () => {
+    describe('When type is changed to STORE_ROOM', () => {
+      it('Then it returns 200 with { storageUUID }', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/storages/${customRoomUUID}/type`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ type: 'STORE_ROOM' });
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body).toEqual({ storageUUID: customRoomUUID });
+      });
+    });
+  });
+
+  describe('Given the storage was just changed to STORE_ROOM', () => {
+    describe('When type is changed to WAREHOUSE', () => {
+      it('Then it returns 200 (address was preserved from previous type)', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/storages/${customRoomUUID}/type`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ type: 'WAREHOUSE' });
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body).toEqual({ storageUUID: customRoomUUID });
+      });
+    });
+  });
+
+  // ── Same type no-op ─────────────────────────────────────────────────────────
+
+  describe('Given an active store room', () => {
+    describe('When type is changed to the same type (STORE_ROOM)', () => {
+      it('Then it returns 200 without any mutation', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/storages/${storeRoomUUID}/type`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ type: 'STORE_ROOM' });
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body).toEqual({ storageUUID: storeRoomUUID });
+      });
+    });
+  });
+
+  // ── Archived block ──────────────────────────────────────────────────────────
+
+  describe('Given an archived storage', () => {
+    describe('When type change is attempted', () => {
+      it('Then it returns 409 (STORAGE_ARCHIVED_CANNOT_BE_UPDATED)', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/storages/${archivedRoomUUID}/type`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ type: 'WAREHOUSE' });
+
+        expect(res.status).toBe(HttpStatus.CONFLICT);
+        expect(res.body.error).toBe('STORAGE_ARCHIVED_CANNOT_BE_UPDATED');
+      });
+    });
+  });
+
+  // ── Not found ───────────────────────────────────────────────────────────────
+
   describe('Given a non-existent storage UUID', () => {
-    describe('When PATCH /api/storages/warehouses/:uuid is called', () => {
-      it('Then it returns 404 (StorageNotFoundError)', async () => {
+    describe('When type change is attempted', () => {
+      it('Then it returns 404 (STORAGE_NOT_FOUND)', async () => {
         const fakeUUID = '00000000-0000-0000-0000-000000000000';
         const res = await request(app.getHttpServer())
-          .patch(`/api/storages/warehouses/${fakeUUID}`)
+          .patch(`/api/storages/${fakeUUID}/type`)
           .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'Does Not Exist' });
+          .send({ type: 'WAREHOUSE' });
 
         expect(res.status).toBe(HttpStatus.NOT_FOUND);
       });
     });
   });
 
-  describe('Given a tenant with an active warehouse', () => {
-    describe('When PATCH /api/storages/warehouses/:uuid is called with a new name', () => {
-      it('Then it returns 200 with { storageUUID } and the name is updated', async () => {
-        const patchRes = await request(app.getHttpServer())
-          .patch(`/api/storages/warehouses/${warehouseUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'PatchWarehouse Alpha Renamed' });
+  // ── Unauthenticated ─────────────────────────────────────────────────────────
 
-        expect(patchRes.status).toBe(HttpStatus.OK);
-        expect(patchRes.body).toEqual({ storageUUID: warehouseUUID });
-
-        const getRes = await request(app.getHttpServer())
-          .get(`/api/storages/${warehouseUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.name).toBe('PatchWarehouse Alpha Renamed');
-      });
-    });
-  });
-
-  describe('Given a tenant with two storages', () => {
-    describe('When PATCH is called with a name that already exists on another storage', () => {
-      it('Then it returns 409 (StorageNameAlreadyExistsError)', async () => {
-        const res = await request(app.getHttpServer())
-          .patch(`/api/storages/warehouses/${warehouseUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'PatchWarehouse Store Room' });
-
-        expect(res.status).toBe(HttpStatus.CONFLICT);
-        expect(res.body.error).toBe('STORAGE_NAME_ALREADY_EXISTS');
-      });
-    });
-  });
-
-  describe('Given an active warehouse and the same name is sent again', () => {
-    describe('When PATCH /api/storages/warehouses/:uuid is called with the current name', () => {
-      it('Then it returns 200 (same-name update skips the existence check)', async () => {
-        const res = await request(app.getHttpServer())
-          .patch(`/api/storages/warehouses/${warehouseUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'PatchWarehouse Alpha Renamed' });
-
-        expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual({ storageUUID: warehouseUUID });
-      });
-    });
-  });
-
-  describe('Given an active warehouse and a request body with non-whitelisted icon and color fields', () => {
-    describe('When PATCH /api/storages/warehouses/:uuid is called with icon and color', () => {
-      it('Then it returns 400 because warehouse icon and color are fixed and not updatable by the client', async () => {
-        const res = await request(app.getHttpServer())
-          .patch(`/api/storages/warehouses/${warehouseUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ icon: 'new-icon', color: '#334455' });
-
-        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
-      });
-    });
-  });
-
-  describe('Given a tenant with an archived custom room', () => {
-    describe('When PATCH /api/storages/custom-rooms/:uuid is called on the archived storage', () => {
-      it('Then it returns 409 (archived storages cannot be updated)', async () => {
-        const res = await request(app.getHttpServer())
-          .patch(`/api/storages/custom-rooms/${archivedCustomRoomUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'Should Not Update' });
-
-        expect(res.status).toBe(HttpStatus.CONFLICT);
-      });
-    });
-  });
-
-  describe('Given an unauthenticated client', () => {
-    describe('When PATCH /api/storages/warehouses/:uuid is called without a token', () => {
+  describe('Given no authentication token', () => {
+    describe('When type change is attempted', () => {
       it('Then it returns 401', async () => {
         const res = await request(app.getHttpServer())
-          .patch(`/api/storages/warehouses/${warehouseUUID}`)
-          .send({ name: 'Hacked Name' });
+          .patch(`/api/storages/${storeRoomUUID}/type`)
+          .send({ type: 'WAREHOUSE' });
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
+      });
+    });
+  });
+
+  // ── Invalid body ────────────────────────────────────────────────────────────
+
+  describe('Given an invalid type value', () => {
+    describe('When type change is sent with a non-enum value', () => {
+      it('Then it returns 400', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/storages/${storeRoomUUID}/type`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ type: 'INVALID_TYPE' });
+
+        expect(res.status).toBe(HttpStatus.BAD_REQUEST);
       });
     });
   });

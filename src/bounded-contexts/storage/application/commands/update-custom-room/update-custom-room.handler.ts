@@ -4,6 +4,7 @@ import { UpdateCustomRoomCommand } from '@storage/application/commands/update-cu
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageArchivedCannotBeUpdatedError } from '@storage/domain/errors/storage-archived-cannot-be-updated.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -26,8 +27,12 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
 
     const customRoom = aggregate.findCustomRoom(command.storageUUID);
 
-    if (!customRoom || customRoom.isArchived()) {
+    if (!customRoom) {
       return err(new StorageNotFoundError(command.storageUUID));
+    }
+
+    if (customRoom.isArchived()) {
+      return err(new StorageArchivedCannotBeUpdatedError(command.storageUUID));
     }
 
     if (command.name !== undefined && command.name !== customRoom.name.getValue()) {
@@ -53,8 +58,13 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
       command.actorUUID,
     );
 
-    const updated = aggregate.findCustomRoom(command.storageUUID)!;
-    await this.customRoomRepository.save(updated, aggregate.id!);
+    const updated = aggregate.findCustomRoom(command.storageUUID);
+
+    if (!updated || aggregate.id === undefined) {
+      return err(new StorageNotFoundError(command.storageUUID));
+    }
+
+    await this.customRoomRepository.save(updated, aggregate.id);
 
     this.eventPublisher.mergeObjectContext(aggregate);
     aggregate.commit();

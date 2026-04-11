@@ -34,4 +34,8 @@ export class TypeOrmWarehouseRepository implements IWarehouseRepository {
     const saved = await this.getRepo().save(entity);
     return WarehouseMapper.toDomain(saved as WarehouseEntity);
   }
+
+  async deleteByUUID(uuid: string): Promise<void> {
+    await this.getRepo().delete({ uuid });
+  }
 }
