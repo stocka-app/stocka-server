@@ -21,6 +21,7 @@ import { UpdateStoreRoomHandler } from '@storage/application/commands/update-sto
 import { UpdateWarehouseHandler } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
 import { ChangeStorageTypeHandler } from '@storage/application/commands/change-storage-type/change-storage-type.handler';
 import { ArchiveStorageHandler } from '@storage/application/commands/archive-storage/archive-storage.handler';
+import { FreezeStorageHandler } from '@storage/application/commands/freeze-storage/freeze-storage.handler';
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
 import { GetStorageHandler } from '@storage/application/queries/get-storage/get-storage.handler';
 import { StorageCreatedEventHandler } from '@storage/application/event-handlers/storage-created.event-handler';
@@ -43,6 +44,7 @@ import { ListStoragesController } from '@storage/infrastructure/http/controllers
 import { GetStorageController } from '@storage/infrastructure/http/controllers/get-storage/get-storage.controller';
 import { ChangeStorageTypeController } from '@storage/infrastructure/http/controllers/change-storage-type/change-storage-type.controller';
 import { ArchiveStorageController } from '@storage/infrastructure/http/controllers/archive-storage/archive-storage.controller';
+import { FreezeStorageController } from '@storage/infrastructure/http/controllers/freeze-storage/freeze-storage.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Module({
@@ -68,6 +70,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     GetStorageController,
     ChangeStorageTypeController,
     ArchiveStorageController,
+    FreezeStorageController,
   ],
   providers: [
     { provide: INJECTION_TOKENS.STORAGE_CONTRACT, useClass: TypeOrmStorageRepository },
@@ -93,6 +96,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     UpdateWarehouseHandler,
     ChangeStorageTypeHandler,
     ArchiveStorageHandler,
+    FreezeStorageHandler,
     ListStoragesHandler,
     GetStorageHandler,
     StorageCreatedEventHandler,
