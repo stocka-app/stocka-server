@@ -81,11 +81,7 @@ async function createStoreRoom(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function freezeStoreRoom(
-  app: INestApplication,
-  token: string,
-  uuid: string,
-): Promise<void> {
+async function freezeStoreRoom(app: INestApplication, token: string, uuid: string): Promise<void> {
   await request(app.getHttpServer())
     .post(`/api/storages/store-rooms/${uuid}/freeze`)
     .set('Authorization', `Bearer ${token}`);
@@ -134,20 +130,15 @@ describe('POST /api/storages/store-rooms/:uuid/unfreeze (E2E)', () => {
 
   describe('Given an owner with a frozen store room', () => {
     describe('When POST /api/storages/store-rooms/:uuid/unfreeze is called', () => {
-      it('Then it returns 200 and the store room transitions back to ACTIVE status', async () => {
+      it('Then it returns 200 with the reactivated storage DTO', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/storages/store-rooms/${frozenStoreRoomUUID}/unfreeze`)
           .set('Authorization', `Bearer ${ownerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-
-        const getRes = await request(app.getHttpServer())
-          .get(`/api/storages/${frozenStoreRoomUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.status).toBe('ACTIVE');
-        expect(getRes.body.frozenAt).toBeNull();
+        expect(res.body.uuid).toBe(frozenStoreRoomUUID);
+        expect(res.body.status).toBe('ACTIVE');
+        expect(res.body.frozenAt).toBeNull();
       });
     });
   });

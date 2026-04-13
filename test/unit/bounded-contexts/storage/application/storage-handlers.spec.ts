@@ -879,7 +879,14 @@ describe('UpdateWarehouseHandler', () => {
         });
         mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
 
-        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, undefined, undefined, '  ');
+        const command = new UpdateWarehouseCommand(
+          WH_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          undefined,
+          undefined,
+          '  ',
+        );
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -1294,7 +1301,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When the type is changed to STORE_ROOM', () => {
       it('Then deletes the custom room, creates a store room, and returns ok with the storage UUID', async () => {
-        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const command = new ChangeStorageTypeCommand(
+          CR_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.STORE_ROOM,
+        );
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -1312,7 +1324,12 @@ describe('ChangeStorageTypeHandler', () => {
       });
 
       it('Then deletes the custom room, creates a warehouse, and returns ok with the storage UUID', async () => {
-        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.WAREHOUSE);
+        const command = new ChangeStorageTypeCommand(
+          CR_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.WAREHOUSE,
+        );
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -1332,7 +1349,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When the type is changed to the same type (WAREHOUSE)', () => {
       it('Then returns ok immediately without deleting or creating anything', async () => {
-        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.WAREHOUSE);
+        const command = new ChangeStorageTypeCommand(
+          WH_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.WAREHOUSE,
+        );
         const result = await handler.execute(command);
 
         expect(result.isOk()).toBe(true);
@@ -1352,7 +1374,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When a type change is requested', () => {
       it('Then returns StorageNotFoundError', async () => {
-        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const command = new ChangeStorageTypeCommand(
+          CR_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.STORE_ROOM,
+        );
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -1372,7 +1399,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When a type change is requested', () => {
       it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
-        const command = new ChangeStorageTypeCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const command = new ChangeStorageTypeCommand(
+          CR_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.STORE_ROOM,
+        );
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -1393,7 +1425,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When a type change is requested', () => {
       it('Then returns StorageTypeLockedWhileFrozenError', async () => {
-        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const command = new ChangeStorageTypeCommand(
+          WH_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.STORE_ROOM,
+        );
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -1404,7 +1441,7 @@ describe('ChangeStorageTypeHandler', () => {
   });
 
   // CT-7: tier does not allow warehouses
-  describe("Given a tenant whose tier does not include warehouse access", () => {
+  describe('Given a tenant whose tier does not include warehouse access', () => {
     beforeEach(() => {
       const aggregate = makeAggregate({ storeRooms: [makeStoreRoom(SR_UUID)] });
       mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
@@ -1413,7 +1450,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When the type is changed to WAREHOUSE', () => {
       it('Then returns WarehouseRequiresTierUpgradeError without touching repositories', async () => {
-        const command = new ChangeStorageTypeCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, StorageType.WAREHOUSE);
+        const command = new ChangeStorageTypeCommand(
+          SR_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.WAREHOUSE,
+        );
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -1435,7 +1477,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When the type is changed to STORE_ROOM', () => {
       it('Then returns StoreRoomLimitReachedError without touching repositories', async () => {
-        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.STORE_ROOM);
+        const command = new ChangeStorageTypeCommand(
+          WH_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.STORE_ROOM,
+        );
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);
@@ -1457,7 +1504,12 @@ describe('ChangeStorageTypeHandler', () => {
 
     describe('When the type is changed to CUSTOM_ROOM', () => {
       it('Then returns CustomRoomLimitReachedError without touching repositories', async () => {
-        const command = new ChangeStorageTypeCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, StorageType.CUSTOM_ROOM);
+        const command = new ChangeStorageTypeCommand(
+          WH_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.CUSTOM_ROOM,
+        );
         const result = await handler.execute(command);
 
         expect(result.isErr()).toBe(true);

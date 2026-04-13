@@ -5,6 +5,7 @@ import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorat
 import { Secure } from '@common/decorators/secure.decorator';
 import { FreezeStoreRoomCommand } from '@storage/application/commands/freeze-store-room/freeze-store-room.command';
 import { FreezeStoreRoomResult } from '@storage/application/commands/freeze-store-room/freeze-store-room.handler';
+import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';
 
 @ApiTags('Storage')
 @Controller('storages/store-rooms')
@@ -17,16 +18,19 @@ export class FreezeStoreRoomController {
   @Secure()
   @ApiOperation({ summary: 'Freeze a store room (pause operations)' })
   @ApiParam({ name: 'uuid', description: 'Store room UUID' })
-  @ApiResponse({ status: 200, description: 'Store room frozen successfully' })
+  @ApiResponse({ status: 200, description: 'Store room frozen successfully', type: StorageOutDto })
   @ApiResponse({ status: 404, description: 'Store room not found' })
   @ApiResponse({ status: 409, description: 'Already frozen or archived' })
-  async handle(@Param('uuid') uuid: string, @CurrentUser() user: JwtPayload): Promise<void> {
+  async handle(
+    @Param('uuid') uuid: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<StorageOutDto> {
     const command = new FreezeStoreRoomCommand(uuid, user.tenantId as string, user.uuid);
     const result = await this.commandBus.execute<FreezeStoreRoomCommand, FreezeStoreRoomResult>(
       command,
     );
-    result.match(
-      () => undefined,
+    return result.match(
+      (view) => StorageOutDto.fromItem(view),
       (error) => {
         throw error;
       },

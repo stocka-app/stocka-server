@@ -8,9 +8,10 @@ import { StorageArchivedCannotBeFrozenError } from '@storage/domain/errors/stora
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
+import { StorageItemView } from '@storage/domain/schemas';
 import { FreezeWarehouseCommand } from '@storage/application/commands/freeze-warehouse/freeze-warehouse.command';
 
-export type FreezeWarehouseResult = Result<void, DomainException>;
+export type FreezeWarehouseResult = Result<StorageItemView, DomainException>;
 
 @CommandHandler(FreezeWarehouseCommand)
 export class FreezeWarehouseHandler implements ICommandHandler<FreezeWarehouseCommand> {
@@ -45,6 +46,9 @@ export class FreezeWarehouseHandler implements ICommandHandler<FreezeWarehouseCo
     this.eventPublisher.mergeObjectContext(aggregate);
     aggregate.commit();
 
-    return ok(undefined);
+    const view = aggregate.findItemView(command.storageUUID);
+    if (!view) return err(new StorageNotFoundError(command.storageUUID));
+
+    return ok(view);
   }
 }

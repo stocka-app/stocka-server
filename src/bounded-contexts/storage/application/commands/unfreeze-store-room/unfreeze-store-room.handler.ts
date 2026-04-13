@@ -7,9 +7,10 @@ import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
+import { StorageItemView } from '@storage/domain/schemas';
 import { UnfreezeStoreRoomCommand } from '@storage/application/commands/unfreeze-store-room/unfreeze-store-room.command';
 
-export type UnfreezeStoreRoomResult = Result<void, DomainException>;
+export type UnfreezeStoreRoomResult = Result<StorageItemView, DomainException>;
 
 @CommandHandler(UnfreezeStoreRoomCommand)
 export class UnfreezeStoreRoomHandler implements ICommandHandler<UnfreezeStoreRoomCommand> {
@@ -40,6 +41,9 @@ export class UnfreezeStoreRoomHandler implements ICommandHandler<UnfreezeStoreRo
     this.eventPublisher.mergeObjectContext(aggregate);
     aggregate.commit();
 
-    return ok(undefined);
+    const view = aggregate.findItemView(command.storageUUID);
+    if (!view) return err(new StorageNotFoundError(command.storageUUID));
+
+    return ok(view);
   }
 }

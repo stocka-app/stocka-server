@@ -8,9 +8,10 @@ import { StorageArchivedCannotBeFrozenError } from '@storage/domain/errors/stora
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
+import { StorageItemView } from '@storage/domain/schemas';
 import { FreezeCustomRoomCommand } from '@storage/application/commands/freeze-custom-room/freeze-custom-room.command';
 
-export type FreezeCustomRoomResult = Result<void, DomainException>;
+export type FreezeCustomRoomResult = Result<StorageItemView, DomainException>;
 
 @CommandHandler(FreezeCustomRoomCommand)
 export class FreezeCustomRoomHandler implements ICommandHandler<FreezeCustomRoomCommand> {
@@ -43,6 +44,9 @@ export class FreezeCustomRoomHandler implements ICommandHandler<FreezeCustomRoom
     this.eventPublisher.mergeObjectContext(aggregate);
     aggregate.commit();
 
-    return ok(undefined);
+    const view = aggregate.findItemView(command.storageUUID);
+    if (!view) return err(new StorageNotFoundError(command.storageUUID));
+
+    return ok(view);
   }
 }
