@@ -16,25 +16,31 @@ export class SeedStorageUnfreezeAction1776067516412 implements MigrationInterfac
   name = 'SeedStorageUnfreezeAction1776067516412';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    // Insert the new STORAGE_UNFREEZE action into the catalog
+    // Insert the new STORAGE_UNFREEZE action into the catalog.
+    // Guard: only insert when the STORAGE module row exists (i.e. seeds have already run).
+    // On a fresh database the SeedCapabilities seed inserts this row, so no action is needed.
     await queryRunner.query(`
       INSERT INTO "capabilities"."catalog_actions" ("module_id", "key", "name", "action_type", "is_active")
-      VALUES (
-        (SELECT id FROM "capabilities"."modules" WHERE "key" = 'STORAGE'),
+      SELECT
+        m.id,
         'STORAGE_UNFREEZE',
         'Unfreeze Storage',
         'WRITE',
         true
-      )
+      FROM "capabilities"."modules" m
+      WHERE m."key" = 'STORAGE'
       ON CONFLICT ("key") DO NOTHING
     `);
 
-    // Grant STORAGE_UNFREEZE to OWNER and PARTNER
+    // Grant STORAGE_UNFREEZE to OWNER and PARTNER.
+    // Guard: only insert grants when the action row actually exists (fresh DB: seeds handle this).
     await queryRunner.query(`
       INSERT INTO "authz"."role_action_grants" ("role_key", "action_key")
-      VALUES
-        ('OWNER', 'STORAGE_UNFREEZE'),
-        ('PARTNER', 'STORAGE_UNFREEZE')
+      SELECT r.role_key, 'STORAGE_UNFREEZE'
+      FROM (VALUES ('OWNER'), ('PARTNER')) AS r(role_key)
+      WHERE EXISTS (
+        SELECT 1 FROM "capabilities"."catalog_actions" WHERE "key" = 'STORAGE_UNFREEZE'
+      )
       ON CONFLICT DO NOTHING
     `);
   }
