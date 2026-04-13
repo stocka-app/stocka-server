@@ -137,7 +137,7 @@ export class CustomRoomModel {
   markArchived(): CustomRoomModel {
     return this.evolveTransition({
       archivedAt: new Date(),
-      frozenAt: this.frozenAt,
+      frozenAt: null,
     });
   }
 

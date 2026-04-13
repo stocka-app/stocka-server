@@ -119,7 +119,7 @@ export class WarehouseModel {
   markArchived(): WarehouseModel {
     return this.evolveTransition({
       archivedAt: new Date(),
-      frozenAt: this.frozenAt,
+      frozenAt: null,
     });
   }
 

@@ -118,7 +118,7 @@ export class StoreRoomModel {
   markArchived(): StoreRoomModel {
     return this.evolveTransition({
       archivedAt: new Date(),
-      frozenAt: this.frozenAt,
+      frozenAt: null,
     });
   }
 

@@ -1,0 +1,35 @@
+import { Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { Secure } from '@common/decorators/secure.decorator';
+import { FreezeStoreRoomCommand } from '@storage/application/commands/freeze-store-room/freeze-store-room.command';
+import { FreezeStoreRoomResult } from '@storage/application/commands/freeze-store-room/freeze-store-room.handler';
+
+@ApiTags('Storage')
+@Controller('storages/store-rooms')
+@ApiBearerAuth('JWT-authentication')
+export class FreezeStoreRoomController {
+  constructor(private readonly commandBus: CommandBus) {}
+
+  @Post(':uuid/freeze')
+  @HttpCode(HttpStatus.OK)
+  @Secure()
+  @ApiOperation({ summary: 'Freeze a store room (pause operations)' })
+  @ApiParam({ name: 'uuid', description: 'Store room UUID' })
+  @ApiResponse({ status: 200, description: 'Store room frozen successfully' })
+  @ApiResponse({ status: 404, description: 'Store room not found' })
+  @ApiResponse({ status: 409, description: 'Already frozen or archived' })
+  async handle(@Param('uuid') uuid: string, @CurrentUser() user: JwtPayload): Promise<void> {
+    const command = new FreezeStoreRoomCommand(uuid, user.tenantId as string, user.uuid);
+    const result = await this.commandBus.execute<FreezeStoreRoomCommand, FreezeStoreRoomResult>(
+      command,
+    );
+    result.match(
+      () => undefined,
+      (error) => {
+        throw error;
+      },
+    );
+  }
+}

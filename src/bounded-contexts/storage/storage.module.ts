@@ -21,6 +21,12 @@ import { UpdateStoreRoomHandler } from '@storage/application/commands/update-sto
 import { UpdateWarehouseHandler } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
 import { ChangeStorageTypeHandler } from '@storage/application/commands/change-storage-type/change-storage-type.handler';
 import { ArchiveStorageHandler } from '@storage/application/commands/archive-storage/archive-storage.handler';
+import { FreezeWarehouseHandler } from '@storage/application/commands/freeze-warehouse/freeze-warehouse.handler';
+import { FreezeStoreRoomHandler } from '@storage/application/commands/freeze-store-room/freeze-store-room.handler';
+import { FreezeCustomRoomHandler } from '@storage/application/commands/freeze-custom-room/freeze-custom-room.handler';
+import { UnfreezeWarehouseHandler } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.handler';
+import { UnfreezeStoreRoomHandler } from '@storage/application/commands/unfreeze-store-room/unfreeze-store-room.handler';
+import { UnfreezeCustomRoomHandler } from '@storage/application/commands/unfreeze-custom-room/unfreeze-custom-room.handler';
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
 import { GetStorageHandler } from '@storage/application/queries/get-storage/get-storage.handler';
 import { StorageCreatedEventHandler } from '@storage/application/event-handlers/storage-created.event-handler';
@@ -43,6 +49,12 @@ import { ListStoragesController } from '@storage/infrastructure/http/controllers
 import { GetStorageController } from '@storage/infrastructure/http/controllers/get-storage/get-storage.controller';
 import { ChangeStorageTypeController } from '@storage/infrastructure/http/controllers/change-storage-type/change-storage-type.controller';
 import { ArchiveStorageController } from '@storage/infrastructure/http/controllers/archive-storage/archive-storage.controller';
+import { FreezeWarehouseController } from '@storage/infrastructure/http/controllers/freeze-warehouse/freeze-warehouse.controller';
+import { FreezeStoreRoomController } from '@storage/infrastructure/http/controllers/freeze-store-room/freeze-store-room.controller';
+import { FreezeCustomRoomController } from '@storage/infrastructure/http/controllers/freeze-custom-room/freeze-custom-room.controller';
+import { UnfreezeWarehouseController } from '@storage/infrastructure/http/controllers/unfreeze-warehouse/unfreeze-warehouse.controller';
+import { UnfreezeStoreRoomController } from '@storage/infrastructure/http/controllers/unfreeze-store-room/unfreeze-store-room.controller';
+import { UnfreezeCustomRoomController } from '@storage/infrastructure/http/controllers/unfreeze-custom-room/unfreeze-custom-room.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Module({
@@ -68,6 +80,12 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     GetStorageController,
     ChangeStorageTypeController,
     ArchiveStorageController,
+    FreezeWarehouseController,
+    FreezeStoreRoomController,
+    FreezeCustomRoomController,
+    UnfreezeWarehouseController,
+    UnfreezeStoreRoomController,
+    UnfreezeCustomRoomController,
   ],
   providers: [
     { provide: INJECTION_TOKENS.STORAGE_CONTRACT, useClass: TypeOrmStorageRepository },
@@ -93,6 +111,12 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     UpdateWarehouseHandler,
     ChangeStorageTypeHandler,
     ArchiveStorageHandler,
+    FreezeWarehouseHandler,
+    FreezeStoreRoomHandler,
+    FreezeCustomRoomHandler,
+    UnfreezeWarehouseHandler,
+    UnfreezeStoreRoomHandler,
+    UnfreezeCustomRoomHandler,
     ListStoragesHandler,
     GetStorageHandler,
     StorageCreatedEventHandler,
