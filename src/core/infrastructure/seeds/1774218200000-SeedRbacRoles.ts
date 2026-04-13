@@ -20,7 +20,8 @@ export class SeedRbacRoles1774218200000 implements MigrationInterface {
     await queryRunner.query(`
       INSERT INTO "authz"."role_action_grants" ("role_key", "action_key") VALUES
         ('OWNER', 'STORAGE_CREATE'),   ('OWNER', 'STORAGE_READ'),    ('OWNER', 'STORAGE_UPDATE'),
-        ('OWNER', 'STORAGE_DELETE'),   ('OWNER', 'STORAGE_FREEZE'),  ('OWNER', 'STORAGE_ARCHIVE'),
+        ('OWNER', 'STORAGE_DELETE'),   ('OWNER', 'STORAGE_FREEZE'),  ('OWNER', 'STORAGE_UNFREEZE'),
+        ('OWNER', 'STORAGE_ARCHIVE'),
         ('OWNER', 'MEMBER_INVITE'),    ('OWNER', 'MEMBER_READ'),
         ('OWNER', 'MEMBER_UPDATE_ROLE'),('OWNER', 'MEMBER_REMOVE'),  ('OWNER', 'PRODUCT_CREATE'),
         ('OWNER', 'PRODUCT_READ'),     ('OWNER', 'PRODUCT_UPDATE'),  ('OWNER', 'PRODUCT_DELETE'),
@@ -28,7 +29,8 @@ export class SeedRbacRoles1774218200000 implements MigrationInterface {
         ('OWNER', 'TENANT_SETTINGS_READ'), ('OWNER', 'TENANT_SETTINGS_UPDATE'),
 
         ('PARTNER', 'STORAGE_CREATE'), ('PARTNER', 'STORAGE_READ'),  ('PARTNER', 'STORAGE_UPDATE'),
-        ('PARTNER', 'STORAGE_DELETE'), ('PARTNER', 'STORAGE_FREEZE'),('PARTNER', 'STORAGE_ARCHIVE'),
+        ('PARTNER', 'STORAGE_DELETE'), ('PARTNER', 'STORAGE_FREEZE'),('PARTNER', 'STORAGE_UNFREEZE'),
+        ('PARTNER', 'STORAGE_ARCHIVE'),
         ('PARTNER', 'MEMBER_INVITE'), ('PARTNER', 'MEMBER_READ'),
         ('PARTNER', 'MEMBER_UPDATE_ROLE'),('PARTNER', 'MEMBER_REMOVE'),('PARTNER', 'PRODUCT_CREATE'),
         ('PARTNER', 'PRODUCT_READ'),   ('PARTNER', 'PRODUCT_UPDATE'),('PARTNER', 'PRODUCT_DELETE'),
