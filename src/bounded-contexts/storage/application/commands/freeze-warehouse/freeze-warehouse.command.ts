@@ -1,4 +1,4 @@
-export class FreezeStorageCommand {
+export class FreezeWarehouseCommand {
   constructor(
     public readonly storageUUID: string,
     public readonly tenantUUID: string,
