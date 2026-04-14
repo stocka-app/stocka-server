@@ -3,21 +3,23 @@ import { GetMeController } from '@user/infrastructure/controllers/get-me/get-me.
 import { UserFacade } from '@user/infrastructure/facade/user.facade';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
+import { asPersisted } from '@test/helpers/persisted';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildUser(): UserAggregate {
-  return {
+function buildUser(): Persisted<UserAggregate> {
+  return asPersisted({
     uuid: 'user-uuid-123',
     createdAt: new Date('2024-01-01T00:00:00Z'),
-  } as unknown as UserAggregate;
+  } as unknown as UserAggregate);
 }
 
-function buildCredential(): CredentialAccountModel {
-  return {
+function buildCredential(): Persisted<CredentialAccountModel> {
+  return asPersisted({
     email: 'test@example.com',
     status: { toString: () => 'active' },
-  } as unknown as CredentialAccountModel;
+  } as unknown as CredentialAccountModel);
 }
 
 function buildFacade(): jest.Mocked<UserFacade> {

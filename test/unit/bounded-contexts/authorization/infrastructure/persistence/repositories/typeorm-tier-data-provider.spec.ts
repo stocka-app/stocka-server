@@ -166,7 +166,7 @@ describe('TypeOrmTierDataProvider', () => {
           maxWarehouses: 3,
           maxCustomRooms: 10,
           maxStoreRooms: 5,
-        } as TierPlanEntity);
+        } as unknown as TierPlanEntity);
       });
 
       it('Then it returns the correct limits', async () => {

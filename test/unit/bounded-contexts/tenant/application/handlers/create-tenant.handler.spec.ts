@@ -9,6 +9,8 @@ import { ITenantConfigContract } from '@tenant/domain/contracts/tenant-config.co
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
+import { asPersisted } from '@test/helpers/persisted';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { OnboardingAlreadyCompletedError } from '@tenant/domain/errors/onboarding-already-completed.error';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -29,13 +31,13 @@ function buildUser(id?: number): UserAggregate {
   return { id, uuid: 'user-uuid-123' } as unknown as UserAggregate;
 }
 
-function buildSavedTenant(): TenantAggregate {
-  return {
+function buildSavedTenant(): Persisted<TenantAggregate> {
+  return asPersisted({
     id: 1,
     uuid: 'tenant-uuid-abc',
     name: 'My Business',
     commit: jest.fn(),
-  } as unknown as TenantAggregate;
+  } as unknown as TenantAggregate);
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -162,7 +164,7 @@ describe('CreateTenantHandler', () => {
 
   describe('Given the user exists and has no active membership', () => {
     describe('When the slug is unique and the transaction succeeds', () => {
-      let savedTenant: TenantAggregate;
+      let savedTenant: Persisted<TenantAggregate>;
 
       beforeEach(() => {
         savedTenant = buildSavedTenant();
@@ -198,13 +200,13 @@ describe('CreateTenantHandler', () => {
     });
 
     describe('When the slug already exists (collision)', () => {
-      let savedTenant: TenantAggregate;
+      let savedTenant: Persisted<TenantAggregate>;
 
       beforeEach(() => {
         savedTenant = buildSavedTenant();
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue(buildUser(42));
         memberContract.findActiveByUserUUID.mockResolvedValue(null);
-        tenantContract.findBySlug.mockResolvedValue({} as TenantAggregate); // slug taken
+        tenantContract.findBySlug.mockResolvedValue(asPersisted({} as unknown as TenantAggregate)); // slug taken
         tenantContract.persist.mockResolvedValue(savedTenant);
         memberContract.persist.mockResolvedValue(
           {} as ReturnType<typeof memberContract.persist> extends Promise<infer T> ? T : never,

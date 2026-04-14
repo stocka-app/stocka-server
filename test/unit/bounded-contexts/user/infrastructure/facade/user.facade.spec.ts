@@ -11,50 +11,58 @@ import { AccountAggregate } from '@user/account/domain/account.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { PersonalProfileModel } from '@user/profile/domain/models/personal-profile.model';
 import { ProfileAggregate } from '@user/profile/domain/profile.aggregate';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
+import { asPersisted } from '@test/helpers/persisted';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildUser(id = 42, uuid = 'user-uuid-001'): UserAggregate {
-  return { id, uuid } as unknown as UserAggregate;
+function buildUser(id = 42, uuid = 'user-uuid-001'): Persisted<UserAggregate> {
+  return asPersisted({ id, uuid } as unknown as UserAggregate, id);
 }
 
-function buildAccount(id = 10, userId = 42): AccountAggregate {
-  return { id, userId } as unknown as AccountAggregate;
+function buildAccount(id = 10, userId = 42): Persisted<AccountAggregate> {
+  return asPersisted({ id, userId } as unknown as AccountAggregate, id);
 }
 
 function buildCredential(
   id = 20,
   accountId = 10,
   email = 'test@example.com',
-): CredentialAccountModel {
-  return {
+): Persisted<CredentialAccountModel> {
+  return asPersisted(
+    {
+      id,
+      accountId,
+      email,
+      verifyEmail: jest.fn(),
+      blockVerification: jest.fn(),
+      updatePasswordHash: jest.fn(),
+      requiresEmailVerification: jest.fn().mockReturnValue(true),
+    } as unknown as CredentialAccountModel,
     id,
-    accountId,
-    email,
-    verifyEmail: jest.fn(),
-    blockVerification: jest.fn(),
-    updatePasswordHash: jest.fn(),
-    requiresEmailVerification: jest.fn().mockReturnValue(true),
-  } as unknown as CredentialAccountModel;
+  );
 }
 
 function buildPersonalProfile(
   id = 5,
   profileId = 5,
   overrides: { displayName?: string; username?: string; avatarUrl?: string } = {},
-): PersonalProfileModel {
-  return {
+): Persisted<PersonalProfileModel> {
+  return asPersisted(
+    {
+      id,
+      profileId,
+      displayName: overrides.displayName ?? null,
+      username: overrides.username ?? 'testuser',
+      avatarUrl: overrides.avatarUrl ?? null,
+      updateLocale: jest.fn(),
+    } as unknown as PersonalProfileModel,
     id,
-    profileId,
-    displayName: overrides.displayName ?? null,
-    username: overrides.username ?? 'testuser',
-    avatarUrl: overrides.avatarUrl ?? null,
-    updateLocale: jest.fn(),
-  } as unknown as PersonalProfileModel;
+  );
 }
 
-function buildProfileAggregate(id = 5, userId = 42): ProfileAggregate {
-  return { id, userId } as unknown as ProfileAggregate;
+function buildProfileAggregate(id = 5, userId = 42): Persisted<ProfileAggregate> {
+  return asPersisted({ id, userId } as unknown as ProfileAggregate, id);
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -163,7 +171,7 @@ describe('UserFacade', () => {
     });
 
     describe('When the user exists and has a personal profile', () => {
-      let personalProfile: PersonalProfileModel;
+      let personalProfile: Persisted<PersonalProfileModel>;
 
       beforeEach(() => {
         personalProfile = buildPersonalProfile();
@@ -195,7 +203,7 @@ describe('UserFacade', () => {
     });
 
     describe('When the credential account exists', () => {
-      let credential: CredentialAccountModel;
+      let credential: Persisted<CredentialAccountModel>;
 
       beforeEach(() => {
         credential = buildCredential(20);
@@ -228,7 +236,7 @@ describe('UserFacade', () => {
     });
 
     describe('When the credential account exists', () => {
-      let credential: CredentialAccountModel;
+      let credential: Persisted<CredentialAccountModel>;
 
       beforeEach(() => {
         credential = buildCredential(20);
@@ -262,7 +270,7 @@ describe('UserFacade', () => {
     });
 
     describe('When the credential account exists', () => {
-      let credential: CredentialAccountModel;
+      let credential: Persisted<CredentialAccountModel>;
 
       beforeEach(() => {
         credential = buildCredential(20);

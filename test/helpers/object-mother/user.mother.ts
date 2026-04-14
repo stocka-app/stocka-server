@@ -1,5 +1,7 @@
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
+import { asPersisted } from '@test/helpers/persisted';
 
 /**
  * UserMother — test object factory for UserAggregate (pure anchor).
@@ -18,14 +20,15 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): UserAggregate {
-    return UserAggregate.reconstitute({
+  ): Persisted<UserAggregate> {
+    const user = UserAggregate.reconstitute({
       id: overrides.id ?? 1,
       uuid: overrides.uuid ?? '550e8400-e29b-41d4-a716-446655440000',
       createdAt: overrides.createdAt ?? new Date('2024-01-01T00:00:00Z'),
       updatedAt: overrides.updatedAt ?? new Date('2024-01-01T00:00:00Z'),
       archivedAt: overrides.archivedAt ?? null,
     });
+    return asPersisted(user, overrides.id ?? 1);
   }
 
   static createArchived(
@@ -36,7 +39,7 @@ export class UserMother {
       updatedAt: Date;
       archivedAt: Date;
     }> = {},
-  ): UserAggregate {
+  ): Persisted<UserAggregate> {
     return this.create({
       ...overrides,
       archivedAt: overrides.archivedAt ?? new Date('2024-06-01T00:00:00Z'),
@@ -63,8 +66,8 @@ export class CredentialAccountMother {
       updatedAt: Date;
       archivedAt: Date | null;
     }> = {},
-  ): CredentialAccountModel {
-    return CredentialAccountModel.reconstitute({
+  ): Persisted<CredentialAccountModel> {
+    const account = CredentialAccountModel.reconstitute({
       id: overrides.id ?? 1,
       uuid: overrides.uuid ?? '660f9511-f30c-4ae5-b827-557766551111',
       accountId: overrides.accountId ?? 1,
@@ -81,6 +84,7 @@ export class CredentialAccountMother {
       updatedAt: overrides.updatedAt ?? new Date('2024-01-01T00:00:00Z'),
       archivedAt: overrides.archivedAt ?? null,
     });
+    return asPersisted(account, overrides.id ?? 1);
   }
 
   static createPendingVerification(
@@ -93,7 +97,7 @@ export class CredentialAccountMother {
       createdAt: Date;
       updatedAt: Date;
     }> = {},
-  ): CredentialAccountModel {
+  ): Persisted<CredentialAccountModel> {
     return this.create({
       ...overrides,
       status: 'pending_verification',
@@ -111,7 +115,7 @@ export class CredentialAccountMother {
       createdAt: Date;
       updatedAt: Date;
     }> = {},
-  ): CredentialAccountModel {
+  ): Persisted<CredentialAccountModel> {
     return this.create({
       ...overrides,
       status: 'active',
@@ -129,7 +133,7 @@ export class CredentialAccountMother {
       createdAt: Date;
       updatedAt: Date;
     }> = {},
-  ): CredentialAccountModel {
+  ): Persisted<CredentialAccountModel> {
     const provider = overrides.provider ?? 'google';
     return this.create({
       ...overrides,
@@ -150,7 +154,7 @@ export class CredentialAccountMother {
       createdAt: Date;
       updatedAt: Date;
     }> = {},
-  ): CredentialAccountModel {
+  ): Persisted<CredentialAccountModel> {
     return this.create({
       ...overrides,
       status: 'pending_verification',
@@ -159,7 +163,7 @@ export class CredentialAccountMother {
     });
   }
 
-  static createWithEmail(email: string): CredentialAccountModel {
+  static createWithEmail(email: string): Persisted<CredentialAccountModel> {
     return this.create({ email });
   }
 }

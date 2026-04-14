@@ -1,7 +1,7 @@
 import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
-class InvalidVerificationCodeException extends DomainException {
+export class InvalidVerificationCodeException extends DomainException {
   constructor(message: string) {
     super(message, 'INVALID_VERIFICATION_CODE', [{ field: 'code', message }]);
   }

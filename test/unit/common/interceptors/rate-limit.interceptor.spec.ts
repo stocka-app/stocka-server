@@ -9,6 +9,7 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { EventBus } from '@nestjs/cqrs';
 import { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/events/integration';
@@ -223,7 +224,9 @@ describe('RateLimitInterceptor', () => {
         credential: mockCredential,
       });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -247,7 +250,9 @@ describe('RateLimitInterceptor', () => {
         credential: mockCredential,
       });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -273,7 +278,9 @@ describe('RateLimitInterceptor', () => {
         credential: mockCredential,
       });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(7);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -301,7 +308,9 @@ describe('RateLimitInterceptor', () => {
         credential: mockCredential,
       });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(10);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -327,7 +336,9 @@ describe('RateLimitInterceptor', () => {
         credential: mockCredential,
       });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -344,7 +355,9 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -365,7 +378,9 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -392,7 +407,9 @@ describe('RateLimitInterceptor', () => {
         credential: mockCredential,
       });
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -432,7 +449,9 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, httpError as unknown as Error);
 
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
-      attemptContract.persist.mockResolvedValue({} as VerificationAttemptModel);
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -479,9 +498,9 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
-      attemptContract.persist.mockResolvedValue(
-        {} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel,
-      );
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -510,9 +529,9 @@ describe('RateLimitInterceptor', () => {
       const error = new InvalidCredentialsException();
       const callHandler = createMockCallHandler(undefined, error);
 
-      attemptContract.persist.mockResolvedValue(
-        {} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel,
-      );
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -549,9 +568,9 @@ describe('RateLimitInterceptor', () => {
         user: mockUser,
         credential: mockCredential,
       });
-      attemptContract.persist.mockResolvedValue(
-        {} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel,
-      );
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -581,9 +600,9 @@ describe('RateLimitInterceptor', () => {
       const callHandler = createMockCallHandler(undefined, error);
 
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
-      attemptContract.persist.mockResolvedValue(
-        {} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel,
-      );
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -606,9 +625,9 @@ describe('RateLimitInterceptor', () => {
         user: mockUser,
         credential: mockCredential,
       });
-      attemptContract.persist.mockResolvedValue(
-        {} as import('@authentication/domain/models/verification-attempt.model').VerificationAttemptModel,
-      );
+      attemptContract.persist.mockResolvedValue({
+        id: 1,
+      } as unknown as Persisted<VerificationAttemptModel>);
 
       await interceptAndCatchError(context, callHandler);
 

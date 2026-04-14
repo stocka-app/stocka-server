@@ -3,6 +3,8 @@ import { GetMyTenantQuery } from '@tenant/application/queries/get-my-tenant/get-
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
 import { TenantNotFoundError } from '@tenant/domain/errors/tenant-not-found.error';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
+import { asPersisted } from '@test/helpers/persisted';
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -23,10 +25,14 @@ describe('GetMyTenantHandler', () => {
 
   describe('Given the tenant exists', () => {
     describe('When execute is called', () => {
-      let tenant: TenantAggregate;
+      let tenant: Persisted<TenantAggregate>;
 
       beforeEach(() => {
-        tenant = { id: 1, uuid: 'tenant-uuid-abc', name: 'Test Biz' } as unknown as TenantAggregate;
+        tenant = asPersisted({
+          id: 1,
+          uuid: 'tenant-uuid-abc',
+          name: 'Test Biz',
+        } as unknown as TenantAggregate);
         tenantContract.findById.mockResolvedValue(tenant);
       });
 

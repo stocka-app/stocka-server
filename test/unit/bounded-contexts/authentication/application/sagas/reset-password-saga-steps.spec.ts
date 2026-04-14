@@ -12,6 +12,7 @@ import { ResetPasswordSagaContext } from '@authentication/application/sagas/rese
 import { ISessionContract } from '@user/account/session/domain/session.contract';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -46,14 +47,14 @@ function buildResetToken(
   overrides: {
     isValid?: boolean;
   } = {},
-): PasswordResetTokenModel {
+): Persisted<PasswordResetTokenModel> {
   return {
     id: 1,
     credentialAccountId: 10,
     isValid: jest.fn().mockReturnValue(overrides.isValid ?? true),
     markAsUsed: jest.fn(),
     commit: jest.fn(),
-  } as unknown as PasswordResetTokenModel;
+  } as unknown as Persisted<PasswordResetTokenModel>;
 }
 
 // ─── ArchiveUserSessionsStep ─────────────────────────────────────────────────
