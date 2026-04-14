@@ -226,20 +226,20 @@ describe('GET /api/rbac/my-permissions (e2e)', () => {
     });
 
     describe('When they request their effective permissions', () => {
-      it('Then it returns 200 with MANAGER role and 16 specific actions', async () => {
+      it('Then it returns 200 with MANAGER role and 11 specific actions (storage read-only per EC-01)', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/rbac/my-permissions')
           .set('Authorization', `Bearer ${managerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.role).toBe('MANAGER');
-        expect(res.body.actions).toHaveLength(16);
-        expect(res.body.actions).toContain('STORAGE_CREATE');
+        expect(res.body.actions).toHaveLength(11);
         expect(res.body.actions).toContain('STORAGE_READ');
-        expect(res.body.actions).toContain('STORAGE_UPDATE');
-        expect(res.body.actions).toContain('STORAGE_DELETE');
-        expect(res.body.actions).toContain('STORAGE_FREEZE');
-        expect(res.body.actions).toContain('STORAGE_ARCHIVE');
+        expect(res.body.actions).not.toContain('STORAGE_CREATE');
+        expect(res.body.actions).not.toContain('STORAGE_UPDATE');
+        expect(res.body.actions).not.toContain('STORAGE_DELETE');
+        expect(res.body.actions).not.toContain('STORAGE_FREEZE');
+        expect(res.body.actions).not.toContain('STORAGE_ARCHIVE');
         expect(res.body.actions).toContain('MEMBER_INVITE');
         expect(res.body.actions).toContain('MEMBER_READ');
         expect(res.body.actions).toContain('PRODUCT_CREATE');

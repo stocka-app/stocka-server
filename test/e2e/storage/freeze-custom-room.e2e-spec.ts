@@ -118,20 +118,15 @@ describe('POST /api/storages/custom-rooms/:uuid/freeze (E2E)', () => {
 
   describe('Given an owner with an active custom room', () => {
     describe('When POST /api/storages/custom-rooms/:uuid/freeze is called', () => {
-      it('Then it returns 200 and the custom room transitions to FROZEN status', async () => {
+      it('Then it returns 200 with the frozen storage DTO', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/storages/custom-rooms/${customRoomUUID}/freeze`)
           .set('Authorization', `Bearer ${ownerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-
-        const getRes = await request(app.getHttpServer())
-          .get(`/api/storages/${customRoomUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.status).toBe('FROZEN');
-        expect(getRes.body.frozenAt).not.toBeNull();
+        expect(res.body.uuid).toBe(customRoomUUID);
+        expect(res.body.status).toBe('FROZEN');
+        expect(res.body.frozenAt).not.toBeNull();
       });
     });
   });

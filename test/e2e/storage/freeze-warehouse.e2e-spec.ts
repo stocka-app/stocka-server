@@ -124,20 +124,16 @@ describe('POST /api/storages/warehouses/:uuid/freeze (E2E)', () => {
 
   describe('Given an owner with an active warehouse', () => {
     describe('When POST /api/storages/warehouses/:uuid/freeze is called', () => {
-      it('Then it returns 200 and the warehouse transitions to FROZEN status', async () => {
+      it('Then it returns 200 with the frozen storage DTO', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/storages/warehouses/${warehouseUUID}/freeze`)
           .set('Authorization', `Bearer ${ownerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
-
-        const getRes = await request(app.getHttpServer())
-          .get(`/api/storages/${warehouseUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.status).toBe('FROZEN');
-        expect(getRes.body.frozenAt).not.toBeNull();
+        expect(res.body.uuid).toBe(warehouseUUID);
+        expect(res.body.status).toBe('FROZEN');
+        expect(res.body.frozenAt).not.toBeNull();
+        expect(res.body.name).toBe('FreezeWarehouse Alpha');
       });
     });
   });
