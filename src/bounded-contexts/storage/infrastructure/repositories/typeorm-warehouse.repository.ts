@@ -30,7 +30,7 @@ export class TypeOrmWarehouseRepository implements IWarehouseRepository {
   }
 
   async findByUUID(uuid: string): Promise<WarehouseModel | null> {
-    const entity = await this.getRepo().findOne({ where: { uuid } });
+    const entity = await this.getRepo().findOne({ where: { uuid }, withDeleted: true });
     return entity ? WarehouseMapper.toDomain(entity) : null;
   }
 

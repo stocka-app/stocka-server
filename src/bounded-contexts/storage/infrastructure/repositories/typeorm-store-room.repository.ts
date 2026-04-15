@@ -30,7 +30,7 @@ export class TypeOrmStoreRoomRepository implements IStoreRoomRepository {
   }
 
   async findByUUID(uuid: string): Promise<StoreRoomModel | null> {
-    const entity = await this.getRepo().findOne({ where: { uuid } });
+    const entity = await this.getRepo().findOne({ where: { uuid }, withDeleted: true });
     return entity ? StoreRoomMapper.toDomain(entity) : null;
   }
 

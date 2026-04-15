@@ -30,7 +30,7 @@ export class TypeOrmCustomRoomRepository implements ICustomRoomRepository {
   }
 
   async findByUUID(uuid: string): Promise<CustomRoomModel | null> {
-    const entity = await this.getRepo().findOne({ where: { uuid } });
+    const entity = await this.getRepo().findOne({ where: { uuid }, withDeleted: true });
     return entity ? CustomRoomMapper.toDomain(entity) : null;
   }
 

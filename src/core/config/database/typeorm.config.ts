@@ -25,6 +25,7 @@ import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
 import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
 import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.entity';
+import { StorageActivityLogEntity } from '@storage/infrastructure/entities/storage-activity-log.entity';
 
 export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
   useFactory: (configService: ConfigService) => ({
@@ -70,6 +71,7 @@ export const typeOrmAsyncConfig: TypeOrmModuleAsyncOptions = {
       WarehouseEntity,
       StoreRoomEntity,
       CustomRoomEntity,
+      StorageActivityLogEntity,
     ],
     // Migrations are run manually via CLI, not auto-loaded in app
     migrationsRun: false,
