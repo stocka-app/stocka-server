@@ -19,8 +19,8 @@ export class CustomRoomEntity extends BaseEntity {
   @Column({ name: 'room_type', type: 'varchar', length: 50 })
   roomType!: string;
 
-  @Column({ type: 'text' })
-  address!: string;
+  @Column({ type: 'text', nullable: true, default: null })
+  address!: string | null;
 
   @Column({ type: 'varchar', length: 100 })
   icon!: string;

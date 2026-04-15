@@ -146,4 +146,32 @@ describe('PATCH /api/storages/custom-rooms/:uuid/convert-to-warehouse (E2E — H
       expect(res.status).toBe(HttpStatus.NOT_FOUND);
     });
   });
+
+  describe('Given metadata (name, description, address) is supplied in the body', () => {
+    let uuid: string;
+
+    beforeAll(async () => {
+      uuid = await createCustomRoom(app, ownerToken, 'CvtCrToWh Meta');
+    });
+
+    it('Then the new warehouse reflects the metadata overrides', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/storages/custom-rooms/${uuid}/convert-to-warehouse`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          name: 'Almacen Central MX',
+          description: 'Bodega convertida',
+          address: 'Eje 3 Norte 200',
+        });
+      expect(res.status).toBe(HttpStatus.OK);
+
+      const getRes = await request(app.getHttpServer())
+        .get(`/api/storages/${uuid}`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(getRes.body.type).toBe('WAREHOUSE');
+      expect(getRes.body.name).toBe('Almacen Central MX');
+      expect(getRes.body.description).toBe('Bodega convertida');
+      expect(getRes.body.address).toBe('Eje 3 Norte 200');
+    });
+  });
 });

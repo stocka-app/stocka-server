@@ -24,6 +24,8 @@ export class StoreRoomModel {
   }
 
   static create(props: CreateStoreRoomProps): StoreRoomModel {
+    const trimmedAddress =
+      typeof props.address === 'string' ? props.address.trim() : props.address ?? null;
     return new StoreRoomModel({
       uuid: new UUIDVO(props.uuid),
       tenantUUID: props.tenantUUID,
@@ -31,7 +33,7 @@ export class StoreRoomModel {
       description: props.description ? StorageDescriptionVO.create(props.description) : null,
       icon: StorageIconVO.create(props.icon),
       color: StorageColorVO.create(props.color),
-      address: StorageAddressVO.create(props.address),
+      address: trimmedAddress ? StorageAddressVO.create(trimmedAddress) : null,
     });
   }
 
@@ -67,7 +69,7 @@ export class StoreRoomModel {
     return this.attrs.color;
   }
 
-  get address(): StorageAddressVO {
+  get address(): StorageAddressVO | null {
     return this.attrs.address;
   }
 
@@ -96,7 +98,7 @@ export class StoreRoomModel {
       description: StoreRoomModel.resolveUpdatedDescription(current.description, props.description),
       icon: props.icon ? StorageIconVO.create(props.icon) : current.icon,
       color: props.color ? StorageColorVO.create(props.color) : current.color,
-      address: props.address ? StorageAddressVO.create(props.address) : current.address,
+      address: StoreRoomModel.resolveUpdatedAddress(current.address, props.address),
       updatedAt: new Date(),
     });
   }
@@ -169,6 +171,24 @@ export class StoreRoomModel {
     if (next === undefined) return current;
     if (next === null) return null;
     return StorageDescriptionVO.create(next);
+  }
+
+  /**
+   * Address semantics on update:
+   *   undefined → inherit current
+   *   null      → clear
+   *   ''        → clear (user emptied the field in the form)
+   *   string    → replace
+   */
+  private static resolveUpdatedAddress(
+    current: StorageAddressVO | null,
+    next: string | null | undefined,
+  ): StorageAddressVO | null {
+    if (next === undefined) return current;
+    if (next === null) return null;
+    const trimmed = next.trim();
+    if (trimmed === '') return null;
+    return StorageAddressVO.create(trimmed);
   }
 
   private evolveTransition(props: StoreRoomTransitionProps): StoreRoomModel {

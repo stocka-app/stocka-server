@@ -15,7 +15,7 @@ type AnyStorageModel = WarehouseModel | StoreRoomModel | CustomRoomModel;
 interface UpdateFields {
   name?: string;
   description?: string | null;
-  address?: string;
+  address?: string | null;
   icon?: string;
   color?: string;
   /** custom-room only */
@@ -66,16 +66,14 @@ export class StorageUpdateEventsPublisher {
       }
     }
 
-    if (fields.address !== undefined && fields.address !== before.address.getValue()) {
-      this.eventBus.publish(
-        new StorageAddressChangedEvent(
-          uuid,
-          tenantUUID,
-          actorUUID,
-          before.address.getValue(),
-          after.address.getValue(),
-        ),
-      );
+    if (fields.address !== undefined) {
+      const prevAddr = before.address?.getValue() ?? null;
+      const nextAddr = after.address?.getValue() ?? null;
+      if (prevAddr !== nextAddr) {
+        this.eventBus.publish(
+          new StorageAddressChangedEvent(uuid, tenantUUID, actorUUID, prevAddr, nextAddr),
+        );
+      }
     }
 
     if (fields.icon !== undefined && fields.icon !== before.icon.getValue()) {

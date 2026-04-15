@@ -257,4 +257,39 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
       });
     });
   });
+
+  describe('Given a store-room with a non-null address', () => {
+    describe('When PATCH is called with address: null', () => {
+      it('Then the address is persisted as null and subsequent GET reflects it', async () => {
+        const patchRes = await request(app.getHttpServer())
+          .patch(`/api/storages/store-rooms/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: null });
+        expect(patchRes.status).toBe(HttpStatus.OK);
+        expect(patchRes.body.address).toBeNull();
+
+        const getRes = await request(app.getHttpServer())
+          .get(`/api/storages/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+        expect(getRes.body.address).toBeNull();
+      });
+    });
+
+    describe('When PATCH is called with address: ""', () => {
+      it('Then the address is also nulled', async () => {
+        // Restore an address first
+        await request(app.getHttpServer())
+          .patch(`/api/storages/store-rooms/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: 'Temporary 123' });
+
+        const patchRes = await request(app.getHttpServer())
+          .patch(`/api/storages/store-rooms/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: '' });
+        expect(patchRes.status).toBe(HttpStatus.OK);
+        expect(patchRes.body.address).toBeNull();
+      });
+    });
+  });
 });

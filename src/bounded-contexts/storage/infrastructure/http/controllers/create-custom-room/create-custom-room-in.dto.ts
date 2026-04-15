@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
 
 export class CreateCustomRoomInDto {
   @ApiProperty({ description: 'Room name', minLength: 1, maxLength: 100 })
@@ -14,11 +14,12 @@ export class CreateCustomRoomInDto {
   @MaxLength(50)
   roomType!: string;
 
-  @ApiProperty({ description: 'Address', maxLength: 200 })
+  @ApiPropertyOptional({ description: 'Address (optional for CUSTOM_ROOM)', maxLength: 200 })
+  @IsOptional()
+  @ValidateIf((_o, v) => v !== null)
   @IsString()
-  @IsNotEmpty()
   @MaxLength(200)
-  address!: string;
+  address?: string | null;
 
   @ApiPropertyOptional({ description: 'Room description', minLength: 5, maxLength: 300 })
   @IsOptional()

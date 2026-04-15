@@ -146,4 +146,34 @@ describe('PATCH /api/storages/warehouses/:uuid/convert-to-custom-room (E2E — H
       expect(res.status).toBe(HttpStatus.NOT_FOUND);
     });
   });
+
+  describe('Given metadata (name, roomType, icon, color) is supplied in the body', () => {
+    let uuid: string;
+
+    beforeAll(async () => {
+      uuid = await createWarehouse(app, ownerToken, 'CvtWhToCr Meta');
+    });
+
+    it('Then the new custom-room reflects the metadata overrides', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/storages/warehouses/${uuid}/convert-to-custom-room`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          name: 'Laboratorio Alpha',
+          roomType: 'Laboratory',
+          icon: 'science',
+          color: '#0D9488',
+        });
+      expect(res.status).toBe(HttpStatus.OK);
+
+      const getRes = await request(app.getHttpServer())
+        .get(`/api/storages/${uuid}`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(getRes.body.type).toBe('CUSTOM_ROOM');
+      expect(getRes.body.name).toBe('Laboratorio Alpha');
+      expect(getRes.body.roomType).toBe('Laboratory');
+      expect(getRes.body.icon).toBe('science');
+      expect(getRes.body.color).toBe('#0D9488');
+    });
+  });
 });

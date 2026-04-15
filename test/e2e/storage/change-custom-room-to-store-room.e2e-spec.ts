@@ -146,4 +146,30 @@ describe('PATCH /api/storages/custom-rooms/:uuid/convert-to-store-room (E2E — 
       expect(res.status).toBe(HttpStatus.NOT_FOUND);
     });
   });
+
+  describe('Given metadata with a new name and address is supplied in the body', () => {
+    let uuid: string;
+
+    beforeAll(async () => {
+      uuid = await createCustomRoom(app, ownerToken, 'CvtCrToSr Meta');
+    });
+
+    it('Then the new store-room reflects the metadata overrides', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/storages/custom-rooms/${uuid}/convert-to-store-room`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          name: 'Estanteria Principal',
+          address: 'Local 7, CDMX',
+        });
+      expect(res.status).toBe(HttpStatus.OK);
+
+      const getRes = await request(app.getHttpServer())
+        .get(`/api/storages/${uuid}`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(getRes.body.type).toBe('STORE_ROOM');
+      expect(getRes.body.name).toBe('Estanteria Principal');
+      expect(getRes.body.address).toBe('Local 7, CDMX');
+    });
+  });
 });

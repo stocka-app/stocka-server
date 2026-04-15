@@ -146,4 +146,32 @@ describe('PATCH /api/storages/store-rooms/:uuid/convert-to-custom-room (E2E — 
       expect(res.status).toBe(HttpStatus.NOT_FOUND);
     });
   });
+
+  describe('Given metadata (roomType, icon, color) is supplied in the body', () => {
+    let uuid: string;
+
+    beforeAll(async () => {
+      uuid = await createStoreRoom(app, ownerToken, 'CvtSrToCr Meta');
+    });
+
+    it('Then the new custom-room reflects the metadata overrides', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/storages/store-rooms/${uuid}/convert-to-custom-room`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          roomType: 'Lounge',
+          icon: 'chair',
+          color: '#F97316',
+        });
+      expect(res.status).toBe(HttpStatus.OK);
+
+      const getRes = await request(app.getHttpServer())
+        .get(`/api/storages/${uuid}`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(getRes.body.type).toBe('CUSTOM_ROOM');
+      expect(getRes.body.roomType).toBe('Lounge');
+      expect(getRes.body.icon).toBe('chair');
+      expect(getRes.body.color).toBe('#F97316');
+    });
+  });
 });

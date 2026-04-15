@@ -146,4 +146,30 @@ describe('PATCH /api/storages/store-rooms/:uuid/convert-to-warehouse (E2E — H-
       expect(res.status).toBe(HttpStatus.NOT_FOUND);
     });
   });
+
+  describe('Given metadata with a new name and address is supplied in the body', () => {
+    let uuid: string;
+
+    beforeAll(async () => {
+      uuid = await createStoreRoom(app, ownerToken, 'CvtSrToWh Meta');
+    });
+
+    it('Then the new warehouse reflects the metadata overrides', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/storages/store-rooms/${uuid}/convert-to-warehouse`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          name: 'Almacen Norte',
+          address: 'Parque Industrial 999',
+        });
+      expect(res.status).toBe(HttpStatus.OK);
+
+      const getRes = await request(app.getHttpServer())
+        .get(`/api/storages/${uuid}`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(getRes.body.type).toBe('WAREHOUSE');
+      expect(getRes.body.name).toBe('Almacen Norte');
+      expect(getRes.body.address).toBe('Parque Industrial 999');
+    });
+  });
 });

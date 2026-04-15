@@ -5,8 +5,8 @@ export class StorageAddressChangedEvent extends DomainEvent {
     public readonly storageUUID: string,
     public readonly tenantUUID: string,
     public readonly actorUUID: string,
-    public readonly previousValue: string,
-    public readonly newValue: string,
+    public readonly previousValue: string | null,
+    public readonly newValue: string | null,
   ) {
     super();
   }

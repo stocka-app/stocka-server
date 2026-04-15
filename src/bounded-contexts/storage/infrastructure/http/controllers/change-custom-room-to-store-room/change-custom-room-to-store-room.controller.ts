@@ -1,4 +1,4 @@
-import { Controller, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Param, Patch } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
@@ -6,6 +6,7 @@ import { CurrentMember, CurrentMemberData } from '@common/decorators/current-mem
 import { Secure } from '@common/decorators/secure.decorator';
 import { ChangeCustomRoomToStoreRoomCommand } from '@storage/application/commands/change-custom-room-to-store-room/change-custom-room-to-store-room.command';
 import { ChangeCustomRoomToStoreRoomResult } from '@storage/application/commands/change-custom-room-to-store-room/change-custom-room-to-store-room.handler';
+import { ConvertToStoreRoomInDto } from '@storage/infrastructure/http/shared/dto/convert-to-store-room-in.dto';
 
 @ApiTags('Storage')
 @Controller('storages/custom-rooms')
@@ -19,17 +20,24 @@ export class ChangeCustomRoomToStoreRoomController {
   @ApiParam({ name: 'uuid', description: 'Custom room UUID' })
   @ApiResponse({ status: 200, description: 'Conversion successful' })
   @ApiResponse({ status: 404, description: 'Custom room not found' })
-  @ApiResponse({ status: 409, description: 'Source is archived or frozen' })
+  @ApiResponse({ status: 409, description: 'Source is archived or frozen or name conflicts' })
   @ApiResponse({ status: 403, description: 'Tier limit reached for store rooms' })
   async handle(
     @Param('uuid') uuid: string,
+    @Body() dto: ConvertToStoreRoomInDto,
     @CurrentUser() user: JwtPayload,
     @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<
       ChangeCustomRoomToStoreRoomCommand,
       ChangeCustomRoomToStoreRoomResult
-    >(new ChangeCustomRoomToStoreRoomCommand(uuid, member.tenantUUID, user.uuid));
+    >(
+      new ChangeCustomRoomToStoreRoomCommand(uuid, member.tenantUUID, user.uuid, {
+        name: dto.name,
+        description: dto.description,
+        address: dto.address,
+      }),
+    );
 
     return result.match(
       (data) => data,

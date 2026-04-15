@@ -12,7 +12,7 @@ export interface StoreRoomModelProps {
   description: StorageDescriptionVO | null;
   icon: StorageIconVO;
   color: StorageColorVO;
-  address: StorageAddressVO;
+  address: StorageAddressVO | null;
 
   id?: number;
   archivedAt?: Date | null;
@@ -28,7 +28,7 @@ export interface StoreRoomModelAttrs {
   description: StorageDescriptionVO | null;
   icon: StorageIconVO;
   color: StorageColorVO;
-  address: StorageAddressVO;
+  address: StorageAddressVO | null;
 
   id?: number;
   archivedAt: Date | null;

@@ -146,4 +146,32 @@ describe('PATCH /api/storages/warehouses/:uuid/convert-to-store-room (E2E — H-
       expect(res.status).toBe(HttpStatus.NOT_FOUND);
     });
   });
+
+  describe('Given metadata (name, description, address) is supplied in the body', () => {
+    let uuid: string;
+
+    beforeAll(async () => {
+      uuid = await createWarehouse(app, ownerToken, 'CvtWhToSr Meta');
+    });
+
+    it('Then the new store-room reflects the metadata overrides', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/storages/warehouses/${uuid}/convert-to-store-room`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({
+          name: 'Bodega Trasera',
+          description: 'Almacen secundario',
+          address: 'Calle 8, CDMX',
+        });
+      expect(res.status).toBe(HttpStatus.OK);
+
+      const getRes = await request(app.getHttpServer())
+        .get(`/api/storages/${uuid}`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+      expect(getRes.body.type).toBe('STORE_ROOM');
+      expect(getRes.body.name).toBe('Bodega Trasera');
+      expect(getRes.body.description).toBe('Almacen secundario');
+      expect(getRes.body.address).toBe('Calle 8, CDMX');
+    });
+  });
 });

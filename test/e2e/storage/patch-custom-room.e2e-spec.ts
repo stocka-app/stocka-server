@@ -261,4 +261,35 @@ describe('PATCH /api/storages/custom-rooms/:uuid (e2e)', () => {
       });
     });
   });
+
+  describe('Given a custom room whose address the user wants to clear', () => {
+    describe('When PATCH is called with address: null and then with address: ""', () => {
+      it('Then the address is persisted as null in both cases and GET reflects it', async () => {
+        const nullRes = await request(app.getHttpServer())
+          .patch(`/api/storages/custom-rooms/${customRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: null });
+        expect(nullRes.status).toBe(HttpStatus.OK);
+        expect(nullRes.body.address).toBeNull();
+
+        // Restore, then clear via empty string
+        await request(app.getHttpServer())
+          .patch(`/api/storages/custom-rooms/${customRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: 'Intermediate 9' });
+
+        const emptyRes = await request(app.getHttpServer())
+          .patch(`/api/storages/custom-rooms/${customRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: '' });
+        expect(emptyRes.status).toBe(HttpStatus.OK);
+        expect(emptyRes.body.address).toBeNull();
+
+        const getRes = await request(app.getHttpServer())
+          .get(`/api/storages/${customRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+        expect(getRes.body.address).toBeNull();
+      });
+    });
+  });
 });

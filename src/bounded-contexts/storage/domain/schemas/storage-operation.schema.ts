@@ -16,7 +16,7 @@ export interface CreateStoreRoomProps {
   description?: string;
   icon: string;
   color: string;
-  address: string;
+  address?: string | null;
 }
 
 export interface CreateCustomRoomProps {
@@ -27,7 +27,7 @@ export interface CreateCustomRoomProps {
   icon: string;
   color: string;
   roomType: string;
-  address: string;
+  address?: string | null;
 }
 
 // Update props
@@ -44,7 +44,7 @@ export interface UpdateStoreRoomProps {
   description?: string | null;
   icon?: string;
   color?: string;
-  address?: string;
+  address?: string | null;
 }
 
 export interface UpdateCustomRoomProps {
@@ -52,6 +52,6 @@ export interface UpdateCustomRoomProps {
   description?: string | null;
   icon?: string;
   color?: string;
-  address?: string;
+  address?: string | null;
   roomType?: string;
 }

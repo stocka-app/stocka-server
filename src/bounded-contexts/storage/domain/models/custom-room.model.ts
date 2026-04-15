@@ -25,6 +25,8 @@ export class CustomRoomModel {
   }
 
   static create(props: CreateCustomRoomProps): CustomRoomModel {
+    const trimmedAddress =
+      typeof props.address === 'string' ? props.address.trim() : props.address ?? null;
     return new CustomRoomModel({
       uuid: new UUIDVO(props.uuid),
       tenantUUID: props.tenantUUID,
@@ -33,7 +35,7 @@ export class CustomRoomModel {
       icon: StorageIconVO.create(props.icon),
       color: StorageColorVO.create(props.color),
       roomType: RoomTypeNameVO.create(props.roomType),
-      address: StorageAddressVO.create(props.address),
+      address: trimmedAddress ? StorageAddressVO.create(trimmedAddress) : null,
     });
   }
 
@@ -73,7 +75,7 @@ export class CustomRoomModel {
     return this.attrs.roomType;
   }
 
-  get address(): StorageAddressVO {
+  get address(): StorageAddressVO | null {
     return this.attrs.address;
   }
 
@@ -101,8 +103,7 @@ export class CustomRoomModel {
     const color = props.color !== undefined ? StorageColorVO.create(props.color) : current.color;
     const roomType =
       props.roomType !== undefined ? RoomTypeNameVO.create(props.roomType) : current.roomType;
-    const address =
-      props.address !== undefined ? StorageAddressVO.create(props.address) : current.address;
+    const address = CustomRoomModel.resolveUpdatedAddress(current.address, props.address);
     const description = CustomRoomModel.resolveUpdatedDescription(
       current.description,
       props.description,
@@ -200,5 +201,17 @@ export class CustomRoomModel {
     if (next === undefined) return current;
     if (next === null) return null;
     return StorageDescriptionVO.create(next);
+  }
+
+  /** Address update: undefined inherits, null or '' clears, string replaces. */
+  private static resolveUpdatedAddress(
+    current: StorageAddressVO | null,
+    next: string | null | undefined,
+  ): StorageAddressVO | null {
+    if (next === undefined) return current;
+    if (next === null) return null;
+    const trimmed = next.trim();
+    if (trimmed === '') return null;
+    return StorageAddressVO.create(trimmed);
   }
 }

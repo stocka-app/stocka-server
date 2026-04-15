@@ -727,6 +727,7 @@ describe('UpdateStoreRoomHandler', () => {
     describe('When update is requested', () => {
       it('Then the name-duplication check is skipped and the update succeeds', async () => {
         storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ name: 'Same' }));
+        storeRoomRepository.save.mockImplementation(async (m) => m);
 
         const result = await handler.execute(
           new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'Same'),

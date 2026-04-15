@@ -7,7 +7,7 @@ export class UpdateCustomRoomCommand {
     public readonly description?: string | null,
     public readonly icon?: string,
     public readonly color?: string,
-    public readonly address?: string,
+    public readonly address?: string | null,
     public readonly roomType?: string,
   ) {}
 }

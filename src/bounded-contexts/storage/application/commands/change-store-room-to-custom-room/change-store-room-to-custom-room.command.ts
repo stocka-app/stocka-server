@@ -1,7 +1,10 @@
+import { ConvertToCustomRoomMetadata } from '@storage/application/types/convert-metadata.types';
+
 export class ChangeStoreRoomToCustomRoomCommand {
   constructor(
     public readonly storageUUID: string,
     public readonly tenantUUID: string,
     public readonly actorUUID: string,
+    public readonly metadata: ConvertToCustomRoomMetadata = {},
   ) {}
 }
