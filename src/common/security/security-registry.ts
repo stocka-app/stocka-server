@@ -65,5 +65,27 @@ export const SecurityRegistry: Record<string, SecurityMeta> = {
   'PATCH /storages/warehouses/:uuid': { action: SystemAction.STORAGE_UPDATE },
   'PATCH /storages/custom-rooms/:uuid': { action: SystemAction.STORAGE_UPDATE },
   'PATCH /storages/store-rooms/:uuid': { action: SystemAction.STORAGE_UPDATE },
+  // Change-storage-type per-transition (H-07 refactor — DT-H07-2 fix)
+  'PATCH /storages/warehouses/:uuid/convert-to-store-room': { action: SystemAction.STORAGE_UPDATE },
+  'PATCH /storages/warehouses/:uuid/convert-to-custom-room': {
+    action: SystemAction.STORAGE_UPDATE,
+  },
+  'PATCH /storages/store-rooms/:uuid/convert-to-warehouse': { action: SystemAction.STORAGE_UPDATE },
+  'PATCH /storages/store-rooms/:uuid/convert-to-custom-room': {
+    action: SystemAction.STORAGE_UPDATE,
+  },
+  'PATCH /storages/custom-rooms/:uuid/convert-to-warehouse': {
+    action: SystemAction.STORAGE_UPDATE,
+  },
+  'PATCH /storages/custom-rooms/:uuid/convert-to-store-room': {
+    action: SystemAction.STORAGE_UPDATE,
+  },
+  // Archive (heredado de H-05) — endpoint a refactorizar a per-type en Paso 3
   'DELETE /storages/:uuid': { action: SystemAction.STORAGE_DELETE },
+  // Restore (H-07)
+  'POST /storages/warehouses/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
+  'POST /storages/store-rooms/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
+  'POST /storages/custom-rooms/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
+  // Permanent delete (H-07 entry point — stub 501; flujo completo en historia separada)
+  'DELETE /storages/:uuid/permanent': { action: SystemAction.STORAGE_DELETE },
 };
