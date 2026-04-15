@@ -135,6 +135,13 @@ export class WarehouseModel {
     });
   }
 
+  markRestored(): WarehouseModel {
+    return this.evolveTransition({
+      archivedAt: null,
+      frozenAt: this.frozenAt,
+    });
+  }
+
   private toProps(): WarehouseModelProps {
     return { ...this.attrs };
   }

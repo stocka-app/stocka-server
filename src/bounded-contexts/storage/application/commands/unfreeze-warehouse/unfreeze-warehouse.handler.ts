@@ -1,14 +1,16 @@
-import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
+import { INJECTION_TOKENS } from '@common/constants/app.constants';
+import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { Result, err, ok } from '@shared/domain/result';
+import { UnfreezeWarehouseCommand } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.command';
+import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen.error';
-import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { Result, ok, err } from '@shared/domain/result';
+import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
 import { StorageItemView } from '@storage/domain/schemas';
-import { UnfreezeWarehouseCommand } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.command';
 
 export type UnfreezeWarehouseResult = Result<StorageItemView, DomainException>;
 
@@ -19,31 +21,26 @@ export class UnfreezeWarehouseHandler implements ICommandHandler<UnfreezeWarehou
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.WAREHOUSE_CONTRACT)
     private readonly warehouseRepository: IWarehouseRepository,
-    private readonly eventPublisher: EventPublisher,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: UnfreezeWarehouseCommand): Promise<UnfreezeWarehouseResult> {
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
-    const warehouse = aggregate.findWarehouse(command.storageUUID);
+    const warehouse = await this.warehouseRepository.findByUUID(command.storageUUID);
 
-    if (!warehouse) return err(new StorageNotFoundError(command.storageUUID));
-    if (!warehouse.isFrozen()) return err(new StorageNotFrozenError(command.storageUUID));
-
-    aggregate.unfreezeWarehouse(command.storageUUID, command.actorUUID);
-
-    const updated = aggregate.findWarehouse(command.storageUUID);
-    if (!updated || aggregate.id === undefined) {
+    if (!warehouse || warehouse.tenantUUID !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
+    if (!warehouse.isFrozen()) return err(new StorageNotFrozenError(command.storageUUID));
 
-    await this.warehouseRepository.save(updated, aggregate.id);
+    const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
+    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
+    const updated = await this.warehouseRepository.save(warehouse.markUnfrozen(), storageId);
 
-    const view = aggregate.findItemView(command.storageUUID);
-    if (!view) return err(new StorageNotFoundError(command.storageUUID));
+    this.eventBus.publish(
+      new StorageReactivatedEvent(command.storageUUID, command.tenantUUID, command.actorUUID),
+    );
 
-    return ok(view);
+    return ok(StorageItemViewMapper.fromWarehouse(updated));
   }
 }

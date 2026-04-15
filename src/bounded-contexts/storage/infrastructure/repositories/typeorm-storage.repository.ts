@@ -54,6 +54,15 @@ export class TypeOrmStorageRepository implements IStorageRepository {
     return StorageMapper.toDomain(storageEntity, warehouses, storeRooms, customRooms);
   }
 
+  async findIdByTenantUUID(tenantUUID: string): Promise<number | null> {
+    const entity = await this.storageRepository.findOne({
+      where: { tenantUUID },
+      select: ['id'],
+    });
+
+    return entity?.id ?? null;
+  }
+
   async existsActiveName(tenantUUID: string, name: string): Promise<boolean> {
     const lowerName = name.toLowerCase();
 

@@ -153,6 +153,13 @@ export class CustomRoomModel {
     });
   }
 
+  markRestored(): CustomRoomModel {
+    return this.evolveTransition({
+      archivedAt: null,
+      frozenAt: this.frozenAt,
+    });
+  }
+
   private toProps(): CustomRoomModelProps {
     return { ...this.attrs };
   }

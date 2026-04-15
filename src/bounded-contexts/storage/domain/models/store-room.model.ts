@@ -134,6 +134,13 @@ export class StoreRoomModel {
     });
   }
 
+  markRestored(): StoreRoomModel {
+    return this.evolveTransition({
+      archivedAt: null,
+      frozenAt: this.frozenAt,
+    });
+  }
+
   private toProps(): StoreRoomModelProps {
     return { ...this.attrs };
   }
