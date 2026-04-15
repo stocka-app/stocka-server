@@ -179,14 +179,14 @@ describe('GET /api/rbac/my-permissions (e2e)', () => {
     });
 
     describe('When they request their effective permissions', () => {
-      it('Then it returns 200 with PARTNER role and 19 specific actions', async () => {
+      it('Then it returns 200 with PARTNER role and 20 specific actions (H-07 adds STORAGE_RESTORE)', async () => {
         const res = await request(app.getHttpServer())
           .get('/api/rbac/my-permissions')
           .set('Authorization', `Bearer ${partnerToken}`);
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.role).toBe('PARTNER');
-        expect(res.body.actions).toHaveLength(19);
+        expect(res.body.actions).toHaveLength(20);
         expect(res.body.actions).toContain('STORAGE_CREATE');
         expect(res.body.actions).toContain('STORAGE_READ');
         expect(res.body.actions).toContain('STORAGE_UPDATE');
@@ -194,6 +194,7 @@ describe('GET /api/rbac/my-permissions (e2e)', () => {
         expect(res.body.actions).toContain('STORAGE_FREEZE');
         expect(res.body.actions).toContain('STORAGE_UNFREEZE');
         expect(res.body.actions).toContain('STORAGE_ARCHIVE');
+        expect(res.body.actions).toContain('STORAGE_RESTORE');
         expect(res.body.actions).toContain('MEMBER_INVITE');
         expect(res.body.actions).toContain('MEMBER_READ');
         expect(res.body.actions).toContain('MEMBER_UPDATE_ROLE');

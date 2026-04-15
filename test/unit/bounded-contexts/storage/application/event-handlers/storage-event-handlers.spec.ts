@@ -6,6 +6,7 @@ import { StorageIconChangedEventHandler } from '@storage/application/event-handl
 import { StorageColorChangedEventHandler } from '@storage/application/event-handlers/storage-color-changed.event-handler';
 import { StorageTypeChangedEventHandler } from '@storage/application/event-handlers/storage-type-changed.event-handler';
 import { StorageArchivedEventHandler } from '@storage/application/event-handlers/storage-archived.event-handler';
+import { StorageRestoredEventHandler } from '@storage/application/event-handlers/storage-restored.event-handler';
 import { StorageFrozenEventHandler } from '@storage/application/event-handlers/storage-frozen.event-handler';
 import { StorageReactivatedEventHandler } from '@storage/application/event-handlers/storage-reactivated.event-handler';
 import { StorageCreatedEvent } from '@storage/domain/events/storage-created.event';
@@ -16,6 +17,7 @@ import { StorageIconChangedEvent } from '@storage/domain/events/storage-icon-cha
 import { StorageColorChangedEvent } from '@storage/domain/events/storage-color-changed.event';
 import { StorageTypeChangedEvent } from '@storage/domain/events/storage-type-changed.event';
 import { StorageArchivedEvent } from '@storage/domain/events/storage-archived.event';
+import { StorageRestoredEvent } from '@storage/domain/events/storage-restored.event';
 import { StorageFrozenEvent } from '@storage/domain/events/storage-frozen.event';
 import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
 import { StorageActivityLogEntry } from '@storage/domain/models/storage-activity-log-entry.model';
@@ -310,6 +312,34 @@ describe('StorageArchivedEventHandler', () => {
         expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
         const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
         expect(savedEntry.action).toBe(StorageActivityAction.ARCHIVED);
+        expect(savedEntry.storageUUID.toString()).toBe(STORAGE_UUID);
+        expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
+        expect(savedEntry.previousValue).toBeNull();
+        expect(savedEntry.newValue).toBeNull();
+      });
+    });
+  });
+});
+
+// ── StorageRestoredEventHandler ───────────────────────────────────────────────
+
+describe('StorageRestoredEventHandler', () => {
+  let handler: StorageRestoredEventHandler;
+
+  beforeEach(() => {
+    handler = new StorageRestoredEventHandler(mockActivityLogRepo);
+  });
+
+  describe('Given a StorageRestoredEvent', () => {
+    describe('When handle is called', () => {
+      it('Then saves an activity log entry with RESTORED action', async () => {
+        const event = new StorageRestoredEvent(STORAGE_UUID, TENANT_UUID, ACTOR_UUID);
+
+        await handler.handle(event);
+
+        expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
+        expect(savedEntry.action).toBe(StorageActivityAction.RESTORED);
         expect(savedEntry.storageUUID.toString()).toBe(STORAGE_UUID);
         expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
         expect(savedEntry.previousValue).toBeNull();

@@ -92,9 +92,13 @@ async function createStorage(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function archiveStorage(app: INestApplication, token: string, uuid: string): Promise<void> {
+async function archiveCustomRoom(
+  app: INestApplication,
+  token: string,
+  uuid: string,
+): Promise<void> {
   await request(app.getHttpServer())
-    .delete(`/api/storages/${uuid}`)
+    .delete(`/api/storages/custom-rooms/${uuid}/archive`)
     .set('Authorization', `Bearer ${token}`);
 }
 
@@ -143,7 +147,7 @@ describe('PATCH /api/storages/custom-rooms/:uuid (e2e)', () => {
       name: 'PatchCustomRoom Archived Custom Room',
       roomType: 'Archive',
     });
-    await archiveStorage(app, ownerToken, archivedCustomRoomUUID);
+    await archiveCustomRoom(app, ownerToken, archivedCustomRoomUUID);
   });
 
   afterAll(async () => {
@@ -179,13 +183,15 @@ describe('PATCH /api/storages/custom-rooms/:uuid (e2e)', () => {
 
   describe('Given a tenant with an archived custom room', () => {
     describe('When PATCH /api/storages/custom-rooms/:archivedUUID is called', () => {
-      it('Then it returns 409 (archived storages cannot be updated)', async () => {
+      it('Then it returns 200 — H-07 allows metadata edits in ARCHIVED (E5.2)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/storages/custom-rooms/${archivedCustomRoomUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'Should Not Update Again' });
+          .send({ name: 'Edited While Archived CR' });
 
-        expect(res.status).toBe(HttpStatus.CONFLICT);
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.name).toBe('Edited While Archived CR');
+        expect(res.body.status).toBe('ARCHIVED');
       });
     });
   });
@@ -199,7 +205,8 @@ describe('PATCH /api/storages/custom-rooms/:uuid (e2e)', () => {
           .send({ name: 'PatchCustomRoom Custom Room Renamed' });
 
         expect(patchRes.status).toBe(HttpStatus.OK);
-        expect(patchRes.body).toEqual({ storageUUID: customRoomUUID });
+        expect(patchRes.body.uuid).toBe(customRoomUUID);
+        expect(patchRes.body.type).toBe('CUSTOM_ROOM');
 
         const getRes = await request(app.getHttpServer())
           .get(`/api/storages/${customRoomUUID}`)
@@ -220,7 +227,8 @@ describe('PATCH /api/storages/custom-rooms/:uuid (e2e)', () => {
           .send({ name: 'PatchCustomRoom Custom Room Renamed' });
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual({ storageUUID: customRoomUUID });
+        expect(res.body.uuid).toBe(customRoomUUID);
+        expect(res.body.type).toBe('CUSTOM_ROOM');
       });
     });
   });
@@ -248,7 +256,8 @@ describe('PATCH /api/storages/custom-rooms/:uuid (e2e)', () => {
           .send({ icon: 'updated-icon', color: '#556677', roomType: 'Meeting' });
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual({ storageUUID: customRoomUUID });
+        expect(res.body.uuid).toBe(customRoomUUID);
+        expect(res.body.type).toBe('CUSTOM_ROOM');
       });
     });
   });

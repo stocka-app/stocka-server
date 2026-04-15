@@ -364,6 +364,14 @@ describe('StorageTypeChangePolicy', () => {
     });
   });
 
+  describe('Given the tenant is below the store-room limit', () => {
+    describe('When assertStoreRoomCapacity() is called', () => {
+      it('Then it returns null (no error)', async () => {
+        await expect(policy.assertStoreRoomCapacity(TENANT_UUID)).resolves.toBeNull();
+      });
+    });
+  });
+
   describe('Given the tenant is at the store-room limit', () => {
     describe('When assertStoreRoomCapacity() is called', () => {
       it('Then it returns StoreRoomLimitReachedError', async () => {
@@ -372,6 +380,14 @@ describe('StorageTypeChangePolicy', () => {
         const result = await policy.assertStoreRoomCapacity(TENANT_UUID);
 
         expect(result).toBeInstanceOf(StoreRoomLimitReachedError);
+      });
+    });
+  });
+
+  describe('Given the tenant is below the custom-room limit', () => {
+    describe('When assertCustomRoomCapacity() is called', () => {
+      it('Then it returns null (no error)', async () => {
+        await expect(policy.assertCustomRoomCapacity(TENANT_UUID)).resolves.toBeNull();
       });
     });
   });

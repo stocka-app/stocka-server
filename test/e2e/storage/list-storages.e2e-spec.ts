@@ -110,9 +110,15 @@ async function createStorage(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function archiveStorage(app: INestApplication, token: string, uuid: string): Promise<void> {
+async function archiveCustomRoom(app: INestApplication, token: string, uuid: string): Promise<void> {
   await request(app.getHttpServer())
-    .delete(`/api/storages/${uuid}`)
+    .delete(`/api/storages/custom-rooms/${uuid}/archive`)
+    .set('Authorization', `Bearer ${token}`);
+}
+
+async function archiveStoreRoom(app: INestApplication, token: string, uuid: string): Promise<void> {
+  await request(app.getHttpServer())
+    .delete(`/api/storages/store-rooms/${uuid}/archive`)
     .set('Authorization', `Bearer ${token}`);
 }
 
@@ -170,7 +176,7 @@ describe('List Storages — GET /api/storages (e2e)', () => {
     });
 
     // Archive the custom room so we have both ACTIVE and ARCHIVED in the DB
-    await archiveStorage(app, ownerAToken, customRoomUUID);
+    await archiveCustomRoom(app, ownerAToken, customRoomUUID);
 
     // ── Tenant B setup (for isolation test) ────────────────────────────────
     await signUp(app, dataSource, OWNER_B_EMAIL, OWNER_B_USERNAME);
@@ -348,8 +354,8 @@ describe('List Storages — GET /api/storages (e2e)', () => {
         type: 'STORE_ROOM',
         name: 'Zeta Store Room',
       });
-      await archiveStorage(app, ownerAToken, firstUUID);
-      await archiveStorage(app, ownerAToken, secondUUID);
+      await archiveStoreRoom(app, ownerAToken, firstUUID);
+      await archiveStoreRoom(app, ownerAToken, secondUUID);
     });
 
     describe('When GET /api/storages?status=ARCHIVED&sortOrder=DESC is called', () => {

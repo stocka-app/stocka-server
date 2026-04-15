@@ -693,6 +693,35 @@ describe('UpdateStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the store room does not exist', () => {
+    describe('When update is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'X'),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When update is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ name: 'Old' }));
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'New'),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 // helper for the nested test above — kept in scope of the file
@@ -747,6 +776,36 @@ describe('UpdateCustomRoomHandler', () => {
 
         const result = await handler.execute(
           new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'X'),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given a name collision for a custom room', () => {
+    describe('When update is requested', () => {
+      it('Then it returns StorageNameAlreadyExistsError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ name: 'Old' }));
+        storageRepository.existsActiveName.mockResolvedValue(true);
+
+        const result = await handler.execute(
+          new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Taken'),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved for a custom room', () => {
+    describe('When update is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'New'),
         );
 
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
