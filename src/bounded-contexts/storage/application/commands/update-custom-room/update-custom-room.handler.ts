@@ -4,7 +4,6 @@ import { UpdateCustomRoomCommand } from '@storage/application/commands/update-cu
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageArchivedCannotBeUpdatedError } from '@storage/domain/errors/storage-archived-cannot-be-updated.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -29,10 +28,6 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
 
     if (!customRoom) {
       return err(new StorageNotFoundError(command.storageUUID));
-    }
-
-    if (customRoom.isArchived()) {
-      return err(new StorageArchivedCannotBeUpdatedError(command.storageUUID));
     }
 
     if (command.name !== undefined && command.name !== customRoom.name.getValue()) {

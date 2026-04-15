@@ -1,4 +1,4 @@
-export class ArchiveStorageCommand {
+export class ArchiveCustomRoomCommand {
   constructor(
     public readonly storageUUID: string,
     public readonly tenantUUID: string,

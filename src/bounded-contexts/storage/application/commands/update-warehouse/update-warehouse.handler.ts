@@ -4,7 +4,6 @@ import { UpdateWarehouseCommand } from '@storage/application/commands/update-war
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageArchivedCannotBeUpdatedError } from '@storage/domain/errors/storage-archived-cannot-be-updated.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { StorageAddressRequiredForWarehouseError } from '@storage/domain/errors/storage-address-required-for-warehouse.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -30,10 +29,6 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
 
     if (!warehouse) {
       return err(new StorageNotFoundError(command.storageUUID));
-    }
-
-    if (warehouse.isArchived()) {
-      return err(new StorageArchivedCannotBeUpdatedError(command.storageUUID));
     }
 
     if (command.name !== undefined && command.name !== warehouse.name.getValue()) {

@@ -80,8 +80,10 @@ export const SecurityRegistry: Record<string, SecurityMeta> = {
   'PATCH /storages/custom-rooms/:uuid/convert-to-store-room': {
     action: SystemAction.STORAGE_UPDATE,
   },
-  // Archive (heredado de H-05) — endpoint a refactorizar a per-type en Paso 3
-  'DELETE /storages/:uuid': { action: SystemAction.STORAGE_DELETE },
+  // Archive (H-07) — per-type soft-delete, reversible via restore
+  'DELETE /storages/warehouses/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },
+  'DELETE /storages/store-rooms/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },
+  'DELETE /storages/custom-rooms/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },
   // Restore (H-07)
   'POST /storages/warehouses/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
   'POST /storages/store-rooms/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },

@@ -4,7 +4,6 @@ import { UpdateStoreRoomCommand } from '@storage/application/commands/update-sto
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageArchivedCannotBeUpdatedError } from '@storage/domain/errors/storage-archived-cannot-be-updated.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -29,10 +28,6 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
 
     if (!storeRoom) {
       return err(new StorageNotFoundError(command.storageUUID));
-    }
-
-    if (storeRoom.isArchived()) {
-      return err(new StorageArchivedCannotBeUpdatedError(command.storageUUID));
     }
 
     if (command.name !== undefined && command.name !== storeRoom.name.getValue()) {

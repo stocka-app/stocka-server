@@ -26,7 +26,9 @@ import { ChangeStoreRoomToCustomRoomHandler } from '@storage/application/command
 import { ChangeCustomRoomToWarehouseHandler } from '@storage/application/commands/change-custom-room-to-warehouse/change-custom-room-to-warehouse.handler';
 import { ChangeCustomRoomToStoreRoomHandler } from '@storage/application/commands/change-custom-room-to-store-room/change-custom-room-to-store-room.handler';
 import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
-import { ArchiveStorageHandler } from '@storage/application/commands/archive-storage/archive-storage.handler';
+import { ArchiveWarehouseHandler } from '@storage/application/commands/archive-warehouse/archive-warehouse.handler';
+import { ArchiveStoreRoomHandler } from '@storage/application/commands/archive-store-room/archive-store-room.handler';
+import { ArchiveCustomRoomHandler } from '@storage/application/commands/archive-custom-room/archive-custom-room.handler';
 import { FreezeWarehouseHandler } from '@storage/application/commands/freeze-warehouse/freeze-warehouse.handler';
 import { FreezeStoreRoomHandler } from '@storage/application/commands/freeze-store-room/freeze-store-room.handler';
 import { FreezeCustomRoomHandler } from '@storage/application/commands/freeze-custom-room/freeze-custom-room.handler';
@@ -63,7 +65,9 @@ import { ChangeStoreRoomToWarehouseController } from '@storage/infrastructure/ht
 import { ChangeStoreRoomToCustomRoomController } from '@storage/infrastructure/http/controllers/change-store-room-to-custom-room/change-store-room-to-custom-room.controller';
 import { ChangeCustomRoomToWarehouseController } from '@storage/infrastructure/http/controllers/change-custom-room-to-warehouse/change-custom-room-to-warehouse.controller';
 import { ChangeCustomRoomToStoreRoomController } from '@storage/infrastructure/http/controllers/change-custom-room-to-store-room/change-custom-room-to-store-room.controller';
-import { ArchiveStorageController } from '@storage/infrastructure/http/controllers/archive-storage/archive-storage.controller';
+import { ArchiveWarehouseController } from '@storage/infrastructure/http/controllers/archive-warehouse/archive-warehouse.controller';
+import { ArchiveStoreRoomController } from '@storage/infrastructure/http/controllers/archive-store-room/archive-store-room.controller';
+import { ArchiveCustomRoomController } from '@storage/infrastructure/http/controllers/archive-custom-room/archive-custom-room.controller';
 import { FreezeWarehouseController } from '@storage/infrastructure/http/controllers/freeze-warehouse/freeze-warehouse.controller';
 import { FreezeStoreRoomController } from '@storage/infrastructure/http/controllers/freeze-store-room/freeze-store-room.controller';
 import { FreezeCustomRoomController } from '@storage/infrastructure/http/controllers/freeze-custom-room/freeze-custom-room.controller';
@@ -103,7 +107,9 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     ChangeStoreRoomToCustomRoomController,
     ChangeCustomRoomToWarehouseController,
     ChangeCustomRoomToStoreRoomController,
-    ArchiveStorageController,
+    ArchiveWarehouseController,
+    ArchiveStoreRoomController,
+    ArchiveCustomRoomController,
     FreezeWarehouseController,
     FreezeStoreRoomController,
     FreezeCustomRoomController,
@@ -144,7 +150,9 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     ChangeCustomRoomToWarehouseHandler,
     ChangeCustomRoomToStoreRoomHandler,
     StorageTypeChangePolicy,
-    ArchiveStorageHandler,
+    ArchiveWarehouseHandler,
+    ArchiveStoreRoomHandler,
+    ArchiveCustomRoomHandler,
     FreezeWarehouseHandler,
     FreezeStoreRoomHandler,
     FreezeCustomRoomHandler,

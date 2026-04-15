@@ -4,7 +4,6 @@ import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StoreRoomModel } from '@storage/domain/models/store-room.model';
 import { WarehouseModel } from '@storage/domain/models/warehouse.model';
 import { StorageCreatedEvent } from '@storage/domain/events/storage-created.event';
-import { StorageArchivedEvent } from '@storage/domain/events/storage-archived.event';
 import { StorageNameChangedEvent } from '@storage/domain/events/storage-name-changed.event';
 import { StorageDescriptionChangedEvent } from '@storage/domain/events/storage-description-changed.event';
 import { StorageAddressChangedEvent } from '@storage/domain/events/storage-address-changed.event';
@@ -172,32 +171,6 @@ export class StorageAggregate extends AggregateRoot {
         ),
       );
     }
-  }
-
-  // ── Archive items ──────────────────────────────────────────────────────
-
-  archiveWarehouse(uuid: string, actorUUID: string): void {
-    const idx = this._warehouses.findIndex((w) => w.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._warehouses[idx] = this._warehouses[idx].markArchived();
-    this.touch();
-    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  archiveStoreRoom(uuid: string, actorUUID: string): void {
-    const idx = this._storeRooms.findIndex((s) => s.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._storeRooms[idx] = this._storeRooms[idx].markArchived();
-    this.touch();
-    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  archiveCustomRoom(uuid: string, actorUUID: string): void {
-    const idx = this._customRooms.findIndex((c) => c.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._customRooms[idx] = this._customRooms[idx].markArchived();
-    this.touch();
-    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID, actorUUID));
   }
 
   // ── Views ──────────────────────────────────────────────────────────────

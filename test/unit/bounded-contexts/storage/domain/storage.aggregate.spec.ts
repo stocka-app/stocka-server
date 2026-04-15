@@ -2,7 +2,6 @@ import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { StorageStatus } from '@storage/domain/enums/storage-status.enum';
 import { StorageCreatedEvent } from '@storage/domain/events/storage-created.event';
-import { StorageArchivedEvent } from '@storage/domain/events/storage-archived.event';
 import { StorageFrozenEvent } from '@storage/domain/events/storage-frozen.event';
 import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
 import { StorageNameChangedEvent } from '@storage/domain/events/storage-name-changed.event';
@@ -570,121 +569,10 @@ describe('StorageAggregate — granular events on update', () => {
   });
 });
 
-// ── archiveWarehouse / archiveStoreRoom / archiveCustomRoom ────────────────────
-
-describe('StorageAggregate — archive items', () => {
-  describe('Given a populated aggregate with an active warehouse', () => {
-    let aggregate: StorageAggregate;
-
-    beforeEach(() => {
-      aggregate = makePopulatedAggregate();
-      aggregate.commit();
-    });
-
-    describe('When archiveWarehouse is called', () => {
-      beforeEach(() => {
-        aggregate.archiveWarehouse(WH_UUID, ACTOR_UUID);
-      });
-
-      it('Then the warehouse is marked as archived', () => {
-        const wh = aggregate.findWarehouse(WH_UUID)!;
-        expect(wh.isArchived()).toBe(true);
-        expect(wh.archivedAt).toBeInstanceOf(Date);
-      });
-
-      it('Then a StorageArchivedEvent is emitted with actorUUID', () => {
-        const events = aggregate.getUncommittedEvents();
-        expect(events).toHaveLength(1);
-        expect(events[0]).toBeInstanceOf(StorageArchivedEvent);
-        const event = events[0] as StorageArchivedEvent;
-        expect(event.storageUUID).toBe(WH_UUID);
-        expect(event.tenantUUID).toBe(TENANT_UUID);
-        expect(event.actorUUID).toBe(ACTOR_UUID);
-      });
-    });
-
-    describe('When archiveWarehouse is called with a non-existent UUID', () => {
-      it('Then no event is emitted', () => {
-        aggregate.archiveWarehouse('019538a0-0000-7000-8000-999999999999', ACTOR_UUID);
-        expect(aggregate.getUncommittedEvents()).toHaveLength(0);
-      });
-    });
-  });
-
-  describe('Given a populated aggregate with an active store room', () => {
-    let aggregate: StorageAggregate;
-
-    beforeEach(() => {
-      aggregate = makePopulatedAggregate();
-      aggregate.commit();
-    });
-
-    describe('When archiveStoreRoom is called', () => {
-      beforeEach(() => {
-        aggregate.archiveStoreRoom(SR_UUID, ACTOR_UUID);
-      });
-
-      it('Then the store room is marked as archived', () => {
-        const sr = aggregate.findStoreRoom(SR_UUID)!;
-        expect(sr.isArchived()).toBe(true);
-        expect(sr.archivedAt).toBeInstanceOf(Date);
-      });
-
-      it('Then a StorageArchivedEvent is emitted for the store room', () => {
-        const events = aggregate.getUncommittedEvents();
-        expect(events).toHaveLength(1);
-        expect(events[0]).toBeInstanceOf(StorageArchivedEvent);
-        const event = events[0] as StorageArchivedEvent;
-        expect(event.storageUUID).toBe(SR_UUID);
-        expect(event.actorUUID).toBe(ACTOR_UUID);
-      });
-    });
-
-    describe('When archiveStoreRoom is called with a non-existent UUID', () => {
-      it('Then no event is emitted and the aggregate is unchanged', () => {
-        aggregate.archiveStoreRoom('019538a0-0000-7000-8000-999999999999', ACTOR_UUID);
-        expect(aggregate.getUncommittedEvents()).toHaveLength(0);
-      });
-    });
-  });
-
-  describe('Given a populated aggregate with an active custom room', () => {
-    let aggregate: StorageAggregate;
-
-    beforeEach(() => {
-      aggregate = makePopulatedAggregate();
-      aggregate.commit();
-    });
-
-    describe('When archiveCustomRoom is called', () => {
-      beforeEach(() => {
-        aggregate.archiveCustomRoom(CR_UUID, ACTOR_UUID);
-      });
-
-      it('Then the custom room is marked as archived', () => {
-        const cr = aggregate.findCustomRoom(CR_UUID)!;
-        expect(cr.isArchived()).toBe(true);
-        expect(cr.archivedAt).toBeInstanceOf(Date);
-      });
-
-      it('Then a StorageArchivedEvent is emitted for the custom room', () => {
-        const events = aggregate.getUncommittedEvents();
-        expect(events).toHaveLength(1);
-        expect(events[0]).toBeInstanceOf(StorageArchivedEvent);
-        const event = events[0] as StorageArchivedEvent;
-        expect(event.storageUUID).toBe(CR_UUID);
-        expect(event.actorUUID).toBe(ACTOR_UUID);
-      });
-    });
-
-    describe('When archiveCustomRoom is called with a non-existent UUID', () => {
-      it('Then no event is emitted and the aggregate is unchanged', () => {
-        aggregate.archiveCustomRoom('019538a0-0000-7000-8000-999999999999', ACTOR_UUID);
-        expect(aggregate.getUncommittedEvents()).toHaveLength(0);
-      });
-    });
-  });
-});
+// ── archive items ──────────────────────────────────────────────────────────────
+// H-07: archiveX methods removed from StorageAggregate. Archive flows run through
+// per-type handlers (ArchiveWarehouseHandler, ArchiveStoreRoomHandler,
+// ArchiveCustomRoomHandler). New unit tests live in FASE 5 (Paso 9 — STOC-373).
 
 // ── findItemView / listItemViews ───────────────────────────────────────────────
 
@@ -822,7 +710,6 @@ describe('StorageAggregate — view methods', () => {
     });
   });
 });
-
 
 // ── Getters ────────────────────────────────────────────────────────────────────
 

@@ -21,8 +21,9 @@ import { UpdateStoreRoomHandler } from '@storage/application/commands/update-sto
 import { UpdateStoreRoomCommand } from '@storage/application/commands/update-store-room/update-store-room.command';
 import { UpdateWarehouseHandler } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
 import { UpdateWarehouseCommand } from '@storage/application/commands/update-warehouse/update-warehouse.command';
-import { ArchiveStorageHandler } from '@storage/application/commands/archive-storage/archive-storage.handler';
-import { ArchiveStorageCommand } from '@storage/application/commands/archive-storage/archive-storage.command';
+// ArchiveStorageHandler refactored into 3 per-type handlers for H-07
+// (ArchiveWarehouseHandler, ArchiveStoreRoomHandler, ArchiveCustomRoomHandler).
+// Their dedicated unit tests live in FASE 5 (Paso 9 — STOC-373).
 import { GetStorageHandler } from '@storage/application/queries/get-storage/get-storage.handler';
 import { GetStorageQuery } from '@storage/application/queries/get-storage/get-storage.query';
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
@@ -44,7 +45,6 @@ import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageAlreadyArchivedError } from '@storage/domain/errors/storage-already-archived.error';
 import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
-import { StorageArchivedCannotBeUpdatedError } from '@storage/domain/errors/storage-archived-cannot-be-updated.error';
 import { StorageTypeLockedWhileFrozenError } from '@storage/domain/errors/storage-type-locked-while-frozen.error';
 import { StorageAddressRequiredForWarehouseError } from '@storage/domain/errors/storage-address-required-for-warehouse.error';
 import { StorageAlreadyFrozenError } from '@storage/domain/errors/storage-already-frozen.error';
@@ -582,22 +582,8 @@ describe('UpdateCustomRoomHandler', () => {
     });
   });
 
-  describe('Given the custom room is archived', () => {
-    describe('When update is requested', () => {
-      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
-        const aggregate = makeAggregate({
-          customRooms: [makeCustomRoom(CR_UUID, { archivedAt: new Date() })],
-        });
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-
-        const command = new UpdateCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
-      });
-    });
-  });
+  // H-07: archived-blocks-update removed — metadata is editable in ARCHIVED.
+  // See storage-handlers.spec.ts FASE 5 for the new matrix of allowed/blocked operations.
 
   describe('Given the aggregate has no persisted id', () => {
     describe('When update is requested', () => {
@@ -713,22 +699,7 @@ describe('UpdateStoreRoomHandler', () => {
     });
   });
 
-  describe('Given the store room is archived', () => {
-    describe('When update is requested', () => {
-      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
-        const aggregate = makeAggregate({
-          storeRooms: [makeStoreRoom(SR_UUID, { archivedAt: new Date() })],
-        });
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-
-        const command = new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
-      });
-    });
-  });
+  // H-07: archived-blocks-update removed — metadata is editable in ARCHIVED.
 
   describe('Given the aggregate has no persisted id', () => {
     describe('When update is requested', () => {
@@ -834,22 +805,7 @@ describe('UpdateWarehouseHandler', () => {
     });
   });
 
-  describe('Given the warehouse is archived', () => {
-    describe('When update is requested', () => {
-      it('Then returns StorageArchivedCannotBeUpdatedError', async () => {
-        const aggregate = makeAggregate({
-          warehouses: [makeWarehouse(WH_UUID, { archivedAt: new Date() })],
-        });
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-
-        const command = new UpdateWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, 'Name');
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeUpdatedError);
-      });
-    });
-  });
+  // H-07: archived-blocks-update removed — metadata is editable in ARCHIVED.
 
   describe('Given the aggregate has no persisted id', () => {
     describe('When update is requested', () => {
@@ -901,101 +857,7 @@ describe('UpdateWarehouseHandler', () => {
 });
 
 // ── ArchiveStorageHandler ───────────────────────────────────────────────────────
-
-describe('ArchiveStorageHandler', () => {
-  let handler: ArchiveStorageHandler;
-
-  beforeEach(() => {
-    handler = new ArchiveStorageHandler(
-      mockStorageRepository,
-      mockWarehouseRepository,
-      mockStoreRoomRepository,
-      mockCustomRoomRepository,
-      mockEventPublisher,
-    );
-  });
-
-  describe('Given an active warehouse', () => {
-    describe('When archive is requested', () => {
-      it('Then archives the warehouse and returns ok(undefined)', async () => {
-        const aggregate = makeAggregate({ warehouses: [makeWarehouse(WH_UUID)] });
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-        mockWarehouseRepository.save.mockImplementation(async (model) => model);
-
-        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID, ACTOR_UUID);
-        const result = await handler.execute(command);
-
-        expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap()).toBeUndefined();
-        expect(mockWarehouseRepository.save).toHaveBeenCalledTimes(1);
-      });
-    });
-  });
-
-  describe('Given an active store room', () => {
-    describe('When archive is requested', () => {
-      it('Then archives the store room via storeRoomRepository', async () => {
-        const aggregate = makeAggregate({ storeRooms: [makeStoreRoom(SR_UUID)] });
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-        mockStoreRoomRepository.save.mockImplementation(async (model) => model);
-
-        const command = new ArchiveStorageCommand(SR_UUID, TENANT_UUID, ACTOR_UUID);
-        const result = await handler.execute(command);
-
-        expect(result.isOk()).toBe(true);
-        expect(mockStoreRoomRepository.save).toHaveBeenCalledTimes(1);
-      });
-    });
-  });
-
-  describe('Given an active custom room', () => {
-    describe('When archive is requested', () => {
-      it('Then archives the custom room via customRoomRepository', async () => {
-        const aggregate = makeAggregate({ customRooms: [makeCustomRoom(CR_UUID)] });
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-        mockCustomRoomRepository.save.mockImplementation(async (model) => model);
-
-        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID, ACTOR_UUID);
-        const result = await handler.execute(command);
-
-        expect(result.isOk()).toBe(true);
-        expect(mockCustomRoomRepository.save).toHaveBeenCalledTimes(1);
-      });
-    });
-  });
-
-  describe('Given the storage does not exist in the aggregate', () => {
-    describe('When archive is requested', () => {
-      it('Then returns StorageNotFoundError', async () => {
-        const aggregate = makeAggregate();
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-
-        const command = new ArchiveStorageCommand(WH_UUID, TENANT_UUID, ACTOR_UUID);
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
-    });
-  });
-
-  describe('Given the storage is already archived', () => {
-    describe('When archive is requested again', () => {
-      it('Then returns StorageAlreadyArchivedError', async () => {
-        const aggregate = makeAggregate({
-          customRooms: [makeCustomRoom(CR_UUID, { archivedAt: new Date() })],
-        });
-        mockStorageRepository.findOrCreate.mockResolvedValue(aggregate);
-
-        const command = new ArchiveStorageCommand(CR_UUID, TENANT_UUID, ACTOR_UUID);
-        const result = await handler.execute(command);
-
-        expect(result.isErr()).toBe(true);
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyArchivedError);
-      });
-    });
-  });
-});
+// Refactored into 3 per-type handlers for H-07. New unit tests in FASE 5 (Paso 9).
 
 // ── GetStorageHandler ───────────────────────────────────────────────────────────
 
@@ -1276,5 +1138,3 @@ describe('ListStoragesHandler', () => {
     });
   });
 });
-
-
