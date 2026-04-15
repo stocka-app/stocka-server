@@ -179,7 +179,8 @@ describe('CreateVerificationTokenStep', () => {
 
   beforeEach(() => {
     codeGenerator = {
-      generateCode: jest.fn(),
+      generateVerificationCode: jest.fn().mockReturnValue('ABC123'),
+      generateSecureToken: jest.fn().mockReturnValue('a'.repeat(64)),
       hashCode: jest.fn().mockReturnValue('hashed-code'),
     };
 

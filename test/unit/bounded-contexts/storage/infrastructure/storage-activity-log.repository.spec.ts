@@ -92,7 +92,7 @@ describe('TypeOrmStorageActivityLogRepository', () => {
             previousValue: null,
             newValue: { name: 'Bodega Norte' },
             occurredAt,
-          } as StorageActivityLogEntity,
+          } as unknown as StorageActivityLogEntity,
         ];
 
         const ormRepo = makeOrmRepo({ find: jest.fn().mockResolvedValue(rawEntities) });

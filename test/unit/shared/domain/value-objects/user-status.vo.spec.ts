@@ -1,5 +1,8 @@
-import { UserStatusVO, UserStatusEnum } from '@shared/domain/value-objects/compound/user-status.vo';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import {
+  InvalidUserStatusException,
+  UserStatusVO,
+  UserStatusEnum,
+} from '@shared/domain/value-objects/compound/user-status.vo';
 
 describe('UserStatusVO', () => {
   // ─── Construction ──────────────────────────────────────────────────────────
@@ -22,21 +25,21 @@ describe('UserStatusVO', () => {
   describe('Given an invalid user status string', () => {
     describe('When constructing the VO', () => {
       it('Then it should throw a DomainException with INVALID_USER_STATUS code', () => {
-        expect(() => new UserStatusVO('invalid_status')).toThrow(DomainException);
+        expect(() => new UserStatusVO('invalid_status')).toThrow(InvalidUserStatusException);
         try {
           new UserStatusVO('nonexistent');
         } catch (e) {
-          expect(e).toBeInstanceOf(DomainException);
-          expect((e as DomainException).errorCode).toBe('INVALID_USER_STATUS');
-          expect((e as DomainException).message).toContain('nonexistent');
-          expect((e as DomainException).details).toEqual([
+          expect(e).toBeInstanceOf(InvalidUserStatusException);
+          expect((e as InvalidUserStatusException).errorCode).toBe('INVALID_USER_STATUS');
+          expect((e as InvalidUserStatusException).message).toContain('nonexistent');
+          expect((e as InvalidUserStatusException).details).toEqual([
             { field: 'status', message: 'Invalid user status: nonexistent' },
           ]);
         }
       });
 
       it('Then it should throw for an empty string', () => {
-        expect(() => new UserStatusVO('')).toThrow(DomainException);
+        expect(() => new UserStatusVO('')).toThrow(InvalidUserStatusException);
       });
     });
   });

@@ -6,6 +6,7 @@ import { IEmailVerificationTokenContract } from '@authentication/domain/contract
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
@@ -52,15 +53,16 @@ function buildToken(
     remainingResends?: number;
     currentCooldownSeconds?: number;
   } = {},
-): EmailVerificationTokenModel {
+): Persisted<EmailVerificationTokenModel> {
   return {
+    id: 1,
     canResend: jest.fn().mockReturnValue(overrides.canResend ?? true),
     getSecondsUntilCanResend: jest.fn().mockReturnValue(overrides.secondsUntilCanResend ?? 0),
     getRemainingResends: jest.fn().mockReturnValue(overrides.remainingResends ?? 2),
     getCurrentCooldownSeconds: jest.fn().mockReturnValue(overrides.currentCooldownSeconds ?? 30),
     updateCode: jest.fn(),
     commit: jest.fn(),
-  } as unknown as EmailVerificationTokenModel;
+  } as unknown as Persisted<EmailVerificationTokenModel>;
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

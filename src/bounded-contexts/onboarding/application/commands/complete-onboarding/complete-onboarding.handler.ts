@@ -13,6 +13,8 @@ import { InvitationAlreadyUsedError } from '@onboarding/domain/errors/invitation
 import { InvitationEmailMismatchError } from '@onboarding/domain/errors/invitation-email-mismatch.error';
 import { CreateTenantCommand } from '@tenant/application/commands/create-tenant/create-tenant.command';
 import { CreateCustomRoomCommand } from '@storage/application/commands/create-custom-room/create-custom-room.command';
+import { CreateWarehouseCommand } from '@storage/application/commands/create-warehouse/create-warehouse.command';
+import { CreateStoreRoomCommand } from '@storage/application/commands/create-store-room/create-store-room.command';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { ITenantContract } from '@tenant/domain/contracts/tenant.contract';
 import { TenantMemberModel } from '@tenant/domain/models/tenant-member.model';
@@ -22,6 +24,8 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
 import { CreateTenantResult } from '@tenant/infrastructure/http/controllers/complete-onboarding/complete-onboarding-out.dto';
 import { CreateCustomRoomResult } from '@storage/application/commands/create-custom-room/create-custom-room.handler';
+import { CreateWarehouseResult } from '@storage/application/commands/create-warehouse/create-warehouse.handler';
+import { CreateStoreRoomResult } from '@storage/application/commands/create-store-room/create-store-room.handler';
 
 export interface CompleteOnboardingData {
   path: OnboardingPath;
@@ -46,6 +50,25 @@ function defaultStorageName(businessType: string): string {
     default:
       return 'Espacio Principal';
   }
+}
+
+interface OnboardingSpaceConfig {
+  type: 'CUSTOM_ROOM' | 'STORE_ROOM' | 'WAREHOUSE';
+  name: string;
+  roomType?: string;
+  address?: string;
+  icon?: string;
+  color?: string;
+}
+
+function isValidSpaceConfig(value: unknown): value is OnboardingSpaceConfig {
+  if (typeof value !== 'object' || value === null) return false;
+  const record = value as Record<string, unknown>;
+  const type = record.type;
+  const name = record.name;
+  if (type !== 'CUSTOM_ROOM' && type !== 'STORE_ROOM' && type !== 'WAREHOUSE') return false;
+  if (typeof name !== 'string' || name.trim().length === 0) return false;
+  return true;
 }
 
 @CommandHandler(CompleteOnboardingCommand)
@@ -112,10 +135,23 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
 
     return createTenantResult.match(
       async ({ tenantId, name }) => {
-        const context = session.getSectionData('context') as { storages?: unknown[] } | null;
-        const hasCustomStorages = context?.storages && context.storages.length > 0;
+        // Step 4 "Spaces" persists the user's configured storages under the
+        // `spaces` section as { spaces: SpaceConfig[] }. If present, create
+        // one storage per entry using the per-type command that matches it.
+        // If absent, fall back to a single default custom room for the
+        // business type — preserving the legacy behaviour for users who skip
+        // the step.
+        const spacesSection = session.getSectionData('spaces') as {
+          spaces?: unknown[];
+        } | null;
+        const rawSpaces = Array.isArray(spacesSection?.spaces) ? spacesSection.spaces : [];
+        const configuredSpaces = rawSpaces.filter(isValidSpaceConfig);
 
-        if (!hasCustomStorages) {
+        if (configuredSpaces.length > 0) {
+          for (const space of configuredSpaces) {
+            await this.createSpaceFor(tenantId, command.userUUID, space);
+          }
+        } else {
           const storageName = defaultStorageName(businessType);
           await this.commandBus.execute<CreateCustomRoomCommand, CreateCustomRoomResult>(
             new CreateCustomRoomCommand(
@@ -195,5 +231,40 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
       tenantName: invitation.tenantName,
       role: invitation.role,
     });
+  }
+
+  private async createSpaceFor(
+    tenantId: string,
+    actorUUID: string,
+    space: OnboardingSpaceConfig,
+  ): Promise<void> {
+    const address = space.address?.trim().length ? space.address.trim() : 'Pendiente';
+
+    switch (space.type) {
+      case 'WAREHOUSE':
+        await this.commandBus.execute<CreateWarehouseCommand, CreateWarehouseResult>(
+          new CreateWarehouseCommand(tenantId, space.name.trim(), address, actorUUID),
+        );
+        return;
+      case 'STORE_ROOM':
+        await this.commandBus.execute<CreateStoreRoomCommand, CreateStoreRoomResult>(
+          new CreateStoreRoomCommand(tenantId, space.name.trim(), address, actorUUID),
+        );
+        return;
+      case 'CUSTOM_ROOM':
+        await this.commandBus.execute<CreateCustomRoomCommand, CreateCustomRoomResult>(
+          new CreateCustomRoomCommand(
+            tenantId,
+            space.name.trim(),
+            space.roomType?.trim().length ? space.roomType.trim() : 'General',
+            address,
+            actorUUID,
+            undefined,
+            space.icon?.trim().length ? space.icon.trim() : 'box',
+            space.color?.trim().length ? space.color.trim() : '#6366F1',
+          ),
+        );
+        return;
+    }
   }
 }

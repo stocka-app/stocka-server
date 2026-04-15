@@ -414,7 +414,7 @@ describe('CompleteOnboardingHandler', () => {
       });
     });
 
-    describe('When tenant creation succeeds with custom storages already set', () => {
+    describe('When tenant creation succeeds and the user configured spaces in Step 4', () => {
       beforeEach(() => {
         sessionContract.findByUserUUID.mockResolvedValue(
           buildSession({
@@ -426,23 +426,90 @@ describe('CompleteOnboardingHandler', () => {
                 country: 'MX',
                 timezone: 'America/Mexico_City',
               },
-              context: {
-                storages: [{ name: 'Custom Storage', type: 'CUSTOM_ROOM' }],
+              spaces: {
+                spaces: [
+                  {
+                    type: 'WAREHOUSE',
+                    name: 'Bodega Central',
+                    address: 'Av. Industrial 500',
+                  },
+                  {
+                    type: 'CUSTOM_ROOM',
+                    name: 'Showroom',
+                    roomType: 'Showroom',
+                    icon: 'storefront',
+                    color: '#10B981',
+                  },
+                ],
               },
             },
           }),
         );
-        commandBus.execute.mockResolvedValueOnce(
-          ok({ tenantId: 'tenant-uuid-456', name: 'Test Biz' }),
-        );
+        commandBus.execute
+          .mockResolvedValueOnce(ok({ tenantId: 'tenant-uuid-456', name: 'Test Biz' }))
+          .mockResolvedValueOnce(ok({ storageUUID: 'warehouse-uuid-1' }))
+          .mockResolvedValueOnce(ok({ storageUUID: 'custom-room-uuid-1' }));
       });
 
-      it('Then it returns ok without creating a default storage', async () => {
+      it('Then it creates one storage per configured space and skips the default', async () => {
         const result = await handler.execute(buildCommand());
 
         expect(result.isOk()).toBe(true);
-        // Only one commandBus.execute call (create tenant, no create storage)
-        expect(commandBus.execute).toHaveBeenCalledTimes(1);
+        // 1 create-tenant + 2 create-storage (warehouse + custom room)
+        expect(commandBus.execute).toHaveBeenCalledTimes(3);
+
+        const createCalls = commandBus.execute.mock.calls
+          .slice(1)
+          .map((call) => call[0] as Record<string, unknown> & { constructor: { name: string } });
+        expect(createCalls[0].constructor.name).toBe('CreateWarehouseCommand');
+        expect(createCalls[0].name).toBe('Bodega Central');
+        expect(createCalls[0].address).toBe('Av. Industrial 500');
+        expect(createCalls[1].constructor.name).toBe('CreateCustomRoomCommand');
+        expect(createCalls[1].name).toBe('Showroom');
+        expect(createCalls[1].roomType).toBe('Showroom');
+        expect(createCalls[1].icon).toBe('storefront');
+        expect(createCalls[1].color).toBe('#10B981');
+      });
+    });
+
+    describe('When the spaces section contains malformed entries', () => {
+      beforeEach(() => {
+        sessionContract.findByUserUUID.mockResolvedValue(
+          buildSession({
+            path: OnboardingPath.CREATE,
+            stepData: {
+              businessProfile: {
+                name: 'Test Biz',
+                businessType: 'retail',
+                country: 'MX',
+                timezone: 'America/Mexico_City',
+              },
+              spaces: {
+                spaces: [
+                  { type: 'INVALID_TYPE', name: 'Oops' },
+                  { type: 'WAREHOUSE' }, // missing name
+                  null,
+                ],
+              },
+            },
+          }),
+        );
+        commandBus.execute
+          .mockResolvedValueOnce(ok({ tenantId: 'tenant-uuid-456', name: 'Test Biz' }))
+          .mockResolvedValueOnce(ok(undefined));
+      });
+
+      it('Then it falls back to the default storage', async () => {
+        const result = await handler.execute(buildCommand());
+
+        expect(result.isOk()).toBe(true);
+        // 1 create-tenant + 1 default create-custom-room
+        expect(commandBus.execute).toHaveBeenCalledTimes(2);
+        const fallbackCall = commandBus.execute.mock.calls[1][0] as Record<string, unknown> & {
+          constructor: { name: string };
+        };
+        expect(fallbackCall.constructor.name).toBe('CreateCustomRoomCommand');
+        expect(fallbackCall.name).toBe('Tienda Principal');
       });
     });
   });

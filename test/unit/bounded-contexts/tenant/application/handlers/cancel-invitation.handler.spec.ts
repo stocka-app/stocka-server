@@ -11,11 +11,18 @@ import {
 
 function buildCommand(
   overrides: Partial<{
-    invitationId: number;
+    invitationId: string;
     tenantId: number;
+    requestingUserId: number;
+    requestingRole: string;
   }> = {},
 ): CancelInvitationCommand {
-  return new CancelInvitationCommand(overrides.invitationId ?? 1, overrides.tenantId ?? 10);
+  return new CancelInvitationCommand(
+    overrides.invitationId ?? 'invitation-uuid-1',
+    overrides.tenantId ?? 10,
+    overrides.requestingUserId ?? 100,
+    overrides.requestingRole ?? 'OWNER',
+  );
 }
 
 function buildInvitation(
@@ -110,7 +117,7 @@ describe('CancelInvitationHandler', () => {
         const result = await handler.execute(buildCommand());
 
         expect(result.isOk()).toBe(true);
-        expect(invitationContract.cancel).toHaveBeenCalledWith(1);
+        expect(invitationContract.cancel).toHaveBeenCalledWith('invitation-uuid-1');
       });
     });
   });

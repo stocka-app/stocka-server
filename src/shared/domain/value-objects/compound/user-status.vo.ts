@@ -1,7 +1,7 @@
 import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
-class InvalidUserStatusException extends DomainException {
+export class InvalidUserStatusException extends DomainException {
   constructor(value: string) {
     super(`Invalid user status: ${value}`, 'INVALID_USER_STATUS', [
       { field: 'status', message: `Invalid user status: ${value}` },

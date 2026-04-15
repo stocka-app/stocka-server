@@ -7,31 +7,37 @@ import { TenantMemberModel } from '@tenant/domain/models/tenant-member.model';
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
 import { TenantConfigModel } from '@tenant/domain/models/tenant-config.model';
 import { CreateTenantFacadeProps } from '@tenant/domain/contracts/tenant-facade.contract';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
+import { asPersisted } from '@test/helpers/persisted';
 import { ok, err } from 'neverthrow';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function buildActiveMember(tenantId = 1): TenantMemberModel {
-  return TenantMemberModel.create({
+function buildActiveMember(tenantId = 1): Persisted<TenantMemberModel> {
+  const member = TenantMemberModel.create({
     tenantId,
     userId: 100,
     userUUID: 'user-uuid-123',
     role: 'OWNER',
   });
+  return asPersisted(member);
 }
 
-function buildTenant(overrides: { uuid?: string; status?: string } = {}): TenantAggregate {
+function buildTenant(
+  overrides: { uuid?: string; status?: string } = {},
+): Persisted<TenantAggregate> {
   return {
     id: 1,
     uuid: overrides.uuid ?? 'tenant-uuid-abc',
     name: 'Test Biz',
     status: overrides.status ?? 'active',
-  } as unknown as TenantAggregate;
+  } as unknown as Persisted<TenantAggregate>;
 }
 
-function buildConfig(tenantId = 1): TenantConfigModel {
+function buildConfig(tenantId = 1): Persisted<TenantConfigModel> {
   return {
+    id: 1,
     tenantId,
     tier: { toString: (): string => 'STARTER' },
     storageCount: 2,
@@ -40,7 +46,7 @@ function buildConfig(tenantId = 1): TenantConfigModel {
     maxCustomRooms: 5,
     maxStoreRooms: 3,
     maxWarehouses: 3,
-  } as unknown as TenantConfigModel;
+  } as unknown as Persisted<TenantConfigModel>;
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -96,10 +102,11 @@ describe('TenantFacade', () => {
     describe('When a member exists but is not active', () => {
       beforeEach(() => {
         const inactiveMember = {
+          id: 1,
           isActive: jest.fn().mockReturnValue(false),
           tenantId: 1,
           role: { toString: (): string => 'OWNER' },
-        } as unknown as TenantMemberModel;
+        } as unknown as Persisted<TenantMemberModel>;
         memberContract.findActiveByUserUUID.mockResolvedValue(inactiveMember);
       });
 

@@ -2,6 +2,8 @@ import { GetTenantMembersHandler } from '@tenant/application/queries/get-tenant-
 import { GetTenantMembersQuery } from '@tenant/application/queries/get-tenant-members/get-tenant-members.query';
 import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.contract';
 import { TenantMemberModel } from '@tenant/domain/models/tenant-member.model';
+import { Persisted } from '@shared/domain/contracts/base-repository.contract';
+import { asPersisted } from '@test/helpers/persisted';
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -38,12 +40,18 @@ describe('GetTenantMembersHandler', () => {
 
   describe('Given members exist for the tenant', () => {
     describe('When execute is called', () => {
-      let members: TenantMemberModel[];
+      let members: Persisted<TenantMemberModel>[];
 
       beforeEach(() => {
         members = [
-          TenantMemberModel.create({ tenantId: 1, userId: 10, userUUID: 'u-1', role: 'OWNER' }),
-          TenantMemberModel.create({ tenantId: 1, userId: 11, userUUID: 'u-2', role: 'VIEWER' }),
+          asPersisted(
+            TenantMemberModel.create({ tenantId: 1, userId: 10, userUUID: 'u-1', role: 'OWNER' }),
+            1,
+          ),
+          asPersisted(
+            TenantMemberModel.create({ tenantId: 1, userId: 11, userUUID: 'u-2', role: 'VIEWER' }),
+            2,
+          ),
         ];
         memberContract.findAllByTenantId.mockResolvedValue(members);
       });

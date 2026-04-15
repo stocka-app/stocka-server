@@ -1,5 +1,7 @@
-import { VerificationCodeVO } from '@shared/domain/value-objects/compound/verification-code.vo';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import {
+  InvalidVerificationCodeException,
+  VerificationCodeVO,
+} from '@shared/domain/value-objects/compound/verification-code.vo';
 
 describe('VerificationCodeVO', () => {
   // ─── Construction with valid codes ─────────────────────────────────────────
@@ -36,65 +38,67 @@ describe('VerificationCodeVO', () => {
   describe('Given an invalid code', () => {
     describe('When the code is too short', () => {
       it('Then it should throw a DomainException about length', () => {
-        expect(() => new VerificationCodeVO('ABC')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('ABC')).toThrow(InvalidVerificationCodeException);
         try {
           new VerificationCodeVO('ABC');
         } catch (e) {
-          expect((e as DomainException).errorCode).toBe('INVALID_VERIFICATION_CODE');
-          expect((e as DomainException).message).toContain('6 characters');
+          expect((e as InvalidVerificationCodeException).errorCode).toBe(
+            'INVALID_VERIFICATION_CODE',
+          );
+          expect((e as InvalidVerificationCodeException).message).toContain('6 characters');
         }
       });
     });
 
     describe('When the code is too long', () => {
       it('Then it should throw a DomainException about length', () => {
-        expect(() => new VerificationCodeVO('ABCDEFG')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('ABCDEFG')).toThrow(InvalidVerificationCodeException);
       });
     });
 
     describe('When the code is empty', () => {
       it('Then it should throw a DomainException about length', () => {
-        expect(() => new VerificationCodeVO('')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('')).toThrow(InvalidVerificationCodeException);
       });
     });
 
     describe('When the code contains excluded characters (O, I, L, 0, 1)', () => {
       it('Then it should throw for character O', () => {
-        expect(() => new VerificationCodeVO('OABCDE')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('OABCDE')).toThrow(InvalidVerificationCodeException);
         try {
           new VerificationCodeVO('OABCDE');
         } catch (e) {
-          expect((e as DomainException).message).toContain('Invalid character');
-          expect((e as DomainException).message).toContain('O');
+          expect((e as InvalidVerificationCodeException).message).toContain('Invalid character');
+          expect((e as InvalidVerificationCodeException).message).toContain('O');
         }
       });
 
       it('Then it should throw for character I', () => {
-        expect(() => new VerificationCodeVO('IABCDE')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('IABCDE')).toThrow(InvalidVerificationCodeException);
       });
 
       it('Then it should throw for character L', () => {
-        expect(() => new VerificationCodeVO('LABCDE')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('LABCDE')).toThrow(InvalidVerificationCodeException);
       });
 
       it('Then it should throw for digit 0', () => {
-        expect(() => new VerificationCodeVO('0ABCDE')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('0ABCDE')).toThrow(InvalidVerificationCodeException);
       });
 
       it('Then it should throw for digit 1', () => {
-        expect(() => new VerificationCodeVO('1ABCDE')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('1ABCDE')).toThrow(InvalidVerificationCodeException);
       });
     });
 
     describe('When the code contains special characters', () => {
       it('Then it should throw a DomainException', () => {
-        expect(() => new VerificationCodeVO('ABC!@#')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('ABC!@#')).toThrow(InvalidVerificationCodeException);
       });
     });
 
     describe('When the code contains spaces in the middle', () => {
       it('Then it should throw because trimmed result has invalid length or chars', () => {
-        expect(() => new VerificationCodeVO('AB CD')).toThrow(DomainException);
+        expect(() => new VerificationCodeVO('AB CD')).toThrow(InvalidVerificationCodeException);
       });
     });
   });
