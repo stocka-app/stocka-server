@@ -1,15 +1,18 @@
-import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { UpdateCustomRoomCommand } from '@storage/application/commands/update-custom-room/update-custom-room.command';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
+import { UpdateCustomRoomCommand } from '@storage/application/commands/update-custom-room/update-custom-room.command';
+import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
+import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
+import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
+import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageItemView } from '@storage/domain/schemas';
 
-export type UpdateCustomRoomResult = Result<{ storageUUID: string }, DomainException>;
+export type UpdateCustomRoomResult = Result<StorageItemView, DomainException>;
 
 @CommandHandler(UpdateCustomRoomCommand)
 export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoomCommand> {
@@ -18,19 +21,21 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.CUSTOM_ROOM_CONTRACT)
     private readonly customRoomRepository: ICustomRoomRepository,
-    private readonly eventPublisher: EventPublisher,
+    private readonly updateEventsPublisher: StorageUpdateEventsPublisher,
   ) {}
 
   async execute(command: UpdateCustomRoomCommand): Promise<UpdateCustomRoomResult> {
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+    const before = await this.customRoomRepository.findByUUID(command.storageUUID);
 
-    const customRoom = aggregate.findCustomRoom(command.storageUUID);
-
-    if (!customRoom) {
+    if (!before || before.tenantUUID !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 
-    if (command.name !== undefined && command.name !== customRoom.name.getValue()) {
+    // H-07: metadata is editable in ARCHIVED (per E5.2). Type-change is still
+    // blocked by ChangeXToYHandler (StorageTypeLockedWhileArchivedError) and
+    // FROZEN by H-05's StorageTypeLockedWhileFrozenError.
+
+    if (command.name !== undefined && command.name !== before.name.getValue()) {
       const nameExists = await this.storageRepository.existsActiveName(
         command.tenantUUID,
         command.name,
@@ -40,30 +45,35 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
       }
     }
 
-    aggregate.updateCustomRoom(
-      command.storageUUID,
-      {
+    const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
+    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
+
+    const after = before.update({
+      name: command.name,
+      description: command.description,
+      icon: command.icon,
+      color: command.color,
+      address: command.address,
+      roomType: command.roomType,
+    });
+    const saved = await this.customRoomRepository.save(after, storageId);
+
+    this.updateEventsPublisher.publish({
+      uuid: command.storageUUID,
+      tenantUUID: command.tenantUUID,
+      actorUUID: command.actorUUID,
+      before,
+      after: saved,
+      fields: {
         name: command.name,
         description: command.description,
+        address: command.address,
         icon: command.icon,
         color: command.color,
-        address: command.address,
         roomType: command.roomType,
       },
-      command.actorUUID,
-    );
+    });
 
-    const updated = aggregate.findCustomRoom(command.storageUUID);
-
-    if (!updated || aggregate.id === undefined) {
-      return err(new StorageNotFoundError(command.storageUUID));
-    }
-
-    await this.customRoomRepository.save(updated, aggregate.id);
-
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
-
-    return ok({ storageUUID: command.storageUUID });
+    return ok(StorageItemViewMapper.fromCustomRoom(saved));
   }
 }

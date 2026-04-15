@@ -1,15 +1,18 @@
-import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { UpdateStoreRoomCommand } from '@storage/application/commands/update-store-room/update-store-room.command';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
+import { UpdateStoreRoomCommand } from '@storage/application/commands/update-store-room/update-store-room.command';
+import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
+import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
+import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
+import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageItemView } from '@storage/domain/schemas';
 
-export type UpdateStoreRoomResult = Result<{ storageUUID: string }, DomainException>;
+export type UpdateStoreRoomResult = Result<StorageItemView, DomainException>;
 
 @CommandHandler(UpdateStoreRoomCommand)
 export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCommand> {
@@ -18,19 +21,21 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.STORE_ROOM_CONTRACT)
     private readonly storeRoomRepository: IStoreRoomRepository,
-    private readonly eventPublisher: EventPublisher,
+    private readonly updateEventsPublisher: StorageUpdateEventsPublisher,
   ) {}
 
   async execute(command: UpdateStoreRoomCommand): Promise<UpdateStoreRoomResult> {
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+    const before = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
-    const storeRoom = aggregate.findStoreRoom(command.storageUUID);
-
-    if (!storeRoom) {
+    if (!before || before.tenantUUID !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 
-    if (command.name !== undefined && command.name !== storeRoom.name.getValue()) {
+    // H-07: metadata is editable in ARCHIVED (per E5.2). Type-change is still
+    // blocked by ChangeXToYHandler (StorageTypeLockedWhileArchivedError) and
+    // FROZEN by H-05's StorageTypeLockedWhileFrozenError.
+
+    if (command.name !== undefined && command.name !== before.name.getValue()) {
       const nameExists = await this.storageRepository.existsActiveName(
         command.tenantUUID,
         command.name,
@@ -40,27 +45,29 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
       }
     }
 
-    aggregate.updateStoreRoom(
-      command.storageUUID,
-      {
+    const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
+    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
+
+    const after = before.update({
+      name: command.name,
+      description: command.description,
+      address: command.address,
+    });
+    const saved = await this.storeRoomRepository.save(after, storageId);
+
+    this.updateEventsPublisher.publish({
+      uuid: command.storageUUID,
+      tenantUUID: command.tenantUUID,
+      actorUUID: command.actorUUID,
+      before,
+      after: saved,
+      fields: {
         name: command.name,
         description: command.description,
         address: command.address,
       },
-      command.actorUUID,
-    );
+    });
 
-    const updated = aggregate.findStoreRoom(command.storageUUID);
-
-    if (!updated || aggregate.id === undefined) {
-      return err(new StorageNotFoundError(command.storageUUID));
-    }
-
-    await this.storeRoomRepository.save(updated, aggregate.id);
-
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
-
-    return ok({ storageUUID: command.storageUUID });
+    return ok(StorageItemViewMapper.fromStoreRoom(saved));
   }
 }

@@ -7,6 +7,7 @@ import { Secure } from '@common/decorators/secure.decorator';
 import { UpdateWarehouseCommand } from '@storage/application/commands/update-warehouse/update-warehouse.command';
 import { UpdateWarehouseResult } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
 import { UpdateWarehouseInDto } from '@storage/infrastructure/http/controllers/update-warehouse/update-warehouse-in.dto';
+import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';
 
 @ApiTags('Storage')
 @Controller('storages/warehouses')
@@ -18,7 +19,7 @@ export class UpdateWarehouseController {
   @Secure()
   @ApiOperation({ summary: 'Update a warehouse' })
   @ApiParam({ name: 'uuid', description: 'Storage UUID' })
-  @ApiResponse({ status: 200, description: 'Warehouse updated' })
+  @ApiResponse({ status: 200, description: 'Warehouse updated', type: StorageOutDto })
   @ApiResponse({ status: 404, description: 'Warehouse not found' })
   @ApiResponse({ status: 409, description: 'Name already exists' })
   async handle(
@@ -26,7 +27,7 @@ export class UpdateWarehouseController {
     @Body() dto: UpdateWarehouseInDto,
     @CurrentUser() user: JwtPayload,
     @CurrentMember() member: CurrentMemberData,
-  ): Promise<{ storageUUID: string }> {
+  ): Promise<StorageOutDto> {
     const result = await this.commandBus.execute<UpdateWarehouseCommand, UpdateWarehouseResult>(
       new UpdateWarehouseCommand(
         uuid,
@@ -39,7 +40,7 @@ export class UpdateWarehouseController {
     );
 
     return result.match(
-      (data) => data,
+      (view) => StorageOutDto.fromItem(view),
       (error) => {
         throw error;
       },

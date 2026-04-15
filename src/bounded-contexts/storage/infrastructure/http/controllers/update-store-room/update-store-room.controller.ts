@@ -7,6 +7,7 @@ import { Secure } from '@common/decorators/secure.decorator';
 import { UpdateStoreRoomCommand } from '@storage/application/commands/update-store-room/update-store-room.command';
 import { UpdateStoreRoomResult } from '@storage/application/commands/update-store-room/update-store-room.handler';
 import { UpdateStoreRoomInDto } from '@storage/infrastructure/http/controllers/update-store-room/update-store-room-in.dto';
+import { StorageOutDto } from '@storage/infrastructure/http/controllers/list-storages/storage-out.dto';
 
 @ApiTags('Storage')
 @Controller('storages/store-rooms')
@@ -18,7 +19,7 @@ export class UpdateStoreRoomController {
   @Secure()
   @ApiOperation({ summary: 'Update a store room (bodega)' })
   @ApiParam({ name: 'uuid', description: 'Storage UUID' })
-  @ApiResponse({ status: 200, description: 'Store room updated' })
+  @ApiResponse({ status: 200, description: 'Store room updated', type: StorageOutDto })
   @ApiResponse({ status: 404, description: 'Store room not found' })
   @ApiResponse({ status: 409, description: 'Name already exists' })
   async handle(
@@ -26,7 +27,7 @@ export class UpdateStoreRoomController {
     @Body() dto: UpdateStoreRoomInDto,
     @CurrentUser() user: JwtPayload,
     @CurrentMember() member: CurrentMemberData,
-  ): Promise<{ storageUUID: string }> {
+  ): Promise<StorageOutDto> {
     const result = await this.commandBus.execute<UpdateStoreRoomCommand, UpdateStoreRoomResult>(
       new UpdateStoreRoomCommand(
         uuid,
@@ -39,7 +40,7 @@ export class UpdateStoreRoomController {
     );
 
     return result.match(
-      (data) => data,
+      (view) => StorageOutDto.fromItem(view),
       (error) => {
         throw error;
       },
