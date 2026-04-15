@@ -92,9 +92,13 @@ async function createStorage(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function archiveStorage(app: INestApplication, token: string, uuid: string): Promise<void> {
+async function archiveStoreRoom(
+  app: INestApplication,
+  token: string,
+  uuid: string,
+): Promise<void> {
   await request(app.getHttpServer())
-    .delete(`/api/storages/${uuid}`)
+    .delete(`/api/storages/store-rooms/${uuid}/archive`)
     .set('Authorization', `Bearer ${token}`);
 }
 
@@ -141,7 +145,7 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
       type: 'STORE_ROOM',
       name: 'PatchStoreRoom Archived Store Room',
     });
-    await archiveStorage(app, ownerToken, archivedStoreRoomUUID);
+    await archiveStoreRoom(app, ownerToken, archivedStoreRoomUUID);
   });
 
   afterAll(async () => {
@@ -177,13 +181,15 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
 
   describe('Given a tenant with an archived store-room', () => {
     describe('When PATCH /api/storages/store-rooms/:archivedUUID is called', () => {
-      it('Then it returns 409 (archived storages cannot be updated)', async () => {
+      it('Then it returns 200 — H-07 allows metadata edits in ARCHIVED (E5.2)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/storages/store-rooms/${archivedStoreRoomUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'Should Not Update' });
+          .send({ name: 'Edited While Archived SR' });
 
-        expect(res.status).toBe(HttpStatus.CONFLICT);
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.name).toBe('Edited While Archived SR');
+        expect(res.body.status).toBe('ARCHIVED');
       });
     });
   });
@@ -197,7 +203,8 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
           .send({ name: 'PatchStoreRoom Store Room Renamed' });
 
         expect(patchRes.status).toBe(HttpStatus.OK);
-        expect(patchRes.body).toEqual({ storageUUID: storeRoomUUID });
+        expect(patchRes.body.uuid).toBe(storeRoomUUID);
+        expect(patchRes.body.type).toBe('STORE_ROOM');
 
         const getRes = await request(app.getHttpServer())
           .get(`/api/storages/${storeRoomUUID}`)
@@ -218,7 +225,8 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
           .send({ name: 'PatchStoreRoom Store Room Renamed' });
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual({ storageUUID: storeRoomUUID });
+        expect(res.body.uuid).toBe(storeRoomUUID);
+        expect(res.body.type).toBe('STORE_ROOM');
       });
     });
   });
@@ -246,6 +254,41 @@ describe('PATCH /api/storages/store-rooms/:uuid (e2e)', () => {
           .send({ icon: 'new-icon', color: '#112233' });
 
         expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      });
+    });
+  });
+
+  describe('Given a store-room with a non-null address', () => {
+    describe('When PATCH is called with address: null', () => {
+      it('Then the address is persisted as null and subsequent GET reflects it', async () => {
+        const patchRes = await request(app.getHttpServer())
+          .patch(`/api/storages/store-rooms/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: null });
+        expect(patchRes.status).toBe(HttpStatus.OK);
+        expect(patchRes.body.address).toBeNull();
+
+        const getRes = await request(app.getHttpServer())
+          .get(`/api/storages/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+        expect(getRes.body.address).toBeNull();
+      });
+    });
+
+    describe('When PATCH is called with address: ""', () => {
+      it('Then the address is also nulled', async () => {
+        // Restore an address first
+        await request(app.getHttpServer())
+          .patch(`/api/storages/store-rooms/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: 'Temporary 123' });
+
+        const patchRes = await request(app.getHttpServer())
+          .patch(`/api/storages/store-rooms/${storeRoomUUID}`)
+          .set('Authorization', `Bearer ${ownerToken}`)
+          .send({ address: '' });
+        expect(patchRes.status).toBe(HttpStatus.OK);
+        expect(patchRes.body.address).toBeNull();
       });
     });
   });

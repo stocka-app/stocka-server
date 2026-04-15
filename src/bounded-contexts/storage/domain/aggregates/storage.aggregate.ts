@@ -4,21 +4,7 @@ import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StoreRoomModel } from '@storage/domain/models/store-room.model';
 import { WarehouseModel } from '@storage/domain/models/warehouse.model';
 import { StorageCreatedEvent } from '@storage/domain/events/storage-created.event';
-import { StorageArchivedEvent } from '@storage/domain/events/storage-archived.event';
-import { StorageFrozenEvent } from '@storage/domain/events/storage-frozen.event';
-import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
-import { StorageNameChangedEvent } from '@storage/domain/events/storage-name-changed.event';
-import { StorageDescriptionChangedEvent } from '@storage/domain/events/storage-description-changed.event';
-import { StorageAddressChangedEvent } from '@storage/domain/events/storage-address-changed.event';
-import { StorageIconChangedEvent } from '@storage/domain/events/storage-icon-changed.event';
-import { StorageColorChangedEvent } from '@storage/domain/events/storage-color-changed.event';
-import { StorageTypeChangedEvent } from '@storage/domain/events/storage-type-changed.event';
 import { StorageItemView } from '@storage/domain/schemas';
-import {
-  UpdateWarehouseProps,
-  UpdateStoreRoomProps,
-  UpdateCustomRoomProps,
-} from '@storage/domain/schemas';
 
 export interface StorageAggregateReconstituteProps extends AggregateRootProps {
   id: number;
@@ -129,131 +115,6 @@ export class StorageAggregate extends AggregateRoot {
     return this._customRooms.find((c) => c.uuid.toString() === uuid) ?? null;
   }
 
-  // ── Update items ───────────────────────────────────────────────────────
-
-  updateWarehouse(uuid: string, props: UpdateWarehouseProps, actorUUID: string): void {
-    const idx = this._warehouses.findIndex((w) => w.uuid.toString() === uuid);
-    if (idx === -1) return;
-
-    const before = this._warehouses[idx];
-    this._warehouses[idx] = before.update(props);
-    this.touch();
-
-    this.emitUpdateEvents(uuid, before, this._warehouses[idx], actorUUID, props);
-  }
-
-  updateStoreRoom(uuid: string, props: UpdateStoreRoomProps, actorUUID: string): void {
-    const idx = this._storeRooms.findIndex((s) => s.uuid.toString() === uuid);
-    if (idx === -1) return;
-
-    const before = this._storeRooms[idx];
-    this._storeRooms[idx] = before.update(props);
-    this.touch();
-
-    this.emitUpdateEvents(uuid, before, this._storeRooms[idx], actorUUID, props);
-  }
-
-  updateCustomRoom(uuid: string, props: UpdateCustomRoomProps, actorUUID: string): void {
-    const idx = this._customRooms.findIndex((c) => c.uuid.toString() === uuid);
-    if (idx === -1) return;
-
-    const before = this._customRooms[idx];
-    this._customRooms[idx] = before.update(props);
-    this.touch();
-
-    this.emitUpdateEvents(uuid, before, this._customRooms[idx], actorUUID, props);
-
-    if (props.roomType !== undefined && props.roomType !== before.roomType.getValue()) {
-      this.apply(
-        new StorageTypeChangedEvent(
-          uuid,
-          this._tenantUUID,
-          actorUUID,
-          before.roomType.getValue(),
-          props.roomType,
-        ),
-      );
-    }
-  }
-
-  // ── Freeze items ───────────────────────────────────────────────────────
-
-  freezeWarehouse(uuid: string, actorUUID: string): void {
-    const idx = this._warehouses.findIndex((w) => w.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._warehouses[idx] = this._warehouses[idx].markFrozen();
-    this.touch();
-    this.apply(new StorageFrozenEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  freezeStoreRoom(uuid: string, actorUUID: string): void {
-    const idx = this._storeRooms.findIndex((s) => s.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._storeRooms[idx] = this._storeRooms[idx].markFrozen();
-    this.touch();
-    this.apply(new StorageFrozenEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  freezeCustomRoom(uuid: string, actorUUID: string): void {
-    const idx = this._customRooms.findIndex((c) => c.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._customRooms[idx] = this._customRooms[idx].markFrozen();
-    this.touch();
-    this.apply(new StorageFrozenEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  // ── Unfreeze items ────────────────────────────────────────────────────
-
-  unfreezeWarehouse(uuid: string, actorUUID: string): void {
-    const idx = this._warehouses.findIndex((w) => w.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._warehouses[idx] = this._warehouses[idx].markUnfrozen();
-    this.touch();
-    this.apply(new StorageReactivatedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  unfreezeStoreRoom(uuid: string, actorUUID: string): void {
-    const idx = this._storeRooms.findIndex((s) => s.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._storeRooms[idx] = this._storeRooms[idx].markUnfrozen();
-    this.touch();
-    this.apply(new StorageReactivatedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  unfreezeCustomRoom(uuid: string, actorUUID: string): void {
-    const idx = this._customRooms.findIndex((c) => c.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._customRooms[idx] = this._customRooms[idx].markUnfrozen();
-    this.touch();
-    this.apply(new StorageReactivatedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  // ── Archive items ──────────────────────────────────────────────────────
-
-  archiveWarehouse(uuid: string, actorUUID: string): void {
-    const idx = this._warehouses.findIndex((w) => w.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._warehouses[idx] = this._warehouses[idx].markArchived();
-    this.touch();
-    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  archiveStoreRoom(uuid: string, actorUUID: string): void {
-    const idx = this._storeRooms.findIndex((s) => s.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._storeRooms[idx] = this._storeRooms[idx].markArchived();
-    this.touch();
-    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
-  archiveCustomRoom(uuid: string, actorUUID: string): void {
-    const idx = this._customRooms.findIndex((c) => c.uuid.toString() === uuid);
-    if (idx === -1) return;
-    this._customRooms[idx] = this._customRooms[idx].markArchived();
-    this.touch();
-    this.apply(new StorageArchivedEvent(uuid, this._tenantUUID, actorUUID));
-  }
-
   // ── Views ──────────────────────────────────────────────────────────────
 
   findItemView(uuid: string): StorageItemView | null {
@@ -290,7 +151,7 @@ export class StorageAggregate extends AggregateRoot {
         description: s.description?.getValue() ?? null,
         icon: s.icon.getValue(),
         color: s.color.getValue(),
-        address: s.address.getValue(),
+        address: s.address?.getValue() ?? null,
         archivedAt: s.archivedAt,
         frozenAt: s.frozenAt,
         status: s.status,
@@ -308,7 +169,7 @@ export class StorageAggregate extends AggregateRoot {
         description: c.description?.getValue() ?? null,
         icon: c.icon.getValue(),
         color: c.color.getValue(),
-        address: c.address.getValue(),
+        address: c.address?.getValue() ?? null,
         archivedAt: c.archivedAt,
         frozenAt: c.frozenAt,
         status: c.status,
@@ -337,73 +198,5 @@ export class StorageAggregate extends AggregateRoot {
 
   get customRooms(): readonly CustomRoomModel[] {
     return this._customRooms;
-  }
-
-  // ── Private helpers ────────────────────────────────────────────────────
-
-  private emitUpdateEvents(
-    uuid: string,
-    before: WarehouseModel | StoreRoomModel | CustomRoomModel,
-    after: WarehouseModel | StoreRoomModel | CustomRoomModel,
-    actorUUID: string,
-    props: UpdateWarehouseProps | UpdateStoreRoomProps | UpdateCustomRoomProps,
-  ): void {
-    if (props.name !== undefined && props.name !== before.name.getValue()) {
-      this.apply(
-        new StorageNameChangedEvent(
-          uuid,
-          this._tenantUUID,
-          actorUUID,
-          before.name.getValue(),
-          after.name.getValue(),
-        ),
-      );
-    }
-
-    if (props.description !== undefined) {
-      const prevDesc = before.description?.getValue() ?? null;
-      const nextDesc = after.description?.getValue() ?? null;
-      if (prevDesc !== nextDesc) {
-        this.apply(
-          new StorageDescriptionChangedEvent(uuid, this._tenantUUID, actorUUID, prevDesc, nextDesc),
-        );
-      }
-    }
-
-    if (props.address !== undefined && props.address !== before.address.getValue()) {
-      this.apply(
-        new StorageAddressChangedEvent(
-          uuid,
-          this._tenantUUID,
-          actorUUID,
-          before.address.getValue(),
-          after.address.getValue(),
-        ),
-      );
-    }
-
-    if (props.icon !== undefined && props.icon !== before.icon.getValue()) {
-      this.apply(
-        new StorageIconChangedEvent(
-          uuid,
-          this._tenantUUID,
-          actorUUID,
-          before.icon.getValue(),
-          after.icon.getValue(),
-        ),
-      );
-    }
-
-    if (props.color !== undefined && props.color !== before.color.getValue()) {
-      this.apply(
-        new StorageColorChangedEvent(
-          uuid,
-          this._tenantUUID,
-          actorUUID,
-          before.color.getValue(),
-          after.color.getValue(),
-        ),
-      );
-    }
   }
 }

@@ -18,15 +18,20 @@ export class TypeOrmWarehouseRepository implements IWarehouseRepository {
   ) {}
 
   private getRepo(): Repository<WarehouseEntity> {
-    /* istanbul ignore next — storage handlers do not use UoW; UoW path is only active in transactional operations */
     if (this.uow.isActive()) {
       return (this.uow.getManager() as EntityManager).getRepository(WarehouseEntity);
     }
+
     return this.repo;
   }
 
   async count(tenantUUID: string): Promise<number> {
     return this.repo.countBy({ tenantUUID });
+  }
+
+  async findByUUID(uuid: string): Promise<WarehouseModel | null> {
+    const entity = await this.getRepo().findOne({ where: { uuid }, withDeleted: true });
+    return entity ? WarehouseMapper.toDomain(entity) : null;
   }
 
   async save(model: WarehouseModel, storageId: number): Promise<WarehouseModel> {

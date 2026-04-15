@@ -19,14 +19,26 @@ import { CreateWarehouseHandler } from '@storage/application/commands/create-war
 import { UpdateCustomRoomHandler } from '@storage/application/commands/update-custom-room/update-custom-room.handler';
 import { UpdateStoreRoomHandler } from '@storage/application/commands/update-store-room/update-store-room.handler';
 import { UpdateWarehouseHandler } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
-import { ChangeStorageTypeHandler } from '@storage/application/commands/change-storage-type/change-storage-type.handler';
-import { ArchiveStorageHandler } from '@storage/application/commands/archive-storage/archive-storage.handler';
+import { ChangeWarehouseToStoreRoomHandler } from '@storage/application/commands/change-warehouse-to-store-room/change-warehouse-to-store-room.handler';
+import { ChangeWarehouseToCustomRoomHandler } from '@storage/application/commands/change-warehouse-to-custom-room/change-warehouse-to-custom-room.handler';
+import { ChangeStoreRoomToWarehouseHandler } from '@storage/application/commands/change-store-room-to-warehouse/change-store-room-to-warehouse.handler';
+import { ChangeStoreRoomToCustomRoomHandler } from '@storage/application/commands/change-store-room-to-custom-room/change-store-room-to-custom-room.handler';
+import { ChangeCustomRoomToWarehouseHandler } from '@storage/application/commands/change-custom-room-to-warehouse/change-custom-room-to-warehouse.handler';
+import { ChangeCustomRoomToStoreRoomHandler } from '@storage/application/commands/change-custom-room-to-store-room/change-custom-room-to-store-room.handler';
+import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
+import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
+import { ArchiveWarehouseHandler } from '@storage/application/commands/archive-warehouse/archive-warehouse.handler';
+import { ArchiveStoreRoomHandler } from '@storage/application/commands/archive-store-room/archive-store-room.handler';
+import { ArchiveCustomRoomHandler } from '@storage/application/commands/archive-custom-room/archive-custom-room.handler';
 import { FreezeWarehouseHandler } from '@storage/application/commands/freeze-warehouse/freeze-warehouse.handler';
 import { FreezeStoreRoomHandler } from '@storage/application/commands/freeze-store-room/freeze-store-room.handler';
 import { FreezeCustomRoomHandler } from '@storage/application/commands/freeze-custom-room/freeze-custom-room.handler';
 import { UnfreezeWarehouseHandler } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.handler';
 import { UnfreezeStoreRoomHandler } from '@storage/application/commands/unfreeze-store-room/unfreeze-store-room.handler';
 import { UnfreezeCustomRoomHandler } from '@storage/application/commands/unfreeze-custom-room/unfreeze-custom-room.handler';
+import { RestoreWarehouseHandler } from '@storage/application/commands/restore-warehouse/restore-warehouse.handler';
+import { RestoreStoreRoomHandler } from '@storage/application/commands/restore-store-room/restore-store-room.handler';
+import { RestoreCustomRoomHandler } from '@storage/application/commands/restore-custom-room/restore-custom-room.handler';
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
 import { GetStorageHandler } from '@storage/application/queries/get-storage/get-storage.handler';
 import { StorageCreatedEventHandler } from '@storage/application/event-handlers/storage-created.event-handler';
@@ -39,6 +51,7 @@ import { StorageTypeChangedEventHandler } from '@storage/application/event-handl
 import { StorageArchivedEventHandler } from '@storage/application/event-handlers/storage-archived.event-handler';
 import { StorageFrozenEventHandler } from '@storage/application/event-handlers/storage-frozen.event-handler';
 import { StorageReactivatedEventHandler } from '@storage/application/event-handlers/storage-reactivated.event-handler';
+import { StorageRestoredEventHandler } from '@storage/application/event-handlers/storage-restored.event-handler';
 import { CreateCustomRoomController } from '@storage/infrastructure/http/controllers/create-custom-room/create-custom-room.controller';
 import { CreateStoreRoomController } from '@storage/infrastructure/http/controllers/create-store-room/create-store-room.controller';
 import { CreateWarehouseController } from '@storage/infrastructure/http/controllers/create-warehouse/create-warehouse.controller';
@@ -47,14 +60,25 @@ import { UpdateStoreRoomController } from '@storage/infrastructure/http/controll
 import { UpdateWarehouseController } from '@storage/infrastructure/http/controllers/update-warehouse/update-warehouse.controller';
 import { ListStoragesController } from '@storage/infrastructure/http/controllers/list-storages/list-storages.controller';
 import { GetStorageController } from '@storage/infrastructure/http/controllers/get-storage/get-storage.controller';
-import { ChangeStorageTypeController } from '@storage/infrastructure/http/controllers/change-storage-type/change-storage-type.controller';
-import { ArchiveStorageController } from '@storage/infrastructure/http/controllers/archive-storage/archive-storage.controller';
+import { ChangeWarehouseToStoreRoomController } from '@storage/infrastructure/http/controllers/change-warehouse-to-store-room/change-warehouse-to-store-room.controller';
+import { ChangeWarehouseToCustomRoomController } from '@storage/infrastructure/http/controllers/change-warehouse-to-custom-room/change-warehouse-to-custom-room.controller';
+import { ChangeStoreRoomToWarehouseController } from '@storage/infrastructure/http/controllers/change-store-room-to-warehouse/change-store-room-to-warehouse.controller';
+import { ChangeStoreRoomToCustomRoomController } from '@storage/infrastructure/http/controllers/change-store-room-to-custom-room/change-store-room-to-custom-room.controller';
+import { ChangeCustomRoomToWarehouseController } from '@storage/infrastructure/http/controllers/change-custom-room-to-warehouse/change-custom-room-to-warehouse.controller';
+import { ChangeCustomRoomToStoreRoomController } from '@storage/infrastructure/http/controllers/change-custom-room-to-store-room/change-custom-room-to-store-room.controller';
+import { ArchiveWarehouseController } from '@storage/infrastructure/http/controllers/archive-warehouse/archive-warehouse.controller';
+import { ArchiveStoreRoomController } from '@storage/infrastructure/http/controllers/archive-store-room/archive-store-room.controller';
+import { ArchiveCustomRoomController } from '@storage/infrastructure/http/controllers/archive-custom-room/archive-custom-room.controller';
 import { FreezeWarehouseController } from '@storage/infrastructure/http/controllers/freeze-warehouse/freeze-warehouse.controller';
 import { FreezeStoreRoomController } from '@storage/infrastructure/http/controllers/freeze-store-room/freeze-store-room.controller';
 import { FreezeCustomRoomController } from '@storage/infrastructure/http/controllers/freeze-custom-room/freeze-custom-room.controller';
 import { UnfreezeWarehouseController } from '@storage/infrastructure/http/controllers/unfreeze-warehouse/unfreeze-warehouse.controller';
 import { UnfreezeStoreRoomController } from '@storage/infrastructure/http/controllers/unfreeze-store-room/unfreeze-store-room.controller';
 import { UnfreezeCustomRoomController } from '@storage/infrastructure/http/controllers/unfreeze-custom-room/unfreeze-custom-room.controller';
+import { RestoreWarehouseController } from '@storage/infrastructure/http/controllers/restore-warehouse/restore-warehouse.controller';
+import { RestoreStoreRoomController } from '@storage/infrastructure/http/controllers/restore-store-room/restore-store-room.controller';
+import { RestoreCustomRoomController } from '@storage/infrastructure/http/controllers/restore-custom-room/restore-custom-room.controller';
+import { DeleteStoragePermanentController } from '@storage/infrastructure/http/controllers/delete-storage-permanent/delete-storage-permanent.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Module({
@@ -78,14 +102,25 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     UpdateWarehouseController,
     ListStoragesController,
     GetStorageController,
-    ChangeStorageTypeController,
-    ArchiveStorageController,
+    ChangeWarehouseToStoreRoomController,
+    ChangeWarehouseToCustomRoomController,
+    ChangeStoreRoomToWarehouseController,
+    ChangeStoreRoomToCustomRoomController,
+    ChangeCustomRoomToWarehouseController,
+    ChangeCustomRoomToStoreRoomController,
+    ArchiveWarehouseController,
+    ArchiveStoreRoomController,
+    ArchiveCustomRoomController,
     FreezeWarehouseController,
     FreezeStoreRoomController,
     FreezeCustomRoomController,
     UnfreezeWarehouseController,
     UnfreezeStoreRoomController,
     UnfreezeCustomRoomController,
+    RestoreWarehouseController,
+    RestoreStoreRoomController,
+    RestoreCustomRoomController,
+    DeleteStoragePermanentController,
   ],
   providers: [
     { provide: INJECTION_TOKENS.STORAGE_CONTRACT, useClass: TypeOrmStorageRepository },
@@ -109,14 +144,26 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     UpdateCustomRoomHandler,
     UpdateStoreRoomHandler,
     UpdateWarehouseHandler,
-    ChangeStorageTypeHandler,
-    ArchiveStorageHandler,
+    ChangeWarehouseToStoreRoomHandler,
+    ChangeWarehouseToCustomRoomHandler,
+    ChangeStoreRoomToWarehouseHandler,
+    ChangeStoreRoomToCustomRoomHandler,
+    ChangeCustomRoomToWarehouseHandler,
+    ChangeCustomRoomToStoreRoomHandler,
+    StorageTypeChangePolicy,
+    StorageUpdateEventsPublisher,
+    ArchiveWarehouseHandler,
+    ArchiveStoreRoomHandler,
+    ArchiveCustomRoomHandler,
     FreezeWarehouseHandler,
     FreezeStoreRoomHandler,
     FreezeCustomRoomHandler,
     UnfreezeWarehouseHandler,
     UnfreezeStoreRoomHandler,
     UnfreezeCustomRoomHandler,
+    RestoreWarehouseHandler,
+    RestoreStoreRoomHandler,
+    RestoreCustomRoomHandler,
     ListStoragesHandler,
     GetStorageHandler,
     StorageCreatedEventHandler,
@@ -129,6 +176,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     StorageArchivedEventHandler,
     StorageFrozenEventHandler,
     StorageReactivatedEventHandler,
+    StorageRestoredEventHandler,
   ],
   exports: [INJECTION_TOKENS.STORAGE_CONTRACT],
 })

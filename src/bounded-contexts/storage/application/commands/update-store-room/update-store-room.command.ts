@@ -5,6 +5,6 @@ export class UpdateStoreRoomCommand {
     public readonly actorUUID: string,
     public readonly name?: string,
     public readonly description?: string | null,
-    public readonly address?: string,
+    public readonly address?: string | null,
   ) {}
 }

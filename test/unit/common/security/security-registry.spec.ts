@@ -124,8 +124,16 @@ describe('SecurityRegistry', () => {
         expect(SecurityRegistry['PATCH /storages/store-rooms/:uuid']).toEqual({
           action: SystemAction.STORAGE_UPDATE,
         });
-        expect(SecurityRegistry['DELETE /storages/:uuid']).toEqual({
-          action: SystemAction.STORAGE_DELETE,
+        // H-07: the legacy DELETE /storages/:uuid was split into 3 per-type
+        // archive routes. The endpoint no longer exists.
+        expect(SecurityRegistry['DELETE /storages/warehouses/:uuid/archive']).toEqual({
+          action: SystemAction.STORAGE_ARCHIVE,
+        });
+        expect(SecurityRegistry['DELETE /storages/store-rooms/:uuid/archive']).toEqual({
+          action: SystemAction.STORAGE_ARCHIVE,
+        });
+        expect(SecurityRegistry['DELETE /storages/custom-rooms/:uuid/archive']).toEqual({
+          action: SystemAction.STORAGE_ARCHIVE,
         });
       });
 

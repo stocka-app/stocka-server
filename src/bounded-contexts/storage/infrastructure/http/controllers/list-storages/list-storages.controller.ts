@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { ListStoragesQuery } from '@storage/application/queries/list-storages/list-storages.query';
 import { StorageItemPage } from '@storage/domain/schemas';
@@ -23,13 +23,13 @@ export class ListStoragesController {
   @ApiResponse({ status: 200, description: 'Paginated list of storages', type: StoragePageOutDto })
   async handle(
     @Query() queryDto: ListStoragesInDto,
-    @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<StoragePageOutDto> {
     const filters = { status: queryDto.status, type: queryDto.type };
     const pagination = { page: queryDto.page, limit: queryDto.limit };
 
     const query = new ListStoragesQuery(
-      user.tenantId as string,
+      member.tenantUUID,
       filters,
       pagination,
       queryDto.sortOrder,

@@ -14,7 +14,7 @@ export interface CustomRoomModelProps {
   icon: StorageIconVO;
   color: StorageColorVO;
   roomType: RoomTypeNameVO;
-  address: StorageAddressVO;
+  address: StorageAddressVO | null;
 
   // Persistence-managed fields: optional on input, normalized in attrs.
   id?: number;
@@ -32,7 +32,7 @@ export interface CustomRoomModelAttrs {
   icon: StorageIconVO;
   color: StorageColorVO;
   roomType: RoomTypeNameVO;
-  address: StorageAddressVO;
+  address: StorageAddressVO | null;
 
   id?: number;
   archivedAt: Date | null;

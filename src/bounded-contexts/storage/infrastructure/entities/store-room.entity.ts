@@ -16,8 +16,8 @@ export class StoreRoomEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 300, nullable: true, default: null })
   description!: string | null;
 
-  @Column({ type: 'text' })
-  address!: string;
+  @Column({ type: 'text', nullable: true, default: null })
+  address!: string | null;
 
   @Column({ type: 'varchar', length: 100 })
   icon!: string;

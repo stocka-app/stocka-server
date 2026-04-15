@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsOptional, IsString, Matches, MaxLength, MinLength, ValidateIf } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class UpdateCustomRoomInDto {
@@ -36,9 +36,10 @@ export class UpdateCustomRoomInDto {
   @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'color must be a valid hex color (e.g. #FF5733)' })
   color?: string;
 
-  @ApiPropertyOptional({ description: 'Address', maxLength: 200 })
+  @ApiPropertyOptional({ description: 'Address (null or empty clears the value)', maxLength: 200 })
   @IsOptional()
+  @ValidateIf((_o, v) => v !== null)
   @IsString()
   @MaxLength(200)
-  address?: string;
+  address?: string | null;
 }

@@ -19,7 +19,7 @@ export class CustomRoomMapper {
       icon: StorageIconVO.create(entity.icon),
       color: StorageColorVO.create(entity.color),
       roomType: RoomTypeNameVO.create(entity.roomType),
-      address: StorageAddressVO.create(entity.address),
+      address: entity.address ? StorageAddressVO.create(entity.address) : null,
       frozenAt: entity.frozenAt,
       archivedAt: entity.archivedAt,
       createdAt: entity.createdAt,
@@ -37,7 +37,7 @@ export class CustomRoomMapper {
       icon: model.icon.getValue(),
       color: model.color.getValue(),
       roomType: model.roomType.getValue(),
-      address: model.address.getValue(),
+      address: model.address?.getValue() ?? null,
       frozenAt: model.frozenAt,
       archivedAt: model.archivedAt,
     };

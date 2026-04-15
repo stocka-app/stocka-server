@@ -2,6 +2,7 @@ import { Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { UnfreezeWarehouseCommand } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.command';
 import { UnfreezeWarehouseResult } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.handler';
@@ -28,8 +29,9 @@ export class UnfreezeWarehouseController {
   async handle(
     @Param('uuid') uuid: string,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<StorageOutDto> {
-    const command = new UnfreezeWarehouseCommand(uuid, user.tenantId as string, user.uuid);
+    const command = new UnfreezeWarehouseCommand(uuid, member.tenantUUID, user.uuid);
     const result = await this.commandBus.execute<UnfreezeWarehouseCommand, UnfreezeWarehouseResult>(
       command,
     );

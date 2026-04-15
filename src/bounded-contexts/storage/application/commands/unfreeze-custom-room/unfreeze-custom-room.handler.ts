@@ -1,14 +1,16 @@
-import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { Result, ok, err } from '@shared/domain/result';
-import { StorageItemView } from '@storage/domain/schemas';
+import { Result, err, ok } from '@shared/domain/result';
 import { UnfreezeCustomRoomCommand } from '@storage/application/commands/unfreeze-custom-room/unfreeze-custom-room.command';
+import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
+import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen.error';
+import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
+import { StorageItemView } from '@storage/domain/schemas';
 
 export type UnfreezeCustomRoomResult = Result<StorageItemView, DomainException>;
 
@@ -19,31 +21,26 @@ export class UnfreezeCustomRoomHandler implements ICommandHandler<UnfreezeCustom
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.CUSTOM_ROOM_CONTRACT)
     private readonly customRoomRepository: ICustomRoomRepository,
-    private readonly eventPublisher: EventPublisher,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: UnfreezeCustomRoomCommand): Promise<UnfreezeCustomRoomResult> {
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
-    const customRoom = aggregate.findCustomRoom(command.storageUUID);
+    const customRoom = await this.customRoomRepository.findByUUID(command.storageUUID);
 
-    if (!customRoom) return err(new StorageNotFoundError(command.storageUUID));
-    if (!customRoom.isFrozen()) return err(new StorageNotFrozenError(command.storageUUID));
-
-    aggregate.unfreezeCustomRoom(command.storageUUID, command.actorUUID);
-
-    const updated = aggregate.findCustomRoom(command.storageUUID);
-    if (!updated || aggregate.id === undefined) {
+    if (!customRoom || customRoom.tenantUUID !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
+    if (!customRoom.isFrozen()) return err(new StorageNotFrozenError(command.storageUUID));
 
-    await this.customRoomRepository.save(updated, aggregate.id);
+    const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
+    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
+    const updated = await this.customRoomRepository.save(customRoom.markUnfrozen(), storageId);
 
-    const view = aggregate.findItemView(command.storageUUID);
-    if (!view) return err(new StorageNotFoundError(command.storageUUID));
+    this.eventBus.publish(
+      new StorageReactivatedEvent(command.storageUUID, command.tenantUUID, command.actorUUID),
+    );
 
-    return ok(view);
+    return ok(StorageItemViewMapper.fromCustomRoom(updated));
   }
 }

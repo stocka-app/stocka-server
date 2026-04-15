@@ -49,7 +49,7 @@ describe('CustomRoomMapper', () => {
         expect(model.icon.getValue()).toBe('office-icon');
         expect(model.color.getValue()).toBe('#AABBCC');
         expect(model.roomType.getValue()).toBe('Office');
-        expect(model.address.getValue()).toBe('123 Main St');
+        expect(model.address!.getValue()).toBe('123 Main St');
         expect(model.frozenAt).toBeNull();
         expect(model.archivedAt).toBeNull();
         expect(model.createdAt).toEqual(new Date('2024-01-01'));
@@ -168,7 +168,7 @@ describe('StoreRoomMapper', () => {
         expect(model.description?.getValue()).toBe('Primary storage');
         expect(model.icon.getValue()).toBe('store-icon');
         expect(model.color.getValue()).toBe('#334455');
-        expect(model.address.getValue()).toBe('789 Elm Rd');
+        expect(model.address!.getValue()).toBe('789 Elm Rd');
         expect(model.frozenAt).toBeNull();
         expect(model.archivedAt).toBeNull();
       });
@@ -267,7 +267,7 @@ describe('WarehouseMapper', () => {
         expect(model.description?.getValue()).toBe('Main warehouse');
         expect(model.icon.getValue()).toBe('wh-icon');
         expect(model.color.getValue()).toBe('#667788');
-        expect(model.address.getValue()).toBe('200 Warehouse Blvd');
+        expect(model.address!.getValue()).toBe('200 Warehouse Blvd');
         expect(model.frozenAt).toBeNull();
         expect(model.archivedAt).toBeNull();
       });

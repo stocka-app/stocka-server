@@ -8,7 +8,7 @@ export interface StorageItemView {
   description: string | null;
   icon: string;
   color: string;
-  address: string;
+  address: string | null;
   archivedAt: Date | null;
   frozenAt: Date | null;
   status: StorageStatus;

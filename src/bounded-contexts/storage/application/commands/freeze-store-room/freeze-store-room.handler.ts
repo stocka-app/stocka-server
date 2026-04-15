@@ -1,15 +1,17 @@
-import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageAlreadyFrozenError } from '@storage/domain/errors/storage-already-frozen.error';
-import { StorageArchivedCannotBeFrozenError } from '@storage/domain/errors/storage-archived-cannot-be-frozen.error';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { Result, ok, err } from '@shared/domain/result';
-import { StorageItemView } from '@storage/domain/schemas';
+import { Result, err, ok } from '@shared/domain/result';
 import { FreezeStoreRoomCommand } from '@storage/application/commands/freeze-store-room/freeze-store-room.command';
+import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
+import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
+import { StorageAlreadyFrozenError } from '@storage/domain/errors/storage-already-frozen.error';
+import { StorageArchivedCannotBeFrozenError } from '@storage/domain/errors/storage-archived-cannot-be-frozen.error';
+import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageFrozenEvent } from '@storage/domain/events/storage-frozen.event';
+import { StorageItemView } from '@storage/domain/schemas';
 
 export type FreezeStoreRoomResult = Result<StorageItemView, DomainException>;
 
@@ -20,33 +22,29 @@ export class FreezeStoreRoomHandler implements ICommandHandler<FreezeStoreRoomCo
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.STORE_ROOM_CONTRACT)
     private readonly storeRoomRepository: IStoreRoomRepository,
-    private readonly eventPublisher: EventPublisher,
+    private readonly eventBus: EventBus,
   ) {}
 
   async execute(command: FreezeStoreRoomCommand): Promise<FreezeStoreRoomResult> {
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
-    const storeRoom = aggregate.findStoreRoom(command.storageUUID);
+    const storeRoom = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
-    if (!storeRoom) return err(new StorageNotFoundError(command.storageUUID));
-    if (storeRoom.isFrozen()) return err(new StorageAlreadyFrozenError(command.storageUUID));
-    if (storeRoom.isArchived())
-      return err(new StorageArchivedCannotBeFrozenError(command.storageUUID));
-
-    aggregate.freezeStoreRoom(command.storageUUID, command.actorUUID);
-
-    const updated = aggregate.findStoreRoom(command.storageUUID);
-    if (!updated || aggregate.id === undefined) {
+    if (!storeRoom || storeRoom.tenantUUID !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
+    if (storeRoom.isFrozen()) return err(new StorageAlreadyFrozenError(command.storageUUID));
+    if (storeRoom.isArchived()) {
+      return err(new StorageArchivedCannotBeFrozenError(command.storageUUID));
+    }
 
-    await this.storeRoomRepository.save(updated, aggregate.id);
+    const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
+    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
+    const updated = await this.storeRoomRepository.save(storeRoom.markFrozen(), storageId);
 
-    const view = aggregate.findItemView(command.storageUUID);
-    if (!view) return err(new StorageNotFoundError(command.storageUUID));
+    this.eventBus.publish(
+      new StorageFrozenEvent(command.storageUUID, command.tenantUUID, command.actorUUID),
+    );
 
-    return ok(view);
+    return ok(StorageItemViewMapper.fromStoreRoom(updated));
   }
 }

@@ -36,7 +36,7 @@ describe('CustomRoomModel', () => {
         expect(model.icon.getValue()).toBe('office-icon');
         expect(model.color.getValue()).toBe('#AABBCC');
         expect(model.roomType.getValue()).toBe('Office');
-        expect(model.address.getValue()).toBe('123 Main St');
+        expect(model.address!.getValue()).toBe('123 Main St');
         expect(model.archivedAt).toBeNull();
         expect(model.frozenAt).toBeNull();
         expect(model.createdAt).toBeInstanceOf(Date);
@@ -59,7 +59,7 @@ describe('CustomRoomModel', () => {
         expect(model.description).toBeNull();
         expect(model.icon.getValue()).toBe('icon-1');
         expect(model.color.getValue()).toBe('#AABBCC');
-        expect(model.address.getValue()).toBe('456 Oak Ave');
+        expect(model.address!.getValue()).toBe('456 Oak Ave');
       });
     });
   });
@@ -83,7 +83,7 @@ describe('CustomRoomModel', () => {
         expect(updated.description?.getValue()).toBe('New desc');
         expect(updated.icon.getValue()).toBe('icon-1');
         expect(updated.color.getValue()).toBe('#AABBCC');
-        expect(updated.address.getValue()).toBe('100 Main St');
+        expect(updated.address!.getValue()).toBe('100 Main St');
       });
     });
 
@@ -129,8 +129,41 @@ describe('CustomRoomModel', () => {
         expect(updated.icon.getValue()).toBe('new-icon');
         expect(updated.color.getValue()).toBe('#FFFFFF');
         expect(updated.roomType.getValue()).toBe('Warehouse');
-        expect(updated.address.getValue()).toBe('2 New Ave');
+        expect(updated.address!.getValue()).toBe('2 New Ave');
         expect(updated.name.getValue()).toBe('Room');
+      });
+    });
+
+    describe('When the user clears the address field on a custom room', () => {
+      it('Then address is nulled both when passing "" and explicit null', () => {
+        const original = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000017',
+          tenantUUID: TENANT_UUID,
+          name: 'Room',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          roomType: 'Office',
+          address: '1 Old St',
+        });
+
+        expect(original.update({ address: '' }).address).toBeNull();
+        expect(original.update({ address: null }).address).toBeNull();
+      });
+    });
+
+    describe('When a custom room is created without an address', () => {
+      it('Then address is null and persists through update()', () => {
+        const created = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000018',
+          tenantUUID: TENANT_UUID,
+          name: 'Room',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          roomType: 'Office',
+        });
+
+        expect(created.address).toBeNull();
+        expect(created.update({ name: 'Renamed' }).address).toBeNull();
       });
     });
   });
@@ -214,6 +247,87 @@ describe('CustomRoomModel', () => {
         expect(unfrozen.status).toBe(StorageStatus.ACTIVE);
       });
     });
+
+    describe('When markRestored is called on an archived model', () => {
+      it('Then archivedAt is cleared and status returns to ACTIVE', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000071',
+          tenantUUID: TENANT_UUID,
+          name: 'To Restore',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markArchived().markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+
+      it('Then a frozen-then-archived model lands ACTIVE on restore (markArchived clears frozenAt)', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000072',
+          tenantUUID: TENANT_UUID,
+          name: 'Frozen Then Archived',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markFrozen().markArchived().markRestored();
+
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.frozenAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
+
+    describe('When markRestored is called on an already active model', () => {
+      it('Then the model stays ACTIVE with archivedAt null (defensive idempotency)', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000073',
+          tenantUUID: TENANT_UUID,
+          name: 'Already Active',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
+
+    describe('When archive then restore is applied', () => {
+      it('Then the model equals the original modulo updatedAt', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000074',
+          tenantUUID: TENANT_UUID,
+          name: 'Archive Then Restore',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const roundTrip = model.markArchived().markRestored();
+
+        expect(roundTrip.uuid.toString()).toBe(model.uuid.toString());
+        expect(roundTrip.name.getValue()).toBe(model.name.getValue());
+        expect(roundTrip.roomType.getValue()).toBe(model.roomType.getValue());
+        expect(roundTrip.archivedAt).toBeNull();
+        expect(roundTrip.frozenAt).toBeNull();
+        expect(roundTrip.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
   });
 
   describe('Given CustomRoomModel.reconstitute() is called with persisted data', () => {
@@ -241,7 +355,7 @@ describe('CustomRoomModel', () => {
         expect(model.icon.getValue()).toBe('icon-x');
         expect(model.color.getValue()).toBe('#112233');
         expect(model.roomType.getValue()).toBe('Kitchen');
-        expect(model.address.getValue()).toBe('456 Oak Ave');
+        expect(model.address!.getValue()).toBe('456 Oak Ave');
         expect(model.createdAt).toEqual(now);
       });
     });
@@ -292,7 +406,7 @@ describe('StoreRoomModel', () => {
         expect(model.description?.getValue()).toBe('Main storage area');
         expect(model.icon.getValue()).toBe('store-icon');
         expect(model.color.getValue()).toBe('#DDEEFF');
-        expect(model.address.getValue()).toBe('789 Elm Rd');
+        expect(model.address!.getValue()).toBe('789 Elm Rd');
         expect(model.archivedAt).toBeNull();
         expect(model.frozenAt).toBeNull();
         expect(model.createdAt).toBeInstanceOf(Date);
@@ -313,7 +427,7 @@ describe('StoreRoomModel', () => {
         expect(model.description).toBeNull();
         expect(model.icon.getValue()).toBe('icon-1');
         expect(model.color.getValue()).toBe('#AABBCC');
-        expect(model.address.getValue()).toBe('100 Main St');
+        expect(model.address!.getValue()).toBe('100 Main St');
       });
     });
   });
@@ -335,7 +449,7 @@ describe('StoreRoomModel', () => {
         expect(updated.name.getValue()).toBe('Store B');
         expect(updated.color.getValue()).toBe('#112233');
         expect(updated.icon.getValue()).toBe('icon-1');
-        expect(updated.address.getValue()).toBe('100 Main St');
+        expect(updated.address!.getValue()).toBe('100 Main St');
       });
     });
 
@@ -389,8 +503,39 @@ describe('StoreRoomModel', () => {
         const updated = original.update({ icon: 'new-icon', address: '2 New Ave' });
 
         expect(updated.icon.getValue()).toBe('new-icon');
-        expect(updated.address.getValue()).toBe('2 New Ave');
+        expect(updated.address!.getValue()).toBe('2 New Ave');
         expect(updated.color.getValue()).toBe('#AABBCC');
+      });
+    });
+
+    describe('When the user clears the address field', () => {
+      it('Then address is nulled both when passing "" and explicit null', () => {
+        const original = StoreRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000029',
+          tenantUUID: TENANT_UUID,
+          name: 'Store',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 Old St',
+        });
+
+        expect(original.update({ address: '' }).address).toBeNull();
+        expect(original.update({ address: null }).address).toBeNull();
+      });
+    });
+
+    describe('When address is omitted (undefined) and was null', () => {
+      it('Then address stays null', () => {
+        const original = StoreRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000030',
+          tenantUUID: TENANT_UUID,
+          name: 'Store',
+          icon: 'icon-1',
+          color: '#AABBCC',
+        });
+
+        expect(original.address).toBeNull();
+        expect(original.update({ name: 'New' }).address).toBeNull();
       });
     });
   });
@@ -470,6 +615,42 @@ describe('StoreRoomModel', () => {
         expect(frozenThenArchived.status).toBe(StorageStatus.ARCHIVED);
       });
     });
+
+    describe('When markRestored is called on an archived model', () => {
+      it('Then archivedAt is cleared and status returns to ACTIVE', () => {
+        const model = StoreRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000081',
+          tenantUUID: TENANT_UUID,
+          name: 'To Restore',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markArchived().markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+
+      it('Then a frozen-then-archived model lands ACTIVE on restore (markArchived clears frozenAt)', () => {
+        const model = StoreRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000082',
+          tenantUUID: TENANT_UUID,
+          name: 'Frozen Then Archived',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markFrozen().markArchived().markRestored();
+
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.frozenAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
   });
 
   describe('Given StoreRoomModel.reconstitute() is called with persisted data', () => {
@@ -493,7 +674,7 @@ describe('StoreRoomModel', () => {
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000030');
         expect(model.name.getValue()).toBe('Restored Store');
         expect(model.description).toBeNull();
-        expect(model.address.getValue()).toBe('100 Industrial');
+        expect(model.address!.getValue()).toBe('100 Industrial');
         expect(model.createdAt).toEqual(now);
       });
     });
@@ -522,7 +703,7 @@ describe('WarehouseModel', () => {
         expect(model.description?.getValue()).toBe('Main distribution center');
         expect(model.icon.getValue()).toBe('warehouse-icon');
         expect(model.color.getValue()).toBe('#001122');
-        expect(model.address.getValue()).toBe('200 Warehouse Blvd');
+        expect(model.address!.getValue()).toBe('200 Warehouse Blvd');
         expect(model.archivedAt).toBeNull();
         expect(model.frozenAt).toBeNull();
         expect(model.createdAt).toBeInstanceOf(Date);
@@ -544,7 +725,7 @@ describe('WarehouseModel', () => {
         expect(model.id).toBeUndefined();
         expect(model.icon.getValue()).toBe('icon-1');
         expect(model.color.getValue()).toBe('#AABBCC');
-        expect(model.address.getValue()).toBe('300 Depot Ln');
+        expect(model.address!.getValue()).toBe('300 Depot Ln');
       });
     });
   });
@@ -564,7 +745,7 @@ describe('WarehouseModel', () => {
         const updated = original.update({ name: 'WH B', address: '200 New Ave' });
 
         expect(updated.name.getValue()).toBe('WH B');
-        expect(updated.address.getValue()).toBe('200 New Ave');
+        expect(updated.address!.getValue()).toBe('200 New Ave');
         expect(updated.icon.getValue()).toBe('icon-1');
         expect(updated.color.getValue()).toBe('#AABBCC');
       });
@@ -620,7 +801,7 @@ describe('WarehouseModel', () => {
 
         expect(updated.icon.getValue()).toBe('new-icon');
         expect(updated.color.getValue()).toBe('#FFFFFF');
-        expect(updated.address.getValue()).toBe('100 St');
+        expect(updated.address!.getValue()).toBe('100 St');
       });
     });
   });
@@ -699,6 +880,42 @@ describe('WarehouseModel', () => {
         expect(unfrozen.status).toBe(StorageStatus.ACTIVE);
       });
     });
+
+    describe('When markRestored is called on an archived model', () => {
+      it('Then archivedAt is cleared and status returns to ACTIVE', () => {
+        const model = WarehouseModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000091',
+          tenantUUID: TENANT_UUID,
+          name: 'To Restore',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markArchived().markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+
+      it('Then a frozen-then-archived model lands ACTIVE on restore (markArchived clears frozenAt)', () => {
+        const model = WarehouseModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000092',
+          tenantUUID: TENANT_UUID,
+          name: 'Frozen Then Archived',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markFrozen().markArchived().markRestored();
+
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.frozenAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
   });
 
   describe('Given WarehouseModel.reconstitute() is called with persisted data', () => {
@@ -724,7 +941,7 @@ describe('WarehouseModel', () => {
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000048');
         expect(model.name.getValue()).toBe('Restored Warehouse');
         expect(model.description).toBeNull();
-        expect(model.address.getValue()).toBe('300 Depot Lane');
+        expect(model.address!.getValue()).toBe('300 Depot Lane');
         expect(model.createdAt).toEqual(now);
       });
     });

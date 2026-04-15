@@ -9,4 +9,5 @@ export enum StorageActivityAction {
   FROZEN = 'FROZEN',
   REACTIVATED = 'REACTIVATED',
   ARCHIVED = 'ARCHIVED',
+  RESTORED = 'RESTORED',
 }

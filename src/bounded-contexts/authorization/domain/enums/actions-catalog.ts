@@ -7,6 +7,7 @@ export enum SystemAction {
   STORAGE_FREEZE = 'STORAGE_FREEZE',
   STORAGE_UNFREEZE = 'STORAGE_UNFREEZE',
   STORAGE_ARCHIVE = 'STORAGE_ARCHIVE',
+  STORAGE_RESTORE = 'STORAGE_RESTORE',
 
   // ── Member management ──────────────────────────────────────────────────────
   MEMBER_INVITE = 'MEMBER_INVITE',

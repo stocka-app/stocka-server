@@ -17,7 +17,7 @@ export class StoreRoomMapper {
       description: entity.description ? new StorageDescriptionVO(entity.description) : null,
       icon: new StorageIconVO(entity.icon),
       color: new StorageColorVO(entity.color),
-      address: new StorageAddressVO(entity.address),
+      address: entity.address ? new StorageAddressVO(entity.address) : null,
       frozenAt: entity.frozenAt,
       archivedAt: entity.archivedAt,
       createdAt: entity.createdAt,
@@ -34,7 +34,7 @@ export class StoreRoomMapper {
       description: model.description?.getValue() ?? null,
       icon: model.icon.getValue(),
       color: model.color.getValue(),
-      address: model.address.getValue(),
+      address: model.address?.getValue() ?? null,
       frozenAt: model.frozenAt,
       archivedAt: model.archivedAt,
     };

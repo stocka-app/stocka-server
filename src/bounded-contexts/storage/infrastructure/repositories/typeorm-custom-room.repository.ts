@@ -18,15 +18,20 @@ export class TypeOrmCustomRoomRepository implements ICustomRoomRepository {
   ) {}
 
   private getRepo(): Repository<CustomRoomEntity> {
-    /* istanbul ignore next — storage handlers do not use UoW; UoW path is only active in transactional operations */
     if (this.uow.isActive()) {
       return (this.uow.getManager() as EntityManager).getRepository(CustomRoomEntity);
     }
+
     return this.repo;
   }
 
   async count(tenantUUID: string): Promise<number> {
     return this.repo.countBy({ tenantUUID });
+  }
+
+  async findByUUID(uuid: string): Promise<CustomRoomModel | null> {
+    const entity = await this.getRepo().findOne({ where: { uuid }, withDeleted: true });
+    return entity ? CustomRoomMapper.toDomain(entity) : null;
   }
 
   async save(model: CustomRoomModel, storageId: number): Promise<CustomRoomModel> {

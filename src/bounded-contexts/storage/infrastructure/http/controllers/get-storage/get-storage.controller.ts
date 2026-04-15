@@ -1,7 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { GetStorageQuery } from '@storage/application/queries/get-storage/get-storage.query';
 import { GetStorageResult } from '@storage/application/queries/get-storage/get-storage.handler';
@@ -21,9 +21,9 @@ export class GetStorageController {
   @ApiResponse({ status: 404, description: 'Storage not found' })
   async handle(
     @Param('uuid') uuid: string,
-    @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<StorageOutDto> {
-    const query = new GetStorageQuery(uuid, user.tenantId as string);
+    const query = new GetStorageQuery(uuid, member.tenantUUID);
     const result = await this.queryBus.execute<GetStorageQuery, GetStorageResult>(query);
 
     return result.match(

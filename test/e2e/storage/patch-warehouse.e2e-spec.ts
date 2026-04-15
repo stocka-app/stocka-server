@@ -92,9 +92,13 @@ async function createStorage(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function archiveStorage(app: INestApplication, token: string, uuid: string): Promise<void> {
+async function archiveCustomRoom(
+  app: INestApplication,
+  token: string,
+  uuid: string,
+): Promise<void> {
   await request(app.getHttpServer())
-    .delete(`/api/storages/${uuid}`)
+    .delete(`/api/storages/custom-rooms/${uuid}/archive`)
     .set('Authorization', `Bearer ${token}`);
 }
 
@@ -142,7 +146,7 @@ describe('PATCH /api/storages/warehouses/:uuid (e2e)', () => {
       name: 'PatchWarehouse Archived Room',
       roomType: 'Archive',
     });
-    await archiveStorage(app, ownerToken, archivedCustomRoomUUID);
+    await archiveCustomRoom(app, ownerToken, archivedCustomRoomUUID);
   });
 
   afterAll(async () => {
@@ -165,21 +169,16 @@ describe('PATCH /api/storages/warehouses/:uuid (e2e)', () => {
 
   describe('Given a tenant with an active warehouse', () => {
     describe('When PATCH /api/storages/warehouses/:uuid is called with a new name', () => {
-      it('Then it returns 200 with { storageUUID } and the name is updated', async () => {
+      it('Then it returns 200 with the updated StorageOutDto (post DT-H07-4)', async () => {
         const patchRes = await request(app.getHttpServer())
           .patch(`/api/storages/warehouses/${warehouseUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
           .send({ name: 'PatchWarehouse Alpha Renamed' });
 
         expect(patchRes.status).toBe(HttpStatus.OK);
-        expect(patchRes.body).toEqual({ storageUUID: warehouseUUID });
-
-        const getRes = await request(app.getHttpServer())
-          .get(`/api/storages/${warehouseUUID}`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(getRes.status).toBe(HttpStatus.OK);
-        expect(getRes.body.name).toBe('PatchWarehouse Alpha Renamed');
+        expect(patchRes.body.uuid).toBe(warehouseUUID);
+        expect(patchRes.body.name).toBe('PatchWarehouse Alpha Renamed');
+        expect(patchRes.body.type).toBe('WAREHOUSE');
       });
     });
   });
@@ -207,7 +206,8 @@ describe('PATCH /api/storages/warehouses/:uuid (e2e)', () => {
           .send({ name: 'PatchWarehouse Alpha Renamed' });
 
         expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body).toEqual({ storageUUID: warehouseUUID });
+        expect(res.body.uuid).toBe(warehouseUUID);
+        expect(res.body.type).toBe('WAREHOUSE');
       });
     });
   });
@@ -227,13 +227,15 @@ describe('PATCH /api/storages/warehouses/:uuid (e2e)', () => {
 
   describe('Given a tenant with an archived custom room', () => {
     describe('When PATCH /api/storages/custom-rooms/:uuid is called on the archived storage', () => {
-      it('Then it returns 409 (archived storages cannot be updated)', async () => {
+      it('Then it returns 200 — H-07 allows metadata edits in ARCHIVED (E5.2)', async () => {
         const res = await request(app.getHttpServer())
           .patch(`/api/storages/custom-rooms/${archivedCustomRoomUUID}`)
           .set('Authorization', `Bearer ${ownerToken}`)
-          .send({ name: 'Should Not Update' });
+          .send({ name: 'Edited While Archived' });
 
-        expect(res.status).toBe(HttpStatus.CONFLICT);
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.name).toBe('Edited While Archived');
+        expect(res.body.status).toBe('ARCHIVED');
       });
     });
   });
