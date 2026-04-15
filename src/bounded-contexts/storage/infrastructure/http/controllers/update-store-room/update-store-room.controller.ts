@@ -2,6 +2,7 @@ import { Body, Controller, Param, Patch } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { UpdateStoreRoomCommand } from '@storage/application/commands/update-store-room/update-store-room.command';
 import { UpdateStoreRoomResult } from '@storage/application/commands/update-store-room/update-store-room.handler';
@@ -24,11 +25,12 @@ export class UpdateStoreRoomController {
     @Param('uuid') uuid: string,
     @Body() dto: UpdateStoreRoomInDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<UpdateStoreRoomCommand, UpdateStoreRoomResult>(
       new UpdateStoreRoomCommand(
         uuid,
-        user.tenantId as string,
+        member.tenantUUID,
         user.uuid,
         dto.name,
         dto.description,

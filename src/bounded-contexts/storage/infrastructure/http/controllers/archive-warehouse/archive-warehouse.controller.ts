@@ -2,6 +2,7 @@ import { Controller, Delete, HttpCode, HttpStatus, Param } from '@nestjs/common'
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { ArchiveWarehouseCommand } from '@storage/application/commands/archive-warehouse/archive-warehouse.command';
 import { ArchiveWarehouseResult } from '@storage/application/commands/archive-warehouse/archive-warehouse.handler';
@@ -24,8 +25,9 @@ export class ArchiveWarehouseController {
   async handle(
     @Param('uuid') uuid: string,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<StorageOutDto> {
-    const command = new ArchiveWarehouseCommand(uuid, user.tenantId as string, user.uuid);
+    const command = new ArchiveWarehouseCommand(uuid, member.tenantUUID, user.uuid);
     const result = await this.commandBus.execute<ArchiveWarehouseCommand, ArchiveWarehouseResult>(
       command,
     );

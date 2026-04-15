@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { CreateWarehouseCommand } from '@storage/application/commands/create-warehouse/create-warehouse.command';
 import { CreateWarehouseResult } from '@storage/application/commands/create-warehouse/create-warehouse.handler';
@@ -22,10 +23,11 @@ export class CreateWarehouseController {
   async handle(
     @Body() dto: CreateWarehouseInDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<CreateWarehouseCommand, CreateWarehouseResult>(
       new CreateWarehouseCommand(
-        user.tenantId as string,
+        member.tenantUUID,
         dto.name,
         dto.address,
         user.uuid,

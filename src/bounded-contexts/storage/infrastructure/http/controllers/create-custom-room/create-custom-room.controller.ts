@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { CreateCustomRoomCommand } from '@storage/application/commands/create-custom-room/create-custom-room.command';
 import { CreateCustomRoomResult } from '@storage/application/commands/create-custom-room/create-custom-room.handler';
@@ -22,10 +23,11 @@ export class CreateCustomRoomController {
   async handle(
     @Body() dto: CreateCustomRoomInDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<CreateCustomRoomCommand, CreateCustomRoomResult>(
       new CreateCustomRoomCommand(
-        user.tenantId as string,
+        member.tenantUUID,
         dto.name,
         dto.roomType,
         dto.address,

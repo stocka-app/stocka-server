@@ -2,6 +2,7 @@ import { Controller, Param, Patch } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { ChangeStoreRoomToCustomRoomCommand } from '@storage/application/commands/change-store-room-to-custom-room/change-store-room-to-custom-room.command';
 import { ChangeStoreRoomToCustomRoomResult } from '@storage/application/commands/change-store-room-to-custom-room/change-store-room-to-custom-room.handler';
@@ -23,11 +24,12 @@ export class ChangeStoreRoomToCustomRoomController {
   async handle(
     @Param('uuid') uuid: string,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<
       ChangeStoreRoomToCustomRoomCommand,
       ChangeStoreRoomToCustomRoomResult
-    >(new ChangeStoreRoomToCustomRoomCommand(uuid, user.tenantId as string, user.uuid));
+    >(new ChangeStoreRoomToCustomRoomCommand(uuid, member.tenantUUID, user.uuid));
 
     return result.match(
       (data) => data,

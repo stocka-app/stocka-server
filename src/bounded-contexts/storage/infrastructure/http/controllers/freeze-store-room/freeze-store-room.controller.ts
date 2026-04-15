@@ -2,6 +2,7 @@ import { Controller, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { FreezeStoreRoomCommand } from '@storage/application/commands/freeze-store-room/freeze-store-room.command';
 import { FreezeStoreRoomResult } from '@storage/application/commands/freeze-store-room/freeze-store-room.handler';
@@ -24,8 +25,9 @@ export class FreezeStoreRoomController {
   async handle(
     @Param('uuid') uuid: string,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<StorageOutDto> {
-    const command = new FreezeStoreRoomCommand(uuid, user.tenantId as string, user.uuid);
+    const command = new FreezeStoreRoomCommand(uuid, member.tenantUUID, user.uuid);
     const result = await this.commandBus.execute<FreezeStoreRoomCommand, FreezeStoreRoomResult>(
       command,
     );

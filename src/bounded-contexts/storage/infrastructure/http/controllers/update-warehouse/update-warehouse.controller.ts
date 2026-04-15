@@ -2,6 +2,7 @@ import { Body, Controller, Param, Patch } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { UpdateWarehouseCommand } from '@storage/application/commands/update-warehouse/update-warehouse.command';
 import { UpdateWarehouseResult } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
@@ -24,11 +25,12 @@ export class UpdateWarehouseController {
     @Param('uuid') uuid: string,
     @Body() dto: UpdateWarehouseInDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<UpdateWarehouseCommand, UpdateWarehouseResult>(
       new UpdateWarehouseCommand(
         uuid,
-        user.tenantId as string,
+        member.tenantUUID,
         user.uuid,
         dto.name,
         dto.description,

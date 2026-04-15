@@ -2,6 +2,7 @@ import { Controller, Param, Patch } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { ChangeWarehouseToStoreRoomCommand } from '@storage/application/commands/change-warehouse-to-store-room/change-warehouse-to-store-room.command';
 import { ChangeWarehouseToStoreRoomResult } from '@storage/application/commands/change-warehouse-to-store-room/change-warehouse-to-store-room.handler';
@@ -23,11 +24,12 @@ export class ChangeWarehouseToStoreRoomController {
   async handle(
     @Param('uuid') uuid: string,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<
       ChangeWarehouseToStoreRoomCommand,
       ChangeWarehouseToStoreRoomResult
-    >(new ChangeWarehouseToStoreRoomCommand(uuid, user.tenantId as string, user.uuid));
+    >(new ChangeWarehouseToStoreRoomCommand(uuid, member.tenantUUID, user.uuid));
 
     return result.match(
       (data) => data,

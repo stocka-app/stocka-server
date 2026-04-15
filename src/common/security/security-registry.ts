@@ -80,6 +80,13 @@ export const SecurityRegistry: Record<string, SecurityMeta> = {
   'PATCH /storages/custom-rooms/:uuid/convert-to-store-room': {
     action: SystemAction.STORAGE_UPDATE,
   },
+  // Freeze / Unfreeze (H-05) — per-type routes not wired to SecurityRegistry until now (DT-H07-1)
+  'POST /storages/warehouses/:uuid/freeze': { action: SystemAction.STORAGE_FREEZE },
+  'POST /storages/store-rooms/:uuid/freeze': { action: SystemAction.STORAGE_FREEZE },
+  'POST /storages/custom-rooms/:uuid/freeze': { action: SystemAction.STORAGE_FREEZE },
+  'POST /storages/warehouses/:uuid/unfreeze': { action: SystemAction.STORAGE_UNFREEZE },
+  'POST /storages/store-rooms/:uuid/unfreeze': { action: SystemAction.STORAGE_UNFREEZE },
+  'POST /storages/custom-rooms/:uuid/unfreeze': { action: SystemAction.STORAGE_UNFREEZE },
   // Archive (H-07) — per-type soft-delete, reversible via restore
   'DELETE /storages/warehouses/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },
   'DELETE /storages/store-rooms/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },

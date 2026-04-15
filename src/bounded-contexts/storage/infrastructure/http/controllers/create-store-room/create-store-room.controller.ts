@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtPayload } from '@common/decorators/current-user.decorator';
+import { CurrentMember, CurrentMemberData } from '@common/decorators/current-member.decorator';
 import { Secure } from '@common/decorators/secure.decorator';
 import { CreateStoreRoomCommand } from '@storage/application/commands/create-store-room/create-store-room.command';
 import { CreateStoreRoomResult } from '@storage/application/commands/create-store-room/create-store-room.handler';
@@ -22,10 +23,11 @@ export class CreateStoreRoomController {
   async handle(
     @Body() dto: CreateStoreRoomInDto,
     @CurrentUser() user: JwtPayload,
+    @CurrentMember() member: CurrentMemberData,
   ): Promise<{ storageUUID: string }> {
     const result = await this.commandBus.execute<CreateStoreRoomCommand, CreateStoreRoomResult>(
       new CreateStoreRoomCommand(
-        user.tenantId as string,
+        member.tenantUUID,
         dto.name,
         dto.address,
         user.uuid,
