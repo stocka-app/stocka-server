@@ -214,6 +214,71 @@ describe('StorageUpdateEventsPublisher', () => {
     });
   });
 
+  describe('Given a warehouse whose description goes from a value to another value', () => {
+    describe('When publish() runs', () => {
+      it('Then StorageDescriptionChangedEvent is emitted with prev→next (non-null on both sides)', () => {
+        const before = makeWarehouse();
+        const after = before.update({ description: 'Updated description' });
+
+        publisher.publish({
+          uuid: WH_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after,
+          fields: { description: 'Updated description' },
+        });
+
+        const event = eventBus.publish.mock.calls[0][0] as StorageDescriptionChangedEvent;
+        expect(event).toBeInstanceOf(StorageDescriptionChangedEvent);
+        expect(event.previousValue).toBe('Primary warehouse');
+        expect(event.newValue).toBe('Updated description');
+      });
+    });
+  });
+
+  describe('Given a warehouse whose description does not change', () => {
+    describe('When publish() runs with the same description', () => {
+      it('Then no StorageDescriptionChangedEvent is emitted', () => {
+        const before = makeWarehouse();
+
+        publisher.publish({
+          uuid: WH_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after: before,
+          fields: { description: 'Primary warehouse' },
+        });
+
+        expect(eventBus.publish).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given a warehouse whose description is cleared from a value to null', () => {
+    describe('When publish() runs', () => {
+      it('Then StorageDescriptionChangedEvent is emitted with value→null', () => {
+        const before = makeWarehouse();
+        const after = before.update({ description: null });
+
+        publisher.publish({
+          uuid: WH_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after,
+          fields: { description: null },
+        });
+
+        const event = eventBus.publish.mock.calls[0][0] as StorageDescriptionChangedEvent;
+        expect(event).toBeInstanceOf(StorageDescriptionChangedEvent);
+        expect(event.previousValue).toBe('Primary warehouse');
+        expect(event.newValue).toBeNull();
+      });
+    });
+  });
+
   describe('Given a custom room whose address, icon and color changed together', () => {
     describe('When publish() runs', () => {
       it('Then three events fire — one per changed field', () => {

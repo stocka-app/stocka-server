@@ -722,6 +722,21 @@ describe('UpdateStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the name in the command equals the current name', () => {
+    describe('When update is requested', () => {
+      it('Then the name-duplication check is skipped and the update succeeds', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ name: 'Same' }));
+
+        const result = await handler.execute(
+          new UpdateStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, 'Same'),
+        );
+
+        expect(result.isOk()).toBe(true);
+        expect(storageRepository.existsActiveName).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
 
 // helper for the nested test above — kept in scope of the file
