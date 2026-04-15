@@ -69,33 +69,17 @@ async function createWarehouse(app: INestApplication, token: string, name: strin
   const res = await request(app.getHttpServer())
     .post('/api/storages/warehouses')
     .set('Authorization', `Bearer ${token}`)
-    .send({ name, address: 'Av. 1000, CDMX' });
+    .send({ name, address: 'Av. Industrial 1000, CDMX' });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function createStoreRoom(app: INestApplication, token: string, name: string): Promise<string> {
-  const res = await request(app.getHttpServer())
-    .post('/api/storages/store-rooms')
-    .set('Authorization', `Bearer ${token}`)
-    .send({ name, address: 'Calle 22, CDMX' });
-  return (res.body as CreateStorageResponse).storageUUID;
-}
-
-async function createCustomRoom(app: INestApplication, token: string, name: string): Promise<string> {
-  const res = await request(app.getHttpServer())
-    .post('/api/storages/custom-rooms')
-    .set('Authorization', `Bearer ${token}`)
-    .send({ name, roomType: 'Office', address: 'Local 3, CDMX' });
-  return (res.body as CreateStorageResponse).storageUUID;
-}
-
-describe('DELETE /api/storages/{type}/:uuid/archive (E2E — H-07)', () => {
+describe('DELETE /api/storages/warehouses/:uuid/archive (E2E — H-07)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
-  const TENANT_NAME = 'ArchivePerType E2E Business';
-  const OWNER_EMAIL = 'archive.pertype.owner@example.com';
-  const OWNER_USERNAME = 'archivepertypeowner';
+  const TENANT_NAME = 'ArchiveWarehouse E2E Business';
+  const OWNER_EMAIL = 'archive.warehouse.owner@example.com';
+  const OWNER_USERNAME = 'archivewarehouseowner';
 
   let ownerToken: string;
 
@@ -117,8 +101,6 @@ describe('DELETE /api/storages/{type}/:uuid/archive (E2E — H-07)', () => {
     await truncateStorageWorkerTables(dataSource);
   });
 
-  // ── Warehouse ──────────────────────────────────────────────────────────────
-
   describe('Given an active warehouse', () => {
     let uuid: string;
 
@@ -126,7 +108,7 @@ describe('DELETE /api/storages/{type}/:uuid/archive (E2E — H-07)', () => {
       uuid = await createWarehouse(app, ownerToken, 'Archive Alpha WH');
     });
 
-    describe('When DELETE /api/storages/warehouses/:uuid/archive is called', () => {
+    describe('When archive is requested', () => {
       it('Then it returns 200 with the archived StorageOutDto and subsequent GET confirms ARCHIVED', async () => {
         const res = await request(app.getHttpServer())
           .delete(`/api/storages/warehouses/${uuid}/archive`)
@@ -134,6 +116,7 @@ describe('DELETE /api/storages/{type}/:uuid/archive (E2E — H-07)', () => {
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.uuid).toBe(uuid);
+        expect(res.body.type).toBe('WAREHOUSE');
         expect(res.body.status).toBe('ARCHIVED');
         expect(res.body.archivedAt).not.toBeNull();
 
@@ -156,50 +139,6 @@ describe('DELETE /api/storages/{type}/:uuid/archive (E2E — H-07)', () => {
     });
   });
 
-  // ── StoreRoom ──────────────────────────────────────────────────────────────
-
-  describe('Given an active store room', () => {
-    let uuid: string;
-
-    beforeAll(async () => {
-      uuid = await createStoreRoom(app, ownerToken, 'Archive Alpha SR');
-    });
-
-    describe('When DELETE /api/storages/store-rooms/:uuid/archive is called', () => {
-      it('Then it returns 200 with ARCHIVED status', async () => {
-        const res = await request(app.getHttpServer())
-          .delete(`/api/storages/store-rooms/${uuid}/archive`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body.status).toBe('ARCHIVED');
-      });
-    });
-  });
-
-  // ── CustomRoom ─────────────────────────────────────────────────────────────
-
-  describe('Given an active custom room', () => {
-    let uuid: string;
-
-    beforeAll(async () => {
-      uuid = await createCustomRoom(app, ownerToken, 'Archive Alpha CR');
-    });
-
-    describe('When DELETE /api/storages/custom-rooms/:uuid/archive is called', () => {
-      it('Then it returns 200 with ARCHIVED status', async () => {
-        const res = await request(app.getHttpServer())
-          .delete(`/api/storages/custom-rooms/${uuid}/archive`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body.status).toBe('ARCHIVED');
-      });
-    });
-  });
-
-  // ── E2E-A6: archive from FROZEN ────────────────────────────────────────────
-
   describe('Given a FROZEN warehouse', () => {
     let uuid: string;
 
@@ -211,7 +150,7 @@ describe('DELETE /api/storages/{type}/:uuid/archive (E2E — H-07)', () => {
     });
 
     describe('When archive is requested', () => {
-      it('Then it returns 200, status becomes ARCHIVED, and frozenAt is cleared', async () => {
+      it('Then it returns 200, status ARCHIVED, and frozenAt is cleared', async () => {
         const res = await request(app.getHttpServer())
           .delete(`/api/storages/warehouses/${uuid}/archive`)
           .set('Authorization', `Bearer ${ownerToken}`);
@@ -223,10 +162,8 @@ describe('DELETE /api/storages/{type}/:uuid/archive (E2E — H-07)', () => {
     });
   });
 
-  // ── Error paths ─────────────────────────────────────────────────────────────
-
   describe('Given an unauthenticated client', () => {
-    describe('When DELETE .../archive is called without a token', () => {
+    describe('When archive is called without a token', () => {
       it('Then it returns 401', async () => {
         const fakeUUID = '00000000-0000-0000-0000-000000000000';
         const res = await request(app.getHttpServer()).delete(

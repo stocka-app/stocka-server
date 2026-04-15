@@ -69,23 +69,7 @@ async function createWarehouse(app: INestApplication, token: string, name: strin
   const res = await request(app.getHttpServer())
     .post('/api/storages/warehouses')
     .set('Authorization', `Bearer ${token}`)
-    .send({ name, address: 'Av. 1000, CDMX' });
-  return (res.body as CreateStorageResponse).storageUUID;
-}
-
-async function createStoreRoom(app: INestApplication, token: string, name: string): Promise<string> {
-  const res = await request(app.getHttpServer())
-    .post('/api/storages/store-rooms')
-    .set('Authorization', `Bearer ${token}`)
-    .send({ name, address: 'Calle 22, CDMX' });
-  return (res.body as CreateStorageResponse).storageUUID;
-}
-
-async function createCustomRoom(app: INestApplication, token: string, name: string): Promise<string> {
-  const res = await request(app.getHttpServer())
-    .post('/api/storages/custom-rooms')
-    .set('Authorization', `Bearer ${token}`)
-    .send({ name, roomType: 'Office', address: 'Local 3, CDMX' });
+    .send({ name, address: 'Av. Industrial 1000, CDMX' });
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
@@ -95,29 +79,13 @@ async function archiveWarehouse(app: INestApplication, token: string, uuid: stri
     .set('Authorization', `Bearer ${token}`);
 }
 
-async function archiveStoreRoom(app: INestApplication, token: string, uuid: string): Promise<void> {
-  await request(app.getHttpServer())
-    .delete(`/api/storages/store-rooms/${uuid}/archive`)
-    .set('Authorization', `Bearer ${token}`);
-}
-
-async function archiveCustomRoom(
-  app: INestApplication,
-  token: string,
-  uuid: string,
-): Promise<void> {
-  await request(app.getHttpServer())
-    .delete(`/api/storages/custom-rooms/${uuid}/archive`)
-    .set('Authorization', `Bearer ${token}`);
-}
-
-describe('POST /api/storages/{type}/:uuid/restore (E2E — H-07)', () => {
+describe('POST /api/storages/warehouses/:uuid/restore (E2E — H-07)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
-  const TENANT_NAME = 'RestorePerType E2E Business';
-  const OWNER_EMAIL = 'restore.pertype.owner@example.com';
-  const OWNER_USERNAME = 'restorepertypeowner';
+  const TENANT_NAME = 'RestoreWarehouse E2E Business';
+  const OWNER_EMAIL = 'restore.warehouse.owner@example.com';
+  const OWNER_USERNAME = 'restorewarehouseowner';
 
   let ownerToken: string;
 
@@ -139,8 +107,6 @@ describe('POST /api/storages/{type}/:uuid/restore (E2E — H-07)', () => {
     await truncateStorageWorkerTables(dataSource);
   });
 
-  // ── Warehouse ──────────────────────────────────────────────────────────────
-
   describe('Given an archived warehouse', () => {
     let uuid: string;
 
@@ -149,7 +115,7 @@ describe('POST /api/storages/{type}/:uuid/restore (E2E — H-07)', () => {
       await archiveWarehouse(app, ownerToken, uuid);
     });
 
-    describe('When POST /api/storages/warehouses/:uuid/restore is called', () => {
+    describe('When restore is requested', () => {
       it('Then it returns 200 with ACTIVE status and archivedAt null', async () => {
         const res = await request(app.getHttpServer())
           .post(`/api/storages/warehouses/${uuid}/restore`)
@@ -157,6 +123,7 @@ describe('POST /api/storages/{type}/:uuid/restore (E2E — H-07)', () => {
 
         expect(res.status).toBe(HttpStatus.OK);
         expect(res.body.uuid).toBe(uuid);
+        expect(res.body.type).toBe('WAREHOUSE');
         expect(res.body.status).toBe('ACTIVE');
         expect(res.body.archivedAt).toBeNull();
       });
@@ -173,52 +140,6 @@ describe('POST /api/storages/{type}/:uuid/restore (E2E — H-07)', () => {
       });
     });
   });
-
-  // ── StoreRoom ──────────────────────────────────────────────────────────────
-
-  describe('Given an archived store room', () => {
-    let uuid: string;
-
-    beforeAll(async () => {
-      uuid = await createStoreRoom(app, ownerToken, 'Restore SR Alpha');
-      await archiveStoreRoom(app, ownerToken, uuid);
-    });
-
-    describe('When POST .../store-rooms/:uuid/restore is called', () => {
-      it('Then it returns 200 with ACTIVE status', async () => {
-        const res = await request(app.getHttpServer())
-          .post(`/api/storages/store-rooms/${uuid}/restore`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body.status).toBe('ACTIVE');
-      });
-    });
-  });
-
-  // ── CustomRoom ─────────────────────────────────────────────────────────────
-
-  describe('Given an archived custom room', () => {
-    let uuid: string;
-
-    beforeAll(async () => {
-      uuid = await createCustomRoom(app, ownerToken, 'Restore CR Alpha');
-      await archiveCustomRoom(app, ownerToken, uuid);
-    });
-
-    describe('When POST .../custom-rooms/:uuid/restore is called', () => {
-      it('Then it returns 200 with ACTIVE status', async () => {
-        const res = await request(app.getHttpServer())
-          .post(`/api/storages/custom-rooms/${uuid}/restore`)
-          .set('Authorization', `Bearer ${ownerToken}`);
-
-        expect(res.status).toBe(HttpStatus.OK);
-        expect(res.body.status).toBe('ACTIVE');
-      });
-    });
-  });
-
-  // ── Error paths ────────────────────────────────────────────────────────────
 
   describe('Given an unauthenticated client', () => {
     describe('When restore is called without a token', () => {
