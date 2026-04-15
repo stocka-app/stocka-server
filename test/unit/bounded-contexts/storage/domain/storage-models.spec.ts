@@ -214,6 +214,87 @@ describe('CustomRoomModel', () => {
         expect(unfrozen.status).toBe(StorageStatus.ACTIVE);
       });
     });
+
+    describe('When markRestored is called on an archived model', () => {
+      it('Then archivedAt is cleared and status returns to ACTIVE', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000071',
+          tenantUUID: TENANT_UUID,
+          name: 'To Restore',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markArchived().markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+
+      it('Then a frozen-then-archived model lands ACTIVE on restore (markArchived clears frozenAt)', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000072',
+          tenantUUID: TENANT_UUID,
+          name: 'Frozen Then Archived',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markFrozen().markArchived().markRestored();
+
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.frozenAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
+
+    describe('When markRestored is called on an already active model', () => {
+      it('Then the model stays ACTIVE with archivedAt null (defensive idempotency)', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000073',
+          tenantUUID: TENANT_UUID,
+          name: 'Already Active',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
+
+    describe('When archive then restore is applied', () => {
+      it('Then the model equals the original modulo updatedAt', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000074',
+          tenantUUID: TENANT_UUID,
+          name: 'Archive Then Restore',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const roundTrip = model.markArchived().markRestored();
+
+        expect(roundTrip.uuid.toString()).toBe(model.uuid.toString());
+        expect(roundTrip.name.getValue()).toBe(model.name.getValue());
+        expect(roundTrip.roomType.getValue()).toBe(model.roomType.getValue());
+        expect(roundTrip.archivedAt).toBeNull();
+        expect(roundTrip.frozenAt).toBeNull();
+        expect(roundTrip.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
   });
 
   describe('Given CustomRoomModel.reconstitute() is called with persisted data', () => {
@@ -470,6 +551,42 @@ describe('StoreRoomModel', () => {
         expect(frozenThenArchived.status).toBe(StorageStatus.ARCHIVED);
       });
     });
+
+    describe('When markRestored is called on an archived model', () => {
+      it('Then archivedAt is cleared and status returns to ACTIVE', () => {
+        const model = StoreRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000081',
+          tenantUUID: TENANT_UUID,
+          name: 'To Restore',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markArchived().markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+
+      it('Then a frozen-then-archived model lands ACTIVE on restore (markArchived clears frozenAt)', () => {
+        const model = StoreRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000082',
+          tenantUUID: TENANT_UUID,
+          name: 'Frozen Then Archived',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markFrozen().markArchived().markRestored();
+
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.frozenAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
   });
 
   describe('Given StoreRoomModel.reconstitute() is called with persisted data', () => {
@@ -697,6 +814,42 @@ describe('WarehouseModel', () => {
         expect(unfrozen.isFrozen()).toBe(false);
         expect(unfrozen.frozenAt).toBeNull();
         expect(unfrozen.status).toBe(StorageStatus.ACTIVE);
+      });
+    });
+
+    describe('When markRestored is called on an archived model', () => {
+      it('Then archivedAt is cleared and status returns to ACTIVE', () => {
+        const model = WarehouseModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000091',
+          tenantUUID: TENANT_UUID,
+          name: 'To Restore',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markArchived().markRestored();
+
+        expect(restored.isArchived()).toBe(false);
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
+      });
+
+      it('Then a frozen-then-archived model lands ACTIVE on restore (markArchived clears frozenAt)', () => {
+        const model = WarehouseModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000092',
+          tenantUUID: TENANT_UUID,
+          name: 'Frozen Then Archived',
+          icon: 'icon-1',
+          color: '#AABBCC',
+          address: '1 St',
+        });
+
+        const restored = model.markFrozen().markArchived().markRestored();
+
+        expect(restored.archivedAt).toBeNull();
+        expect(restored.frozenAt).toBeNull();
+        expect(restored.status).toBe(StorageStatus.ACTIVE);
       });
     });
   });
