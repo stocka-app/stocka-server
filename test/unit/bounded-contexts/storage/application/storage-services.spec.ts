@@ -469,6 +469,93 @@ describe('StorageTypeChangePolicy', () => {
     });
   });
 
+  // ── Restore-flow capacity guards ────────────────────────────────────────────
+  // Restore is a state flip: the archived item is already counted toward the
+  // tier limit (count() runs with withDeleted: true since Paso 4). Restoring
+  // does NOT increase the total, so being exactly at the limit must NOT block
+  // the recovery — only a strict overflow (count > max, possible after a
+  // downgrade) should block.
+
+  describe('Given the tenant has the warehouse count exactly equal to the tier limit', () => {
+    describe('When the policy is asked whether the tenant can restore an archived warehouse', () => {
+      it('Then it returns null because restoring does not increase the count beyond the limit', async () => {
+        capabilities.canCreateWarehouse.mockReturnValue(true);
+        capabilities.canCreateMoreWarehouses.mockReturnValue(false); // 5 < 5 → false (create-style guard)
+        warehouseRepository.count.mockResolvedValue(5);
+
+        const result = await policy.assertWarehouseCanRestore(TENANT_UUID);
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  describe('Given the tenant has the warehouse count strictly above the tier limit (post-downgrade overflow)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived warehouse', () => {
+      it('Then it returns WarehouseRequiresTierUpgradeError', async () => {
+        capabilities.canCreateWarehouse.mockReturnValue(true);
+        warehouseRepository.count.mockResolvedValue(7);
+        capabilities.exceedsWarehouseLimit = jest.fn().mockReturnValue(true);
+
+        const result = await policy.assertWarehouseCanRestore(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+      });
+    });
+  });
+
+  describe('Given the tenant has the store-room count exactly equal to the tier limit', () => {
+    describe('When the policy is asked whether the tenant can restore an archived store room', () => {
+      it('Then it returns null because restoring does not increase the count beyond the limit', async () => {
+        capabilities.canCreateMoreStoreRooms.mockReturnValue(false);
+        storeRoomRepository.count.mockResolvedValue(3);
+
+        const result = await policy.assertStoreRoomCanRestore(TENANT_UUID);
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  describe('Given the tenant has the store-room count strictly above the tier limit (post-downgrade overflow)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived store room', () => {
+      it('Then it returns StoreRoomLimitReachedError', async () => {
+        storeRoomRepository.count.mockResolvedValue(5);
+        capabilities.exceedsStoreRoomLimit = jest.fn().mockReturnValue(true);
+
+        const result = await policy.assertStoreRoomCanRestore(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(StoreRoomLimitReachedError);
+      });
+    });
+  });
+
+  describe('Given the tenant has the custom-room count exactly equal to the tier limit', () => {
+    describe('When the policy is asked whether the tenant can restore an archived custom room', () => {
+      it('Then it returns null because restoring does not increase the count beyond the limit', async () => {
+        capabilities.canCreateMoreCustomRooms.mockReturnValue(false);
+        customRoomRepository.count.mockResolvedValue(3);
+
+        const result = await policy.assertCustomRoomCanRestore(TENANT_UUID);
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  describe('Given the tenant has the custom-room count strictly above the tier limit (post-downgrade overflow)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived custom room', () => {
+      it('Then it returns CustomRoomLimitReachedError', async () => {
+        customRoomRepository.count.mockResolvedValue(5);
+        capabilities.exceedsCustomRoomLimit = jest.fn().mockReturnValue(true);
+
+        const result = await policy.assertCustomRoomCanRestore(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(CustomRoomLimitReachedError);
+      });
+    });
+  });
+
   describe('Given an empty address when converting to WAREHOUSE', () => {
     describe('When assertAddressForWarehouse() is called', () => {
       it('Then it returns StorageAddressRequiredForWarehouseError', () => {

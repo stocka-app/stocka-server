@@ -203,4 +203,43 @@ describe('POST /api/storages/custom-rooms/:uuid/restore (E2E)', () => {
       });
     });
   });
+
+  // Saturation scenario: tenant has total === tier limit (3/3 custom rooms in
+  // STARTER) with one of those archived. Restoring is a state flip, so the
+  // total stays at 3 — the tier is NOT exceeded. The API must respond 200.
+  describe('Given the tenant has the custom-room count exactly at the tier limit and one is archived', () => {
+    const SECONDARY_OWNER_EMAIL = 'restore.customroom.saturated@example.com';
+    const SECONDARY_OWNER_USERNAME = 'restorecustomroomsaturated';
+    const SECONDARY_TENANT_NAME = 'RestoreCustomRoom Saturated E2E Business';
+
+    let saturatedToken: string;
+    let archivedUUID: string;
+
+    beforeAll(async () => {
+      await signUp(app, dataSource, SECONDARY_OWNER_EMAIL, SECONDARY_OWNER_USERNAME);
+      const tmp = await signIn(app, SECONDARY_OWNER_EMAIL);
+      await completeOnboarding(app, tmp, SECONDARY_TENANT_NAME);
+      saturatedToken = await signIn(app, SECONDARY_OWNER_EMAIL);
+      await setTenantToStarter(dataSource, SECONDARY_TENANT_NAME);
+      saturatedToken = await signIn(app, SECONDARY_OWNER_EMAIL);
+
+      // Saturate the custom-room quota: STARTER allows 3.
+      archivedUUID = await createCustomRoom(app, saturatedToken, 'Saturated CR Alpha');
+      await createCustomRoom(app, saturatedToken, 'Saturated CR Beta');
+      await createCustomRoom(app, saturatedToken, 'Saturated CR Gamma');
+      await archiveCustomRoom(app, saturatedToken, archivedUUID);
+    });
+
+    describe('When restore is requested for the archived custom room', () => {
+      it('Then it returns 200 because restore is a state flip and does not increase the total', async () => {
+        const res = await request(app.getHttpServer())
+          .post(`/api/storages/custom-rooms/${archivedUUID}/restore`)
+          .set('Authorization', `Bearer ${saturatedToken}`);
+
+        expect(res.status).toBe(HttpStatus.OK);
+        expect(res.body.status).toBe('ACTIVE');
+        expect(res.body.archivedAt).toBeNull();
+      });
+    });
+  });
 });
