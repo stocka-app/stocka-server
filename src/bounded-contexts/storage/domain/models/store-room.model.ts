@@ -139,7 +139,7 @@ export class StoreRoomModel {
   markRestored(): StoreRoomModel {
     return this.evolveTransition({
       archivedAt: null,
-      frozenAt: this.frozenAt,
+      frozenAt: null,
     });
   }
 
