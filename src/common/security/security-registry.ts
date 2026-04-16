@@ -87,14 +87,14 @@ export const SecurityRegistry: Record<string, SecurityMeta> = {
   'POST /storages/warehouses/:uuid/unfreeze': { action: SystemAction.STORAGE_UNFREEZE },
   'POST /storages/store-rooms/:uuid/unfreeze': { action: SystemAction.STORAGE_UNFREEZE },
   'POST /storages/custom-rooms/:uuid/unfreeze': { action: SystemAction.STORAGE_UNFREEZE },
-  // Archive (H-07) — per-type soft-delete, reversible via restore
+  // Archive — per-type soft-delete, reversible via restore
   'DELETE /storages/warehouses/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },
   'DELETE /storages/store-rooms/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },
   'DELETE /storages/custom-rooms/:uuid/archive': { action: SystemAction.STORAGE_ARCHIVE },
-  // Restore (H-07)
+  // Restore — per-type, transitions back to ACTIVE
   'POST /storages/warehouses/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
   'POST /storages/store-rooms/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
   'POST /storages/custom-rooms/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
-  // Permanent delete (H-07 entry point — stub 501; flujo completo en historia separada)
+  // Permanent delete (entry point — stub 501; full flow tracked separately)
   'DELETE /storages/:uuid/permanent': { action: SystemAction.STORAGE_DELETE },
 };
