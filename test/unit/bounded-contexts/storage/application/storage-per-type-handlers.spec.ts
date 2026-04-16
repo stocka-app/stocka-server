@@ -21,6 +21,8 @@ import { UpdateWarehouseHandler } from '@storage/application/commands/update-war
 import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
 import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
 import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
+import { StoreRoomLimitReachedError } from '@storage/application/errors/store-room-limit-reached.error';
+import { CustomRoomLimitReachedError } from '@storage/application/errors/custom-room-limit-reached.error';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
@@ -551,6 +553,72 @@ describe('RestoreStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the store room belongs to another tenant', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ archivedAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the store room does not exist', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ archivedAt: new Date() }),
+        );
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
+    describe('When restore is requested', () => {
+      it('Then restore is blocked with StoreRoomLimitReachedError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ archivedAt: new Date() }),
+        );
+        policy.assertStoreRoomCapacity.mockResolvedValue(new StoreRoomLimitReachedError());
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StoreRoomLimitReachedError);
+        expect(storeRoomRepository.save).not.toHaveBeenCalled();
+        expect(eventBus.publish).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
 
 describe('RestoreCustomRoomHandler', () => {
@@ -593,6 +661,72 @@ describe('RestoreCustomRoomHandler', () => {
         );
 
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotArchivedError);
+      });
+    });
+  });
+
+  describe('Given the custom room belongs to another tenant', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ archivedAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the custom room does not exist', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ archivedAt: new Date() }),
+        );
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
+    describe('When restore is requested', () => {
+      it('Then restore is blocked with CustomRoomLimitReachedError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ archivedAt: new Date() }),
+        );
+        policy.assertCustomRoomCapacity.mockResolvedValue(new CustomRoomLimitReachedError());
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(CustomRoomLimitReachedError);
+        expect(customRoomRepository.save).not.toHaveBeenCalled();
+        expect(eventBus.publish).not.toHaveBeenCalled();
       });
     });
   });
