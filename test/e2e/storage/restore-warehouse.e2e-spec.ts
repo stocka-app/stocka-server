@@ -79,7 +79,7 @@ async function archiveWarehouse(app: INestApplication, token: string, uuid: stri
     .set('Authorization', `Bearer ${token}`);
 }
 
-describe('POST /api/storages/warehouses/:uuid/restore (E2E — H-07)', () => {
+describe('POST /api/storages/warehouses/:uuid/restore (E2E)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
@@ -87,7 +87,12 @@ describe('POST /api/storages/warehouses/:uuid/restore (E2E — H-07)', () => {
   const OWNER_EMAIL = 'restore.warehouse.owner@example.com';
   const OWNER_USERNAME = 'restorewarehouseowner';
 
+  const OTHER_TENANT_NAME = 'RestoreWarehouse Other E2E Business';
+  const OTHER_OWNER_EMAIL = 'restore.warehouse.other@example.com';
+  const OTHER_OWNER_USERNAME = 'restorewarehouseother';
+
   let ownerToken: string;
+  let otherOwnerToken: string;
 
   beforeAll(async () => {
     const workerApp = await getStorageWorkerApp();
@@ -101,6 +106,13 @@ describe('POST /api/storages/warehouses/:uuid/restore (E2E — H-07)', () => {
     ownerToken = await signIn(app, OWNER_EMAIL);
     await setTenantToStarter(dataSource, TENANT_NAME);
     ownerToken = await signIn(app, OWNER_EMAIL);
+
+    await signUp(app, dataSource, OTHER_OWNER_EMAIL, OTHER_OWNER_USERNAME);
+    const otherTempToken = await signIn(app, OTHER_OWNER_EMAIL);
+    await completeOnboarding(app, otherTempToken, OTHER_TENANT_NAME);
+    otherOwnerToken = await signIn(app, OTHER_OWNER_EMAIL);
+    await setTenantToStarter(dataSource, OTHER_TENANT_NAME);
+    otherOwnerToken = await signIn(app, OTHER_OWNER_EMAIL);
   });
 
   afterAll(async () => {
@@ -160,6 +172,26 @@ describe('POST /api/storages/warehouses/:uuid/restore (E2E — H-07)', () => {
         const fakeUUID = '00000000-0000-0000-0000-000000000000';
         const res = await request(app.getHttpServer())
           .post(`/api/storages/warehouses/${fakeUUID}/restore`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        expect(res.status).toBe(HttpStatus.NOT_FOUND);
+        expect(res.body.error).toBe('STORAGE_NOT_FOUND');
+      });
+    });
+  });
+
+  describe('Given an archived warehouse owned by another tenant', () => {
+    let foreignUUID: string;
+
+    beforeAll(async () => {
+      foreignUUID = await createWarehouse(app, otherOwnerToken, 'Foreign WH');
+      await archiveWarehouse(app, otherOwnerToken, foreignUUID);
+    });
+
+    describe('When restore is requested with a token from a different tenant', () => {
+      it('Then it returns 404 STORAGE_NOT_FOUND without revealing existence', async () => {
+        const res = await request(app.getHttpServer())
+          .post(`/api/storages/warehouses/${foreignUUID}/restore`)
           .set('Authorization', `Bearer ${ownerToken}`);
 
         expect(res.status).toBe(HttpStatus.NOT_FOUND);

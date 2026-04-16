@@ -83,7 +83,7 @@ async function archiveCustomRoom(
     .set('Authorization', `Bearer ${token}`);
 }
 
-describe('POST /api/storages/custom-rooms/:uuid/restore (E2E — H-07)', () => {
+describe('POST /api/storages/custom-rooms/:uuid/restore (E2E)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
 
@@ -91,7 +91,12 @@ describe('POST /api/storages/custom-rooms/:uuid/restore (E2E — H-07)', () => {
   const OWNER_EMAIL = 'restore.customroom.owner@example.com';
   const OWNER_USERNAME = 'restorecustomroomowner';
 
+  const OTHER_TENANT_NAME = 'RestoreCustomRoom Other E2E Business';
+  const OTHER_OWNER_EMAIL = 'restore.customroom.other@example.com';
+  const OTHER_OWNER_USERNAME = 'restorecustomroomother';
+
   let ownerToken: string;
+  let otherOwnerToken: string;
 
   beforeAll(async () => {
     const workerApp = await getStorageWorkerApp();
@@ -105,6 +110,13 @@ describe('POST /api/storages/custom-rooms/:uuid/restore (E2E — H-07)', () => {
     ownerToken = await signIn(app, OWNER_EMAIL);
     await setTenantToStarter(dataSource, TENANT_NAME);
     ownerToken = await signIn(app, OWNER_EMAIL);
+
+    await signUp(app, dataSource, OTHER_OWNER_EMAIL, OTHER_OWNER_USERNAME);
+    const otherTempToken = await signIn(app, OTHER_OWNER_EMAIL);
+    await completeOnboarding(app, otherTempToken, OTHER_TENANT_NAME);
+    otherOwnerToken = await signIn(app, OTHER_OWNER_EMAIL);
+    await setTenantToStarter(dataSource, OTHER_TENANT_NAME);
+    otherOwnerToken = await signIn(app, OTHER_OWNER_EMAIL);
   });
 
   afterAll(async () => {
@@ -164,6 +176,26 @@ describe('POST /api/storages/custom-rooms/:uuid/restore (E2E — H-07)', () => {
         const fakeUUID = '00000000-0000-0000-0000-000000000000';
         const res = await request(app.getHttpServer())
           .post(`/api/storages/custom-rooms/${fakeUUID}/restore`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        expect(res.status).toBe(HttpStatus.NOT_FOUND);
+        expect(res.body.error).toBe('STORAGE_NOT_FOUND');
+      });
+    });
+  });
+
+  describe('Given an archived custom room owned by another tenant', () => {
+    let foreignUUID: string;
+
+    beforeAll(async () => {
+      foreignUUID = await createCustomRoom(app, otherOwnerToken, 'Foreign CR');
+      await archiveCustomRoom(app, otherOwnerToken, foreignUUID);
+    });
+
+    describe('When restore is requested with a token from a different tenant', () => {
+      it('Then it returns 404 STORAGE_NOT_FOUND without revealing existence', async () => {
+        const res = await request(app.getHttpServer())
+          .post(`/api/storages/custom-rooms/${foreignUUID}/restore`)
           .set('Authorization', `Bearer ${ownerToken}`);
 
         expect(res.status).toBe(HttpStatus.NOT_FOUND);
