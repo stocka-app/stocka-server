@@ -26,7 +26,7 @@ export class TypeOrmWarehouseRepository implements IWarehouseRepository {
   }
 
   async count(tenantUUID: string): Promise<number> {
-    return this.repo.countBy({ tenantUUID });
+    return this.repo.count({ where: { tenantUUID }, withDeleted: true });
   }
 
   async findByUUID(uuid: string): Promise<WarehouseModel | null> {

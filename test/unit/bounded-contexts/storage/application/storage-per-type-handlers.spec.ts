@@ -18,7 +18,9 @@ import { UpdateStoreRoomCommand } from '@storage/application/commands/update-sto
 import { UpdateStoreRoomHandler } from '@storage/application/commands/update-store-room/update-store-room.handler';
 import { UpdateWarehouseCommand } from '@storage/application/commands/update-warehouse/update-warehouse.command';
 import { UpdateWarehouseHandler } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
+import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
 import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
+import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
@@ -128,6 +130,7 @@ let storeRoomRepository: jest.Mocked<IStoreRoomRepository>;
 let customRoomRepository: jest.Mocked<ICustomRoomRepository>;
 let eventBus: jest.Mocked<EventBus>;
 let updatePublisher: jest.Mocked<StorageUpdateEventsPublisher>;
+let policy: jest.Mocked<StorageTypeChangePolicy>;
 
 beforeEach(() => {
   storageRepository = {
@@ -155,6 +158,12 @@ beforeEach(() => {
   };
   eventBus = { publish: jest.fn() } as unknown as jest.Mocked<EventBus>;
   updatePublisher = { publish: jest.fn() } as unknown as jest.Mocked<StorageUpdateEventsPublisher>;
+  policy = {
+    assertWarehouseCapacity: jest.fn().mockResolvedValue(null),
+    assertStoreRoomCapacity: jest.fn().mockResolvedValue(null),
+    assertCustomRoomCapacity: jest.fn().mockResolvedValue(null),
+    assertAddressForWarehouse: jest.fn().mockReturnValue(null),
+  } as unknown as jest.Mocked<StorageTypeChangePolicy>;
 });
 
 // ═══ ArchiveXHandler ═══════════════════════════════════════════════════════════
@@ -370,7 +379,12 @@ describe('RestoreWarehouseHandler', () => {
   let handler: RestoreWarehouseHandler;
 
   beforeEach(() => {
-    handler = new RestoreWarehouseHandler(storageRepository, warehouseRepository, eventBus);
+    handler = new RestoreWarehouseHandler(
+      storageRepository,
+      warehouseRepository,
+      policy,
+      eventBus,
+    );
   });
 
   describe('Given an ARCHIVED warehouse', () => {
@@ -454,9 +468,11 @@ describe('RestoreWarehouseHandler', () => {
     });
   });
 
-  describe('Given the tenant is already at the warehouse tier limit', () => {
+  describe('Given the tenant is at the warehouse tier limit in the normal flow', () => {
     describe('When restore is requested', () => {
-      it('Then restore still succeeds — restore does NOT consume quota (EC-H07-1)', async () => {
+      it('Then restore succeeds — counts are state-agnostic, the archived item already counted', async () => {
+        // Capacity guard returns null because count() includes archived items —
+        // restoring does not change the total, so there is nothing to block.
         warehouseRepository.findByUUID.mockResolvedValue(
           makeWarehouse({ archivedAt: new Date() }),
         );
@@ -467,6 +483,26 @@ describe('RestoreWarehouseHandler', () => {
         );
 
         expect(result.isOk()).toBe(true);
+        expect(policy.assertWarehouseCapacity).toHaveBeenCalledWith(TENANT_UUID);
+      });
+    });
+  });
+
+  describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
+    describe('When restore is requested', () => {
+      it('Then restore is blocked with WarehouseRequiresTierUpgradeError', async () => {
+        warehouseRepository.findByUUID.mockResolvedValue(
+          makeWarehouse({ archivedAt: new Date() }),
+        );
+        policy.assertWarehouseCapacity.mockResolvedValue(new WarehouseRequiresTierUpgradeError());
+
+        const result = await handler.execute(
+          new RestoreWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+        expect(warehouseRepository.save).not.toHaveBeenCalled();
+        expect(eventBus.publish).not.toHaveBeenCalled();
       });
     });
   });
@@ -476,7 +512,12 @@ describe('RestoreStoreRoomHandler', () => {
   let handler: RestoreStoreRoomHandler;
 
   beforeEach(() => {
-    handler = new RestoreStoreRoomHandler(storageRepository, storeRoomRepository, eventBus);
+    handler = new RestoreStoreRoomHandler(
+      storageRepository,
+      storeRoomRepository,
+      policy,
+      eventBus,
+    );
   });
 
   describe('Given an ARCHIVED store room', () => {
@@ -516,7 +557,12 @@ describe('RestoreCustomRoomHandler', () => {
   let handler: RestoreCustomRoomHandler;
 
   beforeEach(() => {
-    handler = new RestoreCustomRoomHandler(storageRepository, customRoomRepository, eventBus);
+    handler = new RestoreCustomRoomHandler(
+      storageRepository,
+      customRoomRepository,
+      policy,
+      eventBus,
+    );
   });
 
   describe('Given an ARCHIVED custom room', () => {
