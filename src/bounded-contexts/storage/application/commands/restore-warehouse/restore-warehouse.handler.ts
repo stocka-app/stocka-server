@@ -39,7 +39,7 @@ export class RestoreWarehouseHandler implements ICommandHandler<RestoreWarehouse
     // the restore. The guard catches the edge case where the tenant downgraded
     // after archiving — the new tier limit may now be below the existing total,
     // blocking the restore until the user resolves the downgrade flow.
-    const capacityError = await this.policy.assertWarehouseCapacity(command.tenantUUID);
+    const capacityError = await this.policy.assertWarehouseCanRestore(command.tenantUUID);
     if (capacityError) return err(capacityError);
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);

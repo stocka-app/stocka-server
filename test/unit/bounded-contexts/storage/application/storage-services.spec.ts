@@ -368,6 +368,9 @@ describe('StorageTypeChangePolicy', () => {
       canCreateMoreWarehouses: jest.fn().mockReturnValue(true),
       canCreateMoreStoreRooms: jest.fn().mockReturnValue(true),
       canCreateMoreCustomRooms: jest.fn().mockReturnValue(true),
+      exceedsWarehouseLimit: jest.fn().mockReturnValue(false),
+      exceedsStoreRoomLimit: jest.fn().mockReturnValue(false),
+      exceedsCustomRoomLimit: jest.fn().mockReturnValue(false),
     };
     capabilitiesPort = { getCapabilities: jest.fn().mockResolvedValue(capabilities) };
     warehouseRepository = {

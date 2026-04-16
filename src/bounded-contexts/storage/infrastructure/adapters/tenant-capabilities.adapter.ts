@@ -30,6 +30,21 @@ class TenantCapabilitiesImpl implements TenantCapabilities {
     if (this.maxStoreRooms === -1) return true;
     return currentCount < this.maxStoreRooms;
   }
+
+  exceedsWarehouseLimit(currentCount: number): boolean {
+    if (this.maxWarehouses === -1) return false;
+    return currentCount > this.maxWarehouses;
+  }
+
+  exceedsStoreRoomLimit(currentCount: number): boolean {
+    if (this.maxStoreRooms === -1) return false;
+    return currentCount > this.maxStoreRooms;
+  }
+
+  exceedsCustomRoomLimit(currentCount: number): boolean {
+    if (this.maxCustomRooms === -1) return false;
+    return currentCount > this.maxCustomRooms;
+  }
 }
 
 @Injectable()

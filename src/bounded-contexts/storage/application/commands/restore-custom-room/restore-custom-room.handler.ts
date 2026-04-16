@@ -39,7 +39,7 @@ export class RestoreCustomRoomHandler implements ICommandHandler<RestoreCustomRo
     // the restore. The guard catches the edge case where the tenant downgraded
     // after archiving — the new tier limit may now be below the existing total,
     // blocking the restore until the user resolves the downgrade flow.
-    const capacityError = await this.policy.assertCustomRoomCapacity(command.tenantUUID);
+    const capacityError = await this.policy.assertCustomRoomCanRestore(command.tenantUUID);
     if (capacityError) return err(capacityError);
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);

@@ -164,6 +164,9 @@ beforeEach(() => {
     assertWarehouseCapacity: jest.fn().mockResolvedValue(null),
     assertStoreRoomCapacity: jest.fn().mockResolvedValue(null),
     assertCustomRoomCapacity: jest.fn().mockResolvedValue(null),
+    assertWarehouseCanRestore: jest.fn().mockResolvedValue(null),
+    assertStoreRoomCanRestore: jest.fn().mockResolvedValue(null),
+    assertCustomRoomCanRestore: jest.fn().mockResolvedValue(null),
     assertAddressForWarehouse: jest.fn().mockReturnValue(null),
   } as unknown as jest.Mocked<StorageTypeChangePolicy>;
 });
@@ -485,7 +488,7 @@ describe('RestoreWarehouseHandler', () => {
         );
 
         expect(result.isOk()).toBe(true);
-        expect(policy.assertWarehouseCapacity).toHaveBeenCalledWith(TENANT_UUID);
+        expect(policy.assertWarehouseCanRestore).toHaveBeenCalledWith(TENANT_UUID);
       });
     });
   });
@@ -496,7 +499,7 @@ describe('RestoreWarehouseHandler', () => {
         warehouseRepository.findByUUID.mockResolvedValue(
           makeWarehouse({ archivedAt: new Date() }),
         );
-        policy.assertWarehouseCapacity.mockResolvedValue(new WarehouseRequiresTierUpgradeError());
+        policy.assertWarehouseCanRestore.mockResolvedValue(new WarehouseRequiresTierUpgradeError());
 
         const result = await handler.execute(
           new RestoreWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
@@ -607,7 +610,7 @@ describe('RestoreStoreRoomHandler', () => {
         storeRoomRepository.findByUUID.mockResolvedValue(
           makeStoreRoom({ archivedAt: new Date() }),
         );
-        policy.assertStoreRoomCapacity.mockResolvedValue(new StoreRoomLimitReachedError());
+        policy.assertStoreRoomCanRestore.mockResolvedValue(new StoreRoomLimitReachedError());
 
         const result = await handler.execute(
           new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
@@ -718,7 +721,7 @@ describe('RestoreCustomRoomHandler', () => {
         customRoomRepository.findByUUID.mockResolvedValue(
           makeCustomRoom({ archivedAt: new Date() }),
         );
-        policy.assertCustomRoomCapacity.mockResolvedValue(new CustomRoomLimitReachedError());
+        policy.assertCustomRoomCanRestore.mockResolvedValue(new CustomRoomLimitReachedError());
 
         const result = await handler.execute(
           new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
