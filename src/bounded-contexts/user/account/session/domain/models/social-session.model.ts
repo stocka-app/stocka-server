@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { OAuthProviderVO } from '@user/domain/value-objects/oauth-provider.vo';
 
 export interface SocialSessionReconstitueProps extends BaseModelProps {
   id: number;
@@ -24,13 +25,13 @@ interface SocialSessionCtorProps extends BaseModelProps {
 export class SocialSessionModel extends BaseModel {
   private readonly _sessionId: number | undefined;
   private readonly _socialAccountId: number;
-  private readonly _provider: string;
+  private readonly _provider: OAuthProviderVO;
 
   private constructor(props: SocialSessionCtorProps) {
     super(props);
     this._sessionId = props.sessionId;
     this._socialAccountId = props.socialAccountId;
-    this._provider = props.provider;
+    this._provider = new OAuthProviderVO(props.provider);
   }
 
   static create(props: { socialAccountId: number; provider: string }): SocialSessionModel {
@@ -57,6 +58,6 @@ export class SocialSessionModel extends BaseModel {
   }
 
   get provider(): string {
-    return this._provider;
+    return this._provider.toString();
   }
 }

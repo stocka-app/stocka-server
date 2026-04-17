@@ -1,13 +1,5 @@
 import { CompoundVO } from '@shared/domain/value-objects/compound/compound.vo';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
-
-class InvalidOAuthProviderException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid OAuth provider: ${value}`, 'INVALID_OAUTH_PROVIDER', [
-      { field: 'createdWith', message: `Invalid OAuth provider: ${value}` },
-    ]);
-  }
-}
+import { InvalidOAuthProviderException } from '@user/domain/exceptions/invalid-oauth-provider.exception';
 
 export enum OAuthProviderEnum {
   LOCAL = 'email',
