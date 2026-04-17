@@ -1,16 +1,10 @@
 import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
-import { DomainException } from '@shared/domain/exceptions/domain.exception';
+import { InvalidUsernameException } from '@user/domain/exceptions/invalid-username.exception';
 import {
   USERNAME_MIN_LENGTH,
   USERNAME_MAX_LENGTH,
   USERNAME_PATTERN,
 } from '@common/constants/validation.constants';
-
-class InvalidUsernameException extends DomainException {
-  constructor(message: string) {
-    super(message, 'INVALID_USERNAME', [{ field: 'username', message }]);
-  }
-}
 
 export class UsernameVO extends StringVO {
   constructor(value: string) {
