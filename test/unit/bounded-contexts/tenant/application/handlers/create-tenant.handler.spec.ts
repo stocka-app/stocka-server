@@ -19,7 +19,7 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
 function buildCommand(overrides: Partial<CreateTenantCommand> = {}): CreateTenantCommand {
   return new CreateTenantCommand(
-    overrides.userUUID ?? 'user-uuid-123',
+    overrides.userUUID ?? '019538a0-0000-7000-8000-000000000901',
     overrides.name ?? 'My Business',
     overrides.businessType ?? 'retail',
     overrides.country ?? 'MX',
@@ -28,7 +28,7 @@ function buildCommand(overrides: Partial<CreateTenantCommand> = {}): CreateTenan
 }
 
 function buildUser(id?: number): UserAggregate {
-  return { id, uuid: 'user-uuid-123' } as unknown as UserAggregate;
+  return { id, uuid: '019538a0-0000-7000-8000-000000000901' } as unknown as UserAggregate;
 }
 
 function buildSavedTenant(): Persisted<TenantAggregate> {

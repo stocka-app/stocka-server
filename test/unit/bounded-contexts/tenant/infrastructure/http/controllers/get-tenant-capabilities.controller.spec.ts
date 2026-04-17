@@ -7,7 +7,7 @@ import { JwtPayload } from '@common/decorators/current-user.decorator';
 
 function buildUser(): JwtPayload {
   return {
-    uuid: 'user-uuid-123',
+    uuid: '019538a0-0000-7000-8000-000000000901',
     email: 'test@example.com',
     tenantId: 'tenant-uuid-456',
     role: 'OWNER',

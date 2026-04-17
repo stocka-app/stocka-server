@@ -32,7 +32,7 @@ function buildCommand(
   overrides: Partial<CompleteOnboardingCommand> = {},
 ): CompleteOnboardingCommand {
   return {
-    userUUID: 'user-uuid-123',
+    userUUID: '019538a0-0000-7000-8000-000000000901',
     userEmail: 'test@example.com',
     ...overrides,
   } as CompleteOnboardingCommand;
@@ -46,7 +46,7 @@ function buildSession(overrides: {
 }): OnboardingSessionModel {
   return OnboardingSessionModel.reconstitute({
     id: 'session-uuid',
-    userUUID: 'user-uuid-123',
+    userUUID: '019538a0-0000-7000-8000-000000000901',
     path: overrides.path ?? null,
     currentStep: 1,
     stepData: overrides.stepData ?? {},
@@ -716,7 +716,7 @@ describe('CompleteOnboardingHandler', () => {
         invitationContract.findByToken.mockResolvedValue(buildInvitation());
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue({
           id: 42,
-          uuid: 'user-uuid-123',
+          uuid: '019538a0-0000-7000-8000-000000000901',
         });
       });
 

@@ -17,9 +17,9 @@ describe('Tenant Domain Events', () => {
   describe('Given MemberAddedEvent', () => {
     describe('When instantiated', () => {
       it('Then it carries all the provided data', () => {
-        const event = new MemberAddedEvent('tenant-uuid', 'user-uuid', 'OWNER');
+        const event = new MemberAddedEvent('tenant-uuid', '019538a0-0000-7000-8000-000000000901', 'OWNER');
         expect(event.tenantUUID).toBe('tenant-uuid');
-        expect(event.userUUID).toBe('user-uuid');
+        expect(event.userUUID).toBe('019538a0-0000-7000-8000-000000000901');
         expect(event.role).toBe('OWNER');
       });
     });

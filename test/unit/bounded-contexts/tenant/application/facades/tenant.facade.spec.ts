@@ -18,7 +18,7 @@ function buildActiveMember(tenantId = 1): Persisted<TenantMemberModel> {
   const member = TenantMemberModel.create({
     tenantId,
     userId: 100,
-    userUUID: 'user-uuid-123',
+    userUUID: '019538a0-0000-7000-8000-000000000901',
     role: 'OWNER',
   });
   return asPersisted(member);
@@ -94,7 +94,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getActiveMembership('user-uuid-123');
+        const result = await facade.getActiveMembership('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -111,7 +111,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getActiveMembership('user-uuid-123');
+        const result = await facade.getActiveMembership('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -124,7 +124,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getActiveMembership('user-uuid-123');
+        const result = await facade.getActiveMembership('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -136,7 +136,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns the tenantUUID and role', async () => {
-        const result = await facade.getActiveMembership('user-uuid-123');
+        const result = await facade.getActiveMembership('019538a0-0000-7000-8000-000000000901');
 
         expect(result).not.toBeNull();
         expect(result?.tenantUUID).toBe('tenant-uuid-abc');
@@ -154,7 +154,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getMembershipContext('user-uuid-123');
+        const result = await facade.getMembershipContext('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -166,7 +166,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getMembershipContext('user-uuid-123');
+        const result = await facade.getMembershipContext('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -179,7 +179,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getMembershipContext('user-uuid-123');
+        const result = await facade.getMembershipContext('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -194,7 +194,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns a complete membership context', async () => {
-        const result = await facade.getMembershipContext('user-uuid-123');
+        const result = await facade.getMembershipContext('019538a0-0000-7000-8000-000000000901');
 
         expect(result).not.toBeNull();
         expect(result?.tenantUUID).toBe('tenant-uuid-abc');
@@ -217,7 +217,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getTierLimits('user-uuid-123');
+        const result = await facade.getTierLimits('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -229,7 +229,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getTierLimits('user-uuid-123');
+        const result = await facade.getTierLimits('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -242,7 +242,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns null', async () => {
-        const result = await facade.getTierLimits('user-uuid-123');
+        const result = await facade.getTierLimits('019538a0-0000-7000-8000-000000000901');
         expect(result).toBeNull();
       });
     });
@@ -255,7 +255,7 @@ describe('TenantFacade', () => {
       });
 
       it('Then it returns tier limits with correct values', async () => {
-        const result = await facade.getTierLimits('user-uuid-123');
+        const result = await facade.getTierLimits('019538a0-0000-7000-8000-000000000901');
 
         expect(result).not.toBeNull();
         expect(result?.tier).toBe('STARTER');
@@ -314,7 +314,7 @@ describe('TenantFacade', () => {
 
   describe('Given createTenantForUser is called', () => {
     const props: CreateTenantFacadeProps = {
-      userUUID: 'user-uuid-123',
+      userUUID: '019538a0-0000-7000-8000-000000000901',
       userId: 100,
       name: 'My Business',
       businessType: 'retail',
@@ -337,7 +337,7 @@ describe('TenantFacade', () => {
 
     describe('When the command uses default country and timezone', () => {
       const propsWithoutOptionals: CreateTenantFacadeProps = {
-        userUUID: 'user-uuid-123',
+        userUUID: '019538a0-0000-7000-8000-000000000901',
         userId: 100,
         name: 'My Business',
         businessType: 'retail',
