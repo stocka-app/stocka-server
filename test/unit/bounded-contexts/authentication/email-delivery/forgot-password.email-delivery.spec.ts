@@ -63,6 +63,14 @@ describe('Password recovery — transactional email delivery', () => {
           useValue: { persist: jest.fn().mockResolvedValue(undefined) },
         },
         {
+          provide: INJECTION_TOKENS.CODE_GENERATOR_CONTRACT,
+          useValue: {
+            generateVerificationCode: jest.fn().mockReturnValue('ABC123'),
+            generateSecureToken: jest.fn().mockReturnValue('a'.repeat(64)),
+            hashCode: jest.fn().mockReturnValue('hashed-token'),
+          },
+        },
+        {
           provide: INJECTION_TOKENS.EMAIL_PROVIDER_CONTRACT,
           useValue: emailProvider,
         },

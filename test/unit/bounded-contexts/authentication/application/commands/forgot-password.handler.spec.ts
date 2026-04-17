@@ -47,6 +47,7 @@ describe('ForgotPasswordHandler', () => {
   let mediator: jest.Mocked<MediatorService>;
   let eventPublisher: jest.Mocked<EventPublisher>;
   let passwordResetTokenContract: jest.Mocked<IPasswordResetTokenContract>;
+  let codeGenerator: jest.Mocked<import('@shared/domain/contracts/code-generator.contract').ICodeGeneratorContract>;
 
   beforeEach(() => {
     mediator = {
@@ -63,7 +64,18 @@ describe('ForgotPasswordHandler', () => {
       invalidateForCredential: jest.fn(),
     } as unknown as jest.Mocked<IPasswordResetTokenContract>;
 
-    handler = new ForgotPasswordHandler(mediator, eventPublisher, passwordResetTokenContract);
+    codeGenerator = {
+      generateVerificationCode: jest.fn().mockReturnValue('ABC123'),
+      generateSecureToken: jest.fn().mockReturnValue('a'.repeat(64)),
+      hashCode: jest.fn().mockReturnValue('hashed-token'),
+    };
+
+    handler = new ForgotPasswordHandler(
+      mediator,
+      eventPublisher,
+      passwordResetTokenContract,
+      codeGenerator,
+    );
   });
 
   describe('Given the email does not belong to any registered user', () => {

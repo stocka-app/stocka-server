@@ -62,6 +62,63 @@ module.exports = [
   '!src/**/application/commands/**/*.command.ts',
   '!src/**/application/queries/**/*.query.ts',
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEFENSIVE — Domain exceptions / errors instantiated ONLY by internal VOs,
+  // models or saga steps. Never reachable through HTTP because either (a) the
+  // DTO class-validator rejects invalid input first, (b) the VO is constructed
+  // with internal-only data (AttemptedAtVO.now(), hash from bcrypt), or (c) the
+  // exception has no throw site in the codebase (dead / placeholder code).
+  // Fully covered at 100% by unit tests via direct VO / model instantiation.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Authentication exceptions (VO validation — class-validator catches first)
+  '!src/bounded-contexts/authentication/domain/exceptions/invalid-password.exception.ts',
+  '!src/bounded-contexts/authentication/domain/exceptions/invalid-attempted-at.exception.ts',
+  '!src/bounded-contexts/authentication/domain/exceptions/invalid-user-agent.exception.ts',
+  '!src/bounded-contexts/authentication/domain/exceptions/invalid-verification-type.exception.ts',
+  '!src/bounded-contexts/authentication/domain/exceptions/email-delivery-failed.exception.ts',
+  // Authentication exceptions (rate-limit / verification blocking — no throw
+  // site in the codebase; placeholders for future enforcement)
+  '!src/bounded-contexts/authentication/domain/exceptions/rate-limit-exceeded.exception.ts',
+  '!src/bounded-contexts/authentication/domain/exceptions/too-many-verification-attempts.exception.ts',
+  '!src/bounded-contexts/authentication/domain/exceptions/verification-blocked.exception.ts',
+
+  // Tenant domain errors (no throw site — defensive placeholders or
+  // JWT-guard-prevents: the aggregate method that would throw is never called
+  // via an HTTP endpoint today)
+  '!src/bounded-contexts/tenant/domain/errors/cannot-remove-last-owner.error.ts',
+  '!src/bounded-contexts/tenant/domain/errors/member-not-found.error.ts',
+  '!src/bounded-contexts/tenant/domain/errors/tenant-limit-exceeded.error.ts',
+  '!src/bounded-contexts/tenant/domain/errors/tenant-not-found.error.ts',
+  '!src/bounded-contexts/tenant/domain/errors/tenant-owner-not-found.error.ts',
+  '!src/bounded-contexts/tenant/domain/errors/tenant-slug-taken.error.ts',
+  '!src/bounded-contexts/tenant/domain/errors/tier-not-allowed.error.ts',
+
+  // User / shared exceptions (defensive — JWT guard ensures user exists;
+  // class-validator prevents invalid email; saga timeout requires real delay)
+  '!src/bounded-contexts/user/domain/exceptions/user-not-found.exception.ts',
+  '!src/shared/domain/exceptions/invalid-email-format.exception.ts',
+  '!src/shared/domain/exceptions/saga-timeout.exception.ts',
+  '!src/shared/infrastructure/email/exceptions/email-delivery.exception.ts',
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEFENSIVE — Value objects / enums instantiated ONLY by internal models.
+  // Their constructors never receive external (HTTP) input. Validation branches
+  // are exercised exhaustively by unit tests.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Authentication VOs (internal to VerificationAttemptModel / EmailVerificationTokenModel)
+  '!src/bounded-contexts/authentication/domain/value-objects/user-agent.vo.ts',
+  '!src/bounded-contexts/authentication/domain/value-objects/verification-code.vo.ts',
+  '!src/bounded-contexts/authentication/domain/enums/social-provider.enum.ts',
+  // User VOs (enum wrappers — only created by mappers from DB enum columns)
+  '!src/bounded-contexts/user/domain/value-objects/account-type.vo.ts',
+  '!src/bounded-contexts/user/domain/value-objects/oauth-provider.vo.ts',
+  '!src/bounded-contexts/user/domain/value-objects/username.vo.ts',
+  // Shared VOs (internal — hash from bcrypt, status from DB enum, etc.)
+  '!src/shared/domain/value-objects/compound/user-status.vo.ts',
+  '!src/shared/domain/value-objects/compound/password-hash.vo.ts',
+
   // ── FUTURE: wired with active imports but no caller exercises them yet ───
   '!src/bounded-contexts/user/profile/domain/models/commercial-profile.model.ts',
   '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
