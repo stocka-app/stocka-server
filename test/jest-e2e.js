@@ -33,12 +33,8 @@ module.exports = {
   collectCoverageFrom: e2eExclusions,
   coverageDirectory: './coverage-e2e',
   coverageReporters: ['json', 'text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      statements: 100,
-      branches: 100,
-      functions: 100,
-      lines: 100,
-    },
-  },
+  // Per-layer threshold removed: now that E2E does not exclude files unit covers,
+  // many domain / value-object files only exercise their happy-path through HTTP
+  // and would never reach 100% in isolation. The real Definition-of-Done is the
+  // MERGED report (unit + e2e) — see scripts/merge-coverage.js.
 };

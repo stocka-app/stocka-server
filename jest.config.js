@@ -26,12 +26,7 @@ module.exports = {
     '^uuid$': require.resolve('uuid'),
   },
   transformIgnorePatterns: ['[/\\\\]node_modules[/\\\\](?!uuid[/\\\\])'],
-  coverageThreshold: {
-    global: {
-      statements: 100,
-      branches: 100,
-      functions: 100,
-      lines: 100,
-    },
-  },
+  // Per-layer threshold removed: many controllers / sagas / repos are exercised
+  // only through E2E and reach 0% in isolation. The Definition-of-Done is the
+  // MERGED report (unit + e2e) — see scripts/merge-coverage.js.
 };
