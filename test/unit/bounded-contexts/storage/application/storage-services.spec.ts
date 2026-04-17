@@ -135,6 +135,57 @@ describe('StorageItemViewMapper', () => {
       });
     });
   });
+
+  describe('Given a StoreRoomModel without an address', () => {
+    describe('When fromStoreRoom() is called', () => {
+      it('Then address is null in the view', () => {
+        const model = StoreRoomModel.reconstitute({
+          id: 2,
+          uuid: new UUIDVO(SR_UUID),
+          tenantUUID: TENANT_UUID,
+          name: new StorageNameVO('Main Store Room'),
+          description: null,
+          icon: new StorageIconVO('inventory_2'),
+          color: new StorageColorVO('#d97706'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-02-01'),
+          updatedAt: new Date('2024-02-01'),
+        });
+
+        const view = StorageItemViewMapper.fromStoreRoom(model);
+
+        expect(view.address).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a CustomRoomModel without an address', () => {
+    describe('When fromCustomRoom() is called', () => {
+      it('Then address is null in the view', () => {
+        const model = CustomRoomModel.reconstitute({
+          id: 3,
+          uuid: new UUIDVO(CR_UUID),
+          tenantUUID: TENANT_UUID,
+          name: StorageNameVO.create('Staff Break Room'),
+          description: null,
+          icon: StorageIconVO.create('coffee'),
+          color: StorageColorVO.create('#6b7280'),
+          roomType: RoomTypeNameVO.create('Break Room'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-03-01'),
+          updatedAt: new Date('2024-03-01'),
+        });
+
+        const view = StorageItemViewMapper.fromCustomRoom(model);
+
+        expect(view.address).toBeNull();
+      });
+    });
+  });
 });
 
 // ── StorageUpdateEventsPublisher ────────────────────────────────────────────────
@@ -274,6 +325,88 @@ describe('StorageUpdateEventsPublisher', () => {
         const event = eventBus.publish.mock.calls[0][0] as StorageDescriptionChangedEvent;
         expect(event).toBeInstanceOf(StorageDescriptionChangedEvent);
         expect(event.previousValue).toBe('Primary warehouse');
+        expect(event.newValue).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a store room whose address fields are equal before and after', () => {
+    describe('When publish() runs with address in fields', () => {
+      it('Then no StorageAddressChangedEvent is emitted', () => {
+        const before = makeStoreRoom();
+
+        publisher.publish({
+          uuid: SR_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after: before,
+          fields: { address: '456 Oak' },
+        });
+
+        const addressEvents = eventBus.publish.mock.calls.filter(
+          (c) => (c[0] as { constructor: { name: string } }).constructor.name === 'StorageAddressChangedEvent',
+        );
+        expect(addressEvents).toHaveLength(0);
+      });
+    });
+  });
+
+  describe('Given a custom room whose address goes from null to a new value', () => {
+    describe('When publish() runs', () => {
+      it('Then StorageAddressChangedEvent fires with previousValue null', () => {
+        const before = CustomRoomModel.reconstitute({
+          id: 3,
+          uuid: new UUIDVO(CR_UUID),
+          tenantUUID: TENANT_UUID,
+          name: StorageNameVO.create('Quiet Room'),
+          description: null,
+          icon: StorageIconVO.create('coffee'),
+          color: StorageColorVO.create('#6b7280'),
+          roomType: RoomTypeNameVO.create('Break Room'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-03-01'),
+          updatedAt: new Date('2024-03-01'),
+        });
+        const after = before.update({ address: '500 Newly Set' });
+
+        publisher.publish({
+          uuid: CR_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after,
+          fields: { address: '500 Newly Set' },
+        });
+
+        const event = eventBus.publish.mock.calls[0][0] as StorageAddressChangedEvent;
+        expect(event).toBeInstanceOf(StorageAddressChangedEvent);
+        expect(event.previousValue).toBeNull();
+        expect(event.newValue).toBe('500 Newly Set');
+      });
+    });
+  });
+
+  describe('Given a custom room whose address is cleared from a value to null', () => {
+    describe('When publish() runs', () => {
+      it('Then StorageAddressChangedEvent fires with newValue null', () => {
+        const before = makeCustomRoom();
+        const after = before.update({ address: null });
+
+        publisher.publish({
+          uuid: CR_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after,
+          fields: { address: null },
+        });
+
+        const event = eventBus.publish.mock.calls[0][0] as StorageAddressChangedEvent;
+        expect(event).toBeInstanceOf(StorageAddressChangedEvent);
+        expect(event.previousValue).toBe('123 Main');
         expect(event.newValue).toBeNull();
       });
     });
@@ -503,6 +636,19 @@ describe('StorageTypeChangePolicy', () => {
         const result = await policy.assertWarehouseCanRestore(TENANT_UUID);
 
         expect(result).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+      });
+    });
+  });
+
+  describe('Given the tenant tier does not allow warehouses at all (FREE)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived warehouse', () => {
+      it('Then it returns WarehouseRequiresTierUpgradeError before checking the count', async () => {
+        capabilities.canCreateWarehouse.mockReturnValue(false);
+
+        const result = await policy.assertWarehouseCanRestore(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+        expect(warehouseRepository.count).not.toHaveBeenCalled();
       });
     });
   });

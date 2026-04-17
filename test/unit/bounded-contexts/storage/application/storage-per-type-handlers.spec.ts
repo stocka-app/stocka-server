@@ -335,6 +335,21 @@ describe('ArchiveStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When archive is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new ArchiveStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 describe('ArchiveCustomRoomHandler', () => {
@@ -373,6 +388,37 @@ describe('ArchiveCustomRoomHandler', () => {
         );
 
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyArchivedError);
+      });
+    });
+  });
+
+  describe('Given the custom room belongs to another tenant', () => {
+    describe('When archive is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new ArchiveCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When archive is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new ArchiveCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
       });
     });
   });

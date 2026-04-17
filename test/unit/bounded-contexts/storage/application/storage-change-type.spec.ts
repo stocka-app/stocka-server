@@ -761,3 +761,579 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
     });
   });
 });
+
+// ═══ Cross-cutting branches: name conflict + missing parent storage id ═══════
+//
+// These branches are identical in shape across the six change-X-to-Y handlers
+// (the rename guard runs before deletion + the storageId === null defensive
+// guard runs after the capacity policy). One pair of tests per handler keeps
+// the branch coverage at 100% without duplicating the full happy-path setup.
+
+describe('Cross-cutting change-type branches', () => {
+  describe('Given a rename collides for ChangeWarehouseToCustomRoomHandler', () => {
+    it('Then StorageNameAlreadyExistsError is returned', async () => {
+      warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse());
+      storageRepository.existsActiveName.mockResolvedValue(true);
+      const handler = new ChangeWarehouseToCustomRoomHandler(
+        storageRepository,
+        warehouseRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+
+      const result = await handler.execute(
+        new ChangeWarehouseToCustomRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID, {
+          name: 'Duplicated',
+        }),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
+    });
+  });
+
+  describe('Given a rename collides for ChangeStoreRoomToWarehouseHandler', () => {
+    it('Then StorageNameAlreadyExistsError is returned', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      storageRepository.existsActiveName.mockResolvedValue(true);
+      const handler = new ChangeStoreRoomToWarehouseHandler(
+        storageRepository,
+        storeRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+
+      const result = await handler.execute(
+        new ChangeStoreRoomToWarehouseCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, {
+          name: 'Duplicated',
+        }),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
+    });
+  });
+
+  describe('Given a rename collides for ChangeStoreRoomToCustomRoomHandler', () => {
+    it('Then StorageNameAlreadyExistsError is returned', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      storageRepository.existsActiveName.mockResolvedValue(true);
+      const handler = new ChangeStoreRoomToCustomRoomHandler(
+        storageRepository,
+        storeRoomRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+
+      const result = await handler.execute(
+        new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, {
+          name: 'Duplicated',
+        }),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
+    });
+  });
+
+  describe('Given a rename collides for ChangeCustomRoomToWarehouseHandler', () => {
+    it('Then StorageNameAlreadyExistsError is returned', async () => {
+      customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+      storageRepository.existsActiveName.mockResolvedValue(true);
+      const handler = new ChangeCustomRoomToWarehouseHandler(
+        storageRepository,
+        customRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+
+      const result = await handler.execute(
+        new ChangeCustomRoomToWarehouseCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, {
+          name: 'Duplicated',
+        }),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
+    });
+  });
+
+  describe('Given a rename collides for ChangeCustomRoomToStoreRoomHandler', () => {
+    it('Then StorageNameAlreadyExistsError is returned', async () => {
+      customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+      storageRepository.existsActiveName.mockResolvedValue(true);
+      const handler = new ChangeCustomRoomToStoreRoomHandler(
+        storageRepository,
+        customRoomRepository,
+        storeRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+
+      const result = await handler.execute(
+        new ChangeCustomRoomToStoreRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, {
+          name: 'Duplicated',
+        }),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNameAlreadyExistsError);
+    });
+  });
+
+  describe('Given the capacity policy reports a limit reached for each change-X handler', () => {
+    it('Then ChangeWarehouseToCustomRoomHandler returns CustomRoomLimitReachedError', async () => {
+      warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse());
+      policy.assertCustomRoomCapacity.mockResolvedValue(new CustomRoomLimitReachedError());
+      const handler = new ChangeWarehouseToCustomRoomHandler(
+        storageRepository,
+        warehouseRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeWarehouseToCustomRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(CustomRoomLimitReachedError);
+    });
+
+    it('Then ChangeStoreRoomToWarehouseHandler returns WarehouseRequiresTierUpgradeError', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      policy.assertWarehouseCapacity.mockResolvedValue(new WarehouseRequiresTierUpgradeError());
+      const handler = new ChangeStoreRoomToWarehouseHandler(
+        storageRepository,
+        storeRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToWarehouseCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+    });
+
+    it('Then ChangeStoreRoomToCustomRoomHandler returns CustomRoomLimitReachedError', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      policy.assertCustomRoomCapacity.mockResolvedValue(new CustomRoomLimitReachedError());
+      const handler = new ChangeStoreRoomToCustomRoomHandler(
+        storageRepository,
+        storeRoomRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(CustomRoomLimitReachedError);
+    });
+
+    it('Then ChangeCustomRoomToWarehouseHandler returns WarehouseRequiresTierUpgradeError', async () => {
+      customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+      policy.assertWarehouseCapacity.mockResolvedValue(new WarehouseRequiresTierUpgradeError());
+      const handler = new ChangeCustomRoomToWarehouseHandler(
+        storageRepository,
+        customRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeCustomRoomToWarehouseCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+    });
+
+    it('Then ChangeCustomRoomToStoreRoomHandler returns StoreRoomLimitReachedError', async () => {
+      customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+      policy.assertStoreRoomCapacity.mockResolvedValue(new StoreRoomLimitReachedError());
+      const handler = new ChangeCustomRoomToStoreRoomHandler(
+        storageRepository,
+        customRoomRepository,
+        storeRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeCustomRoomToStoreRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StoreRoomLimitReachedError);
+    });
+  });
+
+  describe('Given a converting source has no address (null) and metadata.address is also undefined', () => {
+    it('Then ChangeCustomRoomToStoreRoomHandler succeeds and target.address falls back to null', async () => {
+      const noAddrCR = CustomRoomModel.reconstitute({
+        id: 3,
+        uuid: new UUIDVO(CR_UUID),
+        tenantUUID: TENANT_UUID,
+        name: StorageNameVO.create('No Addr CR'),
+        description: null,
+        icon: StorageIconVO.create('coffee'),
+        color: StorageColorVO.create('#6b7280'),
+        roomType: RoomTypeNameVO.create('Office'),
+        address: null,
+        archivedAt: null,
+        frozenAt: null,
+        createdAt: new Date('2024-03-01'),
+        updatedAt: new Date('2024-03-01'),
+      });
+      customRoomRepository.findByUUID.mockResolvedValue(noAddrCR);
+      const handler = new ChangeCustomRoomToStoreRoomHandler(
+        storageRepository,
+        customRoomRepository,
+        storeRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeCustomRoomToStoreRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result.isOk()).toBe(true);
+      const saved = storeRoomRepository.save.mock.calls[0][0] as StoreRoomModel;
+      expect(saved.address).toBeNull();
+    });
+
+    it('Then ChangeStoreRoomToCustomRoomHandler succeeds and target.address falls back to null', async () => {
+      const noAddrSR = StoreRoomModel.reconstitute({
+        id: 2,
+        uuid: new UUIDVO(SR_UUID),
+        tenantUUID: TENANT_UUID,
+        name: new StorageNameVO('No Addr SR'),
+        description: null,
+        icon: new StorageIconVO('inventory_2'),
+        color: new StorageColorVO('#d97706'),
+        address: null,
+        archivedAt: null,
+        frozenAt: null,
+        createdAt: new Date('2024-02-01'),
+        updatedAt: new Date('2024-02-01'),
+      });
+      storeRoomRepository.findByUUID.mockResolvedValue(noAddrSR);
+      const handler = new ChangeStoreRoomToCustomRoomHandler(
+        storageRepository,
+        storeRoomRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result.isOk()).toBe(true);
+      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      expect(saved.address).toBeNull();
+    });
+
+    it('Then ChangeCustomRoomToWarehouseHandler returns address-required error (warehouse needs address)', async () => {
+      const noAddrCR = CustomRoomModel.reconstitute({
+        id: 3,
+        uuid: new UUIDVO(CR_UUID),
+        tenantUUID: TENANT_UUID,
+        name: StorageNameVO.create('No Addr CR'),
+        description: null,
+        icon: StorageIconVO.create('coffee'),
+        color: StorageColorVO.create('#6b7280'),
+        roomType: RoomTypeNameVO.create('Office'),
+        address: null,
+        archivedAt: null,
+        frozenAt: null,
+        createdAt: new Date('2024-03-01'),
+        updatedAt: new Date('2024-03-01'),
+      });
+      customRoomRepository.findByUUID.mockResolvedValue(noAddrCR);
+      policy.assertAddressForWarehouse.mockReturnValueOnce(
+        new StorageAddressRequiredForWarehouseError(CR_UUID),
+      );
+      const handler = new ChangeCustomRoomToWarehouseHandler(
+        storageRepository,
+        customRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeCustomRoomToWarehouseCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAddressRequiredForWarehouseError);
+    });
+
+    it('Then ChangeStoreRoomToWarehouseHandler returns address-required error', async () => {
+      const noAddrSR = StoreRoomModel.reconstitute({
+        id: 2,
+        uuid: new UUIDVO(SR_UUID),
+        tenantUUID: TENANT_UUID,
+        name: new StorageNameVO('No Addr SR'),
+        description: null,
+        icon: new StorageIconVO('inventory_2'),
+        color: new StorageColorVO('#d97706'),
+        address: null,
+        archivedAt: null,
+        frozenAt: null,
+        createdAt: new Date('2024-02-01'),
+        updatedAt: new Date('2024-02-01'),
+      });
+      storeRoomRepository.findByUUID.mockResolvedValue(noAddrSR);
+      policy.assertAddressForWarehouse.mockReturnValueOnce(
+        new StorageAddressRequiredForWarehouseError(SR_UUID),
+      );
+      const handler = new ChangeStoreRoomToWarehouseHandler(
+        storageRepository,
+        storeRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToWarehouseCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAddressRequiredForWarehouseError);
+    });
+  });
+
+  describe('Given metadata overrides on a store-room → custom-room conversion', () => {
+    it('Then a rename that does NOT collide proceeds and existsActiveName returns false', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      storageRepository.existsActiveName.mockResolvedValue(false);
+      const handler = new ChangeStoreRoomToCustomRoomHandler(
+        storageRepository,
+        storeRoomRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, {
+          name: 'Renamed CR',
+        }),
+      );
+      expect(result.isOk()).toBe(true);
+      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      expect(saved.name.getValue()).toBe('Renamed CR');
+    });
+
+    it('Then metadata.description with a value flows through to the target', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      const handler = new ChangeStoreRoomToCustomRoomHandler(
+        storageRepository,
+        storeRoomRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, {
+          description: 'New description',
+        }),
+      );
+      expect(result.isOk()).toBe(true);
+      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      expect(saved.description?.getValue()).toBe('New description');
+    });
+
+    it('Then metadata.address with a value overrides the source address', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      const handler = new ChangeStoreRoomToCustomRoomHandler(
+        storageRepository,
+        storeRoomRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, {
+          address: '999 Override St',
+        }),
+      );
+      expect(result.isOk()).toBe(true);
+      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      expect(saved.address?.getValue()).toBe('999 Override St');
+    });
+  });
+
+  describe('Given metadata.address is explicitly null on a conversion to WAREHOUSE', () => {
+    it('Then ChangeCustomRoomToWarehouseHandler resolves the empty-string fallback path for the address guard', async () => {
+      customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+      policy.assertAddressForWarehouse.mockReturnValueOnce(
+        new StorageAddressRequiredForWarehouseError(CR_UUID),
+      );
+      const handler = new ChangeCustomRoomToWarehouseHandler(
+        storageRepository,
+        customRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeCustomRoomToWarehouseCommand(CR_UUID, TENANT_UUID, ACTOR_UUID, {
+          address: null,
+        }),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAddressRequiredForWarehouseError);
+    });
+
+    it('Then ChangeStoreRoomToWarehouseHandler resolves the empty-string fallback for the address guard', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      policy.assertAddressForWarehouse.mockReturnValueOnce(
+        new StorageAddressRequiredForWarehouseError(SR_UUID),
+      );
+      const handler = new ChangeStoreRoomToWarehouseHandler(
+        storageRepository,
+        storeRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToWarehouseCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, {
+          address: null,
+        }),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAddressRequiredForWarehouseError);
+    });
+  });
+
+  describe('Given metadata.description with a value is provided to ChangeStoreRoomToWarehouseHandler', () => {
+    it('Then the description flows through to the warehouse target', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      const handler = new ChangeStoreRoomToWarehouseHandler(
+        storageRepository,
+        storeRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToWarehouseCommand(SR_UUID, TENANT_UUID, ACTOR_UUID, {
+          description: 'Promoted to warehouse',
+        }),
+      );
+      expect(result.isOk()).toBe(true);
+      const saved = warehouseRepository.save.mock.calls[0][0] as WarehouseModel;
+      expect(saved.description?.getValue()).toBe('Promoted to warehouse');
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved for any change-X handler', () => {
+    beforeEach(() => {
+      storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+    });
+
+    it('Then ChangeWarehouseToStoreRoomHandler returns StorageNotFoundError', async () => {
+      warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse());
+      const handler = new ChangeWarehouseToStoreRoomHandler(
+        storageRepository,
+        warehouseRepository,
+        storeRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeWarehouseToStoreRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+    });
+
+    it('Then ChangeWarehouseToCustomRoomHandler returns StorageNotFoundError', async () => {
+      warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse());
+      const handler = new ChangeWarehouseToCustomRoomHandler(
+        storageRepository,
+        warehouseRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeWarehouseToCustomRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+    });
+
+    it('Then ChangeStoreRoomToWarehouseHandler returns StorageNotFoundError', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      const handler = new ChangeStoreRoomToWarehouseHandler(
+        storageRepository,
+        storeRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToWarehouseCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+    });
+
+    it('Then ChangeStoreRoomToCustomRoomHandler returns StorageNotFoundError', async () => {
+      storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+      const handler = new ChangeStoreRoomToCustomRoomHandler(
+        storageRepository,
+        storeRoomRepository,
+        customRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+    });
+
+    it('Then ChangeCustomRoomToWarehouseHandler returns StorageNotFoundError', async () => {
+      customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+      const handler = new ChangeCustomRoomToWarehouseHandler(
+        storageRepository,
+        customRoomRepository,
+        warehouseRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeCustomRoomToWarehouseCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+    });
+
+    it('Then ChangeCustomRoomToStoreRoomHandler returns StorageNotFoundError', async () => {
+      customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+      const handler = new ChangeCustomRoomToStoreRoomHandler(
+        storageRepository,
+        customRoomRepository,
+        storeRoomRepository,
+        uow,
+        policy,
+        eventBus,
+      );
+      const result = await handler.execute(
+        new ChangeCustomRoomToStoreRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+    });
+  });
+});

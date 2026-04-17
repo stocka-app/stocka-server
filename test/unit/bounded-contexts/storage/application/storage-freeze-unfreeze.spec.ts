@@ -269,6 +269,53 @@ describe('FreezeStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given a FROZEN store room', () => {
+    describe('When freeze is requested again', () => {
+      it('Then it returns StorageAlreadyFrozenError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ frozenAt: new Date() }),
+        );
+
+        const result = await handler.execute(
+          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
+      });
+    });
+  });
+
+  describe('Given a store room belonging to another tenant', () => {
+    describe('When freeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When freeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 describe('FreezeCustomRoomHandler', () => {
@@ -305,6 +352,53 @@ describe('FreezeCustomRoomHandler', () => {
         );
 
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
+      });
+    });
+  });
+
+  describe('Given an ARCHIVED custom room', () => {
+    describe('When freeze is requested', () => {
+      it('Then it returns StorageArchivedCannotBeFrozenError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ archivedAt: new Date() }),
+        );
+
+        const result = await handler.execute(
+          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeFrozenError);
+      });
+    });
+  });
+
+  describe('Given a custom room belonging to another tenant', () => {
+    describe('When freeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When freeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
       });
     });
   });
@@ -419,6 +513,39 @@ describe('UnfreezeStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given a store room belonging to another tenant', () => {
+    describe('When unfreeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ frozenAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new UnfreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When unfreeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ frozenAt: new Date() }),
+        );
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new UnfreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 describe('UnfreezeCustomRoomHandler', () => {
@@ -454,6 +581,39 @@ describe('UnfreezeCustomRoomHandler', () => {
         );
 
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFrozenError);
+      });
+    });
+  });
+
+  describe('Given a custom room belonging to another tenant', () => {
+    describe('When unfreeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ frozenAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new UnfreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When unfreeze is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ frozenAt: new Date() }),
+        );
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new UnfreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
       });
     });
   });
