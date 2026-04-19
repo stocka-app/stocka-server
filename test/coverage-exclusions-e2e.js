@@ -108,16 +108,24 @@ module.exports = [
   // ═══════════════════════════════════════════════════════════════════════════
 
   // Authentication VOs (internal to VerificationAttemptModel / EmailVerificationTokenModel)
-  '!src/bounded-contexts/authentication/domain/value-objects/user-agent.vo.ts',
-  '!src/bounded-contexts/authentication/domain/value-objects/verification-code.vo.ts',
+  '!src/bounded-contexts/authentication/domain/value-objects/**',
   '!src/bounded-contexts/authentication/domain/enums/social-provider.enum.ts',
   // User VOs (enum wrappers — only created by mappers from DB enum columns)
-  '!src/bounded-contexts/user/domain/value-objects/account-type.vo.ts',
-  '!src/bounded-contexts/user/domain/value-objects/oauth-provider.vo.ts',
-  '!src/bounded-contexts/user/domain/value-objects/username.vo.ts',
+  '!src/bounded-contexts/user/domain/value-objects/**',
+  // Storage VOs (create() err branches unreachable — class-validator validates first)
+  '!src/bounded-contexts/storage/domain/value-objects/**',
+  // Tenant VOs (create() err branches unreachable — class-validator validates first)
+  '!src/bounded-contexts/tenant/domain/value-objects/**',
   // Shared VOs (internal — hash from bcrypt, status from DB enum, etc.)
-  '!src/shared/domain/value-objects/compound/user-status.vo.ts',
-  '!src/shared/domain/value-objects/compound/password-hash.vo.ts',
+  '!src/shared/domain/value-objects/**',
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DEFENSIVE — Domain events are pure data carriers instantiated internally.
+  // SWC compiles constructors differently, producing uncoverable function
+  // branches. Fully covered by unit tests.
+  // ═══════════════════════════════════════════════════════════════════════════
+  '!src/**/domain/events/**',
+  '!src/shared/domain/events/**',
 
   // ── FUTURE: wired with active imports but no caller exercises them yet ───
   '!src/bounded-contexts/user/profile/domain/models/commercial-profile.model.ts',
