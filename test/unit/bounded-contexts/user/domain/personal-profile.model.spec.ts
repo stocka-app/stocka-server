@@ -29,12 +29,12 @@ describe('PersonalProfileModel', () => {
 
       it('Then displayName getter returns the persisted display name', () => {
         const model = PersonalProfileModel.reconstitute(BASE_PROPS);
-        expect(model.displayName).toBe('John Doe');
+        expect(model.displayName!.getValue()).toBe('John Doe');
       });
 
       it('Then avatarUrl getter returns the persisted avatar url', () => {
         const model = PersonalProfileModel.reconstitute(BASE_PROPS);
-        expect(model.avatarUrl).toBe('https://cdn.example.com/avatar.png');
+        expect(model.avatarUrl!.getValue()).toBe('https://cdn.example.com/avatar.png');
       });
 
       it('Then locale getter returns the persisted locale', () => {
@@ -91,8 +91,8 @@ describe('PersonalProfileModel', () => {
           timezone: 'America/New_York',
         });
 
-        expect(model.displayName).toBe('John Doe');
-        expect(model.avatarUrl).toBe('https://cdn.example.com/avatar.png');
+        expect(model.displayName!.getValue()).toBe('John Doe');
+        expect(model.avatarUrl!.getValue()).toBe('https://cdn.example.com/avatar.png');
         expect(model.locale).toBe('en');
         expect(model.timezone).toBe('America/New_York');
       });

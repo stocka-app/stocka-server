@@ -28,7 +28,7 @@ export class CredentialAccountMapper {
       status: model.status.toString(),
       emailVerifiedAt: model.emailVerifiedAt,
       verificationBlockedUntil: model.verificationBlockedUntil,
-      createdWith: model.createdWith,
+      createdWith: model.createdWith.getValue(),
       archivedAt: model.archivedAt,
     };
 

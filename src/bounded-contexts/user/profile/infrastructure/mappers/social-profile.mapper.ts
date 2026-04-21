@@ -31,14 +31,17 @@ export class SocialProfileMapper {
       profileId: model.profileId,
       socialAccountUUID: model.socialAccountUUID.toString(),
       provider: model.provider,
-      providerDisplayName: model.providerDisplayName,
-      providerAvatarUrl: model.providerAvatarUrl,
-      providerProfileUrl: model.providerProfileUrl,
-      givenName: model.givenName,
-      familyName: model.familyName,
+      providerDisplayName:
+        model.providerDisplayName !== null ? model.providerDisplayName.getValue() : null,
+      providerAvatarUrl:
+        model.providerAvatarUrl !== null ? model.providerAvatarUrl.getValue() : null,
+      providerProfileUrl:
+        model.providerProfileUrl !== null ? model.providerProfileUrl.getValue() : null,
+      givenName: model.givenName !== null ? model.givenName.getValue() : null,
+      familyName: model.familyName !== null ? model.familyName.getValue() : null,
       locale: model.locale,
       emailVerified: model.emailVerified,
-      jobTitle: model.jobTitle,
+      jobTitle: model.jobTitle !== null ? model.jobTitle.getValue() : null,
       rawData: model.rawData,
       syncedAt: model.syncedAt,
       archivedAt: model.archivedAt,

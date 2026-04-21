@@ -13,6 +13,7 @@ import { PersonalProfileModel } from '@user/profile/domain/models/personal-profi
 import { ProfileAggregate } from '@user/profile/domain/profile.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { asPersisted } from '@test/helpers/persisted';
+import { DisplayNameVO } from '@shared/domain/value-objects/display-name.vo';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -52,7 +53,7 @@ function buildPersonalProfile(
     {
       id,
       profileId,
-      displayName: overrides.displayName ?? null,
+      displayName: overrides.displayName != null ? DisplayNameVO.create(overrides.displayName) : null,
       username: overrides.username ?? 'testuser',
       avatarUrl: overrides.avatarUrl ?? null,
       updateLocale: jest.fn(),

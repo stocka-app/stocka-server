@@ -44,14 +44,14 @@ describe('SocialProfileModel.create', () => {
       expect(model.profileId).toBe(10);
       expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000098');
       expect(model.provider).toBe('google');
-      expect(model.providerDisplayName).toBe('Roberto Medina');
-      expect(model.providerAvatarUrl).toBe('https://example.com/avatar.jpg');
+      expect(model.providerDisplayName!.getValue()).toBe('Roberto Medina');
+      expect(model.providerAvatarUrl!.getValue()).toBe('https://example.com/avatar.jpg');
       expect(model.providerProfileUrl).toBeNull();
-      expect(model.givenName).toBe('Roberto');
-      expect(model.familyName).toBe('Medina');
+      expect(model.givenName!.getValue()).toBe('Roberto');
+      expect(model.familyName!.getValue()).toBe('Medina');
       expect(model.locale).toBe('es');
       expect(model.emailVerified).toBe(true);
-      expect(model.jobTitle).toBe('Engineer');
+      expect(model.jobTitle!.getValue()).toBe('Engineer');
       expect(model.rawData).toEqual({ sub: 'sub-001' });
       expect(model.syncedAt).toBeInstanceOf(Date);
     });
@@ -90,11 +90,11 @@ describe('SocialProfileModel.reconstitute', () => {
       expect(model.profileId).toBe(10);
       expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000099');
       expect(model.provider).toBe('google');
-      expect(model.providerDisplayName).toBe('Roberto Medina');
-      expect(model.providerAvatarUrl).toBe('https://example.com/avatar.jpg');
+      expect(model.providerDisplayName!.getValue()).toBe('Roberto Medina');
+      expect(model.providerAvatarUrl!.getValue()).toBe('https://example.com/avatar.jpg');
       expect(model.providerProfileUrl).toBeNull();
-      expect(model.givenName).toBe('Roberto');
-      expect(model.familyName).toBe('Medina');
+      expect(model.givenName!.getValue()).toBe('Roberto');
+      expect(model.familyName!.getValue()).toBe('Medina');
       expect(model.locale).toBe('es');
       expect(model.emailVerified).toBe(true);
       expect(model.jobTitle).toBeNull();
@@ -130,14 +130,14 @@ describe('SocialProfileModel.refreshSync', () => {
           providerAvatarUrl: 'https://example.com/new-avatar.jpg',
         });
 
-        expect(model.providerDisplayName).toBe('Roberto Eduardo Medina');
-        expect(model.givenName).toBe('Roberto Eduardo');
-        expect(model.familyName).toBe('Medina Austin');
+        expect(model.providerDisplayName!.getValue()).toBe('Roberto Eduardo Medina');
+        expect(model.givenName!.getValue()).toBe('Roberto Eduardo');
+        expect(model.familyName!.getValue()).toBe('Medina Austin');
         expect(model.locale).toBe('en');
         expect(model.emailVerified).toBe(false);
-        expect(model.jobTitle).toBe('Senior Engineer');
+        expect(model.jobTitle!.getValue()).toBe('Senior Engineer');
         expect(model.rawData).toEqual({ sub: 'new-sub' });
-        expect(model.providerAvatarUrl).toBe('https://example.com/new-avatar.jpg');
+        expect(model.providerAvatarUrl!.getValue()).toBe('https://example.com/new-avatar.jpg');
         expect(model.syncedAt.getTime()).toBeGreaterThanOrEqual(beforeSync.getTime());
       });
     });

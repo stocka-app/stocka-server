@@ -114,7 +114,7 @@ describe('SocialAccountMapper', () => {
         expect(model.uuid).toBe(entity.uuid);
         expect(model.accountId).toBe(entity.accountId);
         expect(model.provider).toBe(entity.provider);
-        expect(model.providerId).toBe(entity.providerId);
+        expect(model.providerId.getValue()).toBe(entity.providerId);
         expect(model.providerEmail).toBeNull();
         expect(model.linkedAt).toEqual(entity.linkedAt);
       });
@@ -135,7 +135,7 @@ describe('SocialAccountMapper', () => {
         const model = SocialAccountMapper.toDomain(entity);
 
         expect(model.provider).toBe('facebook');
-        expect(model.providerId).toBe('fb-123');
+        expect(model.providerId.getValue()).toBe('fb-123');
       });
     });
   });
@@ -283,7 +283,7 @@ describe('AccountSocialAccountMapper', () => {
         expect(model.id).toBe(20);
         expect(model.accountId).toBe(3);
         expect(model.provider).toBe('google');
-        expect(model.providerId).toBe('google-123');
+        expect(model.providerId.getValue()).toBe('google-123');
         expect(model.providerEmail).toBe('social@gmail.com');
       });
     });
@@ -376,7 +376,7 @@ describe('PersonalProfileMapper', () => {
         expect(model.id).toBe(11);
         expect(model.profileId).toBe(8);
         expect(model.username).toBe('johndoe');
-        expect(model.displayName).toBe('John Doe');
+        expect(model.displayName!.getValue()).toBe('John Doe');
         expect(model.avatarUrl).toBeNull();
         expect(model.locale).toBe('es');
         expect(model.timezone).toBe('America/Mexico_City');
@@ -441,11 +441,11 @@ describe('SocialProfileMapper', () => {
         expect(model.profileId).toBe(10);
         expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000099');
         expect(model.provider).toBe('google');
-        expect(model.providerDisplayName).toBe('Roberto Medina');
-        expect(model.providerAvatarUrl).toBe('https://example.com/avatar.jpg');
+        expect(model.providerDisplayName!.getValue()).toBe('Roberto Medina');
+        expect(model.providerAvatarUrl!.getValue()).toBe('https://example.com/avatar.jpg');
         expect(model.providerProfileUrl).toBeNull();
-        expect(model.givenName).toBe('Roberto');
-        expect(model.familyName).toBe('Medina');
+        expect(model.givenName!.getValue()).toBe('Roberto');
+        expect(model.familyName!.getValue()).toBe('Medina');
         expect(model.locale).toBe('es');
         expect(model.emailVerified).toBe(true);
         expect(model.jobTitle).toBeNull();

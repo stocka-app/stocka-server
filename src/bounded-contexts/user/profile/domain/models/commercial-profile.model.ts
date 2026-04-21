@@ -1,4 +1,7 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { FullNameVO } from '@shared/domain/value-objects/full-name.vo';
+import { CountryCodeVO } from '@shared/domain/value-objects/country-code.vo';
+import { TaxIdVO } from '@shared/domain/value-objects/tax-id.vo';
 
 export interface CommercialProfileReconstitueProps extends BaseModelProps {
   id: number;
@@ -15,10 +18,10 @@ export interface CommercialProfileReconstitueProps extends BaseModelProps {
 
 export class CommercialProfileModel extends BaseModel {
   private readonly _profileId: number;
-  private _fullName: string | null;
+  private _fullName: FullNameVO | null;
   private _phone: string | null;
-  private _countryCode: string | null;
-  private _taxId: string | null;
+  private _countryCode: CountryCodeVO | null;
+  private _taxId: TaxIdVO | null;
 
   private constructor(props: CommercialProfileReconstitueProps) {
     super({
@@ -29,10 +32,10 @@ export class CommercialProfileModel extends BaseModel {
       archivedAt: props.archivedAt,
     });
     this._profileId = props.profileId;
-    this._fullName = props.fullName;
+    this._fullName = props.fullName !== null ? FullNameVO.create(props.fullName) : null;
     this._phone = props.phone;
-    this._countryCode = props.countryCode;
-    this._taxId = props.taxId;
+    this._countryCode = props.countryCode !== null ? CountryCodeVO.create(props.countryCode) : null;
+    this._taxId = props.taxId !== null ? TaxIdVO.create(props.taxId) : null;
   }
 
   static createEmpty(props: { profileId: number }): CommercialProfileModel {
@@ -58,7 +61,7 @@ export class CommercialProfileModel extends BaseModel {
     return this._profileId;
   }
 
-  get fullName(): string | null {
+  get fullName(): FullNameVO | null {
     return this._fullName;
   }
 
@@ -66,11 +69,11 @@ export class CommercialProfileModel extends BaseModel {
     return this._phone;
   }
 
-  get countryCode(): string | null {
+  get countryCode(): CountryCodeVO | null {
     return this._countryCode;
   }
 
-  get taxId(): string | null {
+  get taxId(): TaxIdVO | null {
     return this._taxId;
   }
 

@@ -184,7 +184,7 @@ describe('CredentialAccountModel', () => {
 
         expect(credential.email).toBe('social@example.com');
         expect(credential.passwordHash).toBeNull();
-        expect(credential.createdWith).toBe('google');
+        expect(credential.createdWith.getValue()).toBe('google');
       });
 
       it('Then the credential is email verified by provider', () => {

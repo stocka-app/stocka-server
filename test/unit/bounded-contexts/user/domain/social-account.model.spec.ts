@@ -12,7 +12,7 @@ describe('SocialAccountModel (account bounded context)', () => {
 
         expect(account.accountId).toBe(10);
         expect(account.provider).toBe('google');
-        expect(account.providerId).toBe('google-123');
+        expect(account.providerId.getValue()).toBe('google-123');
       });
 
       it('Then providerEmail defaults to null when not provided', () => {
@@ -72,7 +72,7 @@ describe('SocialAccountModel (account bounded context)', () => {
 
         expect(account.accountId).toBe(10);
         expect(account.provider).toBe('google');
-        expect(account.providerId).toBe('google-123');
+        expect(account.providerId.getValue()).toBe('google-123');
         expect(account.providerEmail).toBe('user@gmail.com');
         expect(account.linkedAt).toBe(linkedAt);
       });

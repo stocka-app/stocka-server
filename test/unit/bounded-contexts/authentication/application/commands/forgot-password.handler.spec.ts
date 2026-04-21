@@ -5,6 +5,7 @@ import { IPasswordResetTokenContract } from '@authentication/domain/contracts/pa
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { UserAggregate } from '@user/domain/models/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
+import { CreatedWithProviderVO } from '@user/account/domain/value-objects/created-with-provider.vo';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -30,7 +31,8 @@ function buildCredential(
 ): CredentialAccountModel {
   const obj: Record<string, unknown> = {
     hasPassword: jest.fn().mockReturnValue(overrides.hasPassword ?? true),
-    createdWith: overrides.createdWith ?? null,
+    createdWith:
+      overrides.createdWith != null ? CreatedWithProviderVO.create(overrides.createdWith) : null,
   };
   if ('id' in overrides) {
     obj.id = overrides.id;
