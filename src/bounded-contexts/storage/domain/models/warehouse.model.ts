@@ -26,7 +26,7 @@ export class WarehouseModel {
   static create(props: CreateWarehouseProps): WarehouseModel {
     return new WarehouseModel({
       uuid: new UUIDVO(props.uuid),
-      tenantUUID: props.tenantUUID,
+      tenantUUID: new UUIDVO(props.tenantUUID),
       name: StorageNameVO.create(props.name),
       description: props.description ? StorageDescriptionVO.create(props.description) : null,
       icon: StorageIconVO.create(props.icon),
@@ -47,7 +47,7 @@ export class WarehouseModel {
     return this.attrs.uuid;
   }
 
-  get tenantUUID(): string {
+  get tenantUUID(): UUIDVO {
     return this.attrs.tenantUUID;
   }
 

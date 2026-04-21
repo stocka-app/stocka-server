@@ -27,7 +27,7 @@ export class UpdateCustomRoomHandler implements ICommandHandler<UpdateCustomRoom
   async execute(command: UpdateCustomRoomCommand): Promise<UpdateCustomRoomResult> {
     const before = await this.customRoomRepository.findByUUID(command.storageUUID);
 
-    if (!before || before.tenantUUID !== command.tenantUUID) {
+    if (!before || before.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 

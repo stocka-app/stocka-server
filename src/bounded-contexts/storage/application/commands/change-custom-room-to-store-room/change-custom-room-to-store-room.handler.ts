@@ -43,7 +43,7 @@ export class ChangeCustomRoomToStoreRoomHandler implements ICommandHandler<Chang
   ): Promise<ChangeCustomRoomToStoreRoomResult> {
     const source = await this.customRoomRepository.findByUUID(command.storageUUID);
 
-    if (!source || source.tenantUUID !== command.tenantUUID) {
+    if (!source || source.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (source.isArchived()) {

@@ -56,14 +56,14 @@ function makeWarehouse(
   overrides: Partial<{
     archivedAt: Date | null;
     frozenAt: Date | null;
-    tenantUUID: string;
+    tenantUUID: UUIDVO;
     name: string;
   }> = {},
 ): WarehouseModel {
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(WH_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: new StorageNameVO(overrides.name ?? 'Main Warehouse'),
     description: null,
     icon: new StorageIconVO('warehouse'),
@@ -80,14 +80,14 @@ function makeStoreRoom(
   overrides: Partial<{
     archivedAt: Date | null;
     frozenAt: Date | null;
-    tenantUUID: string;
+    tenantUUID: UUIDVO;
     name: string;
   }> = {},
 ): StoreRoomModel {
   return StoreRoomModel.reconstitute({
     id: 2,
     uuid: new UUIDVO(SR_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: new StorageNameVO(overrides.name ?? 'Main Store Room'),
     description: null,
     icon: new StorageIconVO('inventory_2'),
@@ -104,7 +104,7 @@ function makeCustomRoom(
   overrides: Partial<{
     archivedAt: Date | null;
     frozenAt: Date | null;
-    tenantUUID: string;
+    tenantUUID: UUIDVO;
     name: string;
     roomType: string;
   }> = {},
@@ -112,7 +112,7 @@ function makeCustomRoom(
   return CustomRoomModel.reconstitute({
     id: 3,
     uuid: new UUIDVO(CR_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: StorageNameVO.create(overrides.name ?? 'Break Room'),
     description: null,
     icon: StorageIconVO.create('coffee'),
@@ -236,7 +236,7 @@ describe('ArchiveWarehouseHandler', () => {
     describe('When archive is requested', () => {
       it('Then it returns StorageNotFoundError (no mismatch leak)', async () => {
         warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ tenantUUID: OTHER_TENANT_UUID }),
+          makeWarehouse({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -251,9 +251,7 @@ describe('ArchiveWarehouseHandler', () => {
   describe('Given the warehouse is already archived', () => {
     describe('When archive is requested again', () => {
       it('Then it returns StorageAlreadyArchivedError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
 
         const result = await handler.execute(
           new ArchiveWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
@@ -308,7 +306,7 @@ describe('ArchiveStoreRoomHandler', () => {
     describe('When archive is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ tenantUUID: OTHER_TENANT_UUID }),
+          makeStoreRoom({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -323,9 +321,7 @@ describe('ArchiveStoreRoomHandler', () => {
   describe('Given the store room is already archived', () => {
     describe('When archive is requested again', () => {
       it('Then it returns StorageAlreadyArchivedError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ archivedAt: new Date() }),
-        );
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ archivedAt: new Date() }));
 
         const result = await handler.execute(
           new ArchiveStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
@@ -396,7 +392,7 @@ describe('ArchiveCustomRoomHandler', () => {
     describe('When archive is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ tenantUUID: OTHER_TENANT_UUID }),
+          makeCustomRoom({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -430,20 +426,13 @@ describe('RestoreWarehouseHandler', () => {
   let handler: RestoreWarehouseHandler;
 
   beforeEach(() => {
-    handler = new RestoreWarehouseHandler(
-      storageRepository,
-      warehouseRepository,
-      policy,
-      eventBus,
-    );
+    handler = new RestoreWarehouseHandler(storageRepository, warehouseRepository, policy, eventBus);
   });
 
   describe('Given an ARCHIVED warehouse', () => {
     describe('When restore is requested', () => {
       it('Then it clears archivedAt, saves, and publishes StorageRestoredEvent', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
         warehouseRepository.save.mockImplementation(async (m) => m);
 
         const result = await handler.execute(
@@ -476,7 +465,7 @@ describe('RestoreWarehouseHandler', () => {
     describe('When restore is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+          makeWarehouse({ archivedAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -505,9 +494,7 @@ describe('RestoreWarehouseHandler', () => {
   describe('Given the parent storage id cannot be resolved', () => {
     describe('When restore is requested', () => {
       it('Then it returns StorageNotFoundError as a defensive guard', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
         storageRepository.findIdByTenantUUID.mockResolvedValue(null);
 
         const result = await handler.execute(
@@ -524,9 +511,7 @@ describe('RestoreWarehouseHandler', () => {
       it('Then restore succeeds — counts are state-agnostic, the archived item already counted', async () => {
         // Capacity guard returns null because count() includes archived items —
         // restoring does not change the total, so there is nothing to block.
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
         warehouseRepository.save.mockImplementation(async (m) => m);
 
         const result = await handler.execute(
@@ -542,9 +527,7 @@ describe('RestoreWarehouseHandler', () => {
   describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
     describe('When restore is requested', () => {
       it('Then restore is blocked with WarehouseRequiresTierUpgradeError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
         policy.assertWarehouseCanRestore.mockResolvedValue(new WarehouseRequiresTierUpgradeError());
 
         const result = await handler.execute(
@@ -563,20 +546,13 @@ describe('RestoreStoreRoomHandler', () => {
   let handler: RestoreStoreRoomHandler;
 
   beforeEach(() => {
-    handler = new RestoreStoreRoomHandler(
-      storageRepository,
-      storeRoomRepository,
-      policy,
-      eventBus,
-    );
+    handler = new RestoreStoreRoomHandler(storageRepository, storeRoomRepository, policy, eventBus);
   });
 
   describe('Given an ARCHIVED store room', () => {
     describe('When restore is requested', () => {
       it('Then it succeeds and publishes StorageRestoredEvent', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ archivedAt: new Date() }),
-        );
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ archivedAt: new Date() }));
         storeRoomRepository.save.mockImplementation(async (m) => m);
 
         const result = await handler.execute(
@@ -607,7 +583,7 @@ describe('RestoreStoreRoomHandler', () => {
     describe('When restore is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ archivedAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+          makeStoreRoom({ archivedAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -636,9 +612,7 @@ describe('RestoreStoreRoomHandler', () => {
   describe('Given the parent storage id cannot be resolved', () => {
     describe('When restore is requested', () => {
       it('Then it returns StorageNotFoundError as a defensive guard', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ archivedAt: new Date() }),
-        );
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ archivedAt: new Date() }));
         storageRepository.findIdByTenantUUID.mockResolvedValue(null);
 
         const result = await handler.execute(
@@ -653,9 +627,7 @@ describe('RestoreStoreRoomHandler', () => {
   describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
     describe('When restore is requested', () => {
       it('Then restore is blocked with StoreRoomLimitReachedError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ archivedAt: new Date() }),
-        );
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ archivedAt: new Date() }));
         policy.assertStoreRoomCanRestore.mockResolvedValue(new StoreRoomLimitReachedError());
 
         const result = await handler.execute(
@@ -718,7 +690,7 @@ describe('RestoreCustomRoomHandler', () => {
     describe('When restore is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ archivedAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+          makeCustomRoom({ archivedAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -810,9 +782,7 @@ describe('UpdateWarehouseHandler', () => {
   describe('Given an ARCHIVED warehouse (H-07 E5.2 — metadata editable)', () => {
     describe('When update is requested', () => {
       it('Then the update succeeds (no isArchived gate)', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
         warehouseRepository.save.mockImplementation(async (m) => m);
 
         const result = await handler.execute(
@@ -857,7 +827,7 @@ describe('UpdateWarehouseHandler', () => {
     describe('When update is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ tenantUUID: OTHER_TENANT_UUID }),
+          makeWarehouse({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -978,19 +948,13 @@ describe('UpdateCustomRoomHandler', () => {
   let handler: UpdateCustomRoomHandler;
 
   beforeEach(() => {
-    handler = new UpdateCustomRoomHandler(
-      storageRepository,
-      customRoomRepository,
-      updatePublisher,
-    );
+    handler = new UpdateCustomRoomHandler(storageRepository, customRoomRepository, updatePublisher);
   });
 
   describe('Given an ACTIVE custom room', () => {
     describe('When update is requested with a new roomType', () => {
       it('Then the update succeeds and the publisher sees roomType in fields', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ roomType: 'Office' }),
-        );
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ roomType: 'Office' }));
         customRoomRepository.save.mockImplementation(async (m) => m);
 
         const result = await handler.execute(

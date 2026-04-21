@@ -27,7 +27,7 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
   async execute(command: UpdateStoreRoomCommand): Promise<UpdateStoreRoomResult> {
     const before = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
-    if (!before || before.tenantUUID !== command.tenantUUID) {
+    if (!before || before.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 

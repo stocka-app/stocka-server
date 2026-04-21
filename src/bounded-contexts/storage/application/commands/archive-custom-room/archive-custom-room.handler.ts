@@ -27,7 +27,7 @@ export class ArchiveCustomRoomHandler implements ICommandHandler<ArchiveCustomRo
   async execute(command: ArchiveCustomRoomCommand): Promise<ArchiveCustomRoomResult> {
     const customRoom = await this.customRoomRepository.findByUUID(command.storageUUID);
 
-    if (!customRoom || customRoom.tenantUUID !== command.tenantUUID) {
+    if (!customRoom || customRoom.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (customRoom.isArchived()) return err(new StorageAlreadyArchivedError(command.storageUUID));

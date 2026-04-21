@@ -410,7 +410,7 @@ function buildSocialProfileEntity(overrides?: Partial<SocialProfileEntity>): Soc
   e.id = 1;
   e.uuid = '550e8400-e29b-41d4-a716-446655440200';
   e.profileId = 10;
-  e.socialAccountUUID = 'social-acc-uuid-001';
+  e.socialAccountUUID = '019538a0-0000-7000-8000-000000000099';
   e.provider = 'google';
   e.providerDisplayName = 'Roberto Medina';
   e.providerAvatarUrl = 'https://example.com/avatar.jpg';
@@ -439,7 +439,7 @@ describe('SocialProfileMapper', () => {
         expect(model.id).toBe(1);
         expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440200');
         expect(model.profileId).toBe(10);
-        expect(model.socialAccountUUID).toBe('social-acc-uuid-001');
+        expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000099');
         expect(model.provider).toBe('google');
         expect(model.providerDisplayName).toBe('Roberto Medina');
         expect(model.providerAvatarUrl).toBe('https://example.com/avatar.jpg');
@@ -477,7 +477,7 @@ describe('SocialProfileMapper', () => {
         const entity = SocialProfileMapper.toEntity(newModel);
 
         expect(entity.profileId).toBe(10);
-        expect(entity.socialAccountUUID).toBe('social-acc-uuid-001');
+        expect(entity.socialAccountUUID).toBe('019538a0-0000-7000-8000-000000000099');
         expect(entity.provider).toBe('google');
         expect(entity.providerDisplayName).toBe('Roberto Medina');
         expect(entity.givenName).toBe('Roberto');

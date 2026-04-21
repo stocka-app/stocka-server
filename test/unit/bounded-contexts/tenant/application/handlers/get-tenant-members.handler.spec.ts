@@ -45,11 +45,21 @@ describe('GetTenantMembersHandler', () => {
       beforeEach(() => {
         members = [
           asPersisted(
-            TenantMemberModel.create({ tenantId: 1, userId: 10, userUUID: '019538a0-0000-7000-8000-000000000901', role: 'OWNER' }),
+            TenantMemberModel.create({
+              tenantId: 1,
+              userId: 10,
+              userUUID: '019538a0-0000-7000-8000-000000000901',
+              role: 'OWNER',
+            }),
             1,
           ),
           asPersisted(
-            TenantMemberModel.create({ tenantId: 1, userId: 11, userUUID: '019538a0-0000-7000-8000-000000000902', role: 'VIEWER' }),
+            TenantMemberModel.create({
+              tenantId: 1,
+              userId: 11,
+              userUUID: '019538a0-0000-7000-8000-000000000902',
+              role: 'VIEWER',
+            }),
             2,
           ),
         ];

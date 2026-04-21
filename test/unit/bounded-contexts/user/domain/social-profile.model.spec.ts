@@ -4,7 +4,7 @@ const BASE_RECONSTITUTE = {
   id: 1,
   uuid: '550e8400-e29b-41d4-a716-446655440100',
   profileId: 10,
-  socialAccountUUID: 'social-acc-uuid-001',
+  socialAccountUUID: '019538a0-0000-7000-8000-000000000099',
   provider: 'google',
   providerDisplayName: 'Roberto Medina',
   providerAvatarUrl: 'https://example.com/avatar.jpg',
@@ -28,7 +28,7 @@ describe('SocialProfileModel.create', () => {
     it('Then it creates a model with the provided values', () => {
       const model = SocialProfileModel.create({
         profileId: 10,
-        socialAccountUUID: 'social-uuid-001',
+        socialAccountUUID: '019538a0-0000-7000-8000-000000000098',
         provider: 'google',
         providerDisplayName: 'Roberto Medina',
         providerAvatarUrl: 'https://example.com/avatar.jpg',
@@ -42,7 +42,7 @@ describe('SocialProfileModel.create', () => {
       });
 
       expect(model.profileId).toBe(10);
-      expect(model.socialAccountUUID).toBe('social-uuid-001');
+      expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000098');
       expect(model.provider).toBe('google');
       expect(model.providerDisplayName).toBe('Roberto Medina');
       expect(model.providerAvatarUrl).toBe('https://example.com/avatar.jpg');
@@ -61,7 +61,7 @@ describe('SocialProfileModel.create', () => {
     it('Then it applies null / false / empty defaults', () => {
       const model = SocialProfileModel.create({
         profileId: 5,
-        socialAccountUUID: 'social-uuid-002',
+        socialAccountUUID: '019538a0-0000-7000-8000-000000000097',
         provider: 'microsoft',
       });
 
@@ -88,7 +88,7 @@ describe('SocialProfileModel.reconstitute', () => {
       expect(model.id).toBe(1);
       expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440100');
       expect(model.profileId).toBe(10);
-      expect(model.socialAccountUUID).toBe('social-acc-uuid-001');
+      expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000099');
       expect(model.provider).toBe('google');
       expect(model.providerDisplayName).toBe('Roberto Medina');
       expect(model.providerAvatarUrl).toBe('https://example.com/avatar.jpg');

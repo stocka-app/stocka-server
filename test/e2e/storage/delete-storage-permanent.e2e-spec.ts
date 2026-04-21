@@ -90,9 +90,7 @@ describe('DELETE /api/storages/:uuid/permanent (E2E — H-07 stub)', () => {
     describe('When DELETE /api/storages/:uuid/permanent is called', () => {
       it('Then it returns 401', async () => {
         const anyUUID = '00000000-0000-0000-0000-000000000000';
-        const res = await request(app.getHttpServer()).delete(
-          `/api/storages/${anyUUID}/permanent`,
-        );
+        const res = await request(app.getHttpServer()).delete(`/api/storages/${anyUUID}/permanent`);
 
         expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
       });

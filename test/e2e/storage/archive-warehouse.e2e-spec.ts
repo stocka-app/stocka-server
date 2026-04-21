@@ -65,7 +65,11 @@ async function setTenantToStarter(dataSource: DataSource, tenantName: string): P
   );
 }
 
-async function createWarehouse(app: INestApplication, token: string, name: string): Promise<string> {
+async function createWarehouse(
+  app: INestApplication,
+  token: string,
+  name: string,
+): Promise<string> {
   const res = await request(app.getHttpServer())
     .post('/api/storages/warehouses')
     .set('Authorization', `Bearer ${token}`)

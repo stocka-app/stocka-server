@@ -47,7 +47,9 @@ describe('ForgotPasswordHandler', () => {
   let mediator: jest.Mocked<MediatorService>;
   let eventPublisher: jest.Mocked<EventPublisher>;
   let passwordResetTokenContract: jest.Mocked<IPasswordResetTokenContract>;
-  let codeGenerator: jest.Mocked<import('@shared/domain/contracts/code-generator.contract').ICodeGeneratorContract>;
+  let codeGenerator: jest.Mocked<
+    import('@shared/domain/contracts/code-generator.contract').ICodeGeneratorContract
+  >;
 
   beforeEach(() => {
     mediator = {

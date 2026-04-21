@@ -42,7 +42,7 @@ function makeWarehouse(overrides: Partial<{ name: string }> = {}): WarehouseMode
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(WH_UUID),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: new StorageNameVO(overrides.name ?? 'Main Warehouse'),
     description: new StorageDescriptionVO('Primary warehouse'),
     icon: new StorageIconVO('warehouse'),
@@ -59,7 +59,7 @@ function makeStoreRoom(): StoreRoomModel {
   return StoreRoomModel.reconstitute({
     id: 2,
     uuid: new UUIDVO(SR_UUID),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('Main Store Room'),
     description: null,
     icon: new StorageIconVO('inventory_2'),
@@ -76,7 +76,7 @@ function makeCustomRoom(overrides: Partial<{ roomType: string }> = {}): CustomRo
   return CustomRoomModel.reconstitute({
     id: 3,
     uuid: new UUIDVO(CR_UUID),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: StorageNameVO.create('Staff Break Room'),
     description: StorageDescriptionVO.create('Quiet zone'),
     icon: StorageIconVO.create('coffee'),
@@ -142,7 +142,7 @@ describe('StorageItemViewMapper', () => {
         const model = StoreRoomModel.reconstitute({
           id: 2,
           uuid: new UUIDVO(SR_UUID),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: new StorageNameVO('Main Store Room'),
           description: null,
           icon: new StorageIconVO('inventory_2'),
@@ -167,7 +167,7 @@ describe('StorageItemViewMapper', () => {
         const model = CustomRoomModel.reconstitute({
           id: 3,
           uuid: new UUIDVO(CR_UUID),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: StorageNameVO.create('Staff Break Room'),
           description: null,
           icon: StorageIconVO.create('coffee'),
@@ -207,7 +207,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: WH_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
@@ -230,7 +230,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: WH_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after: before,
@@ -250,7 +250,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: SR_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
@@ -273,7 +273,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: WH_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
@@ -295,7 +295,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: WH_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after: before,
@@ -315,7 +315,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: WH_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
@@ -337,7 +337,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: SR_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after: before,
@@ -345,7 +345,9 @@ describe('StorageUpdateEventsPublisher', () => {
         });
 
         const addressEvents = eventBus.publish.mock.calls.filter(
-          (c) => (c[0] as { constructor: { name: string } }).constructor.name === 'StorageAddressChangedEvent',
+          (c) =>
+            (c[0] as { constructor: { name: string } }).constructor.name ===
+            'StorageAddressChangedEvent',
         );
         expect(addressEvents).toHaveLength(0);
       });
@@ -358,7 +360,7 @@ describe('StorageUpdateEventsPublisher', () => {
         const before = CustomRoomModel.reconstitute({
           id: 3,
           uuid: new UUIDVO(CR_UUID),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: StorageNameVO.create('Quiet Room'),
           description: null,
           icon: StorageIconVO.create('coffee'),
@@ -374,7 +376,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: CR_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
@@ -397,7 +399,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: CR_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
@@ -424,14 +426,16 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: CR_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
           fields: { address: '999 New Way', icon: 'star', color: '#ff00ff' },
         });
 
-        const types = eventBus.publish.mock.calls.map((c) => (c[0] as { constructor: { name: string } }).constructor.name);
+        const types = eventBus.publish.mock.calls.map(
+          (c) => (c[0] as { constructor: { name: string } }).constructor.name,
+        );
         expect(types).toContain('StorageAddressChangedEvent');
         expect(types).toContain('StorageIconChangedEvent');
         expect(types).toContain('StorageColorChangedEvent');
@@ -448,7 +452,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: CR_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,
@@ -472,7 +476,7 @@ describe('StorageUpdateEventsPublisher', () => {
 
         publisher.publish({
           uuid: WH_UUID,
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID).toString(),
           actorUUID: ACTOR_UUID,
           before,
           after,

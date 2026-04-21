@@ -39,12 +39,12 @@ const SR_UUID = '019538a0-0000-7000-8000-000000000020';
 const CR_UUID = '019538a0-0000-7000-8000-000000000030';
 
 function makeWarehouse(
-  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: string }> = {},
+  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: UUIDVO }> = {},
 ): WarehouseModel {
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(WH_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('WH'),
     description: null,
     icon: new StorageIconVO('warehouse'),
@@ -58,12 +58,12 @@ function makeWarehouse(
 }
 
 function makeStoreRoom(
-  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: string }> = {},
+  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: UUIDVO }> = {},
 ): StoreRoomModel {
   return StoreRoomModel.reconstitute({
     id: 2,
     uuid: new UUIDVO(SR_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('SR'),
     description: null,
     icon: new StorageIconVO('inventory_2'),
@@ -77,12 +77,12 @@ function makeStoreRoom(
 }
 
 function makeCustomRoom(
-  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: string }> = {},
+  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: UUIDVO }> = {},
 ): CustomRoomModel {
   return CustomRoomModel.reconstitute({
     id: 3,
     uuid: new UUIDVO(CR_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: StorageNameVO.create('CR'),
     description: null,
     icon: StorageIconVO.create('coffee'),
@@ -158,7 +158,7 @@ describe('FreezeWarehouseHandler', () => {
     describe('When freeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ tenantUUID: OTHER_TENANT_UUID }),
+          makeWarehouse({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -187,9 +187,7 @@ describe('FreezeWarehouseHandler', () => {
   describe('Given a FROZEN warehouse', () => {
     describe('When freeze is requested again', () => {
       it('Then it returns StorageAlreadyFrozenError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ frozenAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ frozenAt: new Date() }));
 
         const result = await handler.execute(
           new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
@@ -203,9 +201,7 @@ describe('FreezeWarehouseHandler', () => {
   describe('Given an ARCHIVED warehouse', () => {
     describe('When freeze is requested', () => {
       it('Then it returns StorageArchivedCannotBeFrozenError (restore first)', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
 
         const result = await handler.execute(
           new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
@@ -257,9 +253,7 @@ describe('FreezeStoreRoomHandler', () => {
   describe('Given an ARCHIVED store room', () => {
     describe('When freeze is requested', () => {
       it('Then it returns StorageArchivedCannotBeFrozenError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ archivedAt: new Date() }),
-        );
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ archivedAt: new Date() }));
 
         const result = await handler.execute(
           new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
@@ -273,9 +267,7 @@ describe('FreezeStoreRoomHandler', () => {
   describe('Given a FROZEN store room', () => {
     describe('When freeze is requested again', () => {
       it('Then it returns StorageAlreadyFrozenError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ frozenAt: new Date() }),
-        );
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ frozenAt: new Date() }));
 
         const result = await handler.execute(
           new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
@@ -290,7 +282,7 @@ describe('FreezeStoreRoomHandler', () => {
     describe('When freeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ tenantUUID: OTHER_TENANT_UUID }),
+          makeStoreRoom({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -343,9 +335,7 @@ describe('FreezeCustomRoomHandler', () => {
   describe('Given an already FROZEN custom room', () => {
     describe('When freeze is requested', () => {
       it('Then it returns StorageAlreadyFrozenError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ frozenAt: new Date() }),
-        );
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ frozenAt: new Date() }));
 
         const result = await handler.execute(
           new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
@@ -376,7 +366,7 @@ describe('FreezeCustomRoomHandler', () => {
     describe('When freeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ tenantUUID: OTHER_TENANT_UUID }),
+          makeCustomRoom({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -416,9 +406,7 @@ describe('UnfreezeWarehouseHandler', () => {
   describe('Given a FROZEN warehouse', () => {
     describe('When unfreeze is requested', () => {
       it('Then frozenAt is cleared and StorageReactivatedEvent is published', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ frozenAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ frozenAt: new Date() }));
 
         const result = await handler.execute(
           new UnfreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
@@ -449,7 +437,7 @@ describe('UnfreezeWarehouseHandler', () => {
     describe('When unfreeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ frozenAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+          makeWarehouse({ frozenAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -464,9 +452,7 @@ describe('UnfreezeWarehouseHandler', () => {
   describe('Given a missing parent storage id', () => {
     describe('When unfreeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ frozenAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ frozenAt: new Date() }));
         storageRepository.findIdByTenantUUID.mockResolvedValue(null);
 
         const result = await handler.execute(
@@ -518,7 +504,7 @@ describe('UnfreezeStoreRoomHandler', () => {
     describe('When unfreeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ frozenAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+          makeStoreRoom({ frozenAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -533,9 +519,7 @@ describe('UnfreezeStoreRoomHandler', () => {
   describe('Given the parent storage id cannot be resolved', () => {
     describe('When unfreeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ frozenAt: new Date() }),
-        );
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ frozenAt: new Date() }));
         storageRepository.findIdByTenantUUID.mockResolvedValue(null);
 
         const result = await handler.execute(
@@ -558,9 +542,7 @@ describe('UnfreezeCustomRoomHandler', () => {
   describe('Given a FROZEN custom room', () => {
     describe('When unfreeze is requested', () => {
       it('Then it succeeds', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ frozenAt: new Date() }),
-        );
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ frozenAt: new Date() }));
 
         const result = await handler.execute(
           new UnfreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
@@ -589,7 +571,7 @@ describe('UnfreezeCustomRoomHandler', () => {
     describe('When unfreeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
         customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ frozenAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+          makeCustomRoom({ frozenAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -604,9 +586,7 @@ describe('UnfreezeCustomRoomHandler', () => {
   describe('Given the parent storage id cannot be resolved', () => {
     describe('When unfreeze is requested', () => {
       it('Then it returns StorageNotFoundError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ frozenAt: new Date() }),
-        );
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ frozenAt: new Date() }));
         storageRepository.findIdByTenantUUID.mockResolvedValue(null);
 
         const result = await handler.execute(

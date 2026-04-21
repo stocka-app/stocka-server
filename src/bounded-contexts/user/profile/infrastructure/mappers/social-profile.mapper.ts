@@ -29,7 +29,7 @@ export class SocialProfileMapper {
     const entity: Partial<SocialProfileEntity> = {
       uuid: model.uuid,
       profileId: model.profileId,
-      socialAccountUUID: model.socialAccountUUID,
+      socialAccountUUID: model.socialAccountUUID.toString(),
       provider: model.provider,
       providerDisplayName: model.providerDisplayName,
       providerAvatarUrl: model.providerAvatarUrl,

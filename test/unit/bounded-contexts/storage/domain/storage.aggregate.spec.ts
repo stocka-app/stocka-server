@@ -29,7 +29,7 @@ function makeWarehouse(
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(uuid),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('Central Warehouse'),
     description: new StorageDescriptionVO('Main warehouse'),
     icon: new StorageIconVO('warehouse'),
@@ -49,7 +49,7 @@ function makeStoreRoom(
   return StoreRoomModel.reconstitute({
     id: 2,
     uuid: new UUIDVO(uuid),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('Main Bodega'),
     description: null,
     icon: new StorageIconVO('inventory_2'),
@@ -69,7 +69,7 @@ function makeCustomRoom(
   return CustomRoomModel.reconstitute({
     id: 3,
     uuid: new UUIDVO(uuid),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: StorageNameVO.create('Office Room'),
     description: StorageDescriptionVO.create('Main office space'),
     icon: StorageIconVO.create('other_houses'),
@@ -108,7 +108,7 @@ describe('StorageAggregate — create()', () => {
       it('Then it has the tenant UUID and empty collections', () => {
         const aggregate = makeEmptyAggregate();
 
-        expect(aggregate.tenantUUID).toBe(TENANT_UUID);
+        expect(aggregate.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(aggregate.warehouses).toHaveLength(0);
         expect(aggregate.storeRooms).toHaveLength(0);
         expect(aggregate.customRooms).toHaveLength(0);
@@ -133,7 +133,7 @@ describe('StorageAggregate — reconstitute()', () => {
 
         expect(aggregate.id).toBe(42);
         expect(aggregate.uuid).toBe('019538a0-0000-7000-8000-000000000099');
-        expect(aggregate.tenantUUID).toBe(TENANT_UUID);
+        expect(aggregate.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(aggregate.warehouses).toHaveLength(1);
         expect(aggregate.storeRooms).toHaveLength(1);
         expect(aggregate.customRooms).toHaveLength(1);
@@ -387,7 +387,7 @@ describe('StorageAggregate — view methods', () => {
         const noAddrSR = StoreRoomModel.reconstitute({
           id: 4,
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000004'),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: new StorageNameVO('Bodega Sin Dirección'),
           description: null,
           icon: new StorageIconVO('inventory_2'),
@@ -401,7 +401,7 @@ describe('StorageAggregate — view methods', () => {
         const noAddrCR = CustomRoomModel.reconstitute({
           id: 5,
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000005'),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: StorageNameVO.create('Cuarto Sin Dirección'),
           description: null,
           icon: StorageIconVO.create('other_houses'),
@@ -529,7 +529,7 @@ describe('StorageAggregate — getters', () => {
     describe('When getters are called', () => {
       it('Then tenantUUID returns the tenant UUID', () => {
         const aggregate = makePopulatedAggregate();
-        expect(aggregate.tenantUUID).toBe(TENANT_UUID);
+        expect(aggregate.tenantUUID.toString()).toBe(TENANT_UUID);
       });
 
       it('Then warehouses, storeRooms, customRooms return readonly arrays', () => {

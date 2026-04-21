@@ -1,5 +1,6 @@
 import { OnboardingPath } from '@onboarding/domain/enums/onboarding-path.enum';
 import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
 export interface OnboardingSessionCreateProps {
   userUUID: string;
@@ -19,7 +20,7 @@ export interface OnboardingSessionReconstituteProps {
 
 export class OnboardingSessionModel {
   private _id: string;
-  private _userUUID: string;
+  private _userUUID: UUIDVO;
   private _path: OnboardingPath | null;
   private _currentStep: number;
   private _stepData: Record<string, unknown>;
@@ -30,7 +31,7 @@ export class OnboardingSessionModel {
 
   private constructor(props: OnboardingSessionReconstituteProps) {
     this._id = props.id;
-    this._userUUID = props.userUUID;
+    this._userUUID = new UUIDVO(props.userUUID);
     this._path = props.path;
     this._currentStep = props.currentStep;
     this._stepData = props.stepData;
@@ -90,7 +91,7 @@ export class OnboardingSessionModel {
     return this._id;
   }
 
-  get userUUID(): string {
+  get userUUID(): UUIDVO {
     return this._userUUID;
   }
 

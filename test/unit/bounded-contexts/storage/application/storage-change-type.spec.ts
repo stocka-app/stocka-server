@@ -47,14 +47,14 @@ function makeWarehouse(
   overrides: Partial<{
     archivedAt: Date | null;
     frozenAt: Date | null;
-    tenantUUID: string;
+    tenantUUID: UUIDVO;
     address: string;
   }> = {},
 ): WarehouseModel {
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(WH_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('WH'),
     description: null,
     icon: new StorageIconVO('warehouse'),
@@ -71,14 +71,14 @@ function makeStoreRoom(
   overrides: Partial<{
     archivedAt: Date | null;
     frozenAt: Date | null;
-    tenantUUID: string;
+    tenantUUID: UUIDVO;
     address: string;
   }> = {},
 ): StoreRoomModel {
   return StoreRoomModel.reconstitute({
     id: 2,
     uuid: new UUIDVO(SR_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('SR'),
     description: null,
     icon: new StorageIconVO('inventory_2'),
@@ -95,14 +95,14 @@ function makeCustomRoom(
   overrides: Partial<{
     archivedAt: Date | null;
     frozenAt: Date | null;
-    tenantUUID: string;
+    tenantUUID: UUIDVO;
     address: string;
   }> = {},
 ): CustomRoomModel {
   return CustomRoomModel.reconstitute({
     id: 3,
     uuid: new UUIDVO(CR_UUID),
-    tenantUUID: overrides.tenantUUID ?? TENANT_UUID,
+    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
     name: StorageNameVO.create('CR'),
     description: null,
     icon: StorageIconVO.create('coffee'),
@@ -202,9 +202,7 @@ describe('ChangeWarehouseToStoreRoomHandler', () => {
   describe('Given an ARCHIVED source warehouse', () => {
     describe('When conversion is requested', () => {
       it('Then StorageTypeLockedWhileArchivedError is returned', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ archivedAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
 
         const result = await handler.execute(
           new ChangeWarehouseToStoreRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
@@ -218,9 +216,7 @@ describe('ChangeWarehouseToStoreRoomHandler', () => {
   describe('Given a FROZEN source warehouse', () => {
     describe('When conversion is requested', () => {
       it('Then StorageTypeLockedWhileFrozenError is returned', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ frozenAt: new Date() }),
-        );
+        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ frozenAt: new Date() }));
 
         const result = await handler.execute(
           new ChangeWarehouseToStoreRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
@@ -406,7 +402,7 @@ describe('ChangeStoreRoomToCustomRoomHandler', () => {
     describe('When conversion is requested', () => {
       it('Then StorageNotFoundError is returned', async () => {
         storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ tenantUUID: OTHER_TENANT_UUID }),
+          makeStoreRoom({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
         );
 
         const result = await handler.execute(
@@ -499,9 +495,7 @@ describe('ChangeCustomRoomToStoreRoomHandler', () => {
   describe('Given the custom room is frozen', () => {
     describe('When conversion is requested', () => {
       it('Then StorageTypeLockedWhileFrozenError is returned', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ frozenAt: new Date() }),
-        );
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ frozenAt: new Date() }));
 
         const result = await handler.execute(
           new ChangeCustomRoomToStoreRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
@@ -540,7 +534,7 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
       );
 
       expect(result.isOk()).toBe(true);
-      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      const saved = customRoomRepository.save.mock.calls[0][0];
       expect(saved.name.getValue()).toBe('Cocina Principal');
       expect(saved.description?.getValue()).toBe('Zona caliente');
       expect(saved.address!.getValue()).toBe('Piso 2');
@@ -567,7 +561,7 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
       );
 
       expect(result.isOk()).toBe(true);
-      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      const saved = customRoomRepository.save.mock.calls[0][0];
       expect(saved.name.getValue()).toBe('WH');
       expect(saved.address!.getValue()).toBe('789 Industrial');
       expect(saved.roomType.getValue()).toBe('General');
@@ -618,8 +612,8 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
 
       expect(result.isOk()).toBe(true);
       expect(policy.assertAddressForWarehouse).toHaveBeenCalledWith('Nueva 123', CR_UUID);
-      const saved = warehouseRepository.save.mock.calls[0][0] as WarehouseModel;
-      expect(saved.address!.getValue()).toBe('Nueva 123');
+      const saved = warehouseRepository.save.mock.calls[0][0];
+      expect(saved.address.getValue()).toBe('Nueva 123');
     });
   });
 
@@ -628,7 +622,7 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
       const source = CustomRoomModel.reconstitute({
         id: 3,
         uuid: new UUIDVO(CR_UUID),
-        tenantUUID: TENANT_UUID,
+        tenantUUID: new UUIDVO(TENANT_UUID),
         name: StorageNameVO.create('CR'),
         description: null,
         icon: StorageIconVO.create('coffee'),
@@ -657,7 +651,7 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
       );
 
       expect(result.isOk()).toBe(true);
-      const saved = storeRoomRepository.save.mock.calls[0][0] as StoreRoomModel;
+      const saved = storeRoomRepository.save.mock.calls[0][0];
       expect(saved.description).toBeNull();
     });
   });
@@ -681,7 +675,7 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
       );
 
       expect(result.isOk()).toBe(true);
-      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      const saved = customRoomRepository.save.mock.calls[0][0];
       expect(saved.roomType.getValue()).toBe('Laboratory');
       expect(saved.name.getValue()).toBe('SR');
     });
@@ -725,9 +719,7 @@ describe('Convert-to handlers merge optional metadata into the new target', () =
       );
 
       await expect(
-        handler.execute(
-          new ChangeWarehouseToStoreRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        ),
+        handler.execute(new ChangeWarehouseToStoreRoomCommand(WH_UUID, TENANT_UUID, ACTOR_UUID)),
       ).rejects.toThrow('db failure');
 
       // Both mutations are invoked inside the same uow.execute callback — the
@@ -977,7 +969,7 @@ describe('Cross-cutting change-type branches', () => {
       const noAddrCR = CustomRoomModel.reconstitute({
         id: 3,
         uuid: new UUIDVO(CR_UUID),
-        tenantUUID: TENANT_UUID,
+        tenantUUID: new UUIDVO(TENANT_UUID),
         name: StorageNameVO.create('No Addr CR'),
         description: null,
         icon: StorageIconVO.create('coffee'),
@@ -1002,7 +994,7 @@ describe('Cross-cutting change-type branches', () => {
         new ChangeCustomRoomToStoreRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
       );
       expect(result.isOk()).toBe(true);
-      const saved = storeRoomRepository.save.mock.calls[0][0] as StoreRoomModel;
+      const saved = storeRoomRepository.save.mock.calls[0][0];
       expect(saved.address).toBeNull();
     });
 
@@ -1010,7 +1002,7 @@ describe('Cross-cutting change-type branches', () => {
       const noAddrSR = StoreRoomModel.reconstitute({
         id: 2,
         uuid: new UUIDVO(SR_UUID),
-        tenantUUID: TENANT_UUID,
+        tenantUUID: new UUIDVO(TENANT_UUID),
         name: new StorageNameVO('No Addr SR'),
         description: null,
         icon: new StorageIconVO('inventory_2'),
@@ -1034,7 +1026,7 @@ describe('Cross-cutting change-type branches', () => {
         new ChangeStoreRoomToCustomRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
       );
       expect(result.isOk()).toBe(true);
-      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      const saved = customRoomRepository.save.mock.calls[0][0];
       expect(saved.address).toBeNull();
     });
 
@@ -1042,7 +1034,7 @@ describe('Cross-cutting change-type branches', () => {
       const noAddrCR = CustomRoomModel.reconstitute({
         id: 3,
         uuid: new UUIDVO(CR_UUID),
-        tenantUUID: TENANT_UUID,
+        tenantUUID: new UUIDVO(TENANT_UUID),
         name: StorageNameVO.create('No Addr CR'),
         description: null,
         icon: StorageIconVO.create('coffee'),
@@ -1076,7 +1068,7 @@ describe('Cross-cutting change-type branches', () => {
       const noAddrSR = StoreRoomModel.reconstitute({
         id: 2,
         uuid: new UUIDVO(SR_UUID),
-        tenantUUID: TENANT_UUID,
+        tenantUUID: new UUIDVO(TENANT_UUID),
         name: new StorageNameVO('No Addr SR'),
         description: null,
         icon: new StorageIconVO('inventory_2'),
@@ -1124,7 +1116,7 @@ describe('Cross-cutting change-type branches', () => {
         }),
       );
       expect(result.isOk()).toBe(true);
-      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      const saved = customRoomRepository.save.mock.calls[0][0];
       expect(saved.name.getValue()).toBe('Renamed CR');
     });
 
@@ -1144,7 +1136,7 @@ describe('Cross-cutting change-type branches', () => {
         }),
       );
       expect(result.isOk()).toBe(true);
-      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      const saved = customRoomRepository.save.mock.calls[0][0];
       expect(saved.description?.getValue()).toBe('New description');
     });
 
@@ -1164,7 +1156,7 @@ describe('Cross-cutting change-type branches', () => {
         }),
       );
       expect(result.isOk()).toBe(true);
-      const saved = customRoomRepository.save.mock.calls[0][0] as CustomRoomModel;
+      const saved = customRoomRepository.save.mock.calls[0][0];
       expect(saved.address?.getValue()).toBe('999 Override St');
     });
   });
@@ -1230,7 +1222,7 @@ describe('Cross-cutting change-type branches', () => {
         }),
       );
       expect(result.isOk()).toBe(true);
-      const saved = warehouseRepository.save.mock.calls[0][0] as WarehouseModel;
+      const saved = warehouseRepository.save.mock.calls[0][0];
       expect(saved.description?.getValue()).toBe('Promoted to warehouse');
     });
   });

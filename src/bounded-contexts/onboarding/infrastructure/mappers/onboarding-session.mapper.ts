@@ -31,7 +31,7 @@ export class OnboardingSessionMapper {
   static toEntity(model: OnboardingSessionModel): Partial<OnboardingSessionEntity> {
     return {
       ...(model.id ? { id: model.id } : {}),
-      userUUID: model.userUUID,
+      userUUID: model.userUUID.toString(),
       path: model.path,
       currentStep: model.currentStep,
       stepData: model.stepData,

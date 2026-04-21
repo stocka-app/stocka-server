@@ -1,4 +1,5 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
 import { StoreRoomModel } from '@storage/domain/models/store-room.model';
@@ -18,7 +19,7 @@ export interface StorageAggregateReconstituteProps extends AggregateRootProps {
 }
 
 export class StorageAggregate extends AggregateRoot {
-  private readonly _tenantUUID: string;
+  private readonly _tenantUUID: UUIDVO;
   private _warehouses: WarehouseModel[];
   private _storeRooms: StoreRoomModel[];
   private _customRooms: CustomRoomModel[];
@@ -32,7 +33,7 @@ export class StorageAggregate extends AggregateRoot {
     },
   ) {
     super(props);
-    this._tenantUUID = props.tenantUUID;
+    this._tenantUUID = new UUIDVO(props.tenantUUID);
     this._warehouses = props.warehouses;
     this._storeRooms = props.storeRooms;
     this._customRooms = props.customRooms;
@@ -67,7 +68,7 @@ export class StorageAggregate extends AggregateRoot {
     this.apply(
       new StorageCreatedEvent(
         model.uuid.toString(),
-        this._tenantUUID,
+        this._tenantUUID.toString(),
         actorUUID,
         StorageType.WAREHOUSE,
         model.name.getValue(),
@@ -80,7 +81,7 @@ export class StorageAggregate extends AggregateRoot {
     this.apply(
       new StorageCreatedEvent(
         model.uuid.toString(),
-        this._tenantUUID,
+        this._tenantUUID.toString(),
         actorUUID,
         StorageType.STORE_ROOM,
         model.name.getValue(),
@@ -93,7 +94,7 @@ export class StorageAggregate extends AggregateRoot {
     this.apply(
       new StorageCreatedEvent(
         model.uuid.toString(),
-        this._tenantUUID,
+        this._tenantUUID.toString(),
         actorUUID,
         StorageType.CUSTOM_ROOM,
         model.name.getValue(),
@@ -184,7 +185,7 @@ export class StorageAggregate extends AggregateRoot {
 
   // ── Getters ────────────────────────────────────────────────────────────
 
-  get tenantUUID(): string {
+  get tenantUUID(): UUIDVO {
     return this._tenantUUID;
   }
 

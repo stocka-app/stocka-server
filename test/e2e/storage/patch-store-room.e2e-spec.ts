@@ -92,11 +92,7 @@ async function createStorage(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function archiveStoreRoom(
-  app: INestApplication,
-  token: string,
-  uuid: string,
-): Promise<void> {
+async function archiveStoreRoom(app: INestApplication, token: string, uuid: string): Promise<void> {
   await request(app.getHttpServer())
     .delete(`/api/storages/store-rooms/${uuid}/archive`)
     .set('Authorization', `Bearer ${token}`);

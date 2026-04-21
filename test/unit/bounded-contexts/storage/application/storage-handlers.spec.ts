@@ -86,7 +86,7 @@ function makeWarehouse(
   return WarehouseModel.reconstitute({
     id: 1,
     uuid: new UUIDVO(uuid),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('Existing WH'),
     description: null,
     icon: new StorageIconVO('warehouse'),
@@ -106,7 +106,7 @@ function makeStoreRoom(
   return StoreRoomModel.reconstitute({
     id: 2,
     uuid: new UUIDVO(uuid),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: new StorageNameVO('Existing Store'),
     description: null,
     icon: new StorageIconVO('inventory_2'),
@@ -126,7 +126,7 @@ function makeCustomRoom(
   return CustomRoomModel.reconstitute({
     id: 3,
     uuid: new UUIDVO(uuid),
-    tenantUUID: TENANT_UUID,
+    tenantUUID: new UUIDVO(TENANT_UUID),
     name: StorageNameVO.create('Existing Room'),
     description: null,
     icon: StorageIconVO.create('other_houses'),

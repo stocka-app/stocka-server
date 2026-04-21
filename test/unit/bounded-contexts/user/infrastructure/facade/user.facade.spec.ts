@@ -292,7 +292,7 @@ describe('UserFacade', () => {
   describe('Given upsertSocialProfile is called', () => {
     const baseProps = {
       userUUID: 'user-uuid-001',
-      socialAccountUUID: 'social-uuid-xyz',
+      socialAccountUUID: '019538a0-0000-7000-8000-000000000096',
       provider: 'google',
       providerDisplayName: 'John Doe',
       providerAvatarUrl: 'https://avatar.url',

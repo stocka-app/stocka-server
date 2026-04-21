@@ -43,7 +43,7 @@ export class ChangeWarehouseToStoreRoomHandler implements ICommandHandler<Change
   ): Promise<ChangeWarehouseToStoreRoomResult> {
     const source = await this.warehouseRepository.findByUUID(command.storageUUID);
 
-    if (!source || source.tenantUUID !== command.tenantUUID) {
+    if (!source || source.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (source.isArchived()) {
@@ -71,9 +71,7 @@ export class ChangeWarehouseToStoreRoomHandler implements ICommandHandler<Change
         : (source.description?.getValue() ?? null);
 
     const effectiveAddress =
-      command.metadata.address === undefined
-        ? source.address.getValue()
-        : command.metadata.address;
+      command.metadata.address === undefined ? source.address.getValue() : command.metadata.address;
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));

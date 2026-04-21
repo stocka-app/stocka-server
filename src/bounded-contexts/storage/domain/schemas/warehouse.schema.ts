@@ -7,7 +7,7 @@ import { StorageNameVO } from '@storage/domain/value-objects/storage-name.vo';
 
 export interface WarehouseModelProps {
   uuid: UUIDVO;
-  tenantUUID: string;
+  tenantUUID: UUIDVO;
   name: StorageNameVO;
   description: StorageDescriptionVO | null;
   icon: StorageIconVO;
@@ -23,7 +23,7 @@ export interface WarehouseModelProps {
 
 export interface WarehouseModelAttrs {
   uuid: UUIDVO;
-  tenantUUID: string;
+  tenantUUID: UUIDVO;
   name: StorageNameVO;
   description: StorageDescriptionVO | null;
   icon: StorageIconVO;

@@ -43,7 +43,7 @@ describe('CustomRoomMapper', () => {
 
         const model = CustomRoomMapper.toDomain(entity);
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000010');
-        expect(model.tenantUUID).toBe(TENANT_UUID);
+        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(model.name.getValue()).toBe('Office Room');
         expect(model.description?.getValue()).toBe('Main office space');
         expect(model.icon.getValue()).toBe('office-icon');
@@ -199,7 +199,7 @@ describe('StoreRoomMapper', () => {
 
         const model = StoreRoomMapper.toDomain(entity);
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000020');
-        expect(model.tenantUUID).toBe(TENANT_UUID);
+        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(model.name.getValue()).toBe('Main Bodega');
         expect(model.description?.getValue()).toBe('Primary storage');
         expect(model.icon.getValue()).toBe('store-icon');
@@ -336,12 +336,12 @@ describe('WarehouseMapper', () => {
 
         const model = WarehouseMapper.toDomain(entity);
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000030');
-        expect(model.tenantUUID).toBe(TENANT_UUID);
+        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(model.name.getValue()).toBe('Central WH');
         expect(model.description?.getValue()).toBe('Main warehouse');
         expect(model.icon.getValue()).toBe('wh-icon');
         expect(model.color.getValue()).toBe('#667788');
-        expect(model.address!.getValue()).toBe('200 Warehouse Blvd');
+        expect(model.address.getValue()).toBe('200 Warehouse Blvd');
         expect(model.frozenAt).toBeNull();
         expect(model.archivedAt).toBeNull();
       });
@@ -458,7 +458,7 @@ describe('StorageMapper', () => {
 
         expect(aggregate.id).toBe(1);
         expect(aggregate.uuid).toBe('019538a0-0000-7000-8000-000000000090');
-        expect(aggregate.tenantUUID).toBe(TENANT_UUID);
+        expect(aggregate.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(aggregate.warehouses).toHaveLength(1);
         expect(aggregate.storeRooms).toHaveLength(1);
         expect(aggregate.customRooms).toHaveLength(1);

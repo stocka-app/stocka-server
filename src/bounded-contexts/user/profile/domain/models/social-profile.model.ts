@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { OAuthProviderVO } from '@user/domain/value-objects/oauth-provider.vo';
 
 export interface SocialProfileReconstitueProps extends BaseModelProps {
@@ -24,7 +25,7 @@ export interface SocialProfileReconstitueProps extends BaseModelProps {
 
 export class SocialProfileModel extends BaseModel {
   private readonly _profileId: number;
-  private _socialAccountUUID: string;
+  private _socialAccountUUID: UUIDVO;
   private _provider: OAuthProviderVO;
   private _providerDisplayName: string | null;
   private _providerAvatarUrl: string | null;
@@ -46,7 +47,7 @@ export class SocialProfileModel extends BaseModel {
       archivedAt: props.archivedAt,
     });
     this._profileId = props.profileId;
-    this._socialAccountUUID = props.socialAccountUUID;
+    this._socialAccountUUID = new UUIDVO(props.socialAccountUUID);
     this._provider = new OAuthProviderVO(props.provider);
     this._providerDisplayName = props.providerDisplayName;
     this._providerAvatarUrl = props.providerAvatarUrl;
@@ -104,7 +105,7 @@ export class SocialProfileModel extends BaseModel {
     return this._profileId;
   }
 
-  get socialAccountUUID(): string {
+  get socialAccountUUID(): UUIDVO {
     return this._socialAccountUUID;
   }
 

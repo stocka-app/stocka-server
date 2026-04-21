@@ -56,7 +56,8 @@ function buildInvitation(
 }
 
 function buildUserAggregate(id?: number): UserAggregate {
-  if (id === undefined) return { uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
+  if (id === undefined)
+    return { uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
   return { id, uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
 }
 
