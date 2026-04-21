@@ -14,8 +14,4 @@ export class AuthenticationDomainService {
   static hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
   }
-
-  static generateRandomToken(): string {
-    return crypto.randomBytes(32).toString('hex');
-  }
 }

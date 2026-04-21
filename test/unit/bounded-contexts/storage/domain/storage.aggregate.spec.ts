@@ -382,6 +382,54 @@ describe('StorageAggregate — view methods', () => {
 
         expect(crView.roomType).toBe('Office');
       });
+
+      it('Then store rooms and custom rooms without an address surface address as null', () => {
+        const noAddrSR = StoreRoomModel.reconstitute({
+          id: 4,
+          uuid: new UUIDVO('019538a0-0000-7000-8000-000000000004'),
+          tenantUUID: TENANT_UUID,
+          name: new StorageNameVO('Bodega Sin Dirección'),
+          description: null,
+          icon: new StorageIconVO('inventory_2'),
+          color: new StorageColorVO('#d97706'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-02-01'),
+          updatedAt: new Date('2024-02-01'),
+        });
+        const noAddrCR = CustomRoomModel.reconstitute({
+          id: 5,
+          uuid: new UUIDVO('019538a0-0000-7000-8000-000000000005'),
+          tenantUUID: TENANT_UUID,
+          name: StorageNameVO.create('Cuarto Sin Dirección'),
+          description: null,
+          icon: StorageIconVO.create('other_houses'),
+          color: StorageColorVO.create('#6b7280'),
+          roomType: RoomTypeNameVO.create('Office'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-03-01'),
+          updatedAt: new Date('2024-03-01'),
+        });
+        const aggWithoutAddresses = StorageAggregate.reconstitute({
+          id: 99,
+          uuid: '019538a0-0000-7000-8000-000000000099',
+          tenantUUID: TENANT_UUID,
+          warehouses: [],
+          storeRooms: [noAddrSR],
+          customRooms: [noAddrCR],
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+        });
+
+        const views = aggWithoutAddresses.listItemViews();
+        const srView = views.find((v) => v.type === StorageType.STORE_ROOM)!;
+        const crView = views.find((v) => v.type === StorageType.CUSTOM_ROOM)!;
+        expect(srView.address).toBeNull();
+        expect(crView.address).toBeNull();
+      });
     });
 
     describe('When findItemView is called with a valid warehouse UUID', () => {

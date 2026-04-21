@@ -18,7 +18,11 @@ import { UpdateStoreRoomCommand } from '@storage/application/commands/update-sto
 import { UpdateStoreRoomHandler } from '@storage/application/commands/update-store-room/update-store-room.handler';
 import { UpdateWarehouseCommand } from '@storage/application/commands/update-warehouse/update-warehouse.command';
 import { UpdateWarehouseHandler } from '@storage/application/commands/update-warehouse/update-warehouse.handler';
+import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
 import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
+import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
+import { StoreRoomLimitReachedError } from '@storage/application/errors/store-room-limit-reached.error';
+import { CustomRoomLimitReachedError } from '@storage/application/errors/custom-room-limit-reached.error';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
@@ -128,6 +132,7 @@ let storeRoomRepository: jest.Mocked<IStoreRoomRepository>;
 let customRoomRepository: jest.Mocked<ICustomRoomRepository>;
 let eventBus: jest.Mocked<EventBus>;
 let updatePublisher: jest.Mocked<StorageUpdateEventsPublisher>;
+let policy: jest.Mocked<StorageTypeChangePolicy>;
 
 beforeEach(() => {
   storageRepository = {
@@ -155,6 +160,15 @@ beforeEach(() => {
   };
   eventBus = { publish: jest.fn() } as unknown as jest.Mocked<EventBus>;
   updatePublisher = { publish: jest.fn() } as unknown as jest.Mocked<StorageUpdateEventsPublisher>;
+  policy = {
+    assertWarehouseCapacity: jest.fn().mockResolvedValue(null),
+    assertStoreRoomCapacity: jest.fn().mockResolvedValue(null),
+    assertCustomRoomCapacity: jest.fn().mockResolvedValue(null),
+    assertWarehouseCanRestore: jest.fn().mockResolvedValue(null),
+    assertStoreRoomCanRestore: jest.fn().mockResolvedValue(null),
+    assertCustomRoomCanRestore: jest.fn().mockResolvedValue(null),
+    assertAddressForWarehouse: jest.fn().mockReturnValue(null),
+  } as unknown as jest.Mocked<StorageTypeChangePolicy>;
 });
 
 // ═══ ArchiveXHandler ═══════════════════════════════════════════════════════════
@@ -321,6 +335,21 @@ describe('ArchiveStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When archive is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new ArchiveStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 describe('ArchiveCustomRoomHandler', () => {
@@ -362,6 +391,37 @@ describe('ArchiveCustomRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the custom room belongs to another tenant', () => {
+    describe('When archive is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new ArchiveCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When archive is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new ArchiveCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
 });
 
 // ═══ RestoreXHandler ═══════════════════════════════════════════════════════════
@@ -370,7 +430,12 @@ describe('RestoreWarehouseHandler', () => {
   let handler: RestoreWarehouseHandler;
 
   beforeEach(() => {
-    handler = new RestoreWarehouseHandler(storageRepository, warehouseRepository, eventBus);
+    handler = new RestoreWarehouseHandler(
+      storageRepository,
+      warehouseRepository,
+      policy,
+      eventBus,
+    );
   });
 
   describe('Given an ARCHIVED warehouse', () => {
@@ -454,9 +519,11 @@ describe('RestoreWarehouseHandler', () => {
     });
   });
 
-  describe('Given the tenant is already at the warehouse tier limit', () => {
+  describe('Given the tenant is at the warehouse tier limit in the normal flow', () => {
     describe('When restore is requested', () => {
-      it('Then restore still succeeds — restore does NOT consume quota (EC-H07-1)', async () => {
+      it('Then restore succeeds — counts are state-agnostic, the archived item already counted', async () => {
+        // Capacity guard returns null because count() includes archived items —
+        // restoring does not change the total, so there is nothing to block.
         warehouseRepository.findByUUID.mockResolvedValue(
           makeWarehouse({ archivedAt: new Date() }),
         );
@@ -467,6 +534,26 @@ describe('RestoreWarehouseHandler', () => {
         );
 
         expect(result.isOk()).toBe(true);
+        expect(policy.assertWarehouseCanRestore).toHaveBeenCalledWith(TENANT_UUID);
+      });
+    });
+  });
+
+  describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
+    describe('When restore is requested', () => {
+      it('Then restore is blocked with WarehouseRequiresTierUpgradeError', async () => {
+        warehouseRepository.findByUUID.mockResolvedValue(
+          makeWarehouse({ archivedAt: new Date() }),
+        );
+        policy.assertWarehouseCanRestore.mockResolvedValue(new WarehouseRequiresTierUpgradeError());
+
+        const result = await handler.execute(
+          new RestoreWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+        expect(warehouseRepository.save).not.toHaveBeenCalled();
+        expect(eventBus.publish).not.toHaveBeenCalled();
       });
     });
   });
@@ -476,7 +563,12 @@ describe('RestoreStoreRoomHandler', () => {
   let handler: RestoreStoreRoomHandler;
 
   beforeEach(() => {
-    handler = new RestoreStoreRoomHandler(storageRepository, storeRoomRepository, eventBus);
+    handler = new RestoreStoreRoomHandler(
+      storageRepository,
+      storeRoomRepository,
+      policy,
+      eventBus,
+    );
   });
 
   describe('Given an ARCHIVED store room', () => {
@@ -510,13 +602,84 @@ describe('RestoreStoreRoomHandler', () => {
       });
     });
   });
+
+  describe('Given the store room belongs to another tenant', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ archivedAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the store room does not exist', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ archivedAt: new Date() }),
+        );
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
+    describe('When restore is requested', () => {
+      it('Then restore is blocked with StoreRoomLimitReachedError', async () => {
+        storeRoomRepository.findByUUID.mockResolvedValue(
+          makeStoreRoom({ archivedAt: new Date() }),
+        );
+        policy.assertStoreRoomCanRestore.mockResolvedValue(new StoreRoomLimitReachedError());
+
+        const result = await handler.execute(
+          new RestoreStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StoreRoomLimitReachedError);
+        expect(storeRoomRepository.save).not.toHaveBeenCalled();
+        expect(eventBus.publish).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
 
 describe('RestoreCustomRoomHandler', () => {
   let handler: RestoreCustomRoomHandler;
 
   beforeEach(() => {
-    handler = new RestoreCustomRoomHandler(storageRepository, customRoomRepository, eventBus);
+    handler = new RestoreCustomRoomHandler(
+      storageRepository,
+      customRoomRepository,
+      policy,
+      eventBus,
+    );
   });
 
   describe('Given an ARCHIVED custom room', () => {
@@ -547,6 +710,72 @@ describe('RestoreCustomRoomHandler', () => {
         );
 
         expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotArchivedError);
+      });
+    });
+  });
+
+  describe('Given the custom room belongs to another tenant', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ archivedAt: new Date(), tenantUUID: OTHER_TENANT_UUID }),
+        );
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the custom room does not exist', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the parent storage id cannot be resolved', () => {
+    describe('When restore is requested', () => {
+      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ archivedAt: new Date() }),
+        );
+        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
+      });
+    });
+  });
+
+  describe('Given the tenant downgraded after archive — capacity guard reports tier overflow', () => {
+    describe('When restore is requested', () => {
+      it('Then restore is blocked with CustomRoomLimitReachedError', async () => {
+        customRoomRepository.findByUUID.mockResolvedValue(
+          makeCustomRoom({ archivedAt: new Date() }),
+        );
+        policy.assertCustomRoomCanRestore.mockResolvedValue(new CustomRoomLimitReachedError());
+
+        const result = await handler.execute(
+          new RestoreCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
+        );
+
+        expect(result._unsafeUnwrapErr()).toBeInstanceOf(CustomRoomLimitReachedError);
+        expect(customRoomRepository.save).not.toHaveBeenCalled();
+        expect(eventBus.publish).not.toHaveBeenCalled();
       });
     });
   });

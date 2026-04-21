@@ -60,6 +60,12 @@ export class TypeOrmStorageRepository implements IStorageRepository {
       select: ['id'],
     });
 
+    /* istanbul ignore next -- defensive: every tenant gets a storage row at
+       onboarding (CompleteOnboardingHandler dispatches CreateTenantCommand
+       which provisions it). Sub-item handlers also load the warehouse /
+       store-room / custom-room before reaching here, and those cascade from
+       this storage row, so a tenant whose sub-item exists but parent storage
+       does not is unreachable through the public API. */
     return entity?.id ?? null;
   }
 

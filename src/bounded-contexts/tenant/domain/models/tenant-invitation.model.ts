@@ -1,3 +1,6 @@
+import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
+import { MemberRoleVO } from '@tenant/domain/value-objects/member-role.vo';
+
 export interface TenantInvitationReconstituteProps {
   id: string;
   tenantId: number;
@@ -24,7 +27,13 @@ export interface CreateTenantInvitationProps {
 }
 
 export class TenantInvitationModel {
-  private constructor(private readonly props: TenantInvitationReconstituteProps) {}
+  private readonly _email: EmailVO;
+  private readonly _role: MemberRoleVO;
+
+  private constructor(private readonly props: TenantInvitationReconstituteProps) {
+    this._email = new EmailVO(props.email);
+    this._role = MemberRoleVO.fromString(props.role);
+  }
 
   static reconstitute(props: TenantInvitationReconstituteProps): TenantInvitationModel {
     return new TenantInvitationModel(props);
@@ -48,7 +57,7 @@ export class TenantInvitationModel {
   }
 
   emailMatches(email: string): boolean {
-    return this.props.email.toLowerCase() === email.toLowerCase();
+    return this._email.toString().toLowerCase() === email.toLowerCase();
   }
 
   get id(): string {
@@ -72,11 +81,11 @@ export class TenantInvitationModel {
   }
 
   get email(): string {
-    return this.props.email;
+    return this._email.toString();
   }
 
   get role(): string {
-    return this.props.role;
+    return this._role.toString();
   }
 
   get token(): string {

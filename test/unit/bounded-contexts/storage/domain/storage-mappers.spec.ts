@@ -76,6 +76,28 @@ describe('CustomRoomMapper', () => {
         const model = CustomRoomMapper.toDomain(entity);
         expect(model.description).toBeNull();
       });
+
+      it('Then address is null when the entity has no address', () => {
+        const entity = {
+          id: 4,
+          uuid: '019538a0-0000-7000-8000-000000000041',
+          tenantUUID: TENANT_UUID,
+          storageId: 4,
+          name: 'No Addr Room',
+          description: null,
+          icon: 'icon-1',
+          color: '#AABBCC',
+          roomType: 'Office',
+          address: null,
+          frozenAt: null,
+          archivedAt: null,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date('2024-01-01'),
+        } as unknown as CustomRoomEntity;
+
+        const model = CustomRoomMapper.toDomain(entity);
+        expect(model.address).toBeNull();
+      });
     });
   });
 
@@ -134,6 +156,20 @@ describe('CustomRoomMapper', () => {
 
         const entity = CustomRoomMapper.toEntity(model, 42);
         expect(entity.storageId).toBe(42);
+      });
+
+      it('Then address is null when the model has no address', () => {
+        const model = CustomRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000053',
+          tenantUUID: TENANT_UUID,
+          name: 'No Addr Room',
+          roomType: 'Office',
+          icon: 'icon-1',
+          color: '#AABBCC',
+        });
+
+        const entity = CustomRoomMapper.toEntity(model);
+        expect(entity.address).toBeNull();
       });
     });
   });
@@ -233,6 +269,44 @@ describe('StoreRoomMapper', () => {
 
         const entity = StoreRoomMapper.toEntity(model, 99);
         expect(entity.storageId).toBe(99);
+      });
+
+      it('Then address is null when the model has no address', () => {
+        const model = StoreRoomModel.create({
+          uuid: '019538a0-0000-7000-8000-000000000062',
+          tenantUUID: TENANT_UUID,
+          name: 'No Addr Bodega',
+          icon: 'icon-1',
+          color: '#AABBCC',
+        });
+
+        const entity = StoreRoomMapper.toEntity(model);
+        expect(entity.address).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a StoreRoomEntity without an address', () => {
+    describe('When toDomain is called', () => {
+      it('Then address is null on the model', () => {
+        const entity = {
+          id: 5,
+          uuid: '019538a0-0000-7000-8000-000000000063',
+          tenantUUID: TENANT_UUID,
+          storageId: 5,
+          name: 'No Addr Bodega',
+          description: null,
+          icon: 'store-icon',
+          color: '#334455',
+          address: null,
+          frozenAt: null,
+          archivedAt: null,
+          createdAt: new Date('2024-02-01'),
+          updatedAt: new Date('2024-02-02'),
+        } as unknown as StoreRoomEntity;
+
+        const model = StoreRoomMapper.toDomain(entity);
+        expect(model.address).toBeNull();
       });
     });
   });

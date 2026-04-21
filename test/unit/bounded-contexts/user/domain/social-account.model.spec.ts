@@ -18,8 +18,8 @@ describe('SocialAccountModel (account bounded context)', () => {
       it('Then providerEmail defaults to null when not provided', () => {
         const account = SocialAccountModel.create({
           accountId: 1,
-          provider: 'github',
-          providerId: 'gh-456',
+          provider: 'facebook',
+          providerId: 'fb-456',
         });
 
         expect(account.providerEmail).toBeNull();

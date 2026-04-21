@@ -135,6 +135,57 @@ describe('StorageItemViewMapper', () => {
       });
     });
   });
+
+  describe('Given a StoreRoomModel without an address', () => {
+    describe('When fromStoreRoom() is called', () => {
+      it('Then address is null in the view', () => {
+        const model = StoreRoomModel.reconstitute({
+          id: 2,
+          uuid: new UUIDVO(SR_UUID),
+          tenantUUID: TENANT_UUID,
+          name: new StorageNameVO('Main Store Room'),
+          description: null,
+          icon: new StorageIconVO('inventory_2'),
+          color: new StorageColorVO('#d97706'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-02-01'),
+          updatedAt: new Date('2024-02-01'),
+        });
+
+        const view = StorageItemViewMapper.fromStoreRoom(model);
+
+        expect(view.address).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a CustomRoomModel without an address', () => {
+    describe('When fromCustomRoom() is called', () => {
+      it('Then address is null in the view', () => {
+        const model = CustomRoomModel.reconstitute({
+          id: 3,
+          uuid: new UUIDVO(CR_UUID),
+          tenantUUID: TENANT_UUID,
+          name: StorageNameVO.create('Staff Break Room'),
+          description: null,
+          icon: StorageIconVO.create('coffee'),
+          color: StorageColorVO.create('#6b7280'),
+          roomType: RoomTypeNameVO.create('Break Room'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-03-01'),
+          updatedAt: new Date('2024-03-01'),
+        });
+
+        const view = StorageItemViewMapper.fromCustomRoom(model);
+
+        expect(view.address).toBeNull();
+      });
+    });
+  });
 });
 
 // ── StorageUpdateEventsPublisher ────────────────────────────────────────────────
@@ -279,6 +330,88 @@ describe('StorageUpdateEventsPublisher', () => {
     });
   });
 
+  describe('Given a store room whose address fields are equal before and after', () => {
+    describe('When publish() runs with address in fields', () => {
+      it('Then no StorageAddressChangedEvent is emitted', () => {
+        const before = makeStoreRoom();
+
+        publisher.publish({
+          uuid: SR_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after: before,
+          fields: { address: '456 Oak' },
+        });
+
+        const addressEvents = eventBus.publish.mock.calls.filter(
+          (c) => (c[0] as { constructor: { name: string } }).constructor.name === 'StorageAddressChangedEvent',
+        );
+        expect(addressEvents).toHaveLength(0);
+      });
+    });
+  });
+
+  describe('Given a custom room whose address goes from null to a new value', () => {
+    describe('When publish() runs', () => {
+      it('Then StorageAddressChangedEvent fires with previousValue null', () => {
+        const before = CustomRoomModel.reconstitute({
+          id: 3,
+          uuid: new UUIDVO(CR_UUID),
+          tenantUUID: TENANT_UUID,
+          name: StorageNameVO.create('Quiet Room'),
+          description: null,
+          icon: StorageIconVO.create('coffee'),
+          color: StorageColorVO.create('#6b7280'),
+          roomType: RoomTypeNameVO.create('Break Room'),
+          address: null,
+          archivedAt: null,
+          frozenAt: null,
+          createdAt: new Date('2024-03-01'),
+          updatedAt: new Date('2024-03-01'),
+        });
+        const after = before.update({ address: '500 Newly Set' });
+
+        publisher.publish({
+          uuid: CR_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after,
+          fields: { address: '500 Newly Set' },
+        });
+
+        const event = eventBus.publish.mock.calls[0][0] as StorageAddressChangedEvent;
+        expect(event).toBeInstanceOf(StorageAddressChangedEvent);
+        expect(event.previousValue).toBeNull();
+        expect(event.newValue).toBe('500 Newly Set');
+      });
+    });
+  });
+
+  describe('Given a custom room whose address is cleared from a value to null', () => {
+    describe('When publish() runs', () => {
+      it('Then StorageAddressChangedEvent fires with newValue null', () => {
+        const before = makeCustomRoom();
+        const after = before.update({ address: null });
+
+        publisher.publish({
+          uuid: CR_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          before,
+          after,
+          fields: { address: null },
+        });
+
+        const event = eventBus.publish.mock.calls[0][0] as StorageAddressChangedEvent;
+        expect(event).toBeInstanceOf(StorageAddressChangedEvent);
+        expect(event.previousValue).toBe('123 Main');
+        expect(event.newValue).toBeNull();
+      });
+    });
+  });
+
   describe('Given a custom room whose address, icon and color changed together', () => {
     describe('When publish() runs', () => {
       it('Then three events fire — one per changed field', () => {
@@ -368,6 +501,9 @@ describe('StorageTypeChangePolicy', () => {
       canCreateMoreWarehouses: jest.fn().mockReturnValue(true),
       canCreateMoreStoreRooms: jest.fn().mockReturnValue(true),
       canCreateMoreCustomRooms: jest.fn().mockReturnValue(true),
+      exceedsWarehouseLimit: jest.fn().mockReturnValue(false),
+      exceedsStoreRoomLimit: jest.fn().mockReturnValue(false),
+      exceedsCustomRoomLimit: jest.fn().mockReturnValue(false),
     };
     capabilitiesPort = { getCapabilities: jest.fn().mockResolvedValue(capabilities) };
     warehouseRepository = {
@@ -463,6 +599,106 @@ describe('StorageTypeChangePolicy', () => {
         capabilities.canCreateMoreCustomRooms.mockReturnValue(false);
 
         const result = await policy.assertCustomRoomCapacity(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(CustomRoomLimitReachedError);
+      });
+    });
+  });
+
+  // ── Restore-flow capacity guards ────────────────────────────────────────────
+  // Restore is a state flip: the archived item is already counted toward the
+  // tier limit (count() runs with withDeleted: true since Paso 4). Restoring
+  // does NOT increase the total, so being exactly at the limit must NOT block
+  // the recovery — only a strict overflow (count > max, possible after a
+  // downgrade) should block.
+
+  describe('Given the tenant has the warehouse count exactly equal to the tier limit', () => {
+    describe('When the policy is asked whether the tenant can restore an archived warehouse', () => {
+      it('Then it returns null because restoring does not increase the count beyond the limit', async () => {
+        capabilities.canCreateWarehouse.mockReturnValue(true);
+        capabilities.canCreateMoreWarehouses.mockReturnValue(false); // 5 < 5 → false (create-style guard)
+        warehouseRepository.count.mockResolvedValue(5);
+
+        const result = await policy.assertWarehouseCanRestore(TENANT_UUID);
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  describe('Given the tenant has the warehouse count strictly above the tier limit (post-downgrade overflow)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived warehouse', () => {
+      it('Then it returns WarehouseRequiresTierUpgradeError', async () => {
+        capabilities.canCreateWarehouse.mockReturnValue(true);
+        warehouseRepository.count.mockResolvedValue(7);
+        capabilities.exceedsWarehouseLimit = jest.fn().mockReturnValue(true);
+
+        const result = await policy.assertWarehouseCanRestore(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+      });
+    });
+  });
+
+  describe('Given the tenant tier does not allow warehouses at all (FREE)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived warehouse', () => {
+      it('Then it returns WarehouseRequiresTierUpgradeError before checking the count', async () => {
+        capabilities.canCreateWarehouse.mockReturnValue(false);
+
+        const result = await policy.assertWarehouseCanRestore(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(WarehouseRequiresTierUpgradeError);
+        expect(warehouseRepository.count).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Given the tenant has the store-room count exactly equal to the tier limit', () => {
+    describe('When the policy is asked whether the tenant can restore an archived store room', () => {
+      it('Then it returns null because restoring does not increase the count beyond the limit', async () => {
+        capabilities.canCreateMoreStoreRooms.mockReturnValue(false);
+        storeRoomRepository.count.mockResolvedValue(3);
+
+        const result = await policy.assertStoreRoomCanRestore(TENANT_UUID);
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  describe('Given the tenant has the store-room count strictly above the tier limit (post-downgrade overflow)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived store room', () => {
+      it('Then it returns StoreRoomLimitReachedError', async () => {
+        storeRoomRepository.count.mockResolvedValue(5);
+        capabilities.exceedsStoreRoomLimit = jest.fn().mockReturnValue(true);
+
+        const result = await policy.assertStoreRoomCanRestore(TENANT_UUID);
+
+        expect(result).toBeInstanceOf(StoreRoomLimitReachedError);
+      });
+    });
+  });
+
+  describe('Given the tenant has the custom-room count exactly equal to the tier limit', () => {
+    describe('When the policy is asked whether the tenant can restore an archived custom room', () => {
+      it('Then it returns null because restoring does not increase the count beyond the limit', async () => {
+        capabilities.canCreateMoreCustomRooms.mockReturnValue(false);
+        customRoomRepository.count.mockResolvedValue(3);
+
+        const result = await policy.assertCustomRoomCanRestore(TENANT_UUID);
+
+        expect(result).toBeNull();
+      });
+    });
+  });
+
+  describe('Given the tenant has the custom-room count strictly above the tier limit (post-downgrade overflow)', () => {
+    describe('When the policy is asked whether the tenant can restore an archived custom room', () => {
+      it('Then it returns CustomRoomLimitReachedError', async () => {
+        customRoomRepository.count.mockResolvedValue(5);
+        capabilities.exceedsCustomRoomLimit = jest.fn().mockReturnValue(true);
+
+        const result = await policy.assertCustomRoomCanRestore(TENANT_UUID);
 
         expect(result).toBeInstanceOf(CustomRoomLimitReachedError);
       });

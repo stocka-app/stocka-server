@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UsernameVO } from '@user/domain/value-objects/username.vo';
 
 export interface PersonalProfileReconstitueProps extends BaseModelProps {
   id: number;
@@ -16,7 +17,7 @@ export interface PersonalProfileReconstitueProps extends BaseModelProps {
 
 export class PersonalProfileModel extends BaseModel {
   private readonly _profileId: number;
-  private _username: string;
+  private _username: UsernameVO;
   private _displayName: string | null;
   private _avatarUrl: string | null;
   private _locale: string;
@@ -31,7 +32,7 @@ export class PersonalProfileModel extends BaseModel {
       archivedAt: props.archivedAt,
     });
     this._profileId = props.profileId;
-    this._username = props.username;
+    this._username = new UsernameVO(props.username);
     this._displayName = props.displayName;
     this._avatarUrl = props.avatarUrl;
     this._locale = props.locale;
@@ -70,7 +71,7 @@ export class PersonalProfileModel extends BaseModel {
   }
 
   get username(): string {
-    return this._username;
+    return this._username.getValue();
   }
 
   get displayName(): string | null {

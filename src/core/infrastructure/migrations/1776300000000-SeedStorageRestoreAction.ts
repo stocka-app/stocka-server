@@ -1,23 +1,15 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * H-07 Archivar instalación — STOC-400
+ * Adds STORAGE_RESTORE as a separate RBAC action and grants it to OWNER and
+ * PARTNER. Manager is intentionally excluded (read-only on the storage module).
  *
- * Adds STORAGE_RESTORE as a separate RBAC action (paralelo a STORAGE_UNFREEZE
- * de H-05). Grants it to OWNER and PARTNER. MANAGER intentionally excluded —
- * per EC-01 / H-04 / H-07, Manager is read-only on the storage module.
- *
- * STORAGE_DELETE already exists in the catalog (used historically for the
- * archive endpoint of H-05). H-07 reserves it for the upcoming permanent
- * delete flow (separate historia), so no new grant changes here.
- *
- * This migration complements the seed file changes in SeedCapabilities and
- * SeedRbacRoles. It exists because existing databases that already ran the
- * original seeds won't pick up the new action on seed re-run (TypeORM
- * tracks executed migrations and won't re-run them).
+ * Complements the seed files SeedCapabilities and SeedRbacRoles for databases
+ * that already ran the original seeds and won't pick up the new action on
+ * seed re-run (TypeORM tracks executed migrations and won't re-run them).
  */
-export class SeedH07RestoreAction1776300000000 implements MigrationInterface {
-  name = 'SeedH07RestoreAction1776300000000';
+export class SeedStorageRestoreAction1776300000000 implements MigrationInterface {
+  name = 'SeedStorageRestoreAction1776300000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Insert the new STORAGE_RESTORE action into the catalog.

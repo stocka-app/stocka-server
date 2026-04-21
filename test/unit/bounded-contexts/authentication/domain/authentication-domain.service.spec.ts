@@ -23,26 +23,6 @@ describe('AuthenticationDomainService', () => {
     });
   });
 
-  describe('Given generateRandomToken() is called', () => {
-    describe('When a token is generated', () => {
-      it('Then it returns a 64-character hex string (32 bytes)', () => {
-        const token = AuthenticationDomainService.generateRandomToken();
-
-        expect(token).toHaveLength(64);
-        expect(token).toMatch(/^[0-9a-f]{64}$/);
-      });
-    });
-
-    describe('When two tokens are generated', () => {
-      it('Then they are unique', () => {
-        const token1 = AuthenticationDomainService.generateRandomToken();
-        const token2 = AuthenticationDomainService.generateRandomToken();
-
-        expect(token1).not.toBe(token2);
-      });
-    });
-  });
-
   describe('Given a plain password and its hash', () => {
     describe('When comparePasswords() is called with the correct password', () => {
       it('Then it returns true', async () => {

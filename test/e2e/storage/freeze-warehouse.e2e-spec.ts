@@ -182,6 +182,30 @@ describe('POST /api/storages/warehouses/:uuid/freeze (E2E)', () => {
     });
   });
 
+  // ── F-WH-5b: freeze an archived warehouse ─────────────────────────────────
+
+  describe('Given a warehouse that has been archived', () => {
+    let archivedUUID: string;
+
+    beforeAll(async () => {
+      archivedUUID = await createWarehouse(app, ownerToken, 'Archived WH', 'Av. Archived 1');
+      await request(app.getHttpServer())
+        .delete(`/api/storages/warehouses/${archivedUUID}/archive`)
+        .set('Authorization', `Bearer ${ownerToken}`);
+    });
+
+    describe('When POST /api/storages/warehouses/:uuid/freeze is called', () => {
+      it('Then it returns 422 STORAGE_ARCHIVED_CANNOT_BE_FROZEN', async () => {
+        const res = await request(app.getHttpServer())
+          .post(`/api/storages/warehouses/${archivedUUID}/freeze`)
+          .set('Authorization', `Bearer ${ownerToken}`);
+
+        expect(res.status).toBe(HttpStatus.CONFLICT);
+        expect(res.body.error).toBe('STORAGE_ARCHIVED_CANNOT_BE_FROZEN');
+      });
+    });
+  });
+
   // ── F-WH-5 ──────────────────────────────────────────────────────────────────
 
   describe('Given a warehouse that has been frozen', () => {

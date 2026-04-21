@@ -10,7 +10,7 @@ import { SaveOnboardingStepInDto } from '@onboarding/infrastructure/http/control
 
 function buildUser(overrides: Partial<JwtPayload> = {}): JwtPayload {
   return {
-    uuid: 'user-uuid-123',
+    uuid: '019538a0-0000-7000-8000-000000000901',
     email: 'test@example.com',
     tenantId: null,
     role: null,
@@ -63,7 +63,7 @@ describe('SaveOnboardingStepController', () => {
       it('Then it calls updateLocale with the normalized locale', async () => {
         await controller.handle(buildDto(), buildUser(), 'en-US');
 
-        expect(mediator.user.updateLocale).toHaveBeenCalledWith('user-uuid-123', 'en');
+        expect(mediator.user.updateLocale).toHaveBeenCalledWith('019538a0-0000-7000-8000-000000000901', 'en');
       });
     });
 
@@ -77,7 +77,7 @@ describe('SaveOnboardingStepController', () => {
       it('Then it defaults to es locale', async () => {
         await controller.handle(buildDto(), buildUser(), undefined);
 
-        expect(mediator.user.updateLocale).toHaveBeenCalledWith('user-uuid-123', 'es');
+        expect(mediator.user.updateLocale).toHaveBeenCalledWith('019538a0-0000-7000-8000-000000000901', 'es');
       });
     });
 
@@ -91,7 +91,7 @@ describe('SaveOnboardingStepController', () => {
       it('Then it defaults to es locale for unsupported languages', async () => {
         await controller.handle(buildDto(), buildUser(), 'fr-FR');
 
-        expect(mediator.user.updateLocale).toHaveBeenCalledWith('user-uuid-123', 'es');
+        expect(mediator.user.updateLocale).toHaveBeenCalledWith('019538a0-0000-7000-8000-000000000901', 'es');
       });
     });
 

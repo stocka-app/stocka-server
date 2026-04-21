@@ -26,7 +26,7 @@ function buildCommand(
 ): AcceptInvitationCommand {
   return new AcceptInvitationCommand(
     overrides.token ?? 'invite-token-abc',
-    overrides.userUUID ?? 'user-uuid-456',
+    overrides.userUUID ?? '019538a0-0000-7000-8000-000000000902',
     overrides.userEmail ?? 'invitee@example.com',
   );
 }
@@ -56,8 +56,8 @@ function buildInvitation(
 }
 
 function buildUserAggregate(id?: number): UserAggregate {
-  if (id === undefined) return { uuid: 'user-uuid-456' } as unknown as UserAggregate;
-  return { id, uuid: 'user-uuid-456' } as unknown as UserAggregate;
+  if (id === undefined) return { uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
+  return { id, uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

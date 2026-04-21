@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { MemberRoleVO } from '@tenant/domain/value-objects/member-role.vo';
 import { MemberStatusVO } from '@tenant/domain/value-objects/member-status.vo';
 
@@ -27,7 +28,7 @@ export interface TenantMemberReconstituteProps extends BaseModelProps {
 export class TenantMemberModel extends BaseModel {
   private readonly _tenantId: number;
   private readonly _userId: number;
-  private readonly _userUUID: string;
+  private readonly _userUUID: UUIDVO;
   private _role: MemberRoleVO;
   private _status: MemberStatusVO;
   private readonly _invitedBy: number | null;
@@ -37,7 +38,7 @@ export class TenantMemberModel extends BaseModel {
     props: BaseModelProps & {
       tenantId: number;
       userId: number;
-      userUUID: string;
+      userUUID: UUIDVO;
       role: MemberRoleVO;
       status: MemberStatusVO;
       invitedBy: number | null;
@@ -58,7 +59,7 @@ export class TenantMemberModel extends BaseModel {
     return new TenantMemberModel({
       tenantId: props.tenantId,
       userId: props.userId,
-      userUUID: props.userUUID,
+      userUUID: new UUIDVO(props.userUUID),
       role: MemberRoleVO.fromString(props.role),
       status: MemberStatusVO.active(),
       invitedBy: null,
@@ -75,7 +76,7 @@ export class TenantMemberModel extends BaseModel {
       archivedAt: props.archivedAt,
       tenantId: props.tenantId,
       userId: props.userId,
-      userUUID: props.userUUID,
+      userUUID: new UUIDVO(props.userUUID),
       role: MemberRoleVO.fromString(props.role),
       status: MemberStatusVO.fromString(props.status),
       invitedBy: props.invitedBy,
@@ -92,7 +93,7 @@ export class TenantMemberModel extends BaseModel {
   }
 
   get userUUID(): string {
-    return this._userUUID;
+    return this._userUUID.toString();
   }
 
   get role(): MemberRoleVO {

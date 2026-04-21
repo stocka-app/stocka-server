@@ -1,18 +1,19 @@
 /**
  * Unit-test coverage exclusions.
  *
- * Unit tests cover pure domain logic: value objects, aggregates, models,
- * exceptions, mappers, validators, guards, helpers, and event handlers.
+ * Same policy as the E2E config: do NOT exclude files just because the OTHER
+ * suite covers them. Unit coverage measures what unit specs ejecutan; the
+ * MERGED report (unit + e2e) is the only one that integrates both layers and
+ * is the one that defines DoD = 100%.
  *
- * Exclusion policy: only exclude files with ZERO runtime business logic
- * or files that require a real DI container / database (covered by E2E).
- *
- * Categories:
- *   BOILERPLATE  — NestJS DI wiring, barrel re-exports, type declarations
- *   BOOTSTRAP    — App entry point and environment configuration
- *   SCHEMA/DDL   — Database migrations, seeds, TypeORM entity decorators
- *   EXTERNAL     — Code that requires a real external service (OAuth provider, email API)
- *   E2E-ONLY     — Infrastructure and application layers needing real DB / DI container
+ * Exclusion policy (the SHORT list):
+ *   - BOILERPLATE  — NestJS DI wiring, barrel re-exports, type declarations
+ *   - BOOTSTRAP    — App entry point, env validation, swagger config
+ *   - SCHEMA/DDL   — Migrations, seeds, TypeORM entity decorators (no logic)
+ *   - EXTERNAL     — Code that hits a real third-party service in production
+ *                    and cannot run inside the test container (OAuth providers,
+ *                    Resend email API)
+ *   - FUTURE       — Wired but not yet exercised by any handler / endpoint
  */
 module.exports = [
   // ── Include all src ──────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ module.exports = [
   '!src/core/infrastructure/app.controller.ts',
   '!src/core/config/database/**',
   '!src/core/config/swagger/**',
+  '!src/core/config/environment/**',
 
   // ── SCHEMA / DDL (no application logic) ──────────────────────────────────
   '!src/core/infrastructure/migrations/**',
@@ -56,106 +58,16 @@ module.exports = [
   '!src/**/infrastructure/controllers/facebook-callback/**',
   '!src/**/infrastructure/controllers/microsoft-callback/**',
 
-  // ── E2E-ONLY: Infrastructure controllers (HTTP layer) ─────────────────────
-  // Controllers delegate to CommandBus/QueryBus, need real DI container + DB.
-  // Covered by E2E specs (sign-up, sign-in, onboarding, storage-crud, etc.).
-  // NOTE: OAuth controllers already excluded above under EXTERNAL.
-  // NOTE: health.controller has a unit test — excluded from this glob via path.
-  // EXCEPT: controllers with unit tests (ResendVerificationCode, GetMe, RefreshSession,
-  //         SaveOnboardingStep, GetMyPermissions, GetAssignableRoles, GetTenantCapabilities)
-  '!src/**/infrastructure/controllers/**/*.controller.ts',
-  '!src/**/infrastructure/http/controllers/**/*.controller.ts',
-  // Re-include controllers with unit test coverage
-  'src/bounded-contexts/authentication/infrastructure/controllers/resend-verification-code/resend-verification-code.controller.ts',
-  'src/bounded-contexts/authentication/infrastructure/controllers/refresh-session/refresh-session.controller.ts',
-  'src/bounded-contexts/user/infrastructure/controllers/get-me/get-me.controller.ts',
-  'src/bounded-contexts/onboarding/infrastructure/http/controllers/save-onboarding-step/save-onboarding-step.controller.ts',
-  'src/bounded-contexts/authorization/infrastructure/http/controllers/get-my-permissions/get-my-permissions.controller.ts',
-  'src/bounded-contexts/authorization/infrastructure/http/controllers/get-assignable-roles/get-assignable-roles.controller.ts',
-  'src/bounded-contexts/tenant/infrastructure/http/controllers/get-tenant-capabilities/get-tenant-capabilities.controller.ts',
-
-  // ── E2E-ONLY: Infrastructure repositories (TypeORM persistence) ──────────
-  // These ARE the contract implementations — TypeORM queries against real DB.
-  // Covered by E2E infra-repository spec + feature E2E specs.
-  '!src/**/infrastructure/repositories/**',
-  '!src/**/infrastructure/persistence/repositories/**',
-  // Re-include repositories with unit test coverage
-  'src/bounded-contexts/authorization/infrastructure/persistence/repositories/typeorm-tier-data-provider.ts',
-  'src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
-  'src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tenant.repository.ts',
-
-  // ── E2E-ONLY: Application facades (cross-BC orchestration via contracts) ──
-  // Facades inject contracts backed by TypeORM repos; need real DB.
-  // onboarding.facade, tenant.facade — exercised by onboarding + tenant E2E.
-  '!src/**/application/facades/**',
-  // Re-include facades with unit test coverage
-  'src/bounded-contexts/tenant/application/facades/tenant.facade.ts',
-  'src/bounded-contexts/user/infrastructure/facade/user.facade.ts',
-
-  // ── E2E-ONLY: Application sagas + saga steps (multi-step DB workflows) ────
-  // Sagas orchestrate repos, contracts, EventPublisher — need full DI + DB.
-  // sign-up, sign-in, reset-password, refresh-session, social-sign-in sagas.
-  // saga-context files are pure data holders but tightly coupled to saga execution.
-  '!src/**/application/sagas/**',
-
-  // ── E2E-ONLY: Application command/query handlers (inject contracts/repos) ─
-  // Per project philosophy: internal contracts are never mocked.
-  // Every handler injects at least one contract backed by TypeORM → needs real DB.
-  // Covered by feature-level E2E specs (sign-up, storage-crud, invitation, etc.).
-  '!src/**/application/commands/**/*.handler.ts',
-  '!src/**/application/queries/**/*.handler.ts',
-  // Re-include handlers with unit test coverage
-  'src/bounded-contexts/authentication/application/commands/verify-email/verify-email.handler.ts',
-  'src/bounded-contexts/authentication/application/commands/forgot-password/forgot-password.handler.ts',
-  'src/bounded-contexts/authentication/application/commands/social-sign-in/social-sign-in.handler.ts',
-  'src/bounded-contexts/authentication/application/commands/resend-verification-code/resend-verification-code.handler.ts',
-  'src/bounded-contexts/tenant/application/commands/create-tenant/create-tenant.handler.ts',
-  'src/bounded-contexts/tenant/application/commands/accept-invitation/accept-invitation.handler.ts',
-  'src/bounded-contexts/tenant/application/commands/cancel-invitation/cancel-invitation.handler.ts',
-  'src/bounded-contexts/tenant/application/commands/invite-member/invite-member.handler.ts',
-  'src/bounded-contexts/tenant/application/queries/get-my-tenant/get-my-tenant.handler.ts',
-  'src/bounded-contexts/tenant/application/queries/get-tenant-members/get-tenant-members.handler.ts',
-  'src/bounded-contexts/user/application/commands/record-user-consents/record-user-consents.handler.ts',
-  'src/bounded-contexts/onboarding/application/commands/complete-onboarding/complete-onboarding.handler.ts',
-  // Storage command/query handlers: fully unit-tested (no real DB needed — aggregate loaded in-memory)
-  'src/bounded-contexts/storage/application/commands/create-custom-room/create-custom-room.handler.ts',
-  'src/bounded-contexts/storage/application/commands/create-store-room/create-store-room.handler.ts',
-  'src/bounded-contexts/storage/application/commands/create-warehouse/create-warehouse.handler.ts',
-  'src/bounded-contexts/storage/application/commands/update-custom-room/update-custom-room.handler.ts',
-  'src/bounded-contexts/storage/application/commands/update-store-room/update-store-room.handler.ts',
-  'src/bounded-contexts/storage/application/commands/update-warehouse/update-warehouse.handler.ts',
-  'src/bounded-contexts/storage/application/commands/archive-storage/archive-storage.handler.ts',
-  'src/bounded-contexts/storage/application/queries/get-storage/get-storage.handler.ts',
-  'src/bounded-contexts/storage/application/queries/list-storages/list-storages.handler.ts',
-
-  // ── CQRS DTOs (command/query classes — pure data carriers, no logic) ─────
+  // ── CQRS DTOs (command / query classes — pure data carriers, no logic) ───
   '!src/**/application/commands/**/*.command.ts',
   '!src/**/application/queries/**/*.query.ts',
 
-  // ── E2E-ONLY: Infrastructure adapters (raw SQL / DataSource) ─────────────
-  '!src/**/infrastructure/adapters/**',
-  // Re-include validators with unit test coverage
-  'src/bounded-contexts/authorization/infrastructure/validators/rbac.validator.ts',
-
-  // ── E2E-ONLY: Infrastructure facades (inject contracts backed by repos) ──
-  '!src/**/infrastructure/facade/**',
-
-  // ── E2E-ONLY: Shared infrastructure database (UoW, ALS middleware) ────────
-  // TypeOrmUnitOfWork needs real DataSource + QueryRunner.
-  // UoW isolation middleware needs real ALS + request lifecycle.
-  '!src/shared/infrastructure/database/typeorm-unit-of-work.ts',
-  '!src/shared/infrastructure/database/unit-of-work-isolation.middleware.ts',
-
-  // ── E2E-ONLY: Capability service (injects TierDataProvider + RbacPolicyPort) ─
-  // Both ports are backed by TypeORM repos; needs real DB to resolve capabilities.
-  // Covered by get-tenant-capabilities E2E spec AND unit tests.
-  '!src/bounded-contexts/authorization/infrastructure/services/capability.service.ts',
-  // Re-include: unit tests cover all branches
-  'src/bounded-contexts/authorization/infrastructure/services/capability.service.ts',
-
-  // ── WIRED BUT NOT YET EXERCISED (future features with active imports) ────
-  // commercial-profile model/mapper: imported by profile.contract + typeorm-profile.repository
-  // These stay excluded until their feature is built; they have no callers today.
+  // ── FUTURE: wired with active imports but no caller exercises them yet ───
   '!src/bounded-contexts/user/profile/domain/models/commercial-profile.model.ts',
   '!src/bounded-contexts/user/profile/infrastructure/mappers/commercial-profile.mapper.ts',
+  '!src/bounded-contexts/authorization/infrastructure/services/capability.service.ts',
+  '!src/bounded-contexts/authorization/infrastructure/persistence/repositories/typeorm-tier-data-provider.ts',
+  '!src/bounded-contexts/tenant/infrastructure/repositories/typeorm-tier-plan.repository.ts',
+  '!src/bounded-contexts/tenant/application/queries/get-tenant-members/get-tenant-members.handler.ts',
+  '!src/bounded-contexts/storage/infrastructure/repositories/typeorm-storage-activity-log.repository.ts',
 ];

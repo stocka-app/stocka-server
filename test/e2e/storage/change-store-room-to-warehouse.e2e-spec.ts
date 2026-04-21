@@ -32,7 +32,7 @@ async function completeOnboarding(app: INestApplication, token: string, tenantNa
 
 async function setTenantToStarter(dataSource: DataSource, tenantName: string): Promise<void> {
   await dataSource.query(
-    `UPDATE "tenants"."tenant_config" tc SET tier = 'STARTER', max_warehouses = 3, max_custom_rooms = 3, max_store_rooms = 3, max_users = 5 FROM "tenants"."tenants" t WHERE t.id = tc.tenant_id AND t.name = $1`,
+    `UPDATE "tenants"."tenant_config" tc SET tier = 'STARTER', max_warehouses = 10, max_custom_rooms = 10, max_store_rooms = 10, max_users = 5 FROM "tenants"."tenants" t WHERE t.id = tc.tenant_id AND t.name = $1`,
     [tenantName],
   );
 }
@@ -144,6 +144,23 @@ describe('PATCH /api/storages/store-rooms/:uuid/convert-to-warehouse (E2E — H-
         .patch(`/api/storages/store-rooms/${fakeUUID}/convert-to-warehouse`)
         .set('Authorization', `Bearer ${ownerToken}`);
       expect(res.status).toBe(HttpStatus.NOT_FOUND);
+    });
+  });
+
+  describe('Given a store room converts to warehouse with an explicit empty address', () => {
+    let uuid: string;
+
+    beforeAll(async () => {
+      uuid = await createStoreRoom(app, ownerToken, 'CvtSrToWh NoAddr');
+    });
+
+    it('Then it returns 400 STORAGE_ADDRESS_REQUIRED_FOR_WAREHOUSE', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/storages/store-rooms/${uuid}/convert-to-warehouse`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ address: '' });
+      expect(res.status).toBe(HttpStatus.BAD_REQUEST);
+      expect(res.body.error).toBe('STORAGE_ADDRESS_REQUIRED_FOR_WAREHOUSE');
     });
   });
 

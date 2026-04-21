@@ -26,7 +26,7 @@ export class TypeOrmStoreRoomRepository implements IStoreRoomRepository {
   }
 
   async count(tenantUUID: string): Promise<number> {
-    return this.repo.countBy({ tenantUUID });
+    return this.repo.count({ where: { tenantUUID }, withDeleted: true });
   }
 
   async findByUUID(uuid: string): Promise<StoreRoomModel | null> {

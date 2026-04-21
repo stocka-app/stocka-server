@@ -32,7 +32,7 @@ function buildCommand(
   overrides: Partial<CompleteOnboardingCommand> = {},
 ): CompleteOnboardingCommand {
   return {
-    userUUID: 'user-uuid-123',
+    userUUID: '019538a0-0000-7000-8000-000000000901',
     userEmail: 'test@example.com',
     ...overrides,
   } as CompleteOnboardingCommand;
@@ -46,7 +46,7 @@ function buildSession(overrides: {
 }): OnboardingSessionModel {
   return OnboardingSessionModel.reconstitute({
     id: 'session-uuid',
-    userUUID: 'user-uuid-123',
+    userUUID: '019538a0-0000-7000-8000-000000000901',
     path: overrides.path ?? null,
     currentStep: 1,
     stepData: overrides.stepData ?? {},
@@ -472,6 +472,93 @@ describe('CompleteOnboardingHandler', () => {
       });
     });
 
+    describe('When tenant creation succeeds and the user configured a minimal CUSTOM_ROOM space (no roomType, icon, color)', () => {
+      beforeEach(() => {
+        sessionContract.findByUserUUID.mockResolvedValue(
+          buildSession({
+            path: OnboardingPath.CREATE,
+            stepData: {
+              businessProfile: {
+                name: 'Test Biz',
+                businessType: 'retail',
+                country: 'MX',
+                timezone: 'America/Mexico_City',
+              },
+              spaces: {
+                spaces: [
+                  {
+                    type: 'CUSTOM_ROOM',
+                    name: 'Sala Comodín',
+                    address: 'Av. 1',
+                  },
+                ],
+              },
+            },
+          }),
+        );
+        commandBus.execute
+          .mockResolvedValueOnce(ok({ tenantId: 'tenant-uuid-min', name: 'Test Biz' }))
+          .mockResolvedValueOnce(ok({ storageUUID: 'custom-room-min-1' }));
+      });
+
+      it('Then the CreateCustomRoomCommand uses the General/box/indigo defaults', async () => {
+        const result = await handler.execute(buildCommand());
+
+        expect(result.isOk()).toBe(true);
+        const createCall = commandBus.execute.mock.calls[1][0] as Record<string, unknown> & {
+          constructor: { name: string };
+        };
+        expect(createCall.constructor.name).toBe('CreateCustomRoomCommand');
+        expect(createCall.roomType).toBe('General');
+        expect(createCall.icon).toBe('box');
+        expect(createCall.color).toBe('#6366F1');
+      });
+    });
+
+    describe('When tenant creation succeeds and the user configured a STORE_ROOM space', () => {
+      beforeEach(() => {
+        sessionContract.findByUserUUID.mockResolvedValue(
+          buildSession({
+            path: OnboardingPath.CREATE,
+            stepData: {
+              businessProfile: {
+                name: 'Test Biz',
+                businessType: 'retail',
+                country: 'MX',
+                timezone: 'America/Mexico_City',
+              },
+              spaces: {
+                spaces: [
+                  {
+                    type: 'STORE_ROOM',
+                    name: 'Bodega Sur',
+                    address: 'Calle 10',
+                  },
+                ],
+              },
+            },
+          }),
+        );
+        commandBus.execute
+          .mockResolvedValueOnce(ok({ tenantId: 'tenant-uuid-789', name: 'Test Biz' }))
+          .mockResolvedValueOnce(ok({ storageUUID: 'store-room-uuid-1' }));
+      });
+
+      it('Then it dispatches a CreateStoreRoomCommand with the trimmed name and address', async () => {
+        const result = await handler.execute(buildCommand());
+
+        expect(result.isOk()).toBe(true);
+        expect(commandBus.execute).toHaveBeenCalledTimes(2);
+
+        const createCall = commandBus.execute.mock.calls[1][0] as Record<string, unknown> & {
+          constructor: { name: string };
+        };
+        expect(createCall.constructor.name).toBe('CreateStoreRoomCommand');
+        expect(createCall.name).toBe('Bodega Sur');
+        expect(createCall.address).toBe('Calle 10');
+      });
+    });
+
     describe('When the spaces section contains malformed entries', () => {
       beforeEach(() => {
         sessionContract.findByUserUUID.mockResolvedValue(
@@ -629,7 +716,7 @@ describe('CompleteOnboardingHandler', () => {
         invitationContract.findByToken.mockResolvedValue(buildInvitation());
         (mediator.user.findByUUID as jest.Mock).mockResolvedValue({
           id: 42,
-          uuid: 'user-uuid-123',
+          uuid: '019538a0-0000-7000-8000-000000000901',
         });
       });
 

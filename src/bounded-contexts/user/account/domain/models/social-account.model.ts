@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { OAuthProviderVO } from '@user/domain/value-objects/oauth-provider.vo';
 
 export interface SocialAccountReconstitueProps extends BaseModelProps {
   id: number;
@@ -27,7 +28,7 @@ interface SocialAccountCtorProps extends BaseModelProps {
 
 export class SocialAccountModel extends BaseModel {
   private readonly _accountId: number;
-  private readonly _provider: string;
+  private readonly _provider: OAuthProviderVO;
   private readonly _providerId: string;
   private readonly _providerEmail: string | null;
   private readonly _linkedAt: Date;
@@ -35,7 +36,7 @@ export class SocialAccountModel extends BaseModel {
   private constructor(props: SocialAccountCtorProps) {
     super(props);
     this._accountId = props.accountId;
-    this._provider = props.provider;
+    this._provider = new OAuthProviderVO(props.provider);
     this._providerId = props.providerId;
     this._providerEmail = props.providerEmail;
     this._linkedAt = props.linkedAt;
@@ -68,7 +69,7 @@ export class SocialAccountModel extends BaseModel {
   }
 
   get provider(): string {
-    return this._provider;
+    return this._provider.toString();
   }
 
   get providerId(): string {

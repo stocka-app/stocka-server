@@ -2,9 +2,9 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
 import { ForgotPasswordCommand } from '@authentication/application/commands/forgot-password/forgot-password.command';
 import { ForgotPasswordResult } from '@authentication/application/types/authentication-result.types';
-import { AuthenticationDomainService } from '@authentication/domain/services/authentication-domain.service';
 import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
+import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -17,6 +17,8 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
     private readonly eventPublisher: EventPublisher,
     @Inject(INJECTION_TOKENS.PASSWORD_RESET_TOKEN_CONTRACT)
     private readonly passwordResetTokenContract: IPasswordResetTokenContract,
+    @Inject(INJECTION_TOKENS.CODE_GENERATOR_CONTRACT)
+    private readonly codeGenerator: ICodeGeneratorContract,
   ) {}
 
   async execute(command: ForgotPasswordCommand): Promise<ForgotPasswordResult> {
@@ -30,8 +32,8 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
 
     const { user, credential } = result;
 
-    const plainToken = AuthenticationDomainService.generateRandomToken();
-    const tokenHash = AuthenticationDomainService.hashToken(plainToken);
+    const plainToken = this.codeGenerator.generateSecureToken();
+    const tokenHash = this.codeGenerator.hashCode(plainToken);
 
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1);

@@ -1,5 +1,6 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
+import { PasswordHashVO } from '@shared/domain/value-objects/primitive/password-hash.vo';
 import {
   AccountStatusVO,
   AccountStatusEnum,
@@ -47,7 +48,7 @@ interface CredentialAccountCtorProps extends BaseModelProps {
 export class CredentialAccountModel extends BaseModel {
   private readonly _accountId: number;
   private _email: EmailVO;
-  private _passwordHash: string | null;
+  private _passwordHash: PasswordHashVO | null;
   private _status: AccountStatusVO;
   private _emailVerifiedAt: Date | null;
   private _verificationBlockedUntil: Date | null;
@@ -57,7 +58,7 @@ export class CredentialAccountModel extends BaseModel {
     super(props);
     this._accountId = props.accountId;
     this._email = new EmailVO(props.email);
-    this._passwordHash = props.passwordHash;
+    this._passwordHash = props.passwordHash ? new PasswordHashVO(props.passwordHash) : null;
     this._status = new AccountStatusVO(props.status);
     this._emailVerifiedAt = props.emailVerifiedAt;
     this._verificationBlockedUntil = props.verificationBlockedUntil;
@@ -116,7 +117,7 @@ export class CredentialAccountModel extends BaseModel {
   }
 
   get passwordHash(): string | null {
-    return this._passwordHash;
+    return this._passwordHash?.getValue() ?? null;
   }
 
   get status(): AccountStatusVO {
@@ -174,7 +175,7 @@ export class CredentialAccountModel extends BaseModel {
   }
 
   updatePasswordHash(hash: string): void {
-    this._passwordHash = hash;
+    this._passwordHash = new PasswordHashVO(hash);
     this.touch();
   }
 }

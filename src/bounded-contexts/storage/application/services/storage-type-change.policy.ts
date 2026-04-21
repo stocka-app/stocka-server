@@ -53,6 +53,35 @@ export class StorageTypeChangePolicy {
     return null;
   }
 
+  /**
+   * Restore-flow capacity guards. Restore is a state flip — the archived
+   * item is already counted toward the tier limit (count() runs with
+   * withDeleted: true). Restoring does NOT change the total, so being
+   * exactly at the limit must not block. Only a strict overflow
+   * (count > max, possible after a downgrade) blocks the restore.
+   */
+  async assertWarehouseCanRestore(tenantUUID: string): Promise<DomainException | null> {
+    const capabilities = await this.capabilitiesPort.getCapabilities(tenantUUID);
+    if (!capabilities.canCreateWarehouse()) return new WarehouseRequiresTierUpgradeError();
+    const count = await this.warehouseRepository.count(tenantUUID);
+    if (capabilities.exceedsWarehouseLimit(count)) return new WarehouseRequiresTierUpgradeError();
+    return null;
+  }
+
+  async assertStoreRoomCanRestore(tenantUUID: string): Promise<DomainException | null> {
+    const capabilities = await this.capabilitiesPort.getCapabilities(tenantUUID);
+    const count = await this.storeRoomRepository.count(tenantUUID);
+    if (capabilities.exceedsStoreRoomLimit(count)) return new StoreRoomLimitReachedError();
+    return null;
+  }
+
+  async assertCustomRoomCanRestore(tenantUUID: string): Promise<DomainException | null> {
+    const capabilities = await this.capabilitiesPort.getCapabilities(tenantUUID);
+    const count = await this.customRoomRepository.count(tenantUUID);
+    if (capabilities.exceedsCustomRoomLimit(count)) return new CustomRoomLimitReachedError();
+    return null;
+  }
+
   /** Address is mandatory when the destination type is WAREHOUSE. */
   assertAddressForWarehouse(address: string, storageUUID: string): DomainException | null {
     if (address.trim().length === 0) {

@@ -125,6 +125,49 @@ describe('TenantCapabilitiesAdapter', () => {
       it('Then canCreateMoreStoreRooms(9999) returns true', () => {
         expect(caps.canCreateMoreStoreRooms(9999)).toBe(true);
       });
+
+      it('Then exceedsWarehouseLimit(9999) returns false', () => {
+        expect(caps.exceedsWarehouseLimit(9999)).toBe(false);
+      });
+
+      it('Then exceedsStoreRoomLimit(9999) returns false', () => {
+        expect(caps.exceedsStoreRoomLimit(9999)).toBe(false);
+      });
+
+      it('Then exceedsCustomRoomLimit(9999) returns false', () => {
+        expect(caps.exceedsCustomRoomLimit(9999)).toBe(false);
+      });
+    });
+  });
+
+  describe('Given a tenant on STARTER tier evaluating overflow predicates', () => {
+    let caps: Awaited<ReturnType<TenantCapabilitiesAdapter['getCapabilities']>>;
+
+    beforeEach(async () => {
+      const adapter = new TenantCapabilitiesAdapter(
+        makeMediator({
+          tier: 'STARTER',
+          maxWarehouses: 3,
+          maxCustomRooms: 5,
+          maxStoreRooms: 5,
+        }),
+      );
+      caps = await adapter.getCapabilities(TENANT_UUID);
+    });
+
+    it('Then exceedsWarehouseLimit returns false at the limit and true above it', () => {
+      expect(caps.exceedsWarehouseLimit(3)).toBe(false);
+      expect(caps.exceedsWarehouseLimit(4)).toBe(true);
+    });
+
+    it('Then exceedsStoreRoomLimit returns false at the limit and true above it', () => {
+      expect(caps.exceedsStoreRoomLimit(5)).toBe(false);
+      expect(caps.exceedsStoreRoomLimit(6)).toBe(true);
+    });
+
+    it('Then exceedsCustomRoomLimit returns false at the limit and true above it', () => {
+      expect(caps.exceedsCustomRoomLimit(5)).toBe(false);
+      expect(caps.exceedsCustomRoomLimit(6)).toBe(true);
     });
   });
 });
