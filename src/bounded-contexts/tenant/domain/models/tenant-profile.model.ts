@@ -1,4 +1,13 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
+import { PhoneVO } from '@shared/domain/value-objects/phone.vo';
+import { GiroVO } from '@tenant/domain/value-objects/giro.vo';
+import { WebsiteVO } from '@tenant/domain/value-objects/website.vo';
+import { AddressLineVO } from '@tenant/domain/value-objects/address-line.vo';
+import { CityVO } from '@tenant/domain/value-objects/city.vo';
+import { StateVO } from '@tenant/domain/value-objects/state.vo';
+import { PostalCodeVO } from '@tenant/domain/value-objects/postal-code.vo';
+import { LogoUrlVO } from '@tenant/domain/value-objects/logo-url.vo';
 
 export interface TenantProfileReconstituteProps extends BaseModelProps {
   id: number;
@@ -20,15 +29,15 @@ export interface TenantProfileReconstituteProps extends BaseModelProps {
 
 export class TenantProfileModel extends BaseModel {
   private readonly _tenantId: number;
-  private _giro: string | null;
-  private _phone: string | null;
-  private _contactEmail: string | null;
-  private _website: string | null;
-  private _addressLine1: string | null;
-  private _city: string | null;
-  private _state: string | null;
-  private _postalCode: string | null;
-  private _logoUrl: string | null;
+  private _giro: GiroVO | null;
+  private _phone: PhoneVO | null;
+  private _contactEmail: EmailVO | null;
+  private _website: WebsiteVO | null;
+  private _addressLine1: AddressLineVO | null;
+  private _city: CityVO | null;
+  private _state: StateVO | null;
+  private _postalCode: PostalCodeVO | null;
+  private _logoUrl: LogoUrlVO | null;
 
   private constructor(
     props: BaseModelProps & {
@@ -46,15 +55,16 @@ export class TenantProfileModel extends BaseModel {
   ) {
     super(props);
     this._tenantId = props.tenantId;
-    this._giro = props.giro;
-    this._phone = props.phone;
-    this._contactEmail = props.contactEmail;
-    this._website = props.website;
-    this._addressLine1 = props.addressLine1;
-    this._city = props.city;
-    this._state = props.state;
-    this._postalCode = props.postalCode;
-    this._logoUrl = props.logoUrl;
+    this._giro = props.giro !== null ? GiroVO.create(props.giro) : null;
+    this._phone = props.phone !== null ? PhoneVO.create(props.phone) : null;
+    this._contactEmail = props.contactEmail !== null ? new EmailVO(props.contactEmail) : null;
+    this._website = props.website !== null ? WebsiteVO.create(props.website) : null;
+    this._addressLine1 =
+      props.addressLine1 !== null ? AddressLineVO.create(props.addressLine1) : null;
+    this._city = props.city !== null ? CityVO.create(props.city) : null;
+    this._state = props.state !== null ? StateVO.create(props.state) : null;
+    this._postalCode = props.postalCode !== null ? PostalCodeVO.create(props.postalCode) : null;
+    this._logoUrl = props.logoUrl !== null ? LogoUrlVO.create(props.logoUrl) : null;
   }
 
   static createEmpty(tenantId: number): TenantProfileModel {
@@ -96,39 +106,39 @@ export class TenantProfileModel extends BaseModel {
     return this._tenantId;
   }
 
-  get giro(): string | null {
+  get giro(): GiroVO | null {
     return this._giro;
   }
 
-  get phone(): string | null {
+  get phone(): PhoneVO | null {
     return this._phone;
   }
 
-  get contactEmail(): string | null {
+  get contactEmail(): EmailVO | null {
     return this._contactEmail;
   }
 
-  get website(): string | null {
+  get website(): WebsiteVO | null {
     return this._website;
   }
 
-  get addressLine1(): string | null {
+  get addressLine1(): AddressLineVO | null {
     return this._addressLine1;
   }
 
-  get city(): string | null {
+  get city(): CityVO | null {
     return this._city;
   }
 
-  get state(): string | null {
+  get state(): StateVO | null {
     return this._state;
   }
 
-  get postalCode(): string | null {
+  get postalCode(): PostalCodeVO | null {
     return this._postalCode;
   }
 
-  get logoUrl(): string | null {
+  get logoUrl(): LogoUrlVO | null {
     return this._logoUrl;
   }
 }

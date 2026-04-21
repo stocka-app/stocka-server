@@ -2,6 +2,9 @@ import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate
 import { SlugVO } from '@tenant/domain/value-objects/slug.vo';
 import { BusinessTypeVO } from '@tenant/domain/value-objects/business-type.vo';
 import { TenantStatusVO } from '@tenant/domain/value-objects/tenant-status.vo';
+import { TenantNameVO } from '@tenant/domain/value-objects/tenant-name.vo';
+import { CountryVO } from '@tenant/domain/value-objects/country.vo';
+import { TimezoneVO } from '@shared/domain/value-objects/timezone.vo';
 import { TenantCreatedEvent } from '@tenant/domain/events/tenant-created.event';
 
 export interface CreateTenantProps {
@@ -29,21 +32,21 @@ export interface TenantAggregateReconstituteProps extends AggregateRootProps {
 }
 
 export class TenantAggregate extends AggregateRoot {
-  private _name: string;
+  private _name: TenantNameVO;
   private readonly _slug: SlugVO;
   private readonly _businessType: BusinessTypeVO;
-  private readonly _country: string;
-  private readonly _timezone: string;
+  private readonly _country: CountryVO;
+  private readonly _timezone: TimezoneVO;
   private _status: TenantStatusVO;
   private readonly _ownerUserId: number;
 
   private constructor(
     props: AggregateRootProps & {
-      name: string;
+      name: TenantNameVO;
       slug: SlugVO;
       businessType: BusinessTypeVO;
-      country: string;
-      timezone: string;
+      country: CountryVO;
+      timezone: TimezoneVO;
       status: TenantStatusVO;
       ownerUserId: number;
     },
@@ -59,12 +62,16 @@ export class TenantAggregate extends AggregateRoot {
   }
 
   static create(props: CreateTenantProps): TenantAggregate {
+    const nameVO = TenantNameVO.create(props.name);
+    const countryVO = CountryVO.create(props.country);
+    const timezoneVO = TimezoneVO.create(props.timezone);
+
     const aggregate = new TenantAggregate({
-      name: props.name,
+      name: nameVO,
       slug: props.slug,
       businessType: props.businessType,
-      country: props.country,
-      timezone: props.timezone,
+      country: countryVO,
+      timezone: timezoneVO,
       status: TenantStatusVO.active(),
       ownerUserId: props.ownerUserId,
     });
@@ -73,7 +80,7 @@ export class TenantAggregate extends AggregateRoot {
       new TenantCreatedEvent(
         aggregate.uuid,
         String(props.ownerUserId),
-        props.name,
+        nameVO.getValue(),
         props.slug.toString(),
       ),
     );
@@ -88,17 +95,17 @@ export class TenantAggregate extends AggregateRoot {
       createdAt: props.createdAt,
       updatedAt: props.updatedAt,
       archivedAt: props.archivedAt,
-      name: props.name,
+      name: new TenantNameVO(props.name),
       slug: SlugVO.fromString(props.slug),
       businessType: BusinessTypeVO.fromString(props.businessType),
-      country: props.country,
-      timezone: props.timezone,
+      country: new CountryVO(props.country),
+      timezone: new TimezoneVO(props.timezone),
       status: TenantStatusVO.fromString(props.status),
       ownerUserId: props.ownerUserId,
     });
   }
 
-  get name(): string {
+  get name(): TenantNameVO {
     return this._name;
   }
 
@@ -110,11 +117,11 @@ export class TenantAggregate extends AggregateRoot {
     return this._businessType.toString();
   }
 
-  get country(): string {
+  get country(): CountryVO {
     return this._country;
   }
 
-  get timezone(): string {
+  get timezone(): TimezoneVO {
     return this._timezone;
   }
 
@@ -127,7 +134,7 @@ export class TenantAggregate extends AggregateRoot {
   }
 
   updateName(name: string): void {
-    this._name = name;
+    this._name = TenantNameVO.create(name);
     this.touch();
   }
 

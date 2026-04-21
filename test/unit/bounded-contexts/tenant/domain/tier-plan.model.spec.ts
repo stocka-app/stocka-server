@@ -26,7 +26,7 @@ describe('TierPlanModel', () => {
       });
 
       it('Then the name is Free', () => {
-        expect(model.name).toBe('Free');
+        expect(model.name.getValue()).toBe('Free');
       });
 
       it('Then the limits are set to free-tier values', () => {
@@ -130,7 +130,7 @@ describe('TierPlanModel', () => {
         });
 
         expect(model.tier).toBe(TierEnum.STARTER);
-        expect(model.name).toBe('Starter');
+        expect(model.name.getValue()).toBe('Starter');
         expect(model.maxProducts).toBe(1000);
         expect(model.maxUsers).toBe(5);
         expect(model.maxWarehouses).toBe(3);

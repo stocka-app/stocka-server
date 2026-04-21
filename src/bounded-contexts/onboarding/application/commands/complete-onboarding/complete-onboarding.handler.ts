@@ -228,7 +228,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     return ok({
       path: OnboardingPath.JOIN,
       tenantId: invitation.tenantUUID,
-      tenantName: invitation.tenantName,
+      tenantName: invitation.tenantName.getValue(),
       role: invitation.role,
     });
   }

@@ -184,7 +184,7 @@ describe('TenantInvitationModel', () => {
 
         expect(invitation.invitedBy).toBe(7);
         expect(invitation.email).toBe('user@empresa.mx');
-        expect(invitation.token).toBe('tok-abc123');
+        expect(invitation.token.getValue()).toBe('tok-abc123');
         expect(invitation.acceptedAt).toEqual(acceptedAt);
         expect(invitation.expiresAt).toEqual(expiresAt);
       });

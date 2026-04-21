@@ -37,10 +37,10 @@ describe('TenantMapper', () => {
         const aggregate = TenantMapper.toDomain(entity as TenantEntity);
         expect(aggregate.id).toBe(1);
         expect(aggregate.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
-        expect(aggregate.name).toBe('Mi Tienda');
+        expect(aggregate.name.getValue()).toBe('Mi Tienda');
         expect(aggregate.slug).toBe('mi-tienda');
         expect(aggregate.businessType).toBe('retail');
-        expect(aggregate.country).toBe('MX');
+        expect(aggregate.country.getValue()).toBe('MX');
         expect(aggregate.ownerUserId).toBe(42);
       });
     });
@@ -153,9 +153,9 @@ describe('TenantProfileMapper', () => {
         const model = TenantProfileMapper.toDomain(entity as TenantProfileEntity);
         expect(model.id).toBe(5);
         expect(model.tenantId).toBe(1);
-        expect(model.giro).toBe('Tech');
-        expect(model.phone).toBe('+521234567890');
-        expect(model.city).toBe('CDMX');
+        expect(model.giro!.getValue()).toBe('Tech');
+        expect(model.phone!.getValue()).toBe('+521234567890');
+        expect(model.city!.getValue()).toBe('CDMX');
       });
     });
   });
@@ -259,7 +259,7 @@ describe('TierPlanMapper', () => {
         const model = TierPlanMapper.toDomain(entity);
 
         expect(model.tier).toBe('STARTER');
-        expect(model.name).toBe('Básico');
+        expect(model.name.getValue()).toBe('Básico');
         expect(model.maxProducts).toBe(1000);
         expect(model.maxUsers).toBe(5);
         expect(model.maxWarehouses).toBe(3);

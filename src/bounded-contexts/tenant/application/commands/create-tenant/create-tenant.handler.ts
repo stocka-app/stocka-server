@@ -91,6 +91,6 @@ export class CreateTenantHandler implements ICommandHandler<CreateTenantCommand>
     this.eventPublisher.mergeObjectContext(savedTenant);
     savedTenant.commit();
 
-    return ok({ tenantId: savedTenant.uuid, name: savedTenant.name });
+    return ok({ tenantId: savedTenant.uuid, name: savedTenant.name.getValue() });
   }
 }

@@ -1,4 +1,5 @@
 import { TierEnum } from '@authorization/domain/enums/tier.enum';
+import { TierPlanNameVO } from '@tenant/domain/value-objects/tier-plan-name.vo';
 
 export interface TierPlanReconstituteProps {
   tier: string;
@@ -15,7 +16,7 @@ export interface TierPlanReconstituteProps {
 
 export class TierPlanModel {
   private readonly _tier: TierEnum;
-  private readonly _name: string;
+  private readonly _name: TierPlanNameVO;
   private readonly _maxProducts: number | null;
   private readonly _maxUsers: number | null;
   private readonly _maxWarehouses: number | null;
@@ -27,7 +28,7 @@ export class TierPlanModel {
 
   private constructor(props: {
     tier: TierEnum;
-    name: string;
+    name: TierPlanNameVO;
     maxProducts: number | null;
     maxUsers: number | null;
     maxWarehouses: number | null;
@@ -57,7 +58,7 @@ export class TierPlanModel {
 
     return new TierPlanModel({
       tier: tierValue,
-      name: props.name,
+      name: new TierPlanNameVO(props.name),
       maxProducts: props.maxProducts,
       maxUsers: props.maxUsers,
       maxWarehouses: props.maxWarehouses,
@@ -73,7 +74,7 @@ export class TierPlanModel {
     return this._tier;
   }
 
-  get name(): string {
+  get name(): TierPlanNameVO {
     return this._name;
   }
 

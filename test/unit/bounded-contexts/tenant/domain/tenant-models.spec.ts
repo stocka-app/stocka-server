@@ -135,15 +135,15 @@ describe('TenantProfileModel', () => {
 
         expect(profile.id).toBe(5);
         expect(profile.tenantId).toBe(1);
-        expect(profile.giro).toBe('Tecnologia');
-        expect(profile.phone).toBe('+5215512345678');
-        expect(profile.contactEmail).toBe('contacto@tienda.com');
-        expect(profile.website).toBe('https://tienda.com');
-        expect(profile.addressLine1).toBe('Calle 123');
-        expect(profile.city).toBe('CDMX');
-        expect(profile.state).toBe('CDMX');
-        expect(profile.postalCode).toBe('06600');
-        expect(profile.logoUrl).toBe('https://cdn.example.com/logo.png');
+        expect(profile.giro!.getValue()).toBe('Tecnologia');
+        expect(profile.phone!.getValue()).toBe('+5215512345678');
+        expect(profile.contactEmail!.toString()).toBe('contacto@tienda.com');
+        expect(profile.website!.getValue()).toBe('https://tienda.com');
+        expect(profile.addressLine1!.getValue()).toBe('Calle 123');
+        expect(profile.city!.getValue()).toBe('CDMX');
+        expect(profile.state!.getValue()).toBe('CDMX');
+        expect(profile.postalCode!.getValue()).toBe('06600');
+        expect(profile.logoUrl!.getValue()).toBe('https://cdn.example.com/logo.png');
       });
     });
   });

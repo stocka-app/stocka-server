@@ -20,7 +20,7 @@ export class GetInvitationByTokenOutDto {
   static fromModel(model: TenantInvitationModel): GetInvitationByTokenOutDto {
     const dto = new GetInvitationByTokenOutDto();
     dto.id = model.id;
-    dto.tenantName = model.tenantName;
+    dto.tenantName = model.tenantName.getValue();
     dto.email = model.email;
     dto.role = model.role;
     dto.expiresAt = model.expiresAt;

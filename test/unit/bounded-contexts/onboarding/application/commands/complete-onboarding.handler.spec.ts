@@ -68,7 +68,7 @@ function buildInvitation(
     id: 'invitation-uuid',
     tenantId: 1,
     tenantUUID: 'tenant-uuid-456',
-    tenantName: 'Test Tenant',
+    tenantName: { getValue: () => 'Test Tenant' },
     email: 'test@example.com',
     role: 'VIEWER',
     isAlreadyAccepted: jest.fn().mockReturnValue(overrides.isAlreadyAccepted ?? false),

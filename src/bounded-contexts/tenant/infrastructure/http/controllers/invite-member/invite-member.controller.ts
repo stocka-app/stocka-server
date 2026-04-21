@@ -48,7 +48,7 @@ export class InviteMemberController {
     const command = new InviteMemberCommand(
       member.tenantId,
       tenant.uuid,
-      tenant.name,
+      tenant.name.getValue(),
       member.userId,
       member.role.toString(),
       dto.email,

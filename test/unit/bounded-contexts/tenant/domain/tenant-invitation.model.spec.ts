@@ -23,11 +23,11 @@ describe('TenantInvitationModel', () => {
         expect(model.id).toBe(BASE_PROPS.id);
         expect(model.tenantId).toBe(BASE_PROPS.tenantId);
         expect(model.tenantUUID).toBe(BASE_PROPS.tenantUUID);
-        expect(model.tenantName).toBe(BASE_PROPS.tenantName);
+        expect(model.tenantName.getValue()).toBe(BASE_PROPS.tenantName);
         expect(model.invitedBy).toBe(BASE_PROPS.invitedBy);
         expect(model.email).toBe(BASE_PROPS.email);
         expect(model.role).toBe(BASE_PROPS.role);
-        expect(model.token).toBe(BASE_PROPS.token);
+        expect(model.token.getValue()).toBe(BASE_PROPS.token);
         expect(model.acceptedAt).toBeNull();
         expect(model.expiresAt).toBe(BASE_PROPS.expiresAt);
         expect(model.createdAt).toBe(BASE_PROPS.createdAt);

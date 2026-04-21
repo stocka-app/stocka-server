@@ -46,7 +46,7 @@ function buildInvitation(
     id: 1,
     tenantId: overrides.tenantId ?? 10,
     tenantUUID: overrides.tenantUUID ?? 'tenant-uuid-xyz',
-    tenantName: overrides.tenantName ?? 'Test Biz',
+    tenantName: { getValue: () => overrides.tenantName ?? 'Test Biz' },
     role: overrides.role ?? 'VIEWER',
     email: 'invitee@example.com',
     isAlreadyAccepted: jest.fn().mockReturnValue(overrides.isAlreadyAccepted ?? false),
