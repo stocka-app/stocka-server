@@ -79,7 +79,7 @@ describe('OnboardingSessionModel', () => {
         session.saveProgress('path', { path: 'CREATE' }, 0);
         session.saveProgress('businessProfile', { name: 'Mi Tienda' }, 3);
 
-        expect(session.currentStep).toBe(3);
+        expect(session.currentStep.getValue()).toBe(3);
       });
     });
 
@@ -89,7 +89,7 @@ describe('OnboardingSessionModel', () => {
         session.saveProgress('path', { path: 'CREATE' }, 3);
         session.saveProgress('consents', { acceptedTyC: true }, 1);
 
-        expect(session.currentStep).toBe(3);
+        expect(session.currentStep.getValue()).toBe(3);
       });
     });
   });
@@ -152,7 +152,7 @@ describe('OnboardingSessionModel', () => {
         session.saveProgress('path', { path: 'JOIN', invitationCode: 'INV-ABC123' });
 
         expect(session.path).toBe(OnboardingPath.JOIN);
-        expect(session.invitationCode).toBe('INV-ABC123');
+        expect(session.invitationCode?.getValue()).toBe('INV-ABC123');
       });
     });
   });

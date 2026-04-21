@@ -25,7 +25,7 @@ export class StartOnboardingController {
     return result.match(
       (session) => ({
         status: session.status,
-        currentStep: session.currentStep,
+        currentStep: session.currentStep.getValue(),
         path: session.path,
         stepData: session.stepData,
       }),

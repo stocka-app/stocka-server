@@ -33,7 +33,7 @@ describe('OnboardingSessionMapper', () => {
           expect(model.id).toBe('session-uuid-1');
           expect(model.path).toBe(OnboardingPath.CREATE);
           expect(model.status).toBe(OnboardingStatus.COMPLETED);
-          expect(model.currentStep).toBe(2);
+          expect(model.currentStep.getValue()).toBe(2);
           expect(model.createdAt).toEqual(new Date('2024-01-01T00:00:00Z'));
         });
       });
@@ -53,7 +53,7 @@ describe('OnboardingSessionMapper', () => {
 
           expect(model.path).toBe(OnboardingPath.JOIN);
           expect(model.status).toBe(OnboardingStatus.IN_PROGRESS);
-          expect(model.invitationCode).toBe('abc123');
+          expect(model.invitationCode?.getValue()).toBe('abc123');
         });
       });
     });

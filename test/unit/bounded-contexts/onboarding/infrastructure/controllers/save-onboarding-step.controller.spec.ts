@@ -50,7 +50,7 @@ describe('SaveOnboardingStepController', () => {
     describe('When the command succeeds', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
       });
 
@@ -73,7 +73,7 @@ describe('SaveOnboardingStepController', () => {
     describe('When the accept-language header is absent', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
       });
 
@@ -90,7 +90,7 @@ describe('SaveOnboardingStepController', () => {
     describe('When the accept-language header is a non-en language', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
       });
 
@@ -107,7 +107,7 @@ describe('SaveOnboardingStepController', () => {
     describe('When updateLocale rejects', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
         (mediator.user.updateLocale as jest.Mock).mockRejectedValue(
           new Error('locale update failed'),
