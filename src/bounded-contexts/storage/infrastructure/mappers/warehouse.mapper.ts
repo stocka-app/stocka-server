@@ -12,7 +12,7 @@ export class WarehouseMapper {
     return WarehouseModel.reconstitute({
       id: entity.id,
       uuid: new UUIDVO(entity.uuid),
-      tenantUUID: entity.tenantUUID,
+      tenantUUID: new UUIDVO(entity.tenantUUID),
       name: new StorageNameVO(entity.name),
       description: entity.description ? new StorageDescriptionVO(entity.description) : null,
       icon: new StorageIconVO(entity.icon),
@@ -29,7 +29,7 @@ export class WarehouseMapper {
     const entity: Partial<WarehouseEntity> = {
       id: model.id,
       uuid: model.uuid.toString(),
-      tenantUUID: model.tenantUUID,
+      tenantUUID: model.tenantUUID.toString(),
       name: model.name.toString(),
       description: model.description?.toString() ?? null,
       icon: model.icon.toString(),

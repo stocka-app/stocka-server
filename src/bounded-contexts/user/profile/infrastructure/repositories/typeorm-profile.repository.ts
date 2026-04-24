@@ -96,13 +96,15 @@ export class TypeOrmProfileRepository implements IProfileContract {
     });
 
     if (existing) {
-      existing.providerDisplayName = model.providerDisplayName;
-      existing.providerAvatarUrl = model.providerAvatarUrl;
-      existing.givenName = model.givenName;
-      existing.familyName = model.familyName;
+      existing.providerDisplayName =
+        model.providerDisplayName !== null ? model.providerDisplayName.getValue() : null;
+      existing.providerAvatarUrl =
+        model.providerAvatarUrl !== null ? model.providerAvatarUrl.getValue() : null;
+      existing.givenName = model.givenName !== null ? model.givenName.getValue() : null;
+      existing.familyName = model.familyName !== null ? model.familyName.getValue() : null;
       existing.locale = model.locale;
       existing.emailVerified = model.emailVerified;
-      existing.jobTitle = model.jobTitle;
+      existing.jobTitle = model.jobTitle !== null ? model.jobTitle.getValue() : null;
       existing.rawData = model.rawData;
       existing.syncedAt = new Date();
       const savedEntity = await repo.save(existing);

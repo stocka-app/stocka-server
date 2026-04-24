@@ -33,11 +33,11 @@ export class GetMyTenantOutDto {
   ): GetMyTenantOutDto {
     const dto = new GetMyTenantOutDto();
     dto.uuid = tenant.uuid;
-    dto.name = tenant.name;
+    dto.name = tenant.name.getValue();
     dto.slug = tenant.slug;
     dto.businessType = tenant.businessType;
-    dto.country = tenant.country;
-    dto.timezone = tenant.timezone;
+    dto.country = tenant.country.getValue();
+    dto.timezone = tenant.timezone.getValue();
     dto.status = tenant.status;
     dto.tier = config ? config.tier.toString() : 'FREE';
     return dto;

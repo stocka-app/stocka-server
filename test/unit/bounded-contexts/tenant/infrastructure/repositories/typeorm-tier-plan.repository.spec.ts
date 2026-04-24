@@ -68,7 +68,7 @@ describe('TypeOrmTierPlanRepository', () => {
 
         expect(result).not.toBeNull();
         expect(result?.tier).toBe(TierEnum.STARTER);
-        expect(result?.name).toBe('Starter');
+        expect(result?.name.getValue()).toBe('Starter');
         expect(result?.maxProducts).toBe(1000);
       });
     });

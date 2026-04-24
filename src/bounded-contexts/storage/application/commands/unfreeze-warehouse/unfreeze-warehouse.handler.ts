@@ -27,7 +27,7 @@ export class UnfreezeWarehouseHandler implements ICommandHandler<UnfreezeWarehou
   async execute(command: UnfreezeWarehouseCommand): Promise<UnfreezeWarehouseResult> {
     const warehouse = await this.warehouseRepository.findByUUID(command.storageUUID);
 
-    if (!warehouse || warehouse.tenantUUID !== command.tenantUUID) {
+    if (!warehouse || warehouse.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (!warehouse.isFrozen()) return err(new StorageNotFrozenError(command.storageUUID));

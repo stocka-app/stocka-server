@@ -24,7 +24,9 @@ export class StorageOutDto {
   @ApiProperty({ description: 'Color hex code' })
   color!: string;
 
-  @ApiPropertyOptional({ description: 'Address (null for STORE_ROOM / CUSTOM_ROOM when not provided)' })
+  @ApiPropertyOptional({
+    description: 'Address (null for STORE_ROOM / CUSTOM_ROOM when not provided)',
+  })
   address!: string | null;
 
   @ApiPropertyOptional({ description: 'Room type (for CUSTOM_ROOM)' })

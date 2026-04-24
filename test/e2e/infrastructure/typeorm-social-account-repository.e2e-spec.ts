@@ -78,11 +78,11 @@ describe('TypeOrmSocialAccountRepository (e2e)', () => {
         });
         const saved = await socialAccountRepo.persist(socialAccount);
         expect(saved.provider).toBe('google');
-        expect(saved.providerId).toBe(providerId);
+        expect(saved.providerId.getValue()).toBe(providerId);
 
         const found = await socialAccountRepo.findByProviderAndProviderId('google', providerId);
         expect(found).not.toBeNull();
-        expect(found!.providerId).toBe(providerId);
+        expect(found!.providerId.getValue()).toBe(providerId);
       });
     });
 

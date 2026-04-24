@@ -1,5 +1,7 @@
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
 import { MemberRoleVO } from '@tenant/domain/value-objects/member-role.vo';
+import { TenantNameVO } from '@tenant/domain/value-objects/tenant-name.vo';
+import { InvitationTokenVO } from '@tenant/domain/value-objects/invitation-token.vo';
 
 export interface TenantInvitationReconstituteProps {
   id: string;
@@ -29,10 +31,14 @@ export interface CreateTenantInvitationProps {
 export class TenantInvitationModel {
   private readonly _email: EmailVO;
   private readonly _role: MemberRoleVO;
+  private readonly _tenantName: TenantNameVO;
+  private readonly _token: InvitationTokenVO;
 
   private constructor(private readonly props: TenantInvitationReconstituteProps) {
     this._email = new EmailVO(props.email);
     this._role = MemberRoleVO.fromString(props.role);
+    this._tenantName = new TenantNameVO(props.tenantName);
+    this._token = new InvitationTokenVO(props.token);
   }
 
   static reconstitute(props: TenantInvitationReconstituteProps): TenantInvitationModel {
@@ -72,8 +78,8 @@ export class TenantInvitationModel {
     return this.props.tenantUUID;
   }
 
-  get tenantName(): string {
-    return this.props.tenantName;
+  get tenantName(): TenantNameVO {
+    return this._tenantName;
   }
 
   get invitedBy(): number {
@@ -88,8 +94,8 @@ export class TenantInvitationModel {
     return this._role.toString();
   }
 
-  get token(): string {
-    return this.props.token;
+  get token(): InvitationTokenVO {
+    return this._token;
   }
 
   get acceptedAt(): Date | null {

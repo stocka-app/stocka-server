@@ -26,10 +26,10 @@ export class CustomRoomModel {
 
   static create(props: CreateCustomRoomProps): CustomRoomModel {
     const trimmedAddress =
-      typeof props.address === 'string' ? props.address.trim() : props.address ?? null;
+      typeof props.address === 'string' ? props.address.trim() : (props.address ?? null);
     return new CustomRoomModel({
       uuid: new UUIDVO(props.uuid),
-      tenantUUID: props.tenantUUID,
+      tenantUUID: new UUIDVO(props.tenantUUID),
       name: StorageNameVO.create(props.name),
       description: props.description ? StorageDescriptionVO.create(props.description) : null,
       icon: StorageIconVO.create(props.icon),
@@ -51,7 +51,7 @@ export class CustomRoomModel {
     return this.attrs.uuid;
   }
 
-  get tenantUUID(): string {
+  get tenantUUID(): UUIDVO {
     return this.attrs.tenantUUID;
   }
 

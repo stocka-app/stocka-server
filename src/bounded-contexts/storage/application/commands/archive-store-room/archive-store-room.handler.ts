@@ -27,7 +27,7 @@ export class ArchiveStoreRoomHandler implements ICommandHandler<ArchiveStoreRoom
   async execute(command: ArchiveStoreRoomCommand): Promise<ArchiveStoreRoomResult> {
     const storeRoom = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
-    if (!storeRoom || storeRoom.tenantUUID !== command.tenantUUID) {
+    if (!storeRoom || storeRoom.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (storeRoom.isArchived()) return err(new StorageAlreadyArchivedError(command.storageUUID));

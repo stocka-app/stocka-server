@@ -28,7 +28,7 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
   async execute(command: UpdateWarehouseCommand): Promise<UpdateWarehouseResult> {
     const before = await this.warehouseRepository.findByUUID(command.storageUUID);
 
-    if (!before || before.tenantUUID !== command.tenantUUID) {
+    if (!before || before.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 

@@ -28,7 +28,7 @@ export class GetOnboardingStatusController {
 
     return {
       status: session.status,
-      currentStep: session.currentStep,
+      currentStep: session.currentStep.getValue(),
       path: session.path,
       stepData: session.stepData,
     };

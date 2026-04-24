@@ -50,7 +50,7 @@ describe('SaveOnboardingStepController', () => {
     describe('When the command succeeds', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
       });
 
@@ -63,42 +63,51 @@ describe('SaveOnboardingStepController', () => {
       it('Then it calls updateLocale with the normalized locale', async () => {
         await controller.handle(buildDto(), buildUser(), 'en-US');
 
-        expect(mediator.user.updateLocale).toHaveBeenCalledWith('019538a0-0000-7000-8000-000000000901', 'en');
+        expect(mediator.user.updateLocale).toHaveBeenCalledWith(
+          '019538a0-0000-7000-8000-000000000901',
+          'en',
+        );
       });
     });
 
     describe('When the accept-language header is absent', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
       });
 
       it('Then it defaults to es locale', async () => {
         await controller.handle(buildDto(), buildUser(), undefined);
 
-        expect(mediator.user.updateLocale).toHaveBeenCalledWith('019538a0-0000-7000-8000-000000000901', 'es');
+        expect(mediator.user.updateLocale).toHaveBeenCalledWith(
+          '019538a0-0000-7000-8000-000000000901',
+          'es',
+        );
       });
     });
 
     describe('When the accept-language header is a non-en language', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
       });
 
       it('Then it defaults to es locale for unsupported languages', async () => {
         await controller.handle(buildDto(), buildUser(), 'fr-FR');
 
-        expect(mediator.user.updateLocale).toHaveBeenCalledWith('019538a0-0000-7000-8000-000000000901', 'es');
+        expect(mediator.user.updateLocale).toHaveBeenCalledWith(
+          '019538a0-0000-7000-8000-000000000901',
+          'es',
+        );
       });
     });
 
     describe('When updateLocale rejects', () => {
       beforeEach(() => {
         commandBus.execute.mockResolvedValue(
-          ok({ status: 'in_progress', currentStep: 1, path: null }),
+          ok({ status: 'in_progress', currentStep: { getValue: () => 1 }, path: null }),
         );
         (mediator.user.updateLocale as jest.Mock).mockRejectedValue(
           new Error('locale update failed'),

@@ -22,7 +22,7 @@ export class SocialAccountMapper {
       uuid: model.uuid,
       accountId: model.accountId,
       provider: model.provider,
-      providerId: model.providerId,
+      providerId: model.providerId.getValue(),
       providerEmail: model.providerEmail,
       linkedAt: model.linkedAt,
       archivedAt: model.archivedAt,

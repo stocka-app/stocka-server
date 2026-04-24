@@ -3,10 +3,19 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { getStorageWorkerApp, truncateStorageWorkerTables } from '@test/storage-worker-app';
 
-interface SignInResponse { accessToken: string }
-interface CreateStorageResponse { storageUUID: string }
+interface SignInResponse {
+  accessToken: string;
+}
+interface CreateStorageResponse {
+  storageUUID: string;
+}
 
-async function signUp(app: INestApplication, dataSource: DataSource, email: string, username: string): Promise<void> {
+async function signUp(
+  app: INestApplication,
+  dataSource: DataSource,
+  email: string,
+  username: string,
+): Promise<void> {
   await request(app.getHttpServer())
     .post('/api/authentication/sign-up')
     .send({ email, username, password: 'SecurePass1!' });
@@ -23,11 +32,20 @@ async function signIn(app: INestApplication, email: string): Promise<string> {
   return (res.body as SignInResponse).accessToken;
 }
 
-async function completeOnboarding(app: INestApplication, token: string, tenantName: string): Promise<void> {
+async function completeOnboarding(
+  app: INestApplication,
+  token: string,
+  tenantName: string,
+): Promise<void> {
   await request(app.getHttpServer())
     .post('/api/tenant/onboarding/complete')
     .set('Authorization', `Bearer ${token}`)
-    .send({ name: tenantName, businessType: 'retail', country: 'MX', timezone: 'America/Mexico_City' });
+    .send({
+      name: tenantName,
+      businessType: 'retail',
+      country: 'MX',
+      timezone: 'America/Mexico_City',
+    });
 }
 
 async function setTenantToStarter(dataSource: DataSource, tenantName: string): Promise<void> {
@@ -37,7 +55,11 @@ async function setTenantToStarter(dataSource: DataSource, tenantName: string): P
   );
 }
 
-async function createStoreRoom(app: INestApplication, token: string, name: string): Promise<string> {
+async function createStoreRoom(
+  app: INestApplication,
+  token: string,
+  name: string,
+): Promise<string> {
   const res = await request(app.getHttpServer())
     .post('/api/storages/store-rooms')
     .set('Authorization', `Bearer ${token}`)
@@ -131,8 +153,9 @@ describe('PATCH /api/storages/store-rooms/:uuid/convert-to-custom-room (E2E — 
   describe('Given an unauthenticated client', () => {
     it('Then convert returns 401', async () => {
       const fakeUUID = '00000000-0000-0000-0000-000000000000';
-      const res = await request(app.getHttpServer())
-        .patch(`/api/storages/store-rooms/${fakeUUID}/convert-to-custom-room`);
+      const res = await request(app.getHttpServer()).patch(
+        `/api/storages/store-rooms/${fakeUUID}/convert-to-custom-room`,
+      );
       expect(res.status).toBe(HttpStatus.UNAUTHORIZED);
     });
   });

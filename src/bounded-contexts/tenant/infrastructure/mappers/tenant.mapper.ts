@@ -22,11 +22,11 @@ export class TenantMapper {
   static toEntity(aggregate: TenantAggregate): Partial<TenantEntity> {
     const entity: Partial<TenantEntity> = {
       uuid: aggregate.uuid,
-      name: aggregate.name,
+      name: aggregate.name.getValue(),
       slug: aggregate.slug,
       businessType: aggregate.businessType,
-      country: aggregate.country,
-      timezone: aggregate.timezone,
+      country: aggregate.country.getValue(),
+      timezone: aggregate.timezone.getValue(),
       status: aggregate.status,
       ownerUserId: aggregate.ownerUserId,
       archivedAt: aggregate.archivedAt,

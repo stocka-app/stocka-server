@@ -13,7 +13,7 @@ export class CustomRoomMapper {
     return CustomRoomModel.reconstitute({
       id: entity.id,
       uuid: new UUIDVO(entity.uuid),
-      tenantUUID: entity.tenantUUID,
+      tenantUUID: new UUIDVO(entity.tenantUUID),
       name: StorageNameVO.create(entity.name),
       description: entity.description ? StorageDescriptionVO.create(entity.description) : null,
       icon: StorageIconVO.create(entity.icon),
@@ -31,7 +31,7 @@ export class CustomRoomMapper {
     const entity: Partial<CustomRoomEntity> = {
       id: model.id,
       uuid: model.uuid.toString(),
-      tenantUUID: model.tenantUUID,
+      tenantUUID: model.tenantUUID.toString(),
       name: model.name.getValue(),
       description: model.description?.getValue() ?? null,
       icon: model.icon.getValue(),

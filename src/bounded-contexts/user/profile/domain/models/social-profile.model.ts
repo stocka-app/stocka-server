@@ -1,5 +1,12 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { OAuthProviderVO } from '@user/domain/value-objects/oauth-provider.vo';
+import { AvatarUrlVO } from '@shared/domain/value-objects/avatar-url.vo';
+import { GivenNameVO } from '@user/profile/domain/value-objects/given-name.vo';
+import { FamilyNameVO } from '@user/profile/domain/value-objects/family-name.vo';
+import { JobTitleVO } from '@user/profile/domain/value-objects/job-title.vo';
+import { ProviderDisplayNameVO } from '@user/profile/domain/value-objects/provider-display-name.vo';
+import { ProviderProfileUrlVO } from '@user/profile/domain/value-objects/provider-profile-url.vo';
 
 export interface SocialProfileReconstitueProps extends BaseModelProps {
   id: number;
@@ -24,16 +31,16 @@ export interface SocialProfileReconstitueProps extends BaseModelProps {
 
 export class SocialProfileModel extends BaseModel {
   private readonly _profileId: number;
-  private _socialAccountUUID: string;
+  private _socialAccountUUID: UUIDVO;
   private _provider: OAuthProviderVO;
-  private _providerDisplayName: string | null;
-  private _providerAvatarUrl: string | null;
-  private _providerProfileUrl: string | null;
-  private _givenName: string | null;
-  private _familyName: string | null;
+  private _providerDisplayName: ProviderDisplayNameVO | null;
+  private _providerAvatarUrl: AvatarUrlVO | null;
+  private _providerProfileUrl: ProviderProfileUrlVO | null;
+  private _givenName: GivenNameVO | null;
+  private _familyName: FamilyNameVO | null;
   private _locale: string | null;
   private _emailVerified: boolean;
-  private _jobTitle: string | null;
+  private _jobTitle: JobTitleVO | null;
   private _rawData: Record<string, unknown>;
   private _syncedAt: Date;
 
@@ -46,16 +53,23 @@ export class SocialProfileModel extends BaseModel {
       archivedAt: props.archivedAt,
     });
     this._profileId = props.profileId;
-    this._socialAccountUUID = props.socialAccountUUID;
+    this._socialAccountUUID = new UUIDVO(props.socialAccountUUID);
     this._provider = new OAuthProviderVO(props.provider);
-    this._providerDisplayName = props.providerDisplayName;
-    this._providerAvatarUrl = props.providerAvatarUrl;
-    this._providerProfileUrl = props.providerProfileUrl;
-    this._givenName = props.givenName;
-    this._familyName = props.familyName;
+    this._providerDisplayName =
+      props.providerDisplayName !== null
+        ? ProviderDisplayNameVO.create(props.providerDisplayName)
+        : null;
+    this._providerAvatarUrl =
+      props.providerAvatarUrl !== null ? AvatarUrlVO.create(props.providerAvatarUrl) : null;
+    this._providerProfileUrl =
+      props.providerProfileUrl !== null
+        ? ProviderProfileUrlVO.create(props.providerProfileUrl)
+        : null;
+    this._givenName = props.givenName !== null ? GivenNameVO.create(props.givenName) : null;
+    this._familyName = props.familyName !== null ? FamilyNameVO.create(props.familyName) : null;
     this._locale = props.locale;
     this._emailVerified = props.emailVerified;
-    this._jobTitle = props.jobTitle;
+    this._jobTitle = props.jobTitle !== null ? JobTitleVO.create(props.jobTitle) : null;
     this._rawData = props.rawData;
     this._syncedAt = props.syncedAt;
   }
@@ -104,7 +118,7 @@ export class SocialProfileModel extends BaseModel {
     return this._profileId;
   }
 
-  get socialAccountUUID(): string {
+  get socialAccountUUID(): UUIDVO {
     return this._socialAccountUUID;
   }
 
@@ -112,23 +126,23 @@ export class SocialProfileModel extends BaseModel {
     return this._provider.toString();
   }
 
-  get providerDisplayName(): string | null {
+  get providerDisplayName(): ProviderDisplayNameVO | null {
     return this._providerDisplayName;
   }
 
-  get providerAvatarUrl(): string | null {
+  get providerAvatarUrl(): AvatarUrlVO | null {
     return this._providerAvatarUrl;
   }
 
-  get providerProfileUrl(): string | null {
+  get providerProfileUrl(): ProviderProfileUrlVO | null {
     return this._providerProfileUrl;
   }
 
-  get givenName(): string | null {
+  get givenName(): GivenNameVO | null {
     return this._givenName;
   }
 
-  get familyName(): string | null {
+  get familyName(): FamilyNameVO | null {
     return this._familyName;
   }
 
@@ -140,7 +154,7 @@ export class SocialProfileModel extends BaseModel {
     return this._emailVerified;
   }
 
-  get jobTitle(): string | null {
+  get jobTitle(): JobTitleVO | null {
     return this._jobTitle;
   }
 
@@ -163,13 +177,21 @@ export class SocialProfileModel extends BaseModel {
     rawData?: Record<string, unknown>;
   }): void {
     if (props.providerDisplayName !== undefined)
-      this._providerDisplayName = props.providerDisplayName;
-    if (props.providerAvatarUrl !== undefined) this._providerAvatarUrl = props.providerAvatarUrl;
-    if (props.givenName !== undefined) this._givenName = props.givenName;
-    if (props.familyName !== undefined) this._familyName = props.familyName;
+      this._providerDisplayName =
+        props.providerDisplayName !== null
+          ? ProviderDisplayNameVO.create(props.providerDisplayName)
+          : null;
+    if (props.providerAvatarUrl !== undefined)
+      this._providerAvatarUrl =
+        props.providerAvatarUrl !== null ? AvatarUrlVO.create(props.providerAvatarUrl) : null;
+    if (props.givenName !== undefined)
+      this._givenName = props.givenName !== null ? GivenNameVO.create(props.givenName) : null;
+    if (props.familyName !== undefined)
+      this._familyName = props.familyName !== null ? FamilyNameVO.create(props.familyName) : null;
     if (props.locale !== undefined) this._locale = props.locale;
     if (props.emailVerified !== undefined) this._emailVerified = props.emailVerified;
-    if (props.jobTitle !== undefined) this._jobTitle = props.jobTitle;
+    if (props.jobTitle !== undefined)
+      this._jobTitle = props.jobTitle !== null ? JobTitleVO.create(props.jobTitle) : null;
     if (props.rawData !== undefined) this._rawData = props.rawData;
     this._syncedAt = new Date();
     this.touch();

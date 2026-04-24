@@ -21,10 +21,10 @@ export class CommercialProfileMapper {
     const entity: Partial<CommercialProfileEntity> = {
       uuid: model.uuid,
       profileId: model.profileId,
-      fullName: model.fullName,
+      fullName: model.fullName !== null ? model.fullName.getValue() : null,
       phone: model.phone,
-      countryCode: model.countryCode,
-      taxId: model.taxId,
+      countryCode: model.countryCode !== null ? model.countryCode.getValue() : null,
+      taxId: model.taxId !== null ? model.taxId.getValue() : null,
       archivedAt: model.archivedAt,
     };
 

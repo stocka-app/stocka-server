@@ -1,5 +1,7 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
 import { UsernameVO } from '@user/domain/value-objects/username.vo';
+import { DisplayNameVO } from '@shared/domain/value-objects/display-name.vo';
+import { AvatarUrlVO } from '@shared/domain/value-objects/avatar-url.vo';
 
 export interface PersonalProfileReconstitueProps extends BaseModelProps {
   id: number;
@@ -18,8 +20,8 @@ export interface PersonalProfileReconstitueProps extends BaseModelProps {
 export class PersonalProfileModel extends BaseModel {
   private readonly _profileId: number;
   private _username: UsernameVO;
-  private _displayName: string | null;
-  private _avatarUrl: string | null;
+  private _displayName: DisplayNameVO | null;
+  private _avatarUrl: AvatarUrlVO | null;
   private _locale: string;
   private _timezone: string;
 
@@ -33,8 +35,8 @@ export class PersonalProfileModel extends BaseModel {
     });
     this._profileId = props.profileId;
     this._username = new UsernameVO(props.username);
-    this._displayName = props.displayName;
-    this._avatarUrl = props.avatarUrl;
+    this._displayName = props.displayName !== null ? DisplayNameVO.create(props.displayName) : null;
+    this._avatarUrl = props.avatarUrl !== null ? AvatarUrlVO.create(props.avatarUrl) : null;
     this._locale = props.locale;
     this._timezone = props.timezone;
   }
@@ -74,11 +76,11 @@ export class PersonalProfileModel extends BaseModel {
     return this._username.getValue();
   }
 
-  get displayName(): string | null {
+  get displayName(): DisplayNameVO | null {
     return this._displayName;
   }
 
-  get avatarUrl(): string | null {
+  get avatarUrl(): AvatarUrlVO | null {
     return this._avatarUrl;
   }
 

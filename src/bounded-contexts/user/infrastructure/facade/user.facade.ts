@@ -167,7 +167,7 @@ export class UserFacade implements IUserFacade {
     const user = await this.userContract.findByUUID(userUUID);
     if (!user) return null;
     const profile = await this.profileContract.findPersonalProfileByUserId(user.id);
-    return profile?.displayName ?? null;
+    return profile?.displayName?.getValue() ?? null;
   }
 
   async findSocialNameByUserUUID(
@@ -183,9 +183,10 @@ export class UserFacade implements IUserFacade {
       this.profileContract.findPersonalProfileByUserId(user.id),
     ]);
     return {
-      givenName: social?.givenName ?? null,
-      familyName: social?.familyName ?? null,
-      avatarUrl: social?.providerAvatarUrl ?? personalProfile?.avatarUrl ?? null,
+      givenName: social?.givenName?.getValue() ?? null,
+      familyName: social?.familyName?.getValue() ?? null,
+      avatarUrl:
+        social?.providerAvatarUrl?.getValue() ?? personalProfile?.avatarUrl?.getValue() ?? null,
     };
   }
 

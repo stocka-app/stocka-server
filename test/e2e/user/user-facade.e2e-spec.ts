@@ -100,7 +100,7 @@ describe('UserFacade (e2e)', () => {
 
         expect(result.user).toBeDefined();
         expect(result.credential.email).toBe('oauth.nulllocale@example.com');
-        expect(result.social.providerId).toBe('google-null-locale-001');
+        expect(result.social.providerId.getValue()).toBe('google-null-locale-001');
       });
     });
   });

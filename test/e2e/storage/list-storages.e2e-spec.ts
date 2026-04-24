@@ -110,7 +110,11 @@ async function createStorage(
   return (res.body as CreateStorageResponse).storageUUID;
 }
 
-async function archiveCustomRoom(app: INestApplication, token: string, uuid: string): Promise<void> {
+async function archiveCustomRoom(
+  app: INestApplication,
+  token: string,
+  uuid: string,
+): Promise<void> {
   await request(app.getHttpServer())
     .delete(`/api/storages/custom-rooms/${uuid}/archive`)
     .set('Authorization', `Bearer ${token}`);

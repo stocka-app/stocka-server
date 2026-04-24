@@ -5,6 +5,7 @@ import {
   AccountStatusVO,
   AccountStatusEnum,
 } from '@user/account/domain/value-objects/account-status.vo';
+import { CreatedWithProviderVO } from '@user/account/domain/value-objects/created-with-provider.vo';
 
 export interface CredentialAccountProps extends BaseModelProps {
   accountId: number;
@@ -52,7 +53,7 @@ export class CredentialAccountModel extends BaseModel {
   private _status: AccountStatusVO;
   private _emailVerifiedAt: Date | null;
   private _verificationBlockedUntil: Date | null;
-  private readonly _createdWith: string;
+  private readonly _createdWith: CreatedWithProviderVO;
 
   private constructor(props: CredentialAccountCtorProps) {
     super(props);
@@ -62,7 +63,7 @@ export class CredentialAccountModel extends BaseModel {
     this._status = new AccountStatusVO(props.status);
     this._emailVerifiedAt = props.emailVerifiedAt;
     this._verificationBlockedUntil = props.verificationBlockedUntil;
-    this._createdWith = props.createdWith;
+    this._createdWith = CreatedWithProviderVO.create(props.createdWith);
   }
 
   static create(props: {
@@ -132,7 +133,7 @@ export class CredentialAccountModel extends BaseModel {
     return this._verificationBlockedUntil;
   }
 
-  get createdWith(): string {
+  get createdWith(): CreatedWithProviderVO {
     return this._createdWith;
   }
 

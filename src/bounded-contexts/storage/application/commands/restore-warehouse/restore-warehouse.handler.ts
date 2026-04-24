@@ -29,7 +29,7 @@ export class RestoreWarehouseHandler implements ICommandHandler<RestoreWarehouse
   async execute(command: RestoreWarehouseCommand): Promise<RestoreWarehouseResult> {
     const warehouse = await this.warehouseRepository.findByUUID(command.storageUUID);
 
-    if (!warehouse || warehouse.tenantUUID !== command.tenantUUID) {
+    if (!warehouse || warehouse.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (!warehouse.isArchived()) return err(new StorageNotArchivedError(command.storageUUID));

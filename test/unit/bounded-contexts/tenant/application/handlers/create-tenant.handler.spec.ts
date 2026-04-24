@@ -35,7 +35,7 @@ function buildSavedTenant(): Persisted<TenantAggregate> {
   return asPersisted({
     id: 1,
     uuid: 'tenant-uuid-abc',
-    name: 'My Business',
+    name: { getValue: () => 'My Business' },
     commit: jest.fn(),
   } as unknown as TenantAggregate);
 }

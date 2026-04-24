@@ -30,7 +30,7 @@ describe('CustomRoomModel', () => {
         });
 
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000010');
-        expect(model.tenantUUID).toBe(TENANT_UUID);
+        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(model.name.getValue()).toBe('Main Office');
         expect(model.description?.getValue()).toBe('Primary workspace');
         expect(model.icon.getValue()).toBe('office-icon');
@@ -336,7 +336,7 @@ describe('CustomRoomModel', () => {
         const now = new Date('2024-06-01');
         const model = CustomRoomModel.reconstitute({
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000012'),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: StorageNameVO.create('Restored Room'),
           description: StorageDescriptionVO.create('A restored room'),
           icon: StorageIconVO.create('icon-x'),
@@ -364,7 +364,7 @@ describe('CustomRoomModel', () => {
       it('Then isFrozen is true and status is FROZEN', () => {
         const model = CustomRoomModel.reconstitute({
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000018'),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: StorageNameVO.create('Frozen Room'),
           description: null,
           icon: StorageIconVO.create('icon-1'),
@@ -401,7 +401,7 @@ describe('StoreRoomModel', () => {
         });
 
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000020');
-        expect(model.tenantUUID).toBe(TENANT_UUID);
+        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(model.name.getValue()).toBe('Main Store');
         expect(model.description?.getValue()).toBe('Main storage area');
         expect(model.icon.getValue()).toBe('store-icon');
@@ -659,7 +659,7 @@ describe('StoreRoomModel', () => {
         const now = new Date('2024-07-01');
         const model = StoreRoomModel.reconstitute({
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000030'),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: StorageNameVO.create('Restored Store'),
           description: null,
           icon: StorageIconVO.create('store-icon'),
@@ -698,12 +698,12 @@ describe('WarehouseModel', () => {
         });
 
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000040');
-        expect(model.tenantUUID).toBe(TENANT_UUID);
+        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(model.name.getValue()).toBe('Central Warehouse');
         expect(model.description?.getValue()).toBe('Main distribution center');
         expect(model.icon.getValue()).toBe('warehouse-icon');
         expect(model.color.getValue()).toBe('#001122');
-        expect(model.address!.getValue()).toBe('200 Warehouse Blvd');
+        expect(model.address.getValue()).toBe('200 Warehouse Blvd');
         expect(model.archivedAt).toBeNull();
         expect(model.frozenAt).toBeNull();
         expect(model.createdAt).toBeInstanceOf(Date);
@@ -725,7 +725,7 @@ describe('WarehouseModel', () => {
         expect(model.id).toBeUndefined();
         expect(model.icon.getValue()).toBe('icon-1');
         expect(model.color.getValue()).toBe('#AABBCC');
-        expect(model.address!.getValue()).toBe('300 Depot Ln');
+        expect(model.address.getValue()).toBe('300 Depot Ln');
       });
     });
   });
@@ -745,7 +745,7 @@ describe('WarehouseModel', () => {
         const updated = original.update({ name: 'WH B', address: '200 New Ave' });
 
         expect(updated.name.getValue()).toBe('WH B');
-        expect(updated.address!.getValue()).toBe('200 New Ave');
+        expect(updated.address.getValue()).toBe('200 New Ave');
         expect(updated.icon.getValue()).toBe('icon-1');
         expect(updated.color.getValue()).toBe('#AABBCC');
       });
@@ -801,7 +801,7 @@ describe('WarehouseModel', () => {
 
         expect(updated.icon.getValue()).toBe('new-icon');
         expect(updated.color.getValue()).toBe('#FFFFFF');
-        expect(updated.address!.getValue()).toBe('100 St');
+        expect(updated.address.getValue()).toBe('100 St');
       });
     });
   });
@@ -925,7 +925,7 @@ describe('WarehouseModel', () => {
         const model = WarehouseModel.reconstitute({
           id: 3,
           uuid: new UUIDVO('019538a0-0000-7000-8000-000000000048'),
-          tenantUUID: TENANT_UUID,
+          tenantUUID: new UUIDVO(TENANT_UUID),
           name: StorageNameVO.create('Restored Warehouse'),
           description: null,
           icon: StorageIconVO.create('wh-icon'),
@@ -941,7 +941,7 @@ describe('WarehouseModel', () => {
         expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000048');
         expect(model.name.getValue()).toBe('Restored Warehouse');
         expect(model.description).toBeNull();
-        expect(model.address!.getValue()).toBe('300 Depot Lane');
+        expect(model.address.getValue()).toBe('300 Depot Lane');
         expect(model.createdAt).toEqual(now);
       });
     });

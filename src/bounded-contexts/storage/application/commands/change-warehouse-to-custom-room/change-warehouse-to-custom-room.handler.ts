@@ -45,7 +45,7 @@ export class ChangeWarehouseToCustomRoomHandler implements ICommandHandler<Chang
   ): Promise<ChangeWarehouseToCustomRoomResult> {
     const source = await this.warehouseRepository.findByUUID(command.storageUUID);
 
-    if (!source || source.tenantUUID !== command.tenantUUID) {
+    if (!source || source.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (source.isArchived()) {
@@ -72,9 +72,7 @@ export class ChangeWarehouseToCustomRoomHandler implements ICommandHandler<Chang
         ? command.metadata.description
         : (source.description?.getValue() ?? null);
     const effectiveAddress =
-      command.metadata.address === undefined
-        ? source.address.getValue()
-        : command.metadata.address;
+      command.metadata.address === undefined ? source.address.getValue() : command.metadata.address;
     const effectiveIcon = command.metadata.icon ?? CUSTOM_ROOM_DEFAULT_ICON;
     const effectiveColor = command.metadata.color ?? CUSTOM_ROOM_DEFAULT_COLOR;
     const effectiveRoomType = command.metadata.roomType ?? DEFAULT_ROOM_TYPE;

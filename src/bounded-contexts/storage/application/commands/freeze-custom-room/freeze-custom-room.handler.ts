@@ -28,7 +28,7 @@ export class FreezeCustomRoomHandler implements ICommandHandler<FreezeCustomRoom
   async execute(command: FreezeCustomRoomCommand): Promise<FreezeCustomRoomResult> {
     const customRoom = await this.customRoomRepository.findByUUID(command.storageUUID);
 
-    if (!customRoom || customRoom.tenantUUID !== command.tenantUUID) {
+    if (!customRoom || customRoom.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (customRoom.isFrozen()) return err(new StorageAlreadyFrozenError(command.storageUUID));

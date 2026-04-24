@@ -100,7 +100,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     }
 
     if (session.path === OnboardingPath.JOIN) {
-      return this.handleJoinPath(command, session.invitationCode);
+      return this.handleJoinPath(command, session.invitationCode?.getValue() ?? null);
     }
 
     return this.handleCreatePath(command, session);
@@ -228,7 +228,7 @@ export class CompleteOnboardingHandler implements ICommandHandler<CompleteOnboar
     return ok({
       path: OnboardingPath.JOIN,
       tenantId: invitation.tenantUUID,
-      tenantName: invitation.tenantName,
+      tenantName: invitation.tenantName.getValue(),
       role: invitation.role,
     });
   }

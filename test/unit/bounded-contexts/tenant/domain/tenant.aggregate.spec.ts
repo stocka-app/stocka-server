@@ -45,7 +45,7 @@ describe('TenantAggregate', () => {
       });
 
       it('Then the tenant name and slug are set correctly', () => {
-        expect(tenant.name).toBe('Mi Tienda');
+        expect(tenant.name.getValue()).toBe('Mi Tienda');
         expect(tenant.slug).toBe('mi-tienda');
       });
 
@@ -54,8 +54,8 @@ describe('TenantAggregate', () => {
       });
 
       it('Then the country and timezone are set correctly', () => {
-        expect(tenant.country).toBe('MX');
-        expect(tenant.timezone).toBe('America/Mexico_City');
+        expect(tenant.country.getValue()).toBe('MX');
+        expect(tenant.timezone.getValue()).toBe('America/Mexico_City');
       });
 
       it('Then the status is active', () => {
@@ -101,11 +101,11 @@ describe('TenantAggregate', () => {
 
       it('Then all properties are restored', () => {
         const tenant = buildPersistedTenant();
-        expect(tenant.name).toBe('Mi Tienda');
+        expect(tenant.name.getValue()).toBe('Mi Tienda');
         expect(tenant.slug).toBe('mi-tienda');
         expect(tenant.businessType).toBe('retail');
-        expect(tenant.country).toBe('MX');
-        expect(tenant.timezone).toBe('America/Mexico_City');
+        expect(tenant.country.getValue()).toBe('MX');
+        expect(tenant.timezone.getValue()).toBe('America/Mexico_City');
         expect(tenant.status).toBe('active');
         expect(tenant.ownerUserId).toBe(42);
       });
@@ -118,7 +118,7 @@ describe('TenantAggregate', () => {
         const tenant = buildPersistedTenant();
         const originalUpdatedAt = tenant.updatedAt;
         tenant.updateName('Mi Nueva Tienda');
-        expect(tenant.name).toBe('Mi Nueva Tienda');
+        expect(tenant.name.getValue()).toBe('Mi Nueva Tienda');
         expect(tenant.updatedAt.getTime()).toBeGreaterThanOrEqual(originalUpdatedAt.getTime());
       });
     });

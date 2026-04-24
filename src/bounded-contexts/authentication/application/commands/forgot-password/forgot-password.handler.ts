@@ -54,7 +54,7 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
       plainToken,
       lang: command.lang,
       isSocialAccount,
-      provider: isSocialAccount ? credential.createdWith : null,
+      provider: isSocialAccount ? credential.createdWith.getValue() : null,
     });
 
     await this.passwordResetTokenContract.persist(resetToken);

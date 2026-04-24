@@ -46,7 +46,7 @@ function buildInvitation(
     id: 1,
     tenantId: overrides.tenantId ?? 10,
     tenantUUID: overrides.tenantUUID ?? 'tenant-uuid-xyz',
-    tenantName: overrides.tenantName ?? 'Test Biz',
+    tenantName: { getValue: () => overrides.tenantName ?? 'Test Biz' },
     role: overrides.role ?? 'VIEWER',
     email: 'invitee@example.com',
     isAlreadyAccepted: jest.fn().mockReturnValue(overrides.isAlreadyAccepted ?? false),
@@ -56,7 +56,8 @@ function buildInvitation(
 }
 
 function buildUserAggregate(id?: number): UserAggregate {
-  if (id === undefined) return { uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
+  if (id === undefined)
+    return { uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
   return { id, uuid: '019538a0-0000-7000-8000-000000000902' } as unknown as UserAggregate;
 }
 

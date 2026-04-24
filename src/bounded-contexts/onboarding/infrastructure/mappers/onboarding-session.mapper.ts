@@ -31,11 +31,11 @@ export class OnboardingSessionMapper {
   static toEntity(model: OnboardingSessionModel): Partial<OnboardingSessionEntity> {
     return {
       ...(model.id ? { id: model.id } : {}),
-      userUUID: model.userUUID,
+      userUUID: model.userUUID.toString(),
       path: model.path,
-      currentStep: model.currentStep,
+      currentStep: model.currentStep.getValue(),
       stepData: model.stepData,
-      invitationCode: model.invitationCode,
+      invitationCode: model.invitationCode?.getValue() ?? null,
       status: model.status,
     };
   }

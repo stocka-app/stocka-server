@@ -36,7 +36,10 @@ export class ConvertToCustomRoomInDto {
   @Matches(/^#[0-9A-Fa-f]{6}$/, { message: 'color must be a valid hex color (e.g. #FF5733)' })
   color?: string;
 
-  @ApiPropertyOptional({ description: 'Physical address (null or empty clears the value)', maxLength: 200 })
+  @ApiPropertyOptional({
+    description: 'Physical address (null or empty clears the value)',
+    maxLength: 200,
+  })
   @IsOptional()
   @ValidateIf((_o, v) => v !== null)
   @IsString()

@@ -1,5 +1,8 @@
 import { OnboardingPath } from '@onboarding/domain/enums/onboarding-path.enum';
 import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';
+import { StepNumberVO } from '@onboarding/domain/value-objects/step-number.vo';
+import { InvitationCodeVO } from '@onboarding/domain/value-objects/invitation-code.vo';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
 export interface OnboardingSessionCreateProps {
   userUUID: string;
@@ -19,22 +22,22 @@ export interface OnboardingSessionReconstituteProps {
 
 export class OnboardingSessionModel {
   private _id: string;
-  private _userUUID: string;
+  private _userUUID: UUIDVO;
   private _path: OnboardingPath | null;
-  private _currentStep: number;
+  private _currentStep: StepNumberVO;
   private _stepData: Record<string, unknown>;
-  private _invitationCode: string | null;
+  private _invitationCode: InvitationCodeVO | null;
   private _status: OnboardingStatus;
   private _createdAt: Date;
   private _updatedAt: Date;
 
   private constructor(props: OnboardingSessionReconstituteProps) {
     this._id = props.id;
-    this._userUUID = props.userUUID;
+    this._userUUID = new UUIDVO(props.userUUID);
     this._path = props.path;
-    this._currentStep = props.currentStep;
+    this._currentStep = StepNumberVO.create(props.currentStep);
     this._stepData = props.stepData;
-    this._invitationCode = props.invitationCode;
+    this._invitationCode = props.invitationCode !== null ? InvitationCodeVO.create(props.invitationCode) : null;
     this._status = props.status;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;
@@ -65,10 +68,11 @@ export class OnboardingSessionModel {
       const path = (data['path'] as string | undefined) ?? null;
       this._path =
         path === 'CREATE' ? OnboardingPath.CREATE : path === 'JOIN' ? OnboardingPath.JOIN : null;
-      this._invitationCode = (data['invitationCode'] as string | undefined) ?? null;
+      const code = (data['invitationCode'] as string | undefined) ?? null;
+      this._invitationCode = code !== null ? InvitationCodeVO.create(code) : null;
     }
-    if (currentStep !== undefined && currentStep > this._currentStep) {
-      this._currentStep = currentStep;
+    if (currentStep !== undefined && currentStep > this._currentStep.getValue()) {
+      this._currentStep = StepNumberVO.create(currentStep);
     }
     this._updatedAt = new Date();
   }
@@ -90,7 +94,7 @@ export class OnboardingSessionModel {
     return this._id;
   }
 
-  get userUUID(): string {
+  get userUUID(): UUIDVO {
     return this._userUUID;
   }
 
@@ -98,7 +102,7 @@ export class OnboardingSessionModel {
     return this._path;
   }
 
-  get currentStep(): number {
+  get currentStep(): StepNumberVO {
     return this._currentStep;
   }
 
@@ -106,7 +110,7 @@ export class OnboardingSessionModel {
     return this._stepData;
   }
 
-  get invitationCode(): string | null {
+  get invitationCode(): InvitationCodeVO | null {
     return this._invitationCode;
   }
 

@@ -18,7 +18,10 @@ export class ConvertToStoreRoomInDto {
   @MaxLength(300)
   description?: string | null;
 
-  @ApiPropertyOptional({ description: 'Physical address (null or empty clears the value)', maxLength: 200 })
+  @ApiPropertyOptional({
+    description: 'Physical address (null or empty clears the value)',
+    maxLength: 200,
+  })
   @IsOptional()
   @ValidateIf((_o, v) => v !== null)
   @IsString()

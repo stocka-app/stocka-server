@@ -29,7 +29,7 @@ export class RestoreStoreRoomHandler implements ICommandHandler<RestoreStoreRoom
   async execute(command: RestoreStoreRoomCommand): Promise<RestoreStoreRoomResult> {
     const storeRoom = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
-    if (!storeRoom || storeRoom.tenantUUID !== command.tenantUUID) {
+    if (!storeRoom || storeRoom.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (!storeRoom.isArchived()) return err(new StorageNotArchivedError(command.storageUUID));

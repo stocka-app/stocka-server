@@ -28,7 +28,7 @@ export class FreezeStoreRoomHandler implements ICommandHandler<FreezeStoreRoomCo
   async execute(command: FreezeStoreRoomCommand): Promise<FreezeStoreRoomResult> {
     const storeRoom = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
-    if (!storeRoom || storeRoom.tenantUUID !== command.tenantUUID) {
+    if (!storeRoom || storeRoom.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
     if (storeRoom.isFrozen()) return err(new StorageAlreadyFrozenError(command.storageUUID));

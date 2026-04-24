@@ -3,10 +3,19 @@ import request from 'supertest';
 import { DataSource } from 'typeorm';
 import { getStorageWorkerApp, truncateStorageWorkerTables } from '@test/storage-worker-app';
 
-interface SignInResponse { accessToken: string }
-interface CreateStorageResponse { storageUUID: string }
+interface SignInResponse {
+  accessToken: string;
+}
+interface CreateStorageResponse {
+  storageUUID: string;
+}
 
-async function signUp(app: INestApplication, dataSource: DataSource, email: string, username: string): Promise<void> {
+async function signUp(
+  app: INestApplication,
+  dataSource: DataSource,
+  email: string,
+  username: string,
+): Promise<void> {
   await request(app.getHttpServer())
     .post('/api/authentication/sign-up')
     .send({ email, username, password: 'SecurePass1!' });
@@ -23,11 +32,20 @@ async function signIn(app: INestApplication, email: string): Promise<string> {
   return (res.body as SignInResponse).accessToken;
 }
 
-async function completeOnboarding(app: INestApplication, token: string, tenantName: string): Promise<void> {
+async function completeOnboarding(
+  app: INestApplication,
+  token: string,
+  tenantName: string,
+): Promise<void> {
   await request(app.getHttpServer())
     .post('/api/tenant/onboarding/complete')
     .set('Authorization', `Bearer ${token}`)
-    .send({ name: tenantName, businessType: 'retail', country: 'MX', timezone: 'America/Mexico_City' });
+    .send({
+      name: tenantName,
+      businessType: 'retail',
+      country: 'MX',
+      timezone: 'America/Mexico_City',
+    });
 }
 
 async function setTenantToStarter(dataSource: DataSource, tenantName: string): Promise<void> {
@@ -37,7 +55,11 @@ async function setTenantToStarter(dataSource: DataSource, tenantName: string): P
   );
 }
 
-async function createWarehouse(app: INestApplication, token: string, name: string): Promise<string> {
+async function createWarehouse(
+  app: INestApplication,
+  token: string,
+  name: string,
+): Promise<string> {
   const res = await request(app.getHttpServer())
     .post('/api/storages/warehouses')
     .set('Authorization', `Bearer ${token}`)
@@ -46,18 +68,18 @@ async function createWarehouse(app: INestApplication, token: string, name: strin
 }
 
 async function countWarehouses(dataSource: DataSource, uuid: string): Promise<number> {
-  const rows = (await dataSource.query(
+  const rows = await dataSource.query(
     `SELECT COUNT(*)::int AS c FROM "storage"."warehouses" WHERE uuid = $1`,
     [uuid],
-  )) as Array<{ c: number }>;
+  );
   return rows[0].c;
 }
 
 async function countStoreRooms(dataSource: DataSource, uuid: string): Promise<number> {
-  const rows = (await dataSource.query(
+  const rows = await dataSource.query(
     `SELECT COUNT(*)::int AS c FROM "storage"."store_rooms" WHERE uuid = $1`,
     [uuid],
-  )) as Array<{ c: number }>;
+  );
   return rows[0].c;
 }
 
@@ -99,10 +121,10 @@ describe('PATCH convert-to-* (rollback E2E)', () => {
 
       // Pre-insert a store_room row with the same UUID so the handler's save
       // will hit a UNIQUE(uuid) violation, forcing rollback of the prior delete.
-      const storageIdRow = (await dataSource.query(
+      const storageIdRow = await dataSource.query(
         `SELECT id FROM "storage"."storages" WHERE tenant_uuid = (SELECT tenant_uuid FROM "storage"."warehouses" WHERE uuid = $1)`,
         [whUUID],
-      )) as Array<{ id: number }>;
+      );
       const storageId = storageIdRow[0].id;
 
       await dataSource.query(

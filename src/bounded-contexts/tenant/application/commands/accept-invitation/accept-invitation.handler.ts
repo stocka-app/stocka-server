@@ -82,7 +82,7 @@ export class AcceptInvitationHandler implements ICommandHandler<AcceptInvitation
 
     return ok({
       tenantUUID: invitation.tenantUUID,
-      tenantName: invitation.tenantName,
+      tenantName: invitation.tenantName.getValue(),
       role: invitation.role,
       joinedAt,
     });

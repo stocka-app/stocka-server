@@ -8,7 +8,7 @@ import { RoomTypeNameVO } from '@storage/domain/value-objects/room-type-name.vo'
 
 export interface CustomRoomModelProps {
   uuid: UUIDVO;
-  tenantUUID: string;
+  tenantUUID: UUIDVO;
   name: StorageNameVO;
   description: StorageDescriptionVO | null;
   icon: StorageIconVO;
@@ -26,7 +26,7 @@ export interface CustomRoomModelProps {
 
 export interface CustomRoomModelAttrs {
   uuid: UUIDVO;
-  tenantUUID: string;
+  tenantUUID: UUIDVO;
   name: StorageNameVO;
   description: StorageDescriptionVO | null;
   icon: StorageIconVO;
