@@ -10,4 +10,5 @@ export enum StorageActivityAction {
   REACTIVATED = 'REACTIVATED',
   ARCHIVED = 'ARCHIVED',
   RESTORED = 'RESTORED',
+  DELETED = 'DELETED',
 }

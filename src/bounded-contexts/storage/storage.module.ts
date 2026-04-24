@@ -39,6 +39,9 @@ import { UnfreezeCustomRoomHandler } from '@storage/application/commands/unfreez
 import { RestoreWarehouseHandler } from '@storage/application/commands/restore-warehouse/restore-warehouse.handler';
 import { RestoreStoreRoomHandler } from '@storage/application/commands/restore-store-room/restore-store-room.handler';
 import { RestoreCustomRoomHandler } from '@storage/application/commands/restore-custom-room/restore-custom-room.handler';
+import { DeletePermanentWarehouseHandler } from '@storage/application/commands/delete-permanent-warehouse/delete-permanent-warehouse.handler';
+import { DeletePermanentStoreRoomHandler } from '@storage/application/commands/delete-permanent-store-room/delete-permanent-store-room.handler';
+import { DeletePermanentCustomRoomHandler } from '@storage/application/commands/delete-permanent-custom-room/delete-permanent-custom-room.handler';
 import { ListStoragesHandler } from '@storage/application/queries/list-storages/list-storages.handler';
 import { GetStorageHandler } from '@storage/application/queries/get-storage/get-storage.handler';
 import { StorageCreatedEventHandler } from '@storage/application/event-handlers/storage-created.event-handler';
@@ -52,6 +55,7 @@ import { StorageArchivedEventHandler } from '@storage/application/event-handlers
 import { StorageFrozenEventHandler } from '@storage/application/event-handlers/storage-frozen.event-handler';
 import { StorageReactivatedEventHandler } from '@storage/application/event-handlers/storage-reactivated.event-handler';
 import { StorageRestoredEventHandler } from '@storage/application/event-handlers/storage-restored.event-handler';
+import { StoragePermanentlyDeletedEventHandler } from '@storage/application/event-handlers/storage-permanently-deleted.event-handler';
 import { CreateCustomRoomController } from '@storage/infrastructure/http/controllers/create-custom-room/create-custom-room.controller';
 import { CreateStoreRoomController } from '@storage/infrastructure/http/controllers/create-store-room/create-store-room.controller';
 import { CreateWarehouseController } from '@storage/infrastructure/http/controllers/create-warehouse/create-warehouse.controller';
@@ -78,7 +82,9 @@ import { UnfreezeCustomRoomController } from '@storage/infrastructure/http/contr
 import { RestoreWarehouseController } from '@storage/infrastructure/http/controllers/restore-warehouse/restore-warehouse.controller';
 import { RestoreStoreRoomController } from '@storage/infrastructure/http/controllers/restore-store-room/restore-store-room.controller';
 import { RestoreCustomRoomController } from '@storage/infrastructure/http/controllers/restore-custom-room/restore-custom-room.controller';
-import { DeleteStoragePermanentController } from '@storage/infrastructure/http/controllers/delete-storage-permanent/delete-storage-permanent.controller';
+import { DeletePermanentWarehouseController } from '@storage/infrastructure/http/controllers/delete-permanent-warehouse/delete-permanent-warehouse.controller';
+import { DeletePermanentStoreRoomController } from '@storage/infrastructure/http/controllers/delete-permanent-store-room/delete-permanent-store-room.controller';
+import { DeletePermanentCustomRoomController } from '@storage/infrastructure/http/controllers/delete-permanent-custom-room/delete-permanent-custom-room.controller';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
 @Module({
@@ -120,7 +126,9 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     RestoreWarehouseController,
     RestoreStoreRoomController,
     RestoreCustomRoomController,
-    DeleteStoragePermanentController,
+    DeletePermanentWarehouseController,
+    DeletePermanentStoreRoomController,
+    DeletePermanentCustomRoomController,
   ],
   providers: [
     { provide: INJECTION_TOKENS.STORAGE_CONTRACT, useClass: TypeOrmStorageRepository },
@@ -164,6 +172,9 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     RestoreWarehouseHandler,
     RestoreStoreRoomHandler,
     RestoreCustomRoomHandler,
+    DeletePermanentWarehouseHandler,
+    DeletePermanentStoreRoomHandler,
+    DeletePermanentCustomRoomHandler,
     ListStoragesHandler,
     GetStorageHandler,
     StorageCreatedEventHandler,
@@ -177,6 +188,7 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     StorageFrozenEventHandler,
     StorageReactivatedEventHandler,
     StorageRestoredEventHandler,
+    StoragePermanentlyDeletedEventHandler,
   ],
   exports: [INJECTION_TOKENS.STORAGE_CONTRACT],
 })

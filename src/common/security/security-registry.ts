@@ -95,6 +95,8 @@ export const SecurityRegistry: Record<string, SecurityMeta> = {
   'POST /storages/warehouses/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
   'POST /storages/store-rooms/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
   'POST /storages/custom-rooms/:uuid/restore': { action: SystemAction.STORAGE_RESTORE },
-  // Permanent delete (entry point — stub 501; full flow tracked separately)
-  'DELETE /storages/:uuid/permanent': { action: SystemAction.STORAGE_DELETE },
+  // Permanent delete — per-type routes (H-08, replaces the unified stub from H-07)
+  'DELETE /storages/warehouses/:uuid/permanent': { action: SystemAction.STORAGE_DELETE },
+  'DELETE /storages/store-rooms/:uuid/permanent': { action: SystemAction.STORAGE_DELETE },
+  'DELETE /storages/custom-rooms/:uuid/permanent': { action: SystemAction.STORAGE_DELETE },
 };
