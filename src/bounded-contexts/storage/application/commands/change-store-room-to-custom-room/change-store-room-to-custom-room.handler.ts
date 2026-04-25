@@ -15,7 +15,7 @@ import { StorageTypeLockedWhileArchivedError } from '@storage/domain/errors/stor
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageTypeLockedWhileFrozenError } from '@storage/domain/errors/storage-type-locked-while-frozen.error';
 import { StorageTypeChangedEvent } from '@storage/domain/events/storage-type-changed.event';
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
+import { CustomRoomAggregate } from '@storage/domain/aggregates/custom-room.aggregate';
 import {
   CUSTOM_ROOM_DEFAULT_COLOR,
   CUSTOM_ROOM_DEFAULT_ICON,
@@ -84,7 +84,7 @@ export class ChangeStoreRoomToCustomRoomHandler implements ICommandHandler<Chang
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    const target = CustomRoomModel.create({
+    const target = CustomRoomAggregate.forTypeChange({
       uuid: command.storageUUID,
       tenantUUID: command.tenantUUID,
       name: effectiveName,

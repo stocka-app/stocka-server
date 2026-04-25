@@ -18,7 +18,7 @@ export interface EmailVerificationTokenProps extends AggregateRootProps {
   email?: string;
 }
 
-export class EmailVerificationTokenModel extends AggregateRoot {
+export class EmailVerificationTokenAggregate extends AggregateRoot {
   private readonly _credentialAccountId: number;
   private _codeHash: CodeHashVO;
   private _expiresAt: ExpiresAtVO;
@@ -48,8 +48,8 @@ export class EmailVerificationTokenModel extends AggregateRoot {
 
   static create(
     props: Omit<EmailVerificationTokenProps, 'id'> & { email: string; code?: string },
-  ): EmailVerificationTokenModel {
-    const token = new EmailVerificationTokenModel(props);
+  ): EmailVerificationTokenAggregate {
+    const token = new EmailVerificationTokenAggregate(props);
 
     if (props.code) {
       token.apply(
@@ -67,8 +67,8 @@ export class EmailVerificationTokenModel extends AggregateRoot {
    */
   static createForResend(
     props: Omit<EmailVerificationTokenProps, 'id'> & { email: string; code: string; lang?: Locale },
-  ): EmailVerificationTokenModel {
-    const token = new EmailVerificationTokenModel({
+  ): EmailVerificationTokenAggregate {
+    const token = new EmailVerificationTokenAggregate({
       ...props,
       resendCount: 1,
       lastResentAt: new Date(),
@@ -89,8 +89,8 @@ export class EmailVerificationTokenModel extends AggregateRoot {
 
   static reconstitute(
     props: EmailVerificationTokenProps & { id: number; uuid: string },
-  ): EmailVerificationTokenModel {
-    return new EmailVerificationTokenModel(props);
+  ): EmailVerificationTokenAggregate {
+    return new EmailVerificationTokenAggregate(props);
   }
 
   get credentialAccountId(): number {
@@ -136,7 +136,7 @@ export class EmailVerificationTokenModel extends AggregateRoot {
   }
 
   canResend(): boolean {
-    if (this._resendCount.getValue() >= EmailVerificationTokenModel.MAX_RESENDS_PER_HOUR) {
+    if (this._resendCount.getValue() >= EmailVerificationTokenAggregate.MAX_RESENDS_PER_HOUR) {
       return false;
     }
 
@@ -155,9 +155,9 @@ export class EmailVerificationTokenModel extends AggregateRoot {
   getCurrentCooldownSeconds(): number {
     const cooldownIndex = Math.min(
       this._resendCount.getValue(),
-      EmailVerificationTokenModel.RESEND_COOLDOWNS.length - 1,
+      EmailVerificationTokenAggregate.RESEND_COOLDOWNS.length - 1,
     );
-    return EmailVerificationTokenModel.RESEND_COOLDOWNS[cooldownIndex];
+    return EmailVerificationTokenAggregate.RESEND_COOLDOWNS[cooldownIndex];
   }
 
   getSecondsUntilCanResend(): number {
@@ -194,13 +194,13 @@ export class EmailVerificationTokenModel extends AggregateRoot {
   }
 
   getMaxResendsPerHour(): number {
-    return EmailVerificationTokenModel.MAX_RESENDS_PER_HOUR;
+    return EmailVerificationTokenAggregate.MAX_RESENDS_PER_HOUR;
   }
 
   getRemainingResends(): number {
     return Math.max(
       0,
-      EmailVerificationTokenModel.MAX_RESENDS_PER_HOUR - this._resendCount.getValue(),
+      EmailVerificationTokenAggregate.MAX_RESENDS_PER_HOUR - this._resendCount.getValue(),
     );
   }
 }

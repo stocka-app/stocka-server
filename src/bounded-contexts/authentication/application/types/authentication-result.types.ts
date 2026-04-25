@@ -1,6 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result } from '@shared/domain/result';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';
 

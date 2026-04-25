@@ -19,7 +19,7 @@ export class SocialAccountMapper {
 
   static toEntity(model: SocialAccountModel): Partial<SocialAccountEntity> {
     const entity: Partial<SocialAccountEntity> = {
-      uuid: model.uuid,
+      uuid: model.uuid.toString(),
       accountId: model.accountId,
       provider: model.provider,
       providerId: model.providerId.getValue(),

@@ -15,7 +15,7 @@ import { StorageTypeLockedWhileArchivedError } from '@storage/domain/errors/stor
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageTypeLockedWhileFrozenError } from '@storage/domain/errors/storage-type-locked-while-frozen.error';
 import { StorageTypeChangedEvent } from '@storage/domain/events/storage-type-changed.event';
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 import {
   WAREHOUSE_DEFAULT_COLOR,
   WAREHOUSE_DEFAULT_ICON,
@@ -83,7 +83,7 @@ export class ChangeCustomRoomToWarehouseHandler implements ICommandHandler<Chang
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    const target = WarehouseModel.create({
+    const target = WarehouseAggregate.forTypeChange({
       uuid: command.storageUUID,
       tenantUUID: command.tenantUUID,
       name: effectiveName,

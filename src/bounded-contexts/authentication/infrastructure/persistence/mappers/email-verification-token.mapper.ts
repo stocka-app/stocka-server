@@ -1,9 +1,9 @@
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { EmailVerificationTokenEntity } from '@authentication/infrastructure/persistence/entities/email-verification-token.entity';
 
 export class EmailVerificationTokenMapper {
-  static toDomain(entity: EmailVerificationTokenEntity): EmailVerificationTokenModel {
-    return EmailVerificationTokenModel.reconstitute({
+  static toDomain(entity: EmailVerificationTokenEntity): EmailVerificationTokenAggregate {
+    return EmailVerificationTokenAggregate.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
       credentialAccountId: entity.credentialAccountId,
@@ -18,7 +18,7 @@ export class EmailVerificationTokenMapper {
     });
   }
 
-  static toEntity(model: EmailVerificationTokenModel): Partial<EmailVerificationTokenEntity> {
+  static toEntity(model: EmailVerificationTokenAggregate): Partial<EmailVerificationTokenEntity> {
     const entity: Partial<EmailVerificationTokenEntity> = {
       uuid: model.uuid,
       credentialAccountId: model.credentialAccountId,

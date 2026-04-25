@@ -26,7 +26,6 @@ import { ChangeStoreRoomToCustomRoomHandler } from '@storage/application/command
 import { ChangeCustomRoomToWarehouseHandler } from '@storage/application/commands/change-custom-room-to-warehouse/change-custom-room-to-warehouse.handler';
 import { ChangeCustomRoomToStoreRoomHandler } from '@storage/application/commands/change-custom-room-to-store-room/change-custom-room-to-store-room.handler';
 import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
-import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
 import { ArchiveWarehouseHandler } from '@storage/application/commands/archive-warehouse/archive-warehouse.handler';
 import { ArchiveStoreRoomHandler } from '@storage/application/commands/archive-store-room/archive-store-room.handler';
 import { ArchiveCustomRoomHandler } from '@storage/application/commands/archive-custom-room/archive-custom-room.handler';
@@ -159,7 +158,6 @@ import { INJECTION_TOKENS } from '@common/constants/app.constants';
     ChangeCustomRoomToWarehouseHandler,
     ChangeCustomRoomToStoreRoomHandler,
     StorageTypeChangePolicy,
-    StorageUpdateEventsPublisher,
     ArchiveWarehouseHandler,
     ArchiveStoreRoomHandler,
     ArchiveCustomRoomHandler,

@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull, MoreThan, EntityManager } from 'typeorm';
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { EmailVerificationTokenEntity } from '@authentication/infrastructure/persistence/entities/email-verification-token.entity';
 import { EmailVerificationTokenMapper } from '@authentication/infrastructure/persistence/mappers/email-verification-token.mapper';
@@ -18,27 +18,31 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     private readonly uow: IUnitOfWork,
   ) {}
 
-  async findById(id: number): Promise<Persisted<EmailVerificationTokenModel> | null> {
+  async findById(id: number): Promise<Persisted<EmailVerificationTokenAggregate> | null> {
     const entity = await this.repository.findOne({
       where: { id, archivedAt: IsNull() },
     });
     return entity
-      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      ? (EmailVerificationTokenMapper.toDomain(
+          entity,
+        ) as Persisted<EmailVerificationTokenAggregate>)
       : null;
   }
 
-  async findByUUID(uuid: string): Promise<Persisted<EmailVerificationTokenModel> | null> {
+  async findByUUID(uuid: string): Promise<Persisted<EmailVerificationTokenAggregate> | null> {
     const entity = await this.repository.findOne({
       where: { uuid, archivedAt: IsNull() },
     });
     return entity
-      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      ? (EmailVerificationTokenMapper.toDomain(
+          entity,
+        ) as Persisted<EmailVerificationTokenAggregate>)
       : null;
   }
 
   async findActiveByCredentialAccountId(
     credentialAccountId: number,
-  ): Promise<Persisted<EmailVerificationTokenModel> | null> {
+  ): Promise<Persisted<EmailVerificationTokenAggregate> | null> {
     const entity = await this.repository.findOne({
       where: {
         credentialAccountId,
@@ -49,11 +53,15 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
       order: { createdAt: 'DESC' },
     });
     return entity
-      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      ? (EmailVerificationTokenMapper.toDomain(
+          entity,
+        ) as Persisted<EmailVerificationTokenAggregate>)
       : null;
   }
 
-  async findByCodeHash(codeHash: string): Promise<Persisted<EmailVerificationTokenModel> | null> {
+  async findByCodeHash(
+    codeHash: string,
+  ): Promise<Persisted<EmailVerificationTokenAggregate> | null> {
     const entity = await this.repository.findOne({
       where: {
         codeHash,
@@ -62,13 +70,15 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
       },
     });
     return entity
-      ? (EmailVerificationTokenMapper.toDomain(entity) as Persisted<EmailVerificationTokenModel>)
+      ? (EmailVerificationTokenMapper.toDomain(
+          entity,
+        ) as Persisted<EmailVerificationTokenAggregate>)
       : null;
   }
 
   async persist(
-    token: EmailVerificationTokenModel,
-  ): Promise<Persisted<EmailVerificationTokenModel>> {
+    token: EmailVerificationTokenAggregate,
+  ): Promise<Persisted<EmailVerificationTokenAggregate>> {
     const entityData = EmailVerificationTokenMapper.toEntity(token);
     const repo = this.uow.isActive()
       ? (this.uow.getManager() as EntityManager).getRepository(EmailVerificationTokenEntity)
@@ -76,7 +86,7 @@ export class TypeOrmEmailVerificationTokenRepository implements IEmailVerificati
     const savedEntity = await repo.save(entityData);
     return EmailVerificationTokenMapper.toDomain(
       savedEntity as EmailVerificationTokenEntity,
-    ) as Persisted<EmailVerificationTokenModel>;
+    ) as Persisted<EmailVerificationTokenAggregate>;
   }
 
   async archive(uuid: string): Promise<void> {

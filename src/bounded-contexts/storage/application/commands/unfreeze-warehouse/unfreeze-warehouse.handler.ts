@@ -1,4 +1,4 @@
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -8,8 +8,6 @@ import { StorageItemViewMapper } from '@storage/application/mappers/storage-item
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen.error';
-import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type UnfreezeWarehouseResult = Result<StorageItemView, DomainException>;
@@ -21,7 +19,7 @@ export class UnfreezeWarehouseHandler implements ICommandHandler<UnfreezeWarehou
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.WAREHOUSE_CONTRACT)
     private readonly warehouseRepository: IWarehouseRepository,
-    private readonly eventBus: EventBus,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: UnfreezeWarehouseCommand): Promise<UnfreezeWarehouseResult> {
@@ -30,17 +28,18 @@ export class UnfreezeWarehouseHandler implements ICommandHandler<UnfreezeWarehou
     if (!warehouse || warehouse.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
-    if (!warehouse.isFrozen()) return err(new StorageNotFrozenError(command.storageUUID));
+
+    const transition = warehouse.markUnfrozen(command.actorUUID);
+    if (transition.isErr()) return err(transition.error);
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    const updated = await this.warehouseRepository.save(warehouse.markUnfrozen(), storageId);
+    const saved = await this.warehouseRepository.save(warehouse, storageId);
 
-    this.eventBus.publish(
-      new StorageReactivatedEvent(command.storageUUID, command.tenantUUID, command.actorUUID),
-    );
+    this.eventPublisher.mergeObjectContext(warehouse);
+    warehouse.commit();
 
-    return ok(StorageItemViewMapper.fromWarehouse(updated));
+    return ok(StorageItemViewMapper.fromWarehouse(saved));
   }
 }

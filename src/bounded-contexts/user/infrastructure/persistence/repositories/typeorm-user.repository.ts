@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { IUserContract } from '@user/domain/contracts/user.contract';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 import { UserMapper } from '@user/infrastructure/persistence/mappers/user.mapper';

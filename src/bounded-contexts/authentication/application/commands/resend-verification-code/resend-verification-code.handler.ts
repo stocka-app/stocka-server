@@ -3,7 +3,7 @@ import { Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ResendVerificationCodeCommand } from '@authentication/application/commands/resend-verification-code/resend-verification-code.command';
 import { ResendVerificationCodeCommandResult } from '@authentication/application/types/authentication-result.types';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { ResendCooldownActiveException } from '@authentication/domain/exceptions/resend-cooldown-active.exception';
@@ -107,7 +107,7 @@ export class ResendVerificationCodeHandler implements ICommandHandler<ResendVeri
     );
     const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
 
-    const token = EmailVerificationTokenModel.createForResend({
+    const token = EmailVerificationTokenAggregate.createForResend({
       credentialAccountId: credentialId,
       codeHash,
       expiresAt,

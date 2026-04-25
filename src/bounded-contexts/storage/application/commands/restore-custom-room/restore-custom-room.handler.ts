@@ -1,4 +1,4 @@
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -8,9 +8,7 @@ import { StorageItemViewMapper } from '@storage/application/mappers/storage-item
 import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageNotArchivedError } from '@storage/domain/errors/storage-not-archived.error';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageRestoredEvent } from '@storage/domain/events/storage-restored.event';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type RestoreCustomRoomResult = Result<StorageItemView, DomainException>;
@@ -23,7 +21,7 @@ export class RestoreCustomRoomHandler implements ICommandHandler<RestoreCustomRo
     @Inject(INJECTION_TOKENS.CUSTOM_ROOM_CONTRACT)
     private readonly customRoomRepository: ICustomRoomRepository,
     private readonly policy: StorageTypeChangePolicy,
-    private readonly eventBus: EventBus,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: RestoreCustomRoomCommand): Promise<RestoreCustomRoomResult> {
@@ -32,25 +30,21 @@ export class RestoreCustomRoomHandler implements ICommandHandler<RestoreCustomRo
     if (!customRoom || customRoom.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
-    if (!customRoom.isArchived()) return err(new StorageNotArchivedError(command.storageUUID));
 
-    // Tier capacity guard. Counts include archived items (state-agnostic), so in
-    // normal flows this guard is a no-op: the archived item already counted before
-    // the restore. The guard catches the edge case where the tenant downgraded
-    // after archiving — the new tier limit may now be below the existing total,
-    // blocking the restore until the user resolves the downgrade flow.
     const capacityError = await this.policy.assertCustomRoomCanRestore(command.tenantUUID);
     if (capacityError) return err(capacityError);
+
+    const transition = customRoom.markRestored(command.actorUUID);
+    if (transition.isErr()) return err(transition.error);
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    const updated = await this.customRoomRepository.save(customRoom.markRestored(), storageId);
+    const saved = await this.customRoomRepository.save(customRoom, storageId);
 
-    this.eventBus.publish(
-      new StorageRestoredEvent(command.storageUUID, command.tenantUUID, command.actorUUID),
-    );
+    this.eventPublisher.mergeObjectContext(customRoom);
+    customRoom.commit();
 
-    return ok(StorageItemViewMapper.fromCustomRoom(updated));
+    return ok(StorageItemViewMapper.fromCustomRoom(saved));
   }
 }

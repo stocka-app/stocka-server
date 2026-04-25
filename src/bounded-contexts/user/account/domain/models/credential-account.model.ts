@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
 import { PasswordHashVO } from '@shared/domain/value-objects/primitive/password-hash.vo';
 import {
@@ -47,6 +48,12 @@ interface CredentialAccountCtorProps extends BaseModelProps {
 }
 
 export class CredentialAccountModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _accountId: number;
   private _email: EmailVO;
   private _passwordHash: PasswordHashVO | null;
@@ -56,7 +63,12 @@ export class CredentialAccountModel extends BaseModel {
   private readonly _createdWith: CreatedWithProviderVO;
 
   private constructor(props: CredentialAccountCtorProps) {
-    super(props);
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._accountId = props.accountId;
     this._email = new EmailVO(props.email);
     this._passwordHash = props.passwordHash ? new PasswordHashVO(props.passwordHash) : null;
@@ -107,6 +119,26 @@ export class CredentialAccountModel extends BaseModel {
 
   static reconstitute(props: CredentialAccountReconstitueProps): CredentialAccountModel {
     return new CredentialAccountModel(props);
+  }
+
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
   }
 
   get accountId(): number {
@@ -178,5 +210,9 @@ export class CredentialAccountModel extends BaseModel {
   updatePasswordHash(hash: string): void {
     this._passwordHash = new PasswordHashVO(hash);
     this.touch();
+  }
+
+  protected touch(): void {
+    this._updatedAt = new Date();
   }
 }

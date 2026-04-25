@@ -1,4 +1,4 @@
-import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
+import { PasswordResetTokenAggregate } from '@authentication/domain/aggregates/password-reset-token.aggregate';
 
 export interface ResetPasswordSagaContext {
   // Input
@@ -6,7 +6,7 @@ export interface ResetPasswordSagaContext {
   readonly newPassword: string;
 
   // Computed by steps
-  resetToken?: PasswordResetTokenModel;
+  resetToken?: PasswordResetTokenAggregate;
   newPasswordHash?: string;
 }
 

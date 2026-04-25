@@ -1,8 +1,8 @@
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
+import { CustomRoomAggregate } from '@storage/domain/aggregates/custom-room.aggregate';
 
 export interface ICustomRoomRepository {
   count(tenantUUID: string): Promise<number>;
-  findByUUID(uuid: string): Promise<CustomRoomModel | null>;
-  save(model: CustomRoomModel, storageId: number): Promise<CustomRoomModel>;
+  findByUUID(uuid: string): Promise<CustomRoomAggregate | null>;
+  save(aggregate: CustomRoomAggregate, storageId: number): Promise<CustomRoomAggregate>;
   deleteByUUID(uuid: string): Promise<void>;
 }

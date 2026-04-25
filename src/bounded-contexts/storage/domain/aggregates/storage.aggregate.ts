@@ -1,35 +1,50 @@
 import { AggregateRoot, AggregateRootProps } from '@shared/domain/base/aggregate-root';
 import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { CustomRoomAggregate } from '@storage/domain/aggregates/custom-room.aggregate';
+import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
-import { StorageCreatedEvent } from '@storage/domain/events/storage-created.event';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export interface StorageAggregateReconstituteProps extends AggregateRootProps {
   id: number;
   uuid: string;
   tenantUUID: string;
-  warehouses: WarehouseModel[];
-  storeRooms: StoreRoomModel[];
-  customRooms: CustomRoomModel[];
+  warehouses: WarehouseAggregate[];
+  storeRooms: StoreRoomAggregate[];
+  customRooms: CustomRoomAggregate[];
   createdAt: Date;
   updatedAt: Date;
 }
 
+/**
+ * Container row that anchors a tenant's storages at the persistence layer
+ * (one `storages` table row per tenant; per-type rows reference it via
+ * FK). After the per-type aggregates were promoted (Warehouse / StoreRoom
+ * / CustomRoom each became its own root with its own repository), this
+ * "aggregate" no longer owns transitions or invariants — it only
+ * provides:
+ *
+ *   - the FK id used by per-type repositories on insert
+ *   - view assembly (`listItemViews`) for the read-side query handlers
+ *
+ * It will be flattened to a `StorageContainerModel` (plain Model) +
+ * dedicated query in a follow-up cleanup. Kept as `AggregateRoot` for
+ * now to avoid cascading the rename across queries / mappers / module
+ * wiring in the same iteration.
+ */
 export class StorageAggregate extends AggregateRoot {
   private readonly _tenantUUID: UUIDVO;
-  private _warehouses: WarehouseModel[];
-  private _storeRooms: StoreRoomModel[];
-  private _customRooms: CustomRoomModel[];
+  private _warehouses: WarehouseAggregate[];
+  private _storeRooms: StoreRoomAggregate[];
+  private _customRooms: CustomRoomAggregate[];
 
   private constructor(
     props: AggregateRootProps & {
       tenantUUID: string;
-      warehouses: WarehouseModel[];
-      storeRooms: StoreRoomModel[];
-      customRooms: CustomRoomModel[];
+      warehouses: WarehouseAggregate[];
+      storeRooms: StoreRoomAggregate[];
+      customRooms: CustomRoomAggregate[];
     },
   ) {
     super(props);
@@ -61,59 +76,18 @@ export class StorageAggregate extends AggregateRoot {
     });
   }
 
-  // ── Add items ──────────────────────────────────────────────────────────
-
-  addWarehouse(model: WarehouseModel, actorUUID: string): void {
-    this._warehouses.push(model);
-    this.apply(
-      new StorageCreatedEvent(
-        model.uuid.toString(),
-        this._tenantUUID.toString(),
-        actorUUID,
-        StorageType.WAREHOUSE,
-        model.name.getValue(),
-      ),
-    );
-  }
-
-  addStoreRoom(model: StoreRoomModel, actorUUID: string): void {
-    this._storeRooms.push(model);
-    this.apply(
-      new StorageCreatedEvent(
-        model.uuid.toString(),
-        this._tenantUUID.toString(),
-        actorUUID,
-        StorageType.STORE_ROOM,
-        model.name.getValue(),
-      ),
-    );
-  }
-
-  addCustomRoom(model: CustomRoomModel, actorUUID: string): void {
-    this._customRooms.push(model);
-    this.apply(
-      new StorageCreatedEvent(
-        model.uuid.toString(),
-        this._tenantUUID.toString(),
-        actorUUID,
-        StorageType.CUSTOM_ROOM,
-        model.name.getValue(),
-      ),
-    );
-  }
-
   // ── Find items ─────────────────────────────────────────────────────────
 
-  findWarehouse(uuid: string): WarehouseModel | null {
-    return this._warehouses.find((w) => w.uuid.toString() === uuid) ?? null;
+  findWarehouse(uuid: string): WarehouseAggregate | null {
+    return this._warehouses.find((w) => w.uuid === uuid) ?? null;
   }
 
-  findStoreRoom(uuid: string): StoreRoomModel | null {
-    return this._storeRooms.find((s) => s.uuid.toString() === uuid) ?? null;
+  findStoreRoom(uuid: string): StoreRoomAggregate | null {
+    return this._storeRooms.find((s) => s.uuid === uuid) ?? null;
   }
 
-  findCustomRoom(uuid: string): CustomRoomModel | null {
-    return this._customRooms.find((c) => c.uuid.toString() === uuid) ?? null;
+  findCustomRoom(uuid: string): CustomRoomAggregate | null {
+    return this._customRooms.find((c) => c.uuid === uuid) ?? null;
   }
 
   // ── Views ──────────────────────────────────────────────────────────────
@@ -128,7 +102,7 @@ export class StorageAggregate extends AggregateRoot {
 
     for (const w of this._warehouses) {
       views.push({
-        uuid: w.uuid.toString(),
+        uuid: w.uuid,
         type: StorageType.WAREHOUSE,
         name: w.name.getValue(),
         description: w.description?.getValue() ?? null,
@@ -146,7 +120,7 @@ export class StorageAggregate extends AggregateRoot {
 
     for (const s of this._storeRooms) {
       views.push({
-        uuid: s.uuid.toString(),
+        uuid: s.uuid,
         type: StorageType.STORE_ROOM,
         name: s.name.getValue(),
         description: s.description?.getValue() ?? null,
@@ -164,7 +138,7 @@ export class StorageAggregate extends AggregateRoot {
 
     for (const c of this._customRooms) {
       views.push({
-        uuid: c.uuid.toString(),
+        uuid: c.uuid,
         type: StorageType.CUSTOM_ROOM,
         name: c.name.getValue(),
         description: c.description?.getValue() ?? null,
@@ -189,15 +163,15 @@ export class StorageAggregate extends AggregateRoot {
     return this._tenantUUID;
   }
 
-  get warehouses(): readonly WarehouseModel[] {
+  get warehouses(): readonly WarehouseAggregate[] {
     return this._warehouses;
   }
 
-  get storeRooms(): readonly StoreRoomModel[] {
+  get storeRooms(): readonly StoreRoomAggregate[] {
     return this._storeRooms;
   }
 
-  get customRooms(): readonly CustomRoomModel[] {
+  get customRooms(): readonly CustomRoomAggregate[] {
     return this._customRooms;
   }
 }

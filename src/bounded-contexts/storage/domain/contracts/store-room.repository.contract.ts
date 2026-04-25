@@ -1,8 +1,8 @@
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
+import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
 
 export interface IStoreRoomRepository {
   count(tenantUUID: string): Promise<number>;
-  findByUUID(uuid: string): Promise<StoreRoomModel | null>;
-  save(model: StoreRoomModel, storageId: number): Promise<StoreRoomModel>;
+  findByUUID(uuid: string): Promise<StoreRoomAggregate | null>;
+  save(aggregate: StoreRoomAggregate, storageId: number): Promise<StoreRoomAggregate>;
   deleteByUUID(uuid: string): Promise<void>;
 }

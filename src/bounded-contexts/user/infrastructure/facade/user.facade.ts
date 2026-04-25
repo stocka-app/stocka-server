@@ -7,7 +7,7 @@ import {
   ISocialAccountContract,
 } from '@user/account/domain/contracts/account.contract';
 import { IProfileContract } from '@user/profile/domain/contracts/profile.contract';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { AccountAggregate } from '@user/account/domain/account.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { SocialAccountModel } from '@user/account/domain/models/social-account.model';

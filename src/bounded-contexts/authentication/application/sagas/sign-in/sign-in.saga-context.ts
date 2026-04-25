@@ -1,4 +1,4 @@
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';

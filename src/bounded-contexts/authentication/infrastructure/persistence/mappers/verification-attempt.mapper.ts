@@ -1,9 +1,9 @@
-import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { VerificationAttemptAggregate } from '@authentication/domain/aggregates/verification-attempt.aggregate';
 import { VerificationAttemptEntity } from '@authentication/infrastructure/persistence/entities/verification-attempt.entity';
 
 export class VerificationAttemptMapper {
-  static toDomain(entity: VerificationAttemptEntity): VerificationAttemptModel {
-    return VerificationAttemptModel.reconstitute({
+  static toDomain(entity: VerificationAttemptEntity): VerificationAttemptAggregate {
+    return VerificationAttemptAggregate.reconstitute({
       id: entity.id,
       uuid: entity.uuid,
       userUUID: entity.userUUID,
@@ -20,7 +20,7 @@ export class VerificationAttemptMapper {
     });
   }
 
-  static toEntity(model: VerificationAttemptModel): Partial<VerificationAttemptEntity> {
+  static toEntity(model: VerificationAttemptAggregate): Partial<VerificationAttemptEntity> {
     const entity: Partial<VerificationAttemptEntity> = {
       uuid: model.uuid,
       userUUID: model.userUUID?.toString() ?? null,

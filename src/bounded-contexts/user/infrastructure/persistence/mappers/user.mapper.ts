@@ -1,4 +1,4 @@
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
 
 export class UserMapper {

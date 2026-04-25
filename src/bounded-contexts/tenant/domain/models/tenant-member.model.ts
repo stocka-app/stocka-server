@@ -26,6 +26,12 @@ export interface TenantMemberReconstituteProps extends BaseModelProps {
 }
 
 export class TenantMemberModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _tenantId: number;
   private readonly _userId: number;
   private readonly _userUUID: UUIDVO;
@@ -45,7 +51,12 @@ export class TenantMemberModel extends BaseModel {
       joinedAt: Date | null;
     },
   ) {
-    super(props);
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._tenantId = props.tenantId;
     this._userId = props.userId;
     this._userUUID = props.userUUID;
@@ -82,6 +93,26 @@ export class TenantMemberModel extends BaseModel {
       invitedBy: props.invitedBy,
       joinedAt: props.joinedAt,
     });
+  }
+
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
   }
 
   get tenantId(): number {

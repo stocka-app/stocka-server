@@ -1,10 +1,10 @@
-import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { VerificationAttemptAggregate } from '@authentication/domain/aggregates/verification-attempt.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 
 export interface IVerificationAttemptContract {
-  findById(id: number): Promise<Persisted<VerificationAttemptModel> | null>;
-  findByUUID(uuid: string): Promise<Persisted<VerificationAttemptModel> | null>;
-  persist(attempt: VerificationAttemptModel): Promise<Persisted<VerificationAttemptModel>>;
+  findById(id: number): Promise<Persisted<VerificationAttemptAggregate> | null>;
+  findByUUID(uuid: string): Promise<Persisted<VerificationAttemptAggregate> | null>;
+  persist(attempt: VerificationAttemptAggregate): Promise<Persisted<VerificationAttemptAggregate>>;
 
   // Rate limiting queries
   countFailedByUserUUIDInLastHour(userUUID: string): Promise<number>;
@@ -32,7 +32,7 @@ export interface IVerificationAttemptContract {
   findRecentByUserUUID(
     userUUID: string,
     limit: number,
-  ): Promise<Persisted<VerificationAttemptModel>[]>;
+  ): Promise<Persisted<VerificationAttemptAggregate>[]>;
 
   // Cleanup
   archiveOlderThan(date: Date): Promise<number>;

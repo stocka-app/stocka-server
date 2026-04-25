@@ -30,6 +30,12 @@ export interface SocialProfileReconstitueProps extends BaseModelProps {
 }
 
 export class SocialProfileModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _profileId: number;
   private _socialAccountUUID: UUIDVO;
   private _provider: OAuthProviderVO;
@@ -45,13 +51,12 @@ export class SocialProfileModel extends BaseModel {
   private _syncedAt: Date;
 
   private constructor(props: SocialProfileReconstitueProps) {
-    super({
-      id: props.id,
-      uuid: props.uuid,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
-      archivedAt: props.archivedAt,
-    });
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._profileId = props.profileId;
     this._socialAccountUUID = new UUIDVO(props.socialAccountUUID);
     this._provider = new OAuthProviderVO(props.provider);
@@ -112,6 +117,26 @@ export class SocialProfileModel extends BaseModel {
 
   static reconstitute(props: SocialProfileReconstitueProps): SocialProfileModel {
     return new SocialProfileModel(props);
+  }
+
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
   }
 
   get profileId(): number {
@@ -195,5 +220,9 @@ export class SocialProfileModel extends BaseModel {
     if (props.rawData !== undefined) this._rawData = props.rawData;
     this._syncedAt = new Date();
     this.touch();
+  }
+
+  protected touch(): void {
+    this._updatedAt = new Date();
   }
 }

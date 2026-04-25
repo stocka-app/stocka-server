@@ -1,8 +1,8 @@
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 
 export interface IWarehouseRepository {
   count(tenantUUID: string): Promise<number>;
-  findByUUID(uuid: string): Promise<WarehouseModel | null>;
-  save(model: WarehouseModel, storageId: number): Promise<WarehouseModel>;
+  findByUUID(uuid: string): Promise<WarehouseAggregate | null>;
+  save(aggregate: WarehouseAggregate, storageId: number): Promise<WarehouseAggregate>;
   deleteByUUID(uuid: string): Promise<void>;
 }

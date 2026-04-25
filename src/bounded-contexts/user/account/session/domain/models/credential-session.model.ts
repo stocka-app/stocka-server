@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
 export interface CredentialSessionReconstitueProps extends BaseModelProps {
   id: number;
@@ -20,11 +21,22 @@ interface CredentialSessionCtorProps extends BaseModelProps {
 }
 
 export class CredentialSessionModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _sessionId: number | undefined;
   private readonly _credentialAccountId: number;
 
   private constructor(props: CredentialSessionCtorProps) {
-    super(props);
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._sessionId = props.sessionId;
     this._credentialAccountId = props.credentialAccountId;
   }
@@ -40,6 +52,26 @@ export class CredentialSessionModel extends BaseModel {
 
   static reconstitute(props: CredentialSessionReconstitueProps): CredentialSessionModel {
     return new CredentialSessionModel(props);
+  }
+
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
   }
 
   /** Defined after DB persist — undefined on newly-created (pre-persist) models. */

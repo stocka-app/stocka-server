@@ -20,7 +20,7 @@ export interface VerificationAttemptProps extends AggregateRootProps {
   attemptedAt?: Date;
 }
 
-export class VerificationAttemptModel extends AggregateRoot {
+export class VerificationAttemptAggregate extends AggregateRoot {
   private readonly _userUUID: UUIDVO | null;
   private readonly _email: EmailVO | null;
   private readonly _ipAddress: IpAddressVO;
@@ -50,15 +50,15 @@ export class VerificationAttemptModel extends AggregateRoot {
       : AttemptedAtVO.now();
   }
 
-  static create(props: Omit<VerificationAttemptProps, 'id'>): VerificationAttemptModel {
-    return new VerificationAttemptModel(props);
+  static create(props: Omit<VerificationAttemptProps, 'id'>): VerificationAttemptAggregate {
+    return new VerificationAttemptAggregate(props);
   }
 
   static createFailed(
     props: Omit<VerificationAttemptProps, 'id' | 'success'> & { userUUID: string; email: string },
     failedAttempts: number,
-  ): VerificationAttemptModel {
-    const attempt = new VerificationAttemptModel({ ...props, success: false });
+  ): VerificationAttemptAggregate {
+    const attempt = new VerificationAttemptAggregate({ ...props, success: false });
     attempt.apply(
       new EmailVerificationFailedEvent(
         props.userUUID,
@@ -72,8 +72,8 @@ export class VerificationAttemptModel extends AggregateRoot {
 
   static reconstitute(
     props: VerificationAttemptProps & { id: number; uuid: string },
-  ): VerificationAttemptModel {
-    return new VerificationAttemptModel(props);
+  ): VerificationAttemptAggregate {
+    return new VerificationAttemptAggregate(props);
   }
 
   get userUUID(): UUIDVO | null {
