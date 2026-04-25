@@ -5,7 +5,7 @@ import { IVerificationAttemptContract } from '@authentication/domain/contracts/v
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { VerificationAttemptAggregate } from '@authentication/domain/aggregates/verification-attempt.aggregate';
 
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
@@ -52,8 +52,8 @@ describe('TypeOrmVerificationAttemptRepository (e2e)', () => {
         ipAddress?: string;
         type?: string;
       } = {},
-    ): Promise<VerificationAttemptModel> {
-      const attempt = VerificationAttemptModel.create({
+    ): Promise<VerificationAttemptAggregate> {
+      const attempt = VerificationAttemptAggregate.create({
         userUUID: overrides.userUUID ?? testUUID,
         email: overrides.email ?? testEmail,
         ipAddress: overrides.ipAddress ?? testIP,
@@ -66,7 +66,7 @@ describe('TypeOrmVerificationAttemptRepository (e2e)', () => {
     }
 
     describe('Given verification attempts exist in the database', () => {
-      let savedAttempt: VerificationAttemptModel;
+      let savedAttempt: VerificationAttemptAggregate;
 
       beforeEach(async () => {
         savedAttempt = await createAttempt();
@@ -164,7 +164,7 @@ describe('TypeOrmVerificationAttemptRepository (e2e)', () => {
 
     describe('Given persist is called within an active UoW transaction', () => {
       it('Then it uses the transaction EntityManager and the attempt is saved', async () => {
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: testUUID,
           email: testEmail,
           ipAddress: testIP,
