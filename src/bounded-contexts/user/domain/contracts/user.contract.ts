@@ -1,4 +1,4 @@
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 
 export interface IUserContract {

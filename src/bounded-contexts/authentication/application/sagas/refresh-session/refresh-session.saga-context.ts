@@ -1,4 +1,4 @@
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { OnboardingStatus } from '@onboarding/domain/enums/onboarding-status.enum';
 
 export interface RefreshSessionSagaContext {

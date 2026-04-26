@@ -1,11 +1,10 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
 import { UpdateWarehouseCommand } from '@storage/application/commands/update-warehouse/update-warehouse.command';
 import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
-import { StorageUpdateEventsPublisher } from '@storage/application/services/storage-update-events.publisher';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { StorageAddressRequiredForWarehouseError } from '@storage/domain/errors/storage-address-required-for-warehouse.error';
@@ -22,13 +21,13 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.WAREHOUSE_CONTRACT)
     private readonly warehouseRepository: IWarehouseRepository,
-    private readonly updateEventsPublisher: StorageUpdateEventsPublisher,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: UpdateWarehouseCommand): Promise<UpdateWarehouseResult> {
-    const before = await this.warehouseRepository.findByUUID(command.storageUUID);
+    const warehouse = await this.warehouseRepository.findByUUID(command.storageUUID);
 
-    if (!before || before.tenantUUID.toString() !== command.tenantUUID) {
+    if (!warehouse || warehouse.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
 
@@ -36,7 +35,7 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
     // blocked by ChangeXToYHandler (StorageTypeLockedWhileArchivedError) and
     // FROZEN by H-05's StorageTypeLockedWhileFrozenError.
 
-    if (command.name !== undefined && command.name !== before.name.getValue()) {
+    if (command.name !== undefined && command.name !== warehouse.name.getValue()) {
       const nameExists = await this.storageRepository.existsActiveName(
         command.tenantUUID,
         command.name,
@@ -53,25 +52,20 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    const after = before.update({
-      name: command.name,
-      description: command.description,
-      address: command.address,
-    });
-    const saved = await this.warehouseRepository.save(after, storageId);
-
-    this.updateEventsPublisher.publish({
-      uuid: command.storageUUID,
-      tenantUUID: command.tenantUUID,
-      actorUUID: command.actorUUID,
-      before,
-      after: saved,
-      fields: {
+    const transition = warehouse.update(
+      {
         name: command.name,
         description: command.description,
         address: command.address,
       },
-    });
+      command.actorUUID,
+    );
+    if (transition.isErr()) return err(transition.error);
+
+    const saved = await this.warehouseRepository.save(warehouse, storageId);
+
+    this.eventPublisher.mergeObjectContext(warehouse);
+    warehouse.commit();
 
     return ok(StorageItemViewMapper.fromWarehouse(saved));
   }

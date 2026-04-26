@@ -2,7 +2,7 @@ import { CommandHandler, ICommandHandler, EventPublisher } from '@nestjs/cqrs';
 import { Logger, Inject } from '@nestjs/common';
 import { ForgotPasswordCommand } from '@authentication/application/commands/forgot-password/forgot-password.command';
 import { ForgotPasswordResult } from '@authentication/application/types/authentication-result.types';
-import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
+import { PasswordResetTokenAggregate } from '@authentication/domain/aggregates/password-reset-token.aggregate';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
@@ -46,7 +46,7 @@ export class ForgotPasswordHandler implements ICommandHandler<ForgotPasswordComm
       return { message: genericMessage };
     }
 
-    const resetToken = PasswordResetTokenModel.create({
+    const resetToken = PasswordResetTokenAggregate.create({
       credentialAccountId: credentialId,
       tokenHash,
       expiresAt,

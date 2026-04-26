@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { UsernameVO } from '@user/domain/value-objects/username.vo';
 import { DisplayNameVO } from '@shared/domain/value-objects/display-name.vo';
 import { AvatarUrlVO } from '@shared/domain/value-objects/avatar-url.vo';
@@ -18,6 +19,12 @@ export interface PersonalProfileReconstitueProps extends BaseModelProps {
 }
 
 export class PersonalProfileModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _profileId: number;
   private _username: UsernameVO;
   private _displayName: DisplayNameVO | null;
@@ -26,13 +33,12 @@ export class PersonalProfileModel extends BaseModel {
   private _timezone: string;
 
   private constructor(props: PersonalProfileReconstitueProps) {
-    super({
-      id: props.id,
-      uuid: props.uuid,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
-      archivedAt: props.archivedAt,
-    });
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._profileId = props.profileId;
     this._username = new UsernameVO(props.username);
     this._displayName = props.displayName !== null ? DisplayNameVO.create(props.displayName) : null;
@@ -68,6 +74,26 @@ export class PersonalProfileModel extends BaseModel {
     return new PersonalProfileModel(props);
   }
 
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
+  }
+
   get profileId(): number {
     return this._profileId;
   }
@@ -95,5 +121,9 @@ export class PersonalProfileModel extends BaseModel {
   updateLocale(locale: string): void {
     this._locale = locale;
     this.touch();
+  }
+
+  protected touch(): void {
+    this._updatedAt = new Date();
   }
 }

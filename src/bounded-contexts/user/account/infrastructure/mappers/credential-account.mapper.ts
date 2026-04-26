@@ -21,7 +21,7 @@ export class CredentialAccountMapper {
 
   static toEntity(model: CredentialAccountModel): Partial<CredentialAccountEntity> {
     const entity: Partial<CredentialAccountEntity> = {
-      uuid: model.uuid,
+      uuid: model.uuid.toString(),
       accountId: model.accountId,
       email: model.email.toLowerCase(),
       passwordHash: model.passwordHash,

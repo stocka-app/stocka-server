@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { FullNameVO } from '@shared/domain/value-objects/full-name.vo';
 import { CountryCodeVO } from '@shared/domain/value-objects/country-code.vo';
 import { TaxIdVO } from '@shared/domain/value-objects/tax-id.vo';
@@ -17,6 +18,12 @@ export interface CommercialProfileReconstitueProps extends BaseModelProps {
 }
 
 export class CommercialProfileModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _profileId: number;
   private _fullName: FullNameVO | null;
   private _phone: string | null;
@@ -24,13 +31,12 @@ export class CommercialProfileModel extends BaseModel {
   private _taxId: TaxIdVO | null;
 
   private constructor(props: CommercialProfileReconstitueProps) {
-    super({
-      id: props.id,
-      uuid: props.uuid,
-      createdAt: props.createdAt,
-      updatedAt: props.updatedAt,
-      archivedAt: props.archivedAt,
-    });
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._profileId = props.profileId;
     this._fullName = props.fullName !== null ? FullNameVO.create(props.fullName) : null;
     this._phone = props.phone;
@@ -55,6 +61,26 @@ export class CommercialProfileModel extends BaseModel {
 
   static reconstitute(props: CommercialProfileReconstitueProps): CommercialProfileModel {
     return new CommercialProfileModel(props);
+  }
+
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
   }
 
   get profileId(): number {

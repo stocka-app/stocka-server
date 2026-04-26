@@ -5,7 +5,7 @@ import { CreateStoreRoomCommand } from '@storage/application/commands/create-sto
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
+import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import {
   resolveStorageIcon,
@@ -49,11 +49,15 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
       return err(new StorageNameAlreadyExistsError(command.name));
     }
 
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+    const container = await this.storageRepository.findOrCreate(command.tenantUUID);
+    if (container.id === undefined) {
+      throw new Error('Storage container persisted without id; repository invariant violated');
+    }
 
-    const model = StoreRoomModel.create({
+    const storeRoom = StoreRoomAggregate.create({
       uuid: uuidV7(),
       tenantUUID: command.tenantUUID,
+      actorUUID: command.actorUUID,
       name: command.name,
       description: command.description,
       icon: resolveStorageIcon(StorageType.STORE_ROOM),
@@ -61,13 +65,11 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
       address: command.address,
     });
 
-    aggregate.addStoreRoom(model, command.actorUUID);
+    await this.storeRoomRepository.save(storeRoom, container.id);
 
-    await this.storeRoomRepository.save(model, aggregate.id!);
+    this.eventPublisher.mergeObjectContext(storeRoom);
+    storeRoom.commit();
 
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
-
-    return ok({ storageUUID: model.uuid.toString() });
+    return ok({ storageUUID: storeRoom.uuid });
   }
 }

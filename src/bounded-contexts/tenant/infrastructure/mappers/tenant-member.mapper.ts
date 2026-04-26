@@ -21,7 +21,7 @@ export class TenantMemberMapper {
 
   static toEntity(model: TenantMemberModel): Partial<TenantMemberEntity> {
     const entity: Partial<TenantMemberEntity> = {
-      uuid: model.uuid,
+      uuid: model.uuid.toString(),
       tenantId: model.tenantId,
       userId: model.userId,
       userUUID: model.userUUID,

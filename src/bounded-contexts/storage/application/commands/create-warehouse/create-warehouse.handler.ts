@@ -5,7 +5,7 @@ import { CreateWarehouseCommand } from '@storage/application/commands/create-war
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import {
   resolveStorageIcon,
@@ -53,11 +53,15 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       return err(new StorageNameAlreadyExistsError(command.name));
     }
 
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+    const container = await this.storageRepository.findOrCreate(command.tenantUUID);
+    if (container.id === undefined) {
+      throw new Error('Storage container persisted without id; repository invariant violated');
+    }
 
-    const model = WarehouseModel.create({
+    const warehouse = WarehouseAggregate.create({
       uuid: uuidV7(),
       tenantUUID: command.tenantUUID,
+      actorUUID: command.actorUUID,
       name: command.name,
       description: command.description,
       icon: resolveStorageIcon(StorageType.WAREHOUSE),
@@ -65,13 +69,11 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
       address: command.address,
     });
 
-    aggregate.addWarehouse(model, command.actorUUID);
+    await this.warehouseRepository.save(warehouse, container.id);
 
-    await this.warehouseRepository.save(model, aggregate.id!);
+    this.eventPublisher.mergeObjectContext(warehouse);
+    warehouse.commit();
 
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
-
-    return ok({ storageUUID: model.uuid.toString() });
+    return ok({ storageUUID: warehouse.uuid });
   }
 }

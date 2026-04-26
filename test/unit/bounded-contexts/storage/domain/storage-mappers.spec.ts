@@ -1,609 +1,379 @@
-import { StorageMapper } from '@storage/infrastructure/mappers/storage.mapper';
-import { CustomRoomMapper } from '@storage/infrastructure/mappers/custom-room.mapper';
-import { StoreRoomMapper } from '@storage/infrastructure/mappers/store-room.mapper';
-import { WarehouseMapper } from '@storage/infrastructure/mappers/warehouse.mapper';
-import { StorageActivityLogMapper } from '@storage/infrastructure/mappers/storage-activity-log.mapper';
-import { StorageType } from '@storage/domain/enums/storage-type.enum';
-import { StorageActivityAction } from '@storage/domain/enums/storage-activity-action.enum';
-import { StorageActivityLogEntry } from '@storage/domain/models/storage-activity-log-entry.model';
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
-import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
+import { CustomRoomAggregate } from '@storage/domain/aggregates/custom-room.aggregate';
+import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
+import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 import { CustomRoomEntity } from '@storage/infrastructure/entities/custom-room.entity';
+import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
 import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
-import { StorageActivityLogEntity } from '@storage/infrastructure/entities/storage-activity-log.entity';
-import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { CustomRoomMapper } from '@storage/infrastructure/mappers/custom-room.mapper';
+import { StorageMapper } from '@storage/infrastructure/mappers/storage.mapper';
+import { StoreRoomMapper } from '@storage/infrastructure/mappers/store-room.mapper';
+import { WarehouseMapper } from '@storage/infrastructure/mappers/warehouse.mapper';
 
 const TENANT_UUID = '019538a0-0000-7000-8000-000000000001';
+const ACTOR_UUID = '019538a0-0000-7000-8000-000000000099';
+const STORAGE_UUID = '019538a0-0000-7000-8000-000000000010';
+const STORAGE_PARENT_UUID = '019538a0-0000-7000-8000-0000000000ff';
 
-// ── CustomRoomMapper ────────────────────────────────────────────────────────────
+const NOW = new Date('2024-06-01T00:00:00.000Z');
+const CREATED_AT = new Date('2024-01-01T00:00:00.000Z');
 
-describe('CustomRoomMapper', () => {
-  describe('Given a CustomRoomEntity with all fields set', () => {
-    describe('When toDomain is called', () => {
-      it('Then it returns a CustomRoomModel with all fields mapped', () => {
-        const entity = {
-          id: 1,
-          uuid: '019538a0-0000-7000-8000-000000000010',
-          tenantUUID: TENANT_UUID,
-          storageId: 1,
-          name: 'Office Room',
-          description: 'Main office space',
-          icon: 'office-icon',
-          color: '#AABBCC',
-          roomType: 'Office',
-          address: '123 Main St',
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-02'),
-        } as CustomRoomEntity;
-
-        const model = CustomRoomMapper.toDomain(entity);
-        expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000010');
-        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
-        expect(model.name.getValue()).toBe('Office Room');
-        expect(model.description?.getValue()).toBe('Main office space');
-        expect(model.icon.getValue()).toBe('office-icon');
-        expect(model.color.getValue()).toBe('#AABBCC');
-        expect(model.roomType.getValue()).toBe('Office');
-        expect(model.address!.getValue()).toBe('123 Main St');
-        expect(model.frozenAt).toBeNull();
-        expect(model.archivedAt).toBeNull();
-        expect(model.createdAt).toEqual(new Date('2024-01-01'));
-      });
-
-      it('Then description is null when not set on entity', () => {
-        const entity = {
-          id: 2,
-          uuid: '019538a0-0000-7000-8000-000000000019',
-          tenantUUID: TENANT_UUID,
-          storageId: 2,
-          name: 'No Desc Room',
-          description: null,
-          icon: 'icon-1',
-          color: '#AABBCC',
-          roomType: 'Storage',
-          address: '456 Ave',
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        } as unknown as CustomRoomEntity;
-
-        const model = CustomRoomMapper.toDomain(entity);
-        expect(model.description).toBeNull();
-      });
-
-      it('Then address is null when the entity has no address', () => {
-        const entity = {
-          id: 4,
-          uuid: '019538a0-0000-7000-8000-000000000041',
-          tenantUUID: TENANT_UUID,
-          storageId: 4,
-          name: 'No Addr Room',
-          description: null,
-          icon: 'icon-1',
-          color: '#AABBCC',
-          roomType: 'Office',
-          address: null,
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        } as unknown as CustomRoomEntity;
-
-        const model = CustomRoomMapper.toDomain(entity);
-        expect(model.address).toBeNull();
-      });
-    });
+function buildWarehouseEntity(overrides: Partial<WarehouseEntity> = {}): WarehouseEntity {
+  const entity = new WarehouseEntity();
+  Object.assign(entity, {
+    id: 1,
+    uuid: STORAGE_UUID,
+    tenantUUID: TENANT_UUID,
+    storageId: 17,
+    name: 'WH',
+    description: null,
+    address: 'addr',
+    icon: 'icon',
+    color: '#000000',
+    frozenAt: null,
+    archivedAt: null,
+    createdAt: CREATED_AT,
+    updatedAt: NOW,
+    ...overrides,
   });
+  return entity;
+}
 
-  describe('Given a CustomRoomModel created via create()', () => {
-    describe('When toEntity is called', () => {
-      it('Then it returns a partial entity with all business fields', () => {
-        const model = CustomRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000050',
-          tenantUUID: TENANT_UUID,
-          name: 'Test Room',
-          description: 'A test room',
-          icon: 'test-icon',
-          color: '#112233',
-          roomType: 'Kitchen',
-          address: '456 Oak Ave',
-        });
-
-        const entity = CustomRoomMapper.toEntity(model);
-        expect(entity.uuid).toBeDefined();
-        expect(entity.tenantUUID).toBe(TENANT_UUID);
-        expect(entity.name).toBe('Test Room');
-        expect(entity.description).toBe('A test room');
-        expect(entity.icon).toBe('test-icon');
-        expect(entity.color).toBe('#112233');
-        expect(entity.roomType).toBe('Kitchen');
-        expect(entity.address).toBe('456 Oak Ave');
-        expect(entity.frozenAt).toBeNull();
-        expect(entity.archivedAt).toBeNull();
-      });
-
-      it('Then description is null when model has no description', () => {
-        const model = CustomRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000051',
-          tenantUUID: TENANT_UUID,
-          name: 'No Desc Room',
-          roomType: 'Storage',
-          icon: 'icon-1',
-          color: '#AABBCC',
-          address: '789 Elm St',
-        });
-
-        const entity = CustomRoomMapper.toEntity(model);
-        expect(entity.description).toBeNull();
-      });
-
-      it('Then storageId is set when provided', () => {
-        const model = CustomRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000052',
-          tenantUUID: TENANT_UUID,
-          name: 'With Storage Id',
-          roomType: 'Office',
-          icon: 'icon-1',
-          color: '#AABBCC',
-          address: '100 St',
-        });
-
-        const entity = CustomRoomMapper.toEntity(model, 42);
-        expect(entity.storageId).toBe(42);
-      });
-
-      it('Then address is null when the model has no address', () => {
-        const model = CustomRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000053',
-          tenantUUID: TENANT_UUID,
-          name: 'No Addr Room',
-          roomType: 'Office',
-          icon: 'icon-1',
-          color: '#AABBCC',
-        });
-
-        const entity = CustomRoomMapper.toEntity(model);
-        expect(entity.address).toBeNull();
-      });
-    });
+function buildStoreRoomEntity(overrides: Partial<StoreRoomEntity> = {}): StoreRoomEntity {
+  const entity = new StoreRoomEntity();
+  Object.assign(entity, {
+    id: 2,
+    uuid: STORAGE_UUID,
+    tenantUUID: TENANT_UUID,
+    storageId: 17,
+    name: 'SR',
+    description: null,
+    address: null,
+    icon: 'icon',
+    color: '#000000',
+    frozenAt: null,
+    archivedAt: null,
+    createdAt: CREATED_AT,
+    updatedAt: NOW,
+    ...overrides,
   });
-});
+  return entity;
+}
 
-// ── StoreRoomMapper ─────────────────────────────────────────────────────────────
-
-describe('StoreRoomMapper', () => {
-  describe('Given a StoreRoomEntity with all fields set', () => {
-    describe('When toDomain is called', () => {
-      it('Then it returns a StoreRoomModel with all fields mapped', () => {
-        const entity = {
-          id: 2,
-          uuid: '019538a0-0000-7000-8000-000000000020',
-          tenantUUID: TENANT_UUID,
-          storageId: 2,
-          name: 'Main Bodega',
-          description: 'Primary storage',
-          icon: 'store-icon',
-          color: '#334455',
-          address: '789 Elm Rd',
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-02-01'),
-          updatedAt: new Date('2024-02-02'),
-        } as StoreRoomEntity;
-
-        const model = StoreRoomMapper.toDomain(entity);
-        expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000020');
-        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
-        expect(model.name.getValue()).toBe('Main Bodega');
-        expect(model.description?.getValue()).toBe('Primary storage');
-        expect(model.icon.getValue()).toBe('store-icon');
-        expect(model.color.getValue()).toBe('#334455');
-        expect(model.address!.getValue()).toBe('789 Elm Rd');
-        expect(model.frozenAt).toBeNull();
-        expect(model.archivedAt).toBeNull();
-      });
-
-      it('Then description is null when not set on entity', () => {
-        const entity = {
-          id: 3,
-          uuid: '019538a0-0000-7000-8000-000000000029',
-          tenantUUID: TENANT_UUID,
-          storageId: 3,
-          name: 'No Desc Store',
-          description: null,
-          icon: 'icon-1',
-          color: '#AABBCC',
-          address: '100 St',
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        } as unknown as StoreRoomEntity;
-
-        const model = StoreRoomMapper.toDomain(entity);
-        expect(model.description).toBeNull();
-      });
-    });
+function buildCustomRoomEntity(overrides: Partial<CustomRoomEntity> = {}): CustomRoomEntity {
+  const entity = new CustomRoomEntity();
+  Object.assign(entity, {
+    id: 3,
+    uuid: STORAGE_UUID,
+    tenantUUID: TENANT_UUID,
+    storageId: 17,
+    name: 'CR',
+    description: null,
+    roomType: 'Office',
+    address: null,
+    icon: 'icon',
+    color: '#000000',
+    frozenAt: null,
+    archivedAt: null,
+    createdAt: CREATED_AT,
+    updatedAt: NOW,
+    ...overrides,
   });
+  return entity;
+}
 
-  describe('Given a StoreRoomModel created via create()', () => {
-    describe('When toEntity is called', () => {
-      it('Then it returns a partial entity with all business fields', () => {
-        const model = StoreRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000060',
-          tenantUUID: TENANT_UUID,
-          name: 'Bodega Test',
-          description: 'Test bodega',
-          icon: 'bodega-icon',
-          color: '#AABBCC',
-          address: '100 Industrial',
-        });
-
-        const entity = StoreRoomMapper.toEntity(model);
-        expect(entity.uuid).toBeDefined();
-        expect(entity.tenantUUID).toBe(TENANT_UUID);
-        expect(entity.name).toBe('Bodega Test');
-        expect(entity.description).toBe('Test bodega');
-        expect(entity.icon).toBe('bodega-icon');
-        expect(entity.color).toBe('#AABBCC');
-        expect(entity.address).toBe('100 Industrial');
-        expect(entity.frozenAt).toBeNull();
-        expect(entity.archivedAt).toBeNull();
-      });
-
-      it('Then storageId is set when provided', () => {
-        const model = StoreRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000061',
-          tenantUUID: TENANT_UUID,
-          name: 'With Storage Id',
-          icon: 'icon-1',
-          color: '#AABBCC',
-          address: '200 St',
-        });
-
-        const entity = StoreRoomMapper.toEntity(model, 99);
-        expect(entity.storageId).toBe(99);
-      });
-
-      it('Then address is null when the model has no address', () => {
-        const model = StoreRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000062',
-          tenantUUID: TENANT_UUID,
-          name: 'No Addr Bodega',
-          icon: 'icon-1',
-          color: '#AABBCC',
-        });
-
-        const entity = StoreRoomMapper.toEntity(model);
-        expect(entity.address).toBeNull();
-      });
-    });
-  });
-
-  describe('Given a StoreRoomEntity without an address', () => {
-    describe('When toDomain is called', () => {
-      it('Then address is null on the model', () => {
-        const entity = {
-          id: 5,
-          uuid: '019538a0-0000-7000-8000-000000000063',
-          tenantUUID: TENANT_UUID,
-          storageId: 5,
-          name: 'No Addr Bodega',
-          description: null,
-          icon: 'store-icon',
-          color: '#334455',
-          address: null,
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-02-01'),
-          updatedAt: new Date('2024-02-02'),
-        } as unknown as StoreRoomEntity;
-
-        const model = StoreRoomMapper.toDomain(entity);
-        expect(model.address).toBeNull();
-      });
-    });
-  });
-});
-
-// ── WarehouseMapper ─────────────────────────────────────────────────────────────
+// ─── WarehouseMapper ──────────────────────────────────────────────────────────
 
 describe('WarehouseMapper', () => {
-  describe('Given a WarehouseEntity with all fields set', () => {
-    describe('When toDomain is called', () => {
-      it('Then it returns a WarehouseModel with all fields mapped', () => {
-        const entity = {
-          id: 3,
-          uuid: '019538a0-0000-7000-8000-000000000030',
-          tenantUUID: TENANT_UUID,
-          storageId: 3,
-          name: 'Central WH',
-          description: 'Main warehouse',
-          icon: 'wh-icon',
-          color: '#667788',
-          address: '200 Warehouse Blvd',
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-03-01'),
-          updatedAt: new Date('2024-03-02'),
-        } as WarehouseEntity;
+  describe('toDomain', () => {
+    describe('Given a persisted Warehouse entity with description and timestamps', () => {
+      it('Then it reconstitutes the WarehouseAggregate with all fields populated', () => {
+        const entity = buildWarehouseEntity({
+          description: 'main location',
+          frozenAt: new Date('2024-05-01T00:00:00.000Z'),
+        });
 
-        const model = WarehouseMapper.toDomain(entity);
-        expect(model.uuid.toString()).toBe('019538a0-0000-7000-8000-000000000030');
-        expect(model.tenantUUID.toString()).toBe(TENANT_UUID);
-        expect(model.name.getValue()).toBe('Central WH');
-        expect(model.description?.getValue()).toBe('Main warehouse');
-        expect(model.icon.getValue()).toBe('wh-icon');
-        expect(model.color.getValue()).toBe('#667788');
-        expect(model.address.getValue()).toBe('200 Warehouse Blvd');
-        expect(model.frozenAt).toBeNull();
-        expect(model.archivedAt).toBeNull();
+        const aggregate = WarehouseMapper.toDomain(entity);
+
+        expect(aggregate.uuid).toBe(STORAGE_UUID);
+        expect(aggregate.tenantUUID.toString()).toBe(TENANT_UUID);
+        expect(aggregate.name.getValue()).toBe('WH');
+        expect(aggregate.description?.getValue()).toBe('main location');
+        expect(aggregate.address.getValue()).toBe('addr');
+        expect(aggregate.frozenAt).toEqual(new Date('2024-05-01T00:00:00.000Z'));
+        expect(aggregate.archivedAt).toBeNull();
+        expect(aggregate.createdAt).toEqual(CREATED_AT);
+        expect(aggregate.updatedAt).toEqual(NOW);
       });
+    });
 
-      it('Then description is null when not set on entity', () => {
-        const entity = {
-          id: 4,
-          uuid: '019538a0-0000-7000-8000-000000000039',
-          tenantUUID: TENANT_UUID,
-          storageId: 4,
-          name: 'No Desc WH',
-          description: null,
-          icon: 'icon-1',
-          color: '#AABBCC',
-          address: '300 St',
-          frozenAt: null,
-          archivedAt: null,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        } as unknown as WarehouseEntity;
-
-        const model = WarehouseMapper.toDomain(entity);
-        expect(model.description).toBeNull();
+    describe('Given a persisted Warehouse entity with no description', () => {
+      it('Then it reconstitutes with description set to null', () => {
+        const aggregate = WarehouseMapper.toDomain(buildWarehouseEntity({ description: null }));
+        expect(aggregate.description).toBeNull();
       });
     });
   });
 
-  describe('Given a WarehouseModel created via create()', () => {
-    describe('When toEntity is called on a newly created warehouse', () => {
-      it('Then id is not included in the entity (sentinel id=0 excluded)', () => {
-        const model = WarehouseModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000070',
+  describe('toEntity', () => {
+    describe('Given a Warehouse aggregate without a storageId override', () => {
+      it('Then it serializes all VOs back to primitive entity props (no storageId set)', () => {
+        const aggregate = WarehouseAggregate.create({
+          uuid: STORAGE_UUID,
           tenantUUID: TENANT_UUID,
-          name: 'WH Test',
-          description: 'Test warehouse',
-          icon: 'wh-test-icon',
-          color: '#DDEEFF',
-          address: '700 Blvd',
+          actorUUID: ACTOR_UUID,
+          name: 'WH',
+          icon: 'icon',
+          color: '#000000',
+          address: 'addr',
         });
 
-        const entity = WarehouseMapper.toEntity(model);
-        expect(entity.uuid).toBeDefined();
-        expect(entity.tenantUUID).toBe(TENANT_UUID);
-        expect(entity.name).toBe('WH Test');
-        expect(entity.description).toBe('Test warehouse');
-        expect(entity.icon).toBe('wh-test-icon');
-        expect(entity.color).toBe('#DDEEFF');
-        expect(entity.address).toBe('700 Blvd');
+        const entity = WarehouseMapper.toEntity(aggregate);
+
+        expect(entity.uuid).toBe(STORAGE_UUID);
+        expect(entity.name).toBe('WH');
+        expect(entity.address).toBe('addr');
         expect(entity.frozenAt).toBeNull();
         expect(entity.archivedAt).toBeNull();
-        expect(entity.id).toBeUndefined();
+        expect(entity.storageId).toBeUndefined();
       });
+    });
 
-      it('Then storageId is set when provided', () => {
-        const model = WarehouseModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000071',
+    describe('Given a Warehouse aggregate with a storageId override', () => {
+      it('Then it includes storageId in the entity output', () => {
+        const aggregate = WarehouseAggregate.create({
+          uuid: STORAGE_UUID,
           tenantUUID: TENANT_UUID,
-          name: 'With Storage Id',
-          icon: 'icon-1',
-          color: '#AABBCC',
-          address: '800 St',
+          actorUUID: ACTOR_UUID,
+          name: 'WH',
+          icon: 'icon',
+          color: '#000000',
+          address: 'addr',
+          description: 'description text',
         });
 
-        const entity = WarehouseMapper.toEntity(model, 55);
-        expect(entity.storageId).toBe(55);
+        const entity = WarehouseMapper.toEntity(aggregate, 42);
+
+        expect(entity.storageId).toBe(42);
+        expect(entity.description).toBe('description text');
       });
     });
   });
 });
 
-// ── StorageMapper (collection-based toDomain) ──────────────────────────────────
+// ─── StoreRoomMapper ──────────────────────────────────────────────────────────
 
-describe('StorageMapper', () => {
-  describe('Given a StorageEntity and sub-model arrays', () => {
-    describe('When toDomain is called with warehouses, storeRooms and customRooms', () => {
-      it('Then it returns a StorageAggregate with all collections populated', () => {
-        const entity = {
-          id: 1,
-          uuid: '019538a0-0000-7000-8000-000000000090',
-          tenantUUID: TENANT_UUID,
-          createdAt: new Date('2024-01-01'),
-          updatedAt: new Date('2024-01-01'),
-        } as StorageEntity;
+describe('StoreRoomMapper', () => {
+  describe('toDomain', () => {
+    describe('Given a persisted StoreRoom entity with an address', () => {
+      it('Then it reconstitutes the StoreRoomAggregate populating the address VO', () => {
+        const entity = buildStoreRoomEntity({ address: 'shop-floor' });
 
-        const warehouse = WarehouseModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000091',
-          tenantUUID: TENANT_UUID,
-          name: 'WH',
-          icon: 'warehouse',
-          color: '#3b82f6',
-          address: '100 St',
-        });
+        const aggregate = StoreRoomMapper.toDomain(entity);
 
-        const storeRoom = StoreRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000092',
-          tenantUUID: TENANT_UUID,
-          name: 'SR',
-          icon: 'inventory_2',
-          color: '#d97706',
-          address: '200 St',
-        });
-
-        const customRoom = CustomRoomModel.create({
-          uuid: '019538a0-0000-7000-8000-000000000093',
-          tenantUUID: TENANT_UUID,
-          name: 'CR',
-          roomType: 'Office',
-          icon: 'other_houses',
-          color: '#6b7280',
-          address: '300 St',
-        });
-
-        const aggregate = StorageMapper.toDomain(entity, [warehouse], [storeRoom], [customRoom]);
-
-        expect(aggregate.id).toBe(1);
-        expect(aggregate.uuid).toBe('019538a0-0000-7000-8000-000000000090');
-        expect(aggregate.tenantUUID.toString()).toBe(TENANT_UUID);
-        expect(aggregate.warehouses).toHaveLength(1);
-        expect(aggregate.storeRooms).toHaveLength(1);
-        expect(aggregate.customRooms).toHaveLength(1);
+        expect(aggregate.uuid).toBe(STORAGE_UUID);
+        expect(aggregate.address?.getValue()).toBe('shop-floor');
       });
     });
 
-    describe('When toDomain is called with empty sub-model arrays', () => {
-      it('Then it returns a StorageAggregate with empty collections', () => {
-        const entity = {
-          id: 2,
-          uuid: '019538a0-0000-7000-8000-000000000095',
+    describe('Given a persisted StoreRoom entity without an address', () => {
+      it('Then the aggregate exposes a null address', () => {
+        const aggregate = StoreRoomMapper.toDomain(buildStoreRoomEntity({ address: null }));
+        expect(aggregate.address).toBeNull();
+      });
+    });
+
+    describe('Given a persisted StoreRoom entity with a description', () => {
+      it('Then the aggregate exposes the description VO', () => {
+        const aggregate = StoreRoomMapper.toDomain(
+          buildStoreRoomEntity({ description: 'Stockroom for sales floor' }),
+        );
+        expect(aggregate.description?.getValue()).toBe('Stockroom for sales floor');
+      });
+    });
+  });
+
+  describe('toEntity', () => {
+    describe('Given a StoreRoom aggregate with a storageId override', () => {
+      it('Then it serializes back including the storageId', () => {
+        const aggregate = StoreRoomAggregate.create({
+          uuid: STORAGE_UUID,
           tenantUUID: TENANT_UUID,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        } as StorageEntity;
+          actorUUID: ACTOR_UUID,
+          name: 'SR',
+          icon: 'icon',
+          color: '#000000',
+        });
+
+        const entity = StoreRoomMapper.toEntity(aggregate, 42);
+
+        expect(entity.uuid).toBe(STORAGE_UUID);
+        expect(entity.storageId).toBe(42);
+        expect(entity.address).toBeNull();
+      });
+    });
+
+    describe('Given a StoreRoom aggregate without storageId', () => {
+      it('Then storageId is omitted from the entity', () => {
+        const aggregate = StoreRoomAggregate.create({
+          uuid: STORAGE_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          name: 'SR',
+          icon: 'icon',
+          color: '#000000',
+        });
+
+        const entity = StoreRoomMapper.toEntity(aggregate);
+        expect(entity.storageId).toBeUndefined();
+      });
+    });
+  });
+});
+
+// ─── CustomRoomMapper ─────────────────────────────────────────────────────────
+
+describe('CustomRoomMapper', () => {
+  describe('toDomain', () => {
+    describe('Given a persisted CustomRoom entity', () => {
+      it('Then it reconstitutes the CustomRoomAggregate including roomType and address', () => {
+        const entity = buildCustomRoomEntity({
+          roomType: 'Server Closet',
+          address: 'IT-Room',
+          description: 'air-conditioned',
+        });
+
+        const aggregate = CustomRoomMapper.toDomain(entity);
+
+        expect(aggregate.roomType.getValue()).toBe('Server Closet');
+        expect(aggregate.address?.getValue()).toBe('IT-Room');
+        expect(aggregate.description?.getValue()).toBe('air-conditioned');
+      });
+    });
+
+    describe('Given a persisted CustomRoom entity with no address or description', () => {
+      it('Then the aggregate exposes null address and description', () => {
+        const aggregate = CustomRoomMapper.toDomain(buildCustomRoomEntity());
+        expect(aggregate.address).toBeNull();
+        expect(aggregate.description).toBeNull();
+      });
+    });
+  });
+
+  describe('toEntity', () => {
+    describe('Given a CustomRoom aggregate without a storageId', () => {
+      it('Then it serializes back without storageId', () => {
+        const aggregate = CustomRoomAggregate.create({
+          uuid: STORAGE_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          name: 'CR',
+          icon: 'icon',
+          color: '#000000',
+          roomType: 'Office',
+        });
+
+        const entity = CustomRoomMapper.toEntity(aggregate);
+        expect(entity.uuid).toBe(STORAGE_UUID);
+        expect(entity.roomType).toBe('Office');
+        expect(entity.storageId).toBeUndefined();
+      });
+    });
+
+    describe('Given a CustomRoom aggregate with a storageId override', () => {
+      it('Then it serializes back with the storageId', () => {
+        const aggregate = CustomRoomAggregate.create({
+          uuid: STORAGE_UUID,
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          name: 'CR',
+          icon: 'icon',
+          color: '#000000',
+          roomType: 'Office',
+          address: 'somewhere',
+        });
+
+        const entity = CustomRoomMapper.toEntity(aggregate, 99);
+        expect(entity.storageId).toBe(99);
+        expect(entity.address).toBe('somewhere');
+      });
+    });
+  });
+});
+
+// ─── StorageMapper ────────────────────────────────────────────────────────────
+
+describe('StorageMapper', () => {
+  describe('Given a persisted StorageEntity with empty children', () => {
+    describe('When toDomain is called', () => {
+      it('Then it builds an empty StorageAggregate scoped to the tenant', () => {
+        const entity = new StorageEntity();
+        Object.assign(entity, {
+          id: 17,
+          uuid: STORAGE_PARENT_UUID,
+          tenantUUID: TENANT_UUID,
+          createdAt: CREATED_AT,
+          updatedAt: NOW,
+        });
 
         const aggregate = StorageMapper.toDomain(entity, [], [], []);
 
+        expect(aggregate.tenantUUID.toString()).toBe(TENANT_UUID);
         expect(aggregate.warehouses).toHaveLength(0);
         expect(aggregate.storeRooms).toHaveLength(0);
         expect(aggregate.customRooms).toHaveLength(0);
       });
     });
   });
-});
 
-// ── StorageActivityLogMapper ────────────────────────────────────────────────────
-
-const LOG_STORAGE_UUID = '019538a0-0000-7000-8000-000000000001';
-const LOG_TENANT_UUID = '019538a0-0000-7000-8000-000000000002';
-const LOG_ACTOR_UUID = '019538a0-0000-7000-8000-000000000003';
-const LOG_ENTRY_UUID = '019538a0-0000-7000-8000-000000000099';
-
-describe('StorageActivityLogMapper', () => {
-  describe('Given a StorageActivityLogEntity with all fields set', () => {
+  describe('Given a persisted StorageEntity with children of all types', () => {
     describe('When toDomain is called', () => {
-      it('Then it returns a StorageActivityLogEntry with all fields mapped correctly', () => {
-        const occurredAt = new Date('2026-01-15T10:00:00Z');
-        const entity = {
-          id: 5,
-          uuid: LOG_ENTRY_UUID,
-          storageUUID: LOG_STORAGE_UUID,
-          tenantUUID: LOG_TENANT_UUID,
-          actorUUID: LOG_ACTOR_UUID,
-          action: StorageActivityAction.CREATED,
-          previousValue: null,
-          newValue: { name: 'Bodega Norte', type: 'WAREHOUSE' },
-          occurredAt,
-        } as unknown as StorageActivityLogEntity;
-
-        const entry = StorageActivityLogMapper.toDomain(entity);
-
-        expect(entry.id).toBe(5);
-        expect(entry.uuid.toString()).toBe(LOG_ENTRY_UUID);
-        expect(entry.storageUUID.toString()).toBe(LOG_STORAGE_UUID);
-        expect(entry.tenantUUID.toString()).toBe(LOG_TENANT_UUID);
-        expect(entry.actorUUID.toString()).toBe(LOG_ACTOR_UUID);
-        expect(entry.action).toBe(StorageActivityAction.CREATED);
-        expect(entry.previousValue).toBeNull();
-        expect(entry.newValue).toEqual({ name: 'Bodega Norte', type: 'WAREHOUSE' });
-        expect(entry.occurredAt).toEqual(occurredAt);
-      });
-
-      it('Then previousValue and newValue are preserved when both are present', () => {
-        const entity = {
-          id: 6,
-          uuid: LOG_ENTRY_UUID,
-          storageUUID: LOG_STORAGE_UUID,
-          tenantUUID: LOG_TENANT_UUID,
-          actorUUID: LOG_ACTOR_UUID,
-          action: StorageActivityAction.NAME_CHANGED,
-          previousValue: { value: 'Old Name' },
-          newValue: { value: 'New Name' },
-          occurredAt: new Date(),
-        } as unknown as StorageActivityLogEntity;
-
-        const entry = StorageActivityLogMapper.toDomain(entity);
-
-        expect(entry.previousValue).toEqual({ value: 'Old Name' });
-        expect(entry.newValue).toEqual({ value: 'New Name' });
-        expect(entry.action).toBe(StorageActivityAction.NAME_CHANGED);
-      });
-    });
-  });
-
-  describe('Given a StorageActivityLogEntry created via create()', () => {
-    describe('When toEntity is called', () => {
-      it('Then the entity has all fields set and id is not assigned', () => {
-        const entry = StorageActivityLogEntry.create({
-          storageUUID: LOG_STORAGE_UUID,
-          tenantUUID: LOG_TENANT_UUID,
-          actorUUID: LOG_ACTOR_UUID,
-          action: StorageActivityAction.ARCHIVED,
-          previousValue: null,
-          newValue: null,
+      it('Then it produces a StorageAggregate that exposes one item view per child', () => {
+        const entity = new StorageEntity();
+        Object.assign(entity, {
+          id: 17,
+          uuid: STORAGE_PARENT_UUID,
+          tenantUUID: TENANT_UUID,
+          createdAt: CREATED_AT,
+          updatedAt: NOW,
         });
 
-        const entity = StorageActivityLogMapper.toEntity(entry);
-
-        expect(entity.uuid).toBeDefined();
-        expect(entity.storageUUID).toBe(LOG_STORAGE_UUID);
-        expect(entity.tenantUUID).toBe(LOG_TENANT_UUID);
-        expect(entity.actorUUID).toBe(LOG_ACTOR_UUID);
-        expect(entity.action).toBe(StorageActivityAction.ARCHIVED);
-        expect(entity.previousValue).toBeNull();
-        expect(entity.newValue).toBeNull();
-        expect(entity.id).toBeUndefined();
-      });
-
-      it('Then previousValue and newValue are mapped when set', () => {
-        const entry = StorageActivityLogEntry.create({
-          storageUUID: LOG_STORAGE_UUID,
-          tenantUUID: LOG_TENANT_UUID,
-          actorUUID: LOG_ACTOR_UUID,
-          action: StorageActivityAction.COLOR_CHANGED,
-          previousValue: { value: '#6b7280' },
-          newValue: { value: '#3b82f6' },
+        const warehouse = WarehouseAggregate.create({
+          uuid: '019538a0-0000-7000-8000-00000000aaaa',
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          name: 'WH-A',
+          icon: 'icon',
+          color: '#000000',
+          address: 'addr',
         });
 
-        const entity = StorageActivityLogMapper.toEntity(entry);
-
-        expect(entity.previousValue).toEqual({ value: '#6b7280' });
-        expect(entity.newValue).toEqual({ value: '#3b82f6' });
-      });
-    });
-  });
-
-  describe('Given a StorageActivityLogEntry reconstituted with an id', () => {
-    describe('When toEntity is called', () => {
-      it('Then the entity id is set', () => {
-        const entry = StorageActivityLogEntry.reconstitute({
-          id: 99,
-          uuid: new UUIDVO(LOG_ENTRY_UUID),
-          storageUUID: new UUIDVO(LOG_STORAGE_UUID),
-          tenantUUID: new UUIDVO(LOG_TENANT_UUID),
-          actorUUID: new UUIDVO(LOG_ACTOR_UUID),
-          action: StorageActivityAction.FROZEN,
-          previousValue: null,
-          newValue: null,
-          occurredAt: new Date(),
+        const storeRoom = StoreRoomAggregate.create({
+          uuid: '019538a0-0000-7000-8000-00000000bbbb',
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          name: 'SR-A',
+          icon: 'icon',
+          color: '#000000',
         });
 
-        const entity = StorageActivityLogMapper.toEntity(entry);
+        const customRoom = CustomRoomAggregate.create({
+          uuid: '019538a0-0000-7000-8000-00000000cccc',
+          tenantUUID: TENANT_UUID,
+          actorUUID: ACTOR_UUID,
+          name: 'CR-A',
+          icon: 'icon',
+          color: '#000000',
+          roomType: 'Office',
+        });
 
-        expect(entity.id).toBe(99);
+        const aggregate = StorageMapper.toDomain(entity, [warehouse], [storeRoom], [customRoom]);
+
+        expect(aggregate.warehouses).toHaveLength(1);
+        expect(aggregate.storeRooms).toHaveLength(1);
+        expect(aggregate.customRooms).toHaveLength(1);
+        expect(aggregate.listItemViews()).toHaveLength(3);
       });
     });
   });

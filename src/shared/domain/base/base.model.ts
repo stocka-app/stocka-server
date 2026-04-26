@@ -1,5 +1,12 @@
 import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
+/**
+ * Backward-compatible props shape used by Models that accept reconstitute
+ * payloads carrying entity surface fields. Pure Models inheriting the new
+ * `BaseModel` declare their own constructor and don't need this — it
+ * remains exported for legacy Models that already use
+ * `XReconstituteProps extends BaseModelProps`.
+ */
 export interface BaseModelProps {
   id?: number;
   uuid?: string;
@@ -8,56 +15,36 @@ export interface BaseModelProps {
   archivedAt?: Date | null;
 }
 
+/**
+ * Base for DDD **Models** — entities that participate in an aggregate but
+ * do not act as its root.
+ *
+ * Pure abstract: declares only the universal entity surface (id, uuid,
+ * lifecycle timestamps, soft-delete marker) plus one derived query
+ * (`isArchived`). It contains zero state and zero business operations.
+ *
+ * In the Pure Model + Aggregate Operator pattern:
+ *   - Pure Models are immutable snapshots — every "transition" produces a
+ *     new instance via a `with()` method.
+ *   - All business operations (archive, freeze, restore, update, etc.)
+ *     live in the corresponding `*Aggregate`. The aggregate replaces its
+ *     internal model reference with the new snapshot and emits the
+ *     appropriate domain event.
+ *
+ * Legacy Models that still mutate state in place (the pre-refactor
+ * pattern) extend this class too — they declare their own `protected`
+ * mutable fields and a private `touch()` method internally. Eventually
+ * they should migrate to the Pure pattern; the contract here is the
+ * transitional anchor.
+ */
 export abstract class BaseModel {
-  protected _id: number | undefined;
-  protected _uuid: UUIDVO;
-  protected _createdAt: Date;
-  protected _updatedAt: Date;
-  protected _archivedAt: Date | null;
-
-  constructor(props?: BaseModelProps) {
-    this._id = props?.id;
-    this._uuid = new UUIDVO(props?.uuid);
-    this._createdAt = props?.createdAt ?? new Date();
-    this._updatedAt = props?.updatedAt ?? new Date();
-    this._archivedAt = props?.archivedAt ?? null;
-  }
-
-  get id(): number | undefined {
-    return this._id;
-  }
-
-  get uuid(): string {
-    return this._uuid.toString();
-  }
-
-  get createdAt(): Date {
-    return this._createdAt;
-  }
-
-  get updatedAt(): Date {
-    return this._updatedAt;
-  }
-
-  get archivedAt(): Date | null {
-    return this._archivedAt;
-  }
+  abstract readonly id?: number;
+  abstract readonly uuid: UUIDVO;
+  abstract readonly createdAt: Date;
+  abstract readonly updatedAt: Date;
+  abstract readonly archivedAt: Date | null;
 
   isArchived(): boolean {
-    return this._archivedAt !== null;
-  }
-
-  archive(): void {
-    this._archivedAt = new Date();
-    this._updatedAt = new Date();
-  }
-
-  restore(): void {
-    this._archivedAt = null;
-    this._updatedAt = new Date();
-  }
-
-  protected touch(): void {
-    this._updatedAt = new Date();
+    return this.archivedAt !== null;
   }
 }

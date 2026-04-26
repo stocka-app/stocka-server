@@ -1,14 +1,14 @@
-import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
+import { PasswordResetTokenAggregate } from '@authentication/domain/aggregates/password-reset-token.aggregate';
 import { PasswordResetRequestedEvent } from '@authentication/domain/events/password-reset-requested.event';
 import { PasswordResetCompletedEvent } from '@authentication/domain/events/password-reset-completed.event';
 
-describe('PasswordResetTokenModel', () => {
+describe('PasswordResetTokenAggregate', () => {
   describe('create', () => {
     it('should create a password reset token with valid data', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.create({
+      const token = PasswordResetTokenAggregate.create({
         credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
@@ -32,7 +32,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.reconstitute({
+      const token = PasswordResetTokenAggregate.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
         credentialAccountId: 1,
@@ -45,7 +45,7 @@ describe('PasswordResetTokenModel', () => {
       });
 
       expect(token.id).toBe(1);
-      expect(token.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+      expect(token.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440000');
       expect(token.credentialAccountId).toBe(1);
     });
   });
@@ -55,7 +55,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.create({
+      const token = PasswordResetTokenAggregate.create({
         credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
@@ -70,7 +70,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() - 1); // 1 hour ago
 
-      const token = PasswordResetTokenModel.reconstitute({
+      const token = PasswordResetTokenAggregate.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
         credentialAccountId: 1,
@@ -90,7 +90,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.reconstitute({
+      const token = PasswordResetTokenAggregate.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
         credentialAccountId: 1,
@@ -110,7 +110,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.reconstitute({
+      const token = PasswordResetTokenAggregate.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
         credentialAccountId: 1,
@@ -132,7 +132,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.create({
+      const token = PasswordResetTokenAggregate.create({
         credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
@@ -154,7 +154,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.create({
+      const token = PasswordResetTokenAggregate.create({
         credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
@@ -175,7 +175,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.reconstitute({
+      const token = PasswordResetTokenAggregate.reconstitute({
         id: 1,
         uuid: '550e8400-e29b-41d4-a716-446655440000',
         credentialAccountId: 1,
@@ -196,7 +196,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.create({
+      const token = PasswordResetTokenAggregate.create({
         credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,
@@ -219,7 +219,7 @@ describe('PasswordResetTokenModel', () => {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 1);
 
-      const token = PasswordResetTokenModel.create({
+      const token = PasswordResetTokenAggregate.create({
         credentialAccountId: 1,
         tokenHash: 'hash123',
         expiresAt,

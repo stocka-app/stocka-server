@@ -11,10 +11,10 @@ import {
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { AccountAggregate } from '@user/account/domain/account.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
@@ -83,8 +83,8 @@ describe('TypeOrmEmailVerificationTokenRepository (e2e)', () => {
 
     async function createToken(
       overrides: { expiresAt?: Date } = {},
-    ): Promise<EmailVerificationTokenModel> {
-      const token = EmailVerificationTokenModel.create({
+    ): Promise<EmailVerificationTokenAggregate> {
+      const token = EmailVerificationTokenAggregate.create({
         credentialAccountId: savedCredential.id!,
         codeHash: sha256(`code-${uuidv4()}`),
         expiresAt: overrides.expiresAt ?? futureDate(),
@@ -94,7 +94,7 @@ describe('TypeOrmEmailVerificationTokenRepository (e2e)', () => {
     }
 
     describe('Given an email verification token exists', () => {
-      let savedToken: EmailVerificationTokenModel;
+      let savedToken: EmailVerificationTokenAggregate;
 
       beforeEach(async () => {
         savedToken = await createToken();
@@ -180,7 +180,7 @@ describe('TypeOrmEmailVerificationTokenRepository (e2e)', () => {
         it('Then it uses the transaction manager and saves the token', async () => {
           await uow.begin();
           try {
-            const token = EmailVerificationTokenModel.create({
+            const token = EmailVerificationTokenAggregate.create({
               credentialAccountId: savedCredential.id!,
               codeHash: sha256(`uow-code-${uuidv4()}`),
               expiresAt: futureDate(),

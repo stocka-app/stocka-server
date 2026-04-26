@@ -1,15 +1,16 @@
 import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 import { WarehouseModel } from '@storage/domain/models/warehouse.model';
-import { StorageNameVO } from '@storage/domain/value-objects/storage-name.vo';
+import { StorageAddressVO } from '@storage/domain/value-objects/storage-address.vo';
+import { StorageColorVO } from '@storage/domain/value-objects/storage-color.vo';
 import { StorageDescriptionVO } from '@storage/domain/value-objects/storage-description.vo';
 import { StorageIconVO } from '@storage/domain/value-objects/storage-icon.vo';
-import { StorageColorVO } from '@storage/domain/value-objects/storage-color.vo';
-import { StorageAddressVO } from '@storage/domain/value-objects/storage-address.vo';
+import { StorageNameVO } from '@storage/domain/value-objects/storage-name.vo';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
 
 export class WarehouseMapper {
-  static toDomain(entity: WarehouseEntity): WarehouseModel {
-    return WarehouseModel.reconstitute({
+  static toDomain(entity: WarehouseEntity): WarehouseAggregate {
+    const model = WarehouseModel.reconstitute({
       id: entity.id,
       uuid: new UUIDVO(entity.uuid),
       tenantUUID: new UUIDVO(entity.tenantUUID),
@@ -23,9 +24,11 @@ export class WarehouseMapper {
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
+    return WarehouseAggregate.reconstitute(model);
   }
 
-  static toEntity(model: WarehouseModel, storageId?: number): Partial<WarehouseEntity> {
+  static toEntity(aggregate: WarehouseAggregate, storageId?: number): Partial<WarehouseEntity> {
+    const model = aggregate.model;
     const entity: Partial<WarehouseEntity> = {
       id: model.id,
       uuid: model.uuid.toString(),
@@ -37,6 +40,8 @@ export class WarehouseMapper {
       address: model.address.toString(),
       frozenAt: model.frozenAt,
       archivedAt: model.archivedAt,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
     };
 
     if (storageId !== undefined) {

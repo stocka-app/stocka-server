@@ -5,10 +5,10 @@ import { ResendVerificationCodeCommand } from '@authentication/application/comma
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
 import { ResendCooldownActiveException } from '@authentication/domain/exceptions/resend-cooldown-active.exception';
 import { MaxResendsExceededException } from '@authentication/domain/exceptions/max-resends-exceeded.exception';
@@ -53,7 +53,7 @@ function buildToken(
     remainingResends?: number;
     currentCooldownSeconds?: number;
   } = {},
-): Persisted<EmailVerificationTokenModel> {
+): Persisted<EmailVerificationTokenAggregate> {
   return {
     id: 1,
     canResend: jest.fn().mockReturnValue(overrides.canResend ?? true),
@@ -62,7 +62,7 @@ function buildToken(
     getCurrentCooldownSeconds: jest.fn().mockReturnValue(overrides.currentCooldownSeconds ?? 30),
     updateCode: jest.fn(),
     commit: jest.fn(),
-  } as unknown as Persisted<EmailVerificationTokenModel>;
+  } as unknown as Persisted<EmailVerificationTokenAggregate>;
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -253,9 +253,9 @@ describe('ResendVerificationCodeHandler', () => {
         });
         tokenContract.findActiveByCredentialAccountId.mockResolvedValue(null);
 
-        // EmailVerificationTokenModel.createForResend creates a new model in-memory
+        // EmailVerificationTokenAggregate.createForResend creates a new model in-memory
         // The handler calls getRemainingResends() on the newly created token
-        // We need to mock EmailVerificationTokenModel.createForResend via the module
+        // We need to mock EmailVerificationTokenAggregate.createForResend via the module
       });
 
       it('Then it creates a new token and returns ok', async () => {

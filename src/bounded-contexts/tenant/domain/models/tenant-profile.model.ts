@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { EmailVO } from '@shared/domain/value-objects/compound/email.vo';
 import { PhoneVO } from '@shared/domain/value-objects/phone.vo';
 import { GiroVO } from '@tenant/domain/value-objects/giro.vo';
@@ -28,6 +29,12 @@ export interface TenantProfileReconstituteProps extends BaseModelProps {
 }
 
 export class TenantProfileModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _tenantId: number;
   private _giro: GiroVO | null;
   private _phone: PhoneVO | null;
@@ -53,7 +60,12 @@ export class TenantProfileModel extends BaseModel {
       logoUrl: string | null;
     },
   ) {
-    super(props);
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._tenantId = props.tenantId;
     this._giro = props.giro !== null ? GiroVO.create(props.giro) : null;
     this._phone = props.phone !== null ? PhoneVO.create(props.phone) : null;
@@ -100,6 +112,26 @@ export class TenantProfileModel extends BaseModel {
       postalCode: props.postalCode,
       logoUrl: props.logoUrl,
     });
+  }
+
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
   }
 
   get tenantId(): number {

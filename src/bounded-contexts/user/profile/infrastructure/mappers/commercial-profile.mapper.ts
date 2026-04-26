@@ -19,7 +19,7 @@ export class CommercialProfileMapper {
 
   static toEntity(model: CommercialProfileModel): Partial<CommercialProfileEntity> {
     const entity: Partial<CommercialProfileEntity> = {
-      uuid: model.uuid,
+      uuid: model.uuid.toString(),
       profileId: model.profileId,
       fullName: model.fullName !== null ? model.fullName.getValue() : null,
       phone: model.phone,

@@ -11,10 +11,10 @@ import {
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { AccountAggregate } from '@user/account/domain/account.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
-import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
+import { PasswordResetTokenAggregate } from '@authentication/domain/aggregates/password-reset-token.aggregate';
 
 import { getWorkerApp, truncateWorkerTables } from '@test/worker-app';
 
@@ -79,8 +79,8 @@ describe('TypeOrmPasswordResetTokenRepository (e2e)', () => {
       ({ credential: savedCredential } = await buildPersistedUserWithCredential());
     });
 
-    async function createPRT(): Promise<PasswordResetTokenModel> {
-      const token = PasswordResetTokenModel.create({
+    async function createPRT(): Promise<PasswordResetTokenAggregate> {
+      const token = PasswordResetTokenAggregate.create({
         credentialAccountId: savedCredential.id!,
         tokenHash: sha256(`reset-${uuidv4()}`),
         expiresAt: futureDate(),
@@ -91,7 +91,7 @@ describe('TypeOrmPasswordResetTokenRepository (e2e)', () => {
     }
 
     describe('Given a password reset token exists', () => {
-      let savedToken: PasswordResetTokenModel;
+      let savedToken: PasswordResetTokenAggregate;
 
       beforeEach(async () => {
         savedToken = await createPRT();
@@ -131,7 +131,7 @@ describe('TypeOrmPasswordResetTokenRepository (e2e)', () => {
         it('Then it uses the transaction manager and saves the token', async () => {
           await uow.begin();
           try {
-            const token = PasswordResetTokenModel.create({
+            const token = PasswordResetTokenAggregate.create({
               credentialAccountId: savedCredential.id!,
               tokenHash: sha256(`uow-reset-${uuidv4()}`),
               expiresAt: futureDate(),

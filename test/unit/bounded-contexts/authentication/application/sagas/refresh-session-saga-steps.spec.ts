@@ -14,7 +14,7 @@ import { ValidateRefreshTokenStep } from '@authentication/application/sagas/refr
 import { RefreshSessionSagaContext } from '@authentication/application/sagas/refresh-session/refresh-session.saga-context';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { ISessionContract } from '@user/account/session/domain/session.contract';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

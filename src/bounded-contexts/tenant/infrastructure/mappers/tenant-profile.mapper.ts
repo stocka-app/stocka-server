@@ -24,7 +24,7 @@ export class TenantProfileMapper {
 
   static toEntity(model: TenantProfileModel): Partial<TenantProfileEntity> {
     const entity: Partial<TenantProfileEntity> = {
-      uuid: model.uuid,
+      uuid: model.uuid.toString(),
       tenantId: model.tenantId,
       giro: model.giro !== null ? model.giro.getValue() : null,
       phone: model.phone !== null ? model.phone.getValue() : null,

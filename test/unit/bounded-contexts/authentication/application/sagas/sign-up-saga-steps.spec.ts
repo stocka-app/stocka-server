@@ -20,7 +20,7 @@ import { IEmailVerificationTokenContract } from '@authentication/domain/contract
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { ISagaStepHandler } from '@shared/domain/saga';
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { SignUpSagaContext } from '@authentication/application/sagas/sign-up/sign-up.saga-context';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
@@ -37,7 +37,7 @@ export class CreateVerificationTokenStep implements ISagaStepHandler<SignUpSagaC
     if (credentialId === undefined)
       throw new Error('CreateVerificationTokenStep: ctx.credential has no id');
 
-    const token = EmailVerificationTokenModel.create({
+    const token = EmailVerificationTokenAggregate.create({
       credentialAccountId: credentialId,
       codeHash,
       expiresAt,

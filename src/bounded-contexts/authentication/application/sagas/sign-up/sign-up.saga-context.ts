@@ -1,4 +1,4 @@
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import type { Locale } from '@shared/infrastructure/i18n/locale.helper';
 

@@ -1,4 +1,4 @@
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -8,8 +8,6 @@ import { StorageItemViewMapper } from '@storage/application/mappers/storage-item
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen.error';
-import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type UnfreezeStoreRoomResult = Result<StorageItemView, DomainException>;
@@ -21,7 +19,7 @@ export class UnfreezeStoreRoomHandler implements ICommandHandler<UnfreezeStoreRo
     private readonly storageRepository: IStorageRepository,
     @Inject(INJECTION_TOKENS.STORE_ROOM_CONTRACT)
     private readonly storeRoomRepository: IStoreRoomRepository,
-    private readonly eventBus: EventBus,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: UnfreezeStoreRoomCommand): Promise<UnfreezeStoreRoomResult> {
@@ -30,17 +28,18 @@ export class UnfreezeStoreRoomHandler implements ICommandHandler<UnfreezeStoreRo
     if (!storeRoom || storeRoom.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
-    if (!storeRoom.isFrozen()) return err(new StorageNotFrozenError(command.storageUUID));
+
+    const transition = storeRoom.markUnfrozen(command.actorUUID);
+    if (transition.isErr()) return err(transition.error);
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    const updated = await this.storeRoomRepository.save(storeRoom.markUnfrozen(), storageId);
+    const saved = await this.storeRoomRepository.save(storeRoom, storageId);
 
-    this.eventBus.publish(
-      new StorageReactivatedEvent(command.storageUUID, command.tenantUUID, command.actorUUID),
-    );
+    this.eventPublisher.mergeObjectContext(storeRoom);
+    storeRoom.commit();
 
-    return ok(StorageItemViewMapper.fromStoreRoom(updated));
+    return ok(StorageItemViewMapper.fromStoreRoom(saved));
   }
 }

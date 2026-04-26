@@ -25,7 +25,7 @@ export class TenantConfigMapper {
 
   static toEntity(model: TenantConfigModel): Partial<TenantConfigEntity> {
     const entity: Partial<TenantConfigEntity> = {
-      uuid: model.uuid,
+      uuid: model.uuid.toString(),
       tenantId: model.tenantId,
       tier: model.tier.toString(),
       maxWarehouses: model.maxWarehouses,

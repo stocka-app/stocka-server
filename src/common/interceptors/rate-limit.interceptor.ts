@@ -12,13 +12,13 @@ import { catchError } from 'rxjs/operators';
 import { Request } from 'express';
 import { RateLimitConfig } from '@common/decorators/rate-limit.decorator';
 import { IVerificationAttemptContract } from '@authentication/domain/contracts/verification-attempt.contract';
-import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { VerificationAttemptAggregate } from '@authentication/domain/aggregates/verification-attempt.aggregate';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/events/integration';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { EMAIL_PATTERN } from '@common/constants/validation.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 interface HttpErrorResponse {
@@ -88,7 +88,7 @@ export class RateLimitInterceptor implements NestInterceptor {
     // Persist failed attempt
     if (userResult) {
       const { user, credential } = userResult;
-      const attempt = VerificationAttemptModel.create({
+      const attempt = VerificationAttemptAggregate.create({
         userUUID: user.uuid,
         email: credential.email,
         ipAddress: ip,
@@ -113,7 +113,7 @@ export class RateLimitInterceptor implements NestInterceptor {
       // Only set email if identifier has valid email format (could be username)
       const emailValue = identifier && this.isValidEmail(identifier) ? identifier : null;
 
-      const attempt = VerificationAttemptModel.create({
+      const attempt = VerificationAttemptAggregate.create({
         userUUID: null,
         email: emailValue,
         ipAddress: ip,

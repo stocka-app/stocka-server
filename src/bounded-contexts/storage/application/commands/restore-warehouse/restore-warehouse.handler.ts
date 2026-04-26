@@ -1,4 +1,4 @@
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { Inject } from '@nestjs/common';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
@@ -8,9 +8,7 @@ import { StorageItemViewMapper } from '@storage/application/mappers/storage-item
 import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
-import { StorageNotArchivedError } from '@storage/domain/errors/storage-not-archived.error';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageRestoredEvent } from '@storage/domain/events/storage-restored.event';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type RestoreWarehouseResult = Result<StorageItemView, DomainException>;
@@ -23,7 +21,7 @@ export class RestoreWarehouseHandler implements ICommandHandler<RestoreWarehouse
     @Inject(INJECTION_TOKENS.WAREHOUSE_CONTRACT)
     private readonly warehouseRepository: IWarehouseRepository,
     private readonly policy: StorageTypeChangePolicy,
-    private readonly eventBus: EventBus,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute(command: RestoreWarehouseCommand): Promise<RestoreWarehouseResult> {
@@ -32,7 +30,6 @@ export class RestoreWarehouseHandler implements ICommandHandler<RestoreWarehouse
     if (!warehouse || warehouse.tenantUUID.toString() !== command.tenantUUID) {
       return err(new StorageNotFoundError(command.storageUUID));
     }
-    if (!warehouse.isArchived()) return err(new StorageNotArchivedError(command.storageUUID));
 
     // Tier capacity guard. Counts include archived items (state-agnostic), so in
     // normal flows this guard is a no-op: the archived item already counted before
@@ -42,15 +39,17 @@ export class RestoreWarehouseHandler implements ICommandHandler<RestoreWarehouse
     const capacityError = await this.policy.assertWarehouseCanRestore(command.tenantUUID);
     if (capacityError) return err(capacityError);
 
+    const transition = warehouse.markRestored(command.actorUUID);
+    if (transition.isErr()) return err(transition.error);
+
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
     if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
 
-    const updated = await this.warehouseRepository.save(warehouse.markRestored(), storageId);
+    const saved = await this.warehouseRepository.save(warehouse, storageId);
 
-    this.eventBus.publish(
-      new StorageRestoredEvent(command.storageUUID, command.tenantUUID, command.actorUUID),
-    );
+    this.eventPublisher.mergeObjectContext(warehouse);
+    warehouse.commit();
 
-    return ok(StorageItemViewMapper.fromWarehouse(updated));
+    return ok(StorageItemViewMapper.fromWarehouse(saved));
   }
 }

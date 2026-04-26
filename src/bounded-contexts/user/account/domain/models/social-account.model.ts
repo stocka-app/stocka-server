@@ -1,4 +1,5 @@
 import { BaseModel, BaseModelProps } from '@shared/domain/base/base.model';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 import { OAuthProviderVO } from '@user/domain/value-objects/oauth-provider.vo';
 import { ProviderIdVO } from '@user/account/domain/value-objects/provider-id.vo';
 
@@ -28,6 +29,12 @@ interface SocialAccountCtorProps extends BaseModelProps {
 }
 
 export class SocialAccountModel extends BaseModel {
+  protected _id: number | undefined;
+  protected _uuid: UUIDVO;
+  protected _createdAt: Date;
+  protected _updatedAt: Date;
+  protected _archivedAt: Date | null;
+
   private readonly _accountId: number;
   private readonly _provider: OAuthProviderVO;
   private readonly _providerId: ProviderIdVO;
@@ -35,7 +42,12 @@ export class SocialAccountModel extends BaseModel {
   private readonly _linkedAt: Date;
 
   private constructor(props: SocialAccountCtorProps) {
-    super(props);
+    super();
+    this._id = props.id;
+    this._uuid = new UUIDVO(props.uuid);
+    this._createdAt = props.createdAt ?? new Date();
+    this._updatedAt = props.updatedAt ?? new Date();
+    this._archivedAt = props.archivedAt ?? null;
     this._accountId = props.accountId;
     this._provider = new OAuthProviderVO(props.provider);
     this._providerId = ProviderIdVO.create(props.providerId);
@@ -63,6 +75,26 @@ export class SocialAccountModel extends BaseModel {
 
   static reconstitute(props: SocialAccountReconstitueProps): SocialAccountModel {
     return new SocialAccountModel(props);
+  }
+
+  get id(): number | undefined {
+    return this._id;
+  }
+
+  get uuid(): UUIDVO {
+    return this._uuid;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get updatedAt(): Date {
+    return this._updatedAt;
+  }
+
+  get archivedAt(): Date | null {
+    return this._archivedAt;
   }
 
   get accountId(): number {

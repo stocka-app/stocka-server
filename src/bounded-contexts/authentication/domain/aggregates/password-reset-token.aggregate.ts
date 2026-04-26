@@ -14,7 +14,7 @@ export interface PasswordResetTokenProps extends AggregateRootProps {
   email?: string;
 }
 
-export class PasswordResetTokenModel extends AggregateRoot {
+export class PasswordResetTokenAggregate extends AggregateRoot {
   private _credentialAccountId: number;
   private _tokenHash: TokenHashVO;
   private _expiresAt: ExpiresAtVO;
@@ -42,8 +42,8 @@ export class PasswordResetTokenModel extends AggregateRoot {
       isSocialAccount?: boolean;
       provider?: string | null;
     },
-  ): PasswordResetTokenModel {
-    const token = new PasswordResetTokenModel(props);
+  ): PasswordResetTokenAggregate {
+    const token = new PasswordResetTokenAggregate(props);
     token.apply(
       new PasswordResetRequestedEvent(
         token.credentialAccountId,
@@ -59,8 +59,8 @@ export class PasswordResetTokenModel extends AggregateRoot {
 
   static reconstitute(
     props: PasswordResetTokenProps & { id: number; uuid: string },
-  ): PasswordResetTokenModel {
-    return new PasswordResetTokenModel(props);
+  ): PasswordResetTokenAggregate {
+    return new PasswordResetTokenAggregate(props);
   }
 
   get credentialAccountId(): number {

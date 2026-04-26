@@ -37,7 +37,8 @@ export class OnboardingSessionModel {
     this._path = props.path;
     this._currentStep = StepNumberVO.create(props.currentStep);
     this._stepData = props.stepData;
-    this._invitationCode = props.invitationCode !== null ? InvitationCodeVO.create(props.invitationCode) : null;
+    this._invitationCode =
+      props.invitationCode !== null ? InvitationCodeVO.create(props.invitationCode) : null;
     this._status = props.status;
     this._createdAt = props.createdAt;
     this._updatedAt = props.updatedAt;

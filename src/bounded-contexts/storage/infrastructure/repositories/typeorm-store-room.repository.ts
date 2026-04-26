@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
+import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
 import { StoreRoomEntity } from '@storage/infrastructure/entities/store-room.entity';
 import { StoreRoomMapper } from '@storage/infrastructure/mappers/store-room.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
@@ -29,13 +29,13 @@ export class TypeOrmStoreRoomRepository implements IStoreRoomRepository {
     return this.repo.count({ where: { tenantUUID }, withDeleted: true });
   }
 
-  async findByUUID(uuid: string): Promise<StoreRoomModel | null> {
+  async findByUUID(uuid: string): Promise<StoreRoomAggregate | null> {
     const entity = await this.getRepo().findOne({ where: { uuid }, withDeleted: true });
     return entity ? StoreRoomMapper.toDomain(entity) : null;
   }
 
-  async save(model: StoreRoomModel, storageId: number): Promise<StoreRoomModel> {
-    const entity = StoreRoomMapper.toEntity(model, storageId);
+  async save(aggregate: StoreRoomAggregate, storageId: number): Promise<StoreRoomAggregate> {
+    const entity = StoreRoomMapper.toEntity(aggregate, storageId);
     const saved = await this.getRepo().save(entity);
     return StoreRoomMapper.toDomain(saved as StoreRoomEntity);
   }

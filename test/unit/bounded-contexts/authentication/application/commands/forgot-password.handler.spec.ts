@@ -3,7 +3,7 @@ import { ForgotPasswordHandler } from '@authentication/application/commands/forg
 import { ForgotPasswordCommand } from '@authentication/application/commands/forgot-password/forgot-password.command';
 import { IPasswordResetTokenContract } from '@authentication/domain/contracts/password-reset-token.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { CreatedWithProviderVO } from '@user/account/domain/value-objects/created-with-provider.vo';
 

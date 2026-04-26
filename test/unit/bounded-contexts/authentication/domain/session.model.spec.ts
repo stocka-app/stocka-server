@@ -60,7 +60,7 @@ describe('SessionAggregate', () => {
         });
 
         expect(session.id).toBe(1);
-        expect(session.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(session.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440000');
         expect(session.accountId).toBe(1);
       });
 

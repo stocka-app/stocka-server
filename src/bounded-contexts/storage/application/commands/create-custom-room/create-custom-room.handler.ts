@@ -5,7 +5,7 @@ import { CreateCustomRoomCommand } from '@storage/application/commands/create-cu
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { ITenantCapabilitiesPort } from '@storage/application/ports/tenant-capabilities.port';
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
+import { CustomRoomAggregate } from '@storage/domain/aggregates/custom-room.aggregate';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
 import {
   resolveStorageIcon,
@@ -49,11 +49,15 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
       return err(new StorageNameAlreadyExistsError(command.name));
     }
 
-    const aggregate = await this.storageRepository.findOrCreate(command.tenantUUID);
+    const container = await this.storageRepository.findOrCreate(command.tenantUUID);
+    if (container.id === undefined) {
+      throw new Error('Storage container persisted without id; repository invariant violated');
+    }
 
-    const model = CustomRoomModel.create({
+    const customRoom = CustomRoomAggregate.create({
       uuid: uuidV7(),
       tenantUUID: command.tenantUUID,
+      actorUUID: command.actorUUID,
       name: command.name,
       roomType: command.roomType,
       description: command.description,
@@ -62,13 +66,11 @@ export class CreateCustomRoomHandler implements ICommandHandler<CreateCustomRoom
       address: command.address,
     });
 
-    aggregate.addCustomRoom(model, command.actorUUID);
+    await this.customRoomRepository.save(customRoom, container.id);
 
-    await this.customRoomRepository.save(model, aggregate.id!);
+    this.eventPublisher.mergeObjectContext(customRoom);
+    customRoom.commit();
 
-    this.eventPublisher.mergeObjectContext(aggregate);
-    aggregate.commit();
-
-    return ok({ storageUUID: model.uuid.toString() });
+    return ok({ storageUUID: customRoom.uuid });
   }
 }

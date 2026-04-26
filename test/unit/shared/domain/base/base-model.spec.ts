@@ -1,63 +1,51 @@
 import { BaseModel } from '@shared/domain/base/base.model';
 import { AggregateRoot } from '@shared/domain/base/aggregate-root';
 import { DomainEvent } from '@shared/domain/base/domain-event';
+import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
 
-// ─── Concrete implementation for testing BaseModel ────────────────────────────
+// ─── Concrete subclass for testing the BaseModel abstract contract ──────────
 class ConcreteBaseModel extends BaseModel {
-  constructor(props?: ConstructorParameters<typeof BaseModel>[0]) {
-    super(props);
-  }
-
-  callTouch(): void {
-    this.touch();
+  constructor(
+    public readonly id: number | undefined,
+    public readonly uuid: UUIDVO,
+    public readonly createdAt: Date,
+    public readonly updatedAt: Date,
+    public readonly archivedAt: Date | null,
+  ) {
+    super();
   }
 }
 
-// ─── Concrete implementation for testing AggregateRoot ───────────────────────
 class ConcreteAggregateRoot extends AggregateRoot {
   constructor(props?: ConstructorParameters<typeof AggregateRoot>[0]) {
     super(props);
   }
 }
 
-// ─── Concrete implementation for testing DomainEvent ─────────────────────────
 class ConcreteDomainEvent extends DomainEvent {
   get eventName(): string {
     return 'concrete.event';
   }
 }
 
-// ─── BaseModel ────────────────────────────────────────────────────────────────
-describe('BaseModel', () => {
-  describe('Given no props', () => {
-    describe('When instantiated', () => {
-      it('Then it auto-generates a UUID and defaults timestamps', () => {
-        const model = new ConcreteBaseModel();
-        expect(model.uuid).toMatch(
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
-        );
-        expect(model.id).toBeUndefined();
-        expect(model.createdAt).toBeInstanceOf(Date);
-        expect(model.updatedAt).toBeInstanceOf(Date);
-        expect(model.archivedAt).toBeNull();
-      });
-    });
-  });
+const STABLE_UUID = '550e8400-e29b-41d4-a716-446655440000';
 
-  describe('Given explicit props', () => {
+describe('BaseModel', () => {
+  describe('Given a Pure Model with full props', () => {
     describe('When instantiated', () => {
-      it('Then it stores all provided props', () => {
+      it('Then it exposes id, uuid (VO), and timestamps verbatim', () => {
         const createdAt = new Date('2024-01-01');
         const updatedAt = new Date('2024-06-01');
-        const model = new ConcreteBaseModel({
-          id: 42,
-          uuid: '550e8400-e29b-41d4-a716-446655440000',
+        const model = new ConcreteBaseModel(
+          42,
+          new UUIDVO(STABLE_UUID),
           createdAt,
           updatedAt,
-          archivedAt: null,
-        });
+          null,
+        );
+
         expect(model.id).toBe(42);
-        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(model.uuid.toString()).toBe(STABLE_UUID);
         expect(model.createdAt).toEqual(createdAt);
         expect(model.updatedAt).toEqual(updatedAt);
         expect(model.archivedAt).toBeNull();
@@ -65,58 +53,35 @@ describe('BaseModel', () => {
     });
   });
 
-  describe('Given an active model', () => {
-    describe('When isArchived() is called', () => {
+  describe('Given a non-archived model', () => {
+    describe('When isArchived() is queried', () => {
       it('Then it returns false', () => {
-        const model = new ConcreteBaseModel({ archivedAt: null });
+        const model = new ConcreteBaseModel(undefined, new UUIDVO(), new Date(), new Date(), null);
         expect(model.isArchived()).toBe(false);
-      });
-    });
-  });
-
-  describe('Given an active model', () => {
-    describe('When archive() is called', () => {
-      it('Then isArchived returns true and archivedAt is set', () => {
-        const model = new ConcreteBaseModel();
-        expect(model.isArchived()).toBe(false);
-        model.archive();
-        expect(model.isArchived()).toBe(true);
-        expect(model.archivedAt).toBeInstanceOf(Date);
       });
     });
   });
 
   describe('Given an archived model', () => {
-    describe('When restore() is called', () => {
-      it('Then isArchived returns false and archivedAt is null', () => {
-        const model = new ConcreteBaseModel({ archivedAt: new Date() });
+    describe('When isArchived() is queried', () => {
+      it('Then it returns true', () => {
+        const model = new ConcreteBaseModel(
+          undefined,
+          new UUIDVO(),
+          new Date(),
+          new Date(),
+          new Date(),
+        );
         expect(model.isArchived()).toBe(true);
-        model.restore();
-        expect(model.isArchived()).toBe(false);
-        expect(model.archivedAt).toBeNull();
-      });
-    });
-  });
-
-  describe('Given a model', () => {
-    describe('When touch() is called via subclass', () => {
-      it('Then updatedAt is refreshed', () => {
-        const model = new ConcreteBaseModel({
-          updatedAt: new Date('2020-01-01'),
-        });
-        const before = model.updatedAt.getTime();
-        model.callTouch();
-        expect(model.updatedAt.getTime()).toBeGreaterThanOrEqual(before);
       });
     });
   });
 });
 
-// ─── AggregateRoot ────────────────────────────────────────────────────────────
 describe('AggregateRoot', () => {
   describe('Given no props', () => {
     describe('When instantiated', () => {
-      it('Then it auto-generates a UUID and provides domain event methods', () => {
+      it('Then it auto-generates a UUID and exposes the CQRS event surface', () => {
         const aggregate = new ConcreteAggregateRoot();
         expect(aggregate.uuid).toBeDefined();
         expect(aggregate.getUncommittedEvents()).toHaveLength(0);
@@ -131,13 +96,13 @@ describe('AggregateRoot', () => {
         const updatedAt = new Date('2024-06-01');
         const aggregate = new ConcreteAggregateRoot({
           id: 5,
-          uuid: '550e8400-e29b-41d4-a716-446655440000',
+          uuid: STABLE_UUID,
           createdAt,
           updatedAt,
           archivedAt: null,
         });
         expect(aggregate.id).toBe(5);
-        expect(aggregate.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(aggregate.uuid.toString()).toBe(STABLE_UUID);
         expect(aggregate.createdAt).toEqual(createdAt);
         expect(aggregate.updatedAt).toEqual(updatedAt);
       });
@@ -168,7 +133,6 @@ describe('AggregateRoot', () => {
   });
 });
 
-// ─── DomainEvent ──────────────────────────────────────────────────────────────
 describe('DomainEvent', () => {
   describe('Given a concrete DomainEvent subclass', () => {
     describe('When instantiated', () => {

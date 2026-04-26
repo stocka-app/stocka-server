@@ -1,14 +1,16 @@
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 
 export interface IEmailVerificationTokenContract {
-  findById(id: number): Promise<Persisted<EmailVerificationTokenModel> | null>;
-  findByUUID(uuid: string): Promise<Persisted<EmailVerificationTokenModel> | null>;
+  findById(id: number): Promise<Persisted<EmailVerificationTokenAggregate> | null>;
+  findByUUID(uuid: string): Promise<Persisted<EmailVerificationTokenAggregate> | null>;
   findActiveByCredentialAccountId(
     credentialAccountId: number,
-  ): Promise<Persisted<EmailVerificationTokenModel> | null>;
-  findByCodeHash(codeHash: string): Promise<Persisted<EmailVerificationTokenModel> | null>;
-  persist(token: EmailVerificationTokenModel): Promise<Persisted<EmailVerificationTokenModel>>;
+  ): Promise<Persisted<EmailVerificationTokenAggregate> | null>;
+  findByCodeHash(codeHash: string): Promise<Persisted<EmailVerificationTokenAggregate> | null>;
+  persist(
+    token: EmailVerificationTokenAggregate,
+  ): Promise<Persisted<EmailVerificationTokenAggregate>>;
   archive(uuid: string): Promise<void>;
   archiveAllByCredentialAccountId(credentialAccountId: number): Promise<void>;
   countResentInLastHour(credentialAccountId: number): Promise<number>;

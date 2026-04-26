@@ -5,7 +5,7 @@ import { ITenantMemberContract } from '@tenant/domain/contracts/tenant-member.co
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { TenantInvitationModel } from '@tenant/domain/models/tenant-invitation.model';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { MemberAlreadyExistsError } from '@tenant/domain/errors/member-already-exists.error';
 import {
   InvitationNotFoundError,

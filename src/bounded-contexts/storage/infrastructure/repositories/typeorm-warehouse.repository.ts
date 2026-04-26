@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 import { WarehouseEntity } from '@storage/infrastructure/entities/warehouse.entity';
 import { WarehouseMapper } from '@storage/infrastructure/mappers/warehouse.mapper';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
@@ -29,13 +29,13 @@ export class TypeOrmWarehouseRepository implements IWarehouseRepository {
     return this.repo.count({ where: { tenantUUID }, withDeleted: true });
   }
 
-  async findByUUID(uuid: string): Promise<WarehouseModel | null> {
+  async findByUUID(uuid: string): Promise<WarehouseAggregate | null> {
     const entity = await this.getRepo().findOne({ where: { uuid }, withDeleted: true });
     return entity ? WarehouseMapper.toDomain(entity) : null;
   }
 
-  async save(model: WarehouseModel, storageId: number): Promise<WarehouseModel> {
-    const entity = WarehouseMapper.toEntity(model, storageId);
+  async save(aggregate: WarehouseAggregate, storageId: number): Promise<WarehouseAggregate> {
+    const entity = WarehouseMapper.toEntity(aggregate, storageId);
     const saved = await this.getRepo().save(entity);
     return WarehouseMapper.toDomain(saved as WarehouseEntity);
   }

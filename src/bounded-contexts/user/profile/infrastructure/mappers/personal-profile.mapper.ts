@@ -20,7 +20,7 @@ export class PersonalProfileMapper {
 
   static toEntity(model: PersonalProfileModel): Partial<PersonalProfileEntity> {
     const entity: Partial<PersonalProfileEntity> = {
-      uuid: model.uuid,
+      uuid: model.uuid.toString(),
       profileId: model.profileId,
       username: model.username,
       displayName: model.displayName !== null ? model.displayName.getValue() : null,

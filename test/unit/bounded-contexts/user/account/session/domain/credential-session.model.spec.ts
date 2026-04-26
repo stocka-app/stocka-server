@@ -31,7 +31,7 @@ describe('CredentialSessionModel', () => {
         });
 
         expect(model.id).toBe(1);
-        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(model.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440000');
         expect(model.sessionId).toBe(10);
         expect(model.credentialAccountId).toBe(42);
         expect(model.archivedAt).toBeNull();

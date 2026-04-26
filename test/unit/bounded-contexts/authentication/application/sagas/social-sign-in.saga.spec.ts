@@ -1,7 +1,7 @@
 import { SocialSignInSaga } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { SocialSignInSagaContext } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga-context';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

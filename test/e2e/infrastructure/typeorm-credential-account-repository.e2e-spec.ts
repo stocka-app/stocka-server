@@ -8,7 +8,7 @@ import {
 } from '@user/account/domain/contracts/account.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { AccountAggregate } from '@user/account/domain/account.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 

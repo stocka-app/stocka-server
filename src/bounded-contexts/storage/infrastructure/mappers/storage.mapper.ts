@@ -1,15 +1,15 @@
+import { CustomRoomAggregate } from '@storage/domain/aggregates/custom-room.aggregate';
 import { StorageAggregate } from '@storage/domain/aggregates/storage.aggregate';
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
+import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
 import { StorageEntity } from '@storage/infrastructure/entities/storage.entity';
 
 export class StorageMapper {
   static toDomain(
     entity: StorageEntity,
-    warehouses: WarehouseModel[],
-    storeRooms: StoreRoomModel[],
-    customRooms: CustomRoomModel[],
+    warehouses: WarehouseAggregate[],
+    storeRooms: StoreRoomAggregate[],
+    customRooms: CustomRoomAggregate[],
   ): StorageAggregate {
     return StorageAggregate.reconstitute({
       id: entity.id,
