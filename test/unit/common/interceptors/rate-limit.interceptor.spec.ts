@@ -8,7 +8,7 @@ import { IVerificationAttemptContract } from '@authentication/domain/contracts/v
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
-import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { VerificationAttemptAggregate } from '@authentication/domain/aggregates/verification-attempt.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { UserMother, CredentialAccountMother } from '@test/helpers/object-mother/user.mother';
 import { EventBus } from '@nestjs/cqrs';
@@ -226,7 +226,7 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -252,7 +252,7 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -280,7 +280,7 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(7);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -310,7 +310,7 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(10);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -338,7 +338,7 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -357,7 +357,7 @@ describe('RateLimitInterceptor', () => {
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -380,7 +380,7 @@ describe('RateLimitInterceptor', () => {
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -409,7 +409,7 @@ describe('RateLimitInterceptor', () => {
       attemptContract.countFailedByUserUUIDInLastHourByType.mockResolvedValue(3);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -451,7 +451,7 @@ describe('RateLimitInterceptor', () => {
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       const caughtError = await interceptAndCatchError(context, callHandler);
 
@@ -500,7 +500,7 @@ describe('RateLimitInterceptor', () => {
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -531,7 +531,7 @@ describe('RateLimitInterceptor', () => {
 
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -570,7 +570,7 @@ describe('RateLimitInterceptor', () => {
       });
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -602,7 +602,7 @@ describe('RateLimitInterceptor', () => {
       mediator.user.findUserByEmailOrUsername.mockResolvedValue(null);
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 
@@ -627,7 +627,7 @@ describe('RateLimitInterceptor', () => {
       });
       attemptContract.persist.mockResolvedValue({
         id: 1,
-      } as unknown as Persisted<VerificationAttemptModel>);
+      } as unknown as Persisted<VerificationAttemptAggregate>);
 
       await interceptAndCatchError(context, callHandler);
 

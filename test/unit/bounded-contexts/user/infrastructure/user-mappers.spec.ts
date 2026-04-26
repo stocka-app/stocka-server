@@ -5,7 +5,7 @@ import { AccountMapper } from '@user/account/infrastructure/mappers/account.mapp
 import { SocialAccountMapper as AccountSocialAccountMapper } from '@user/account/infrastructure/mappers/social-account.mapper';
 import { ProfileMapper } from '@user/profile/infrastructure/mappers/profile.mapper';
 import { PersonalProfileMapper } from '@user/profile/infrastructure/mappers/personal-profile.mapper';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { SocialAccountModel } from '@user/account/domain/models/social-account.model';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { UserEntity } from '@user/infrastructure/persistence/entities/user.entity';
@@ -57,7 +57,7 @@ describe('UserMapper', () => {
 
         expect(model).toBeInstanceOf(UserAggregate);
         expect(model.id).toBe(entity.id);
-        expect(model.uuid).toBe(entity.uuid);
+        expect(model.uuid.toString()).toBe(entity.uuid);
         expect(model.archivedAt).toBeNull();
       });
     });
@@ -111,7 +111,7 @@ describe('SocialAccountMapper', () => {
 
         expect(model).toBeInstanceOf(SocialAccountModel);
         expect(model.id).toBe(entity.id);
-        expect(model.uuid).toBe(entity.uuid);
+        expect(model.uuid.toString()).toBe(entity.uuid);
         expect(model.accountId).toBe(entity.accountId);
         expect(model.provider).toBe(entity.provider);
         expect(model.providerId.getValue()).toBe(entity.providerId);
@@ -171,7 +171,7 @@ describe('CredentialAccountMapper', () => {
 
         expect(model).toBeInstanceOf(CredentialAccountModel);
         expect(model.id).toBe(entity.id);
-        expect(model.uuid).toBe(entity.uuid);
+        expect(model.uuid.toString()).toBe(entity.uuid);
         expect(model.email).toBe(entity.email);
         expect(model.passwordHash).toBe(entity.passwordHash);
         expect(model.emailVerifiedAt).toEqual(entity.emailVerifiedAt);
@@ -232,7 +232,7 @@ describe('AccountMapper', () => {
         const model = AccountMapper.toDomain(entity);
 
         expect(model.id).toBe(3);
-        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440013');
+        expect(model.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440013');
         expect(model.userId).toBe(1);
         expect(model.archivedAt).toBeNull();
       });
@@ -325,7 +325,7 @@ describe('ProfileMapper', () => {
         const model = ProfileMapper.toDomain(entity);
 
         expect(model.id).toBe(8);
-        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440015');
+        expect(model.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440015');
         expect(model.userId).toBe(1);
         expect(model.archivedAt).toBeNull();
       });
@@ -437,7 +437,7 @@ describe('SocialProfileMapper', () => {
         const model = SocialProfileMapper.toDomain(entity);
 
         expect(model.id).toBe(1);
-        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440200');
+        expect(model.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440200');
         expect(model.profileId).toBe(10);
         expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000099');
         expect(model.provider).toBe('google');

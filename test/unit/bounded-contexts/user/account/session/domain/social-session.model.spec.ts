@@ -33,7 +33,7 @@ describe('SocialSessionModel', () => {
         });
 
         expect(model.id).toBe(2);
-        expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440001');
+        expect(model.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440001');
         expect(model.sessionId).toBe(20);
         expect(model.socialAccountId).toBe(7);
         expect(model.provider).toBe('facebook');

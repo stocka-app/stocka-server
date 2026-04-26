@@ -1,4 +1,4 @@
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { AccountStatusVO } from '@user/account/domain/value-objects/account-status.vo';
 import { SocialAccountModel } from '@user/domain/models/social-account.model';
@@ -60,7 +60,7 @@ describe('UserAggregate', () => {
         const user = buildPersistedUser();
 
         expect(user.id).toBe(1);
-        expect(user.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(user.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440000');
       });
 
       it('Then no domain events are emitted', () => {

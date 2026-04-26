@@ -5,7 +5,7 @@ import { SignUpSaga } from '@authentication/application/sagas/sign-up/sign-up.sa
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { IUnitOfWork } from '@shared/domain/contracts/unit-of-work.contract';
 import { SignUpSagaContext } from '@authentication/application/sagas/sign-up/sign-up.saga-context';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

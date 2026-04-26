@@ -1,4 +1,4 @@
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { EmailVerificationRequestedEvent } from '@authentication/domain/events/email-verification-requested.event';
 import { EmailVerificationCompletedEvent } from '@authentication/domain/events/email-verification-completed.event';
 import { VerificationCodeResentEvent } from '@authentication/domain/events/verification-code-resent.event';
@@ -10,11 +10,11 @@ const FUTURE_DATE = (): Date => {
   return d;
 };
 
-describe('EmailVerificationTokenModel', () => {
+describe('EmailVerificationTokenAggregate', () => {
   describe('Given a new token created via create()', () => {
     describe('When code is provided', () => {
       it('Then it emits EmailVerificationRequestedEvent', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'hash',
           expiresAt: FUTURE_DATE(),
@@ -29,7 +29,7 @@ describe('EmailVerificationTokenModel', () => {
 
     describe('When code is not provided', () => {
       it('Then it does not emit any event', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'hash',
           expiresAt: FUTURE_DATE(),
@@ -43,7 +43,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a token created via createForResend()', () => {
     describe('When called with all fields', () => {
       it('Then it emits VerificationCodeResentEvent with count 1', () => {
-        const token = EmailVerificationTokenModel.createForResend({
+        const token = EmailVerificationTokenAggregate.createForResend({
           credentialAccountId: 2,
           codeHash: 'hash2',
           expiresAt: FUTURE_DATE(),
@@ -61,7 +61,7 @@ describe('EmailVerificationTokenModel', () => {
     describe('When called without lang', () => {
       it('Then it defaults lang to "es" in the emitted event', () => {
         // Covers the `props.lang ?? 'es'` false branch (lang not provided → defaults to 'es')
-        const token = EmailVerificationTokenModel.createForResend({
+        const token = EmailVerificationTokenAggregate.createForResend({
           credentialAccountId: 3,
           codeHash: 'hash3',
           expiresAt: FUTURE_DATE(),
@@ -79,7 +79,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a reconstituted token', () => {
     describe('When reconstituted from persisted data', () => {
       it('Then it holds all properties without emitting events', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 5,
           uuid: VALID_UUID,
           credentialAccountId: 10,
@@ -90,7 +90,7 @@ describe('EmailVerificationTokenModel', () => {
           lastResentAt: new Date(Date.now() - 5000),
         });
         expect(token.id).toBe(5);
-        expect(token.uuid).toBe(VALID_UUID);
+        expect(token.uuid.toString()).toBe(VALID_UUID);
         expect(token.credentialAccountId).toBe(10);
         expect(token.codeHash).toBe('stored-hash');
         expect(token.resendCount).toBe(2);
@@ -103,7 +103,7 @@ describe('EmailVerificationTokenModel', () => {
       it('Then usedAt getter returns a Date when reconstituted with a usedAt timestamp', () => {
         // Covers line 44 TRUE branch: props.usedAt is set → creates UsedAtVO
         const usedDate = new Date(Date.now() - 60000);
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 6,
           uuid: VALID_UUID,
           credentialAccountId: 11,
@@ -122,7 +122,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a valid token', () => {
     describe('When checking isValid()', () => {
       it('Then it returns true for a non-expired, non-used, non-archived token', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -138,7 +138,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given an archived token', () => {
     describe('When checking isValid()', () => {
       it('Then it returns false because the token is archived', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 10,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -158,7 +158,7 @@ describe('EmailVerificationTokenModel', () => {
     describe('When checking isValid()', () => {
       it('Then it returns false because the token is expired', () => {
         const pastDate = new Date(Date.now() - 60000);
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 11,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -176,7 +176,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a used token', () => {
     describe('When checking isValid()', () => {
       it('Then it returns false because the token is already used', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 12,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -195,7 +195,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a token that has been marked as used', () => {
     describe('When markAsUsed() is called', () => {
       it('Then isUsed returns true and emits EmailVerificationCompletedEvent', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -210,7 +210,7 @@ describe('EmailVerificationTokenModel', () => {
 
       it('Then lang defaults to "es" when not provided', () => {
         // Covers line 124 default parameter branch: lang: Locale = 'es'
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -225,7 +225,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a token with zero resends', () => {
     describe('When checking canResend()', () => {
       it('Then it returns true since no cooldown has started yet', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -241,7 +241,7 @@ describe('EmailVerificationTokenModel', () => {
     describe('When canResend() is called', () => {
       it('Then it returns true — secondsSinceLastResend defaults to MAX_SAFE_INTEGER, covering cooldown elapsed', () => {
         // Covers line 137: this._lastResentAt ? Math.floor(...) : Number.MAX_SAFE_INTEGER (false branch)
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -258,7 +258,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a token reconstituted with max resends used', () => {
     describe('When checking canResend()', () => {
       it('Then it returns false', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -275,7 +275,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a token reconstituted with 1 resend and a recent lastResentAt', () => {
     describe('When the cooldown period has not elapsed', () => {
       it('Then canResend returns false and getSecondsUntilCanResend returns positive', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -292,7 +292,7 @@ describe('EmailVerificationTokenModel', () => {
 
     describe('When the cooldown period has elapsed', () => {
       it('Then canResend returns true', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -310,7 +310,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a valid token', () => {
     describe('When updateCode() is called', () => {
       it('Then the resend count increments and emits VerificationCodeResentEvent', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'old-hash',
           expiresAt: FUTURE_DATE(),
@@ -325,7 +325,7 @@ describe('EmailVerificationTokenModel', () => {
 
       it('Then lang defaults to "es" when not provided', () => {
         // Covers line 170 default parameter branch: lang: Locale = 'es'
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'old-hash',
           expiresAt: FUTURE_DATE(),
@@ -340,7 +340,7 @@ describe('EmailVerificationTokenModel', () => {
   describe('Given a token', () => {
     describe('When getCurrentCooldownSeconds() is called', () => {
       it('Then it returns 0 for the initial state (0 resends)', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -350,7 +350,7 @@ describe('EmailVerificationTokenModel', () => {
       });
 
       it('Then it returns 60 for 1 resend (index 1)', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -363,7 +363,7 @@ describe('EmailVerificationTokenModel', () => {
       });
 
       it('Then it returns 120 for 2 resends (index 2)', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -376,7 +376,7 @@ describe('EmailVerificationTokenModel', () => {
       });
 
       it('Then it returns 300 for 3 resends (index 3)', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -389,7 +389,7 @@ describe('EmailVerificationTokenModel', () => {
       });
 
       it('Then it clamps to 300 for resend counts beyond the array length', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -404,7 +404,7 @@ describe('EmailVerificationTokenModel', () => {
 
     describe('When getRemainingResends() is called', () => {
       it('Then it returns 5 for 0 resends', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -414,7 +414,7 @@ describe('EmailVerificationTokenModel', () => {
       });
 
       it('Then it returns 0 when max resends are reached', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -429,7 +429,7 @@ describe('EmailVerificationTokenModel', () => {
 
     describe('When getSecondsUntilCanResend() is called with no lastResentAt', () => {
       it('Then it returns 0', () => {
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -445,7 +445,7 @@ describe('EmailVerificationTokenModel', () => {
     describe('When expiresAt getter is accessed', () => {
       it('Then it returns the expiration date', () => {
         const future = FUTURE_DATE();
-        const token = EmailVerificationTokenModel.reconstitute({
+        const token = EmailVerificationTokenAggregate.reconstitute({
           id: 1,
           uuid: VALID_UUID,
           credentialAccountId: 1,
@@ -461,7 +461,7 @@ describe('EmailVerificationTokenModel', () => {
 
     describe('When usedAt getter is accessed after markAsUsed()', () => {
       it('Then it returns the date the token was used', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -474,7 +474,7 @@ describe('EmailVerificationTokenModel', () => {
 
     describe('When lastResentAt getter is accessed after updateCode()', () => {
       it('Then it returns the last resend date', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),
@@ -487,7 +487,7 @@ describe('EmailVerificationTokenModel', () => {
 
     describe('When getMaxResendsPerHour() is called', () => {
       it('Then it returns 5', () => {
-        const token = EmailVerificationTokenModel.create({
+        const token = EmailVerificationTokenAggregate.create({
           credentialAccountId: 1,
           codeHash: 'h',
           expiresAt: FUTURE_DATE(),

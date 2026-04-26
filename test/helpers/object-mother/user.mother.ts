@@ -1,4 +1,4 @@
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { asPersisted } from '@test/helpers/persisted';

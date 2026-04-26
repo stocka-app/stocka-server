@@ -4,9 +4,9 @@ import { VerifyEmailCommand } from '@authentication/application/commands/verify-
 import { IEmailVerificationTokenContract } from '@authentication/domain/contracts/email-verification-token.contract';
 import { ICodeGeneratorContract } from '@shared/domain/contracts/code-generator.contract';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { InvalidVerificationCodeException } from '@authentication/domain/exceptions/invalid-verification-code.exception';
 import { UserAlreadyVerifiedException } from '@authentication/domain/exceptions/user-already-verified.exception';
@@ -43,13 +43,13 @@ function buildToken(
   overrides: {
     codeHash?: string;
   } = {},
-): Persisted<EmailVerificationTokenModel> {
+): Persisted<EmailVerificationTokenAggregate> {
   return {
     id: 1,
     codeHash: overrides.codeHash ?? 'hashed-ABC123',
     markAsUsed: jest.fn(),
     commit: jest.fn(),
-  } as unknown as Persisted<EmailVerificationTokenModel>;
+  } as unknown as Persisted<EmailVerificationTokenAggregate>;
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────

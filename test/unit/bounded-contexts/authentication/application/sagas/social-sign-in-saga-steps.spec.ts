@@ -13,7 +13,7 @@ import { ResolveSocialUserStep } from '@authentication/application/sagas/social-
 import { SocialSignInSagaContext } from '@authentication/application/sagas/social-sign-in/social-sign-in.saga-context';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { ISessionContract } from '@user/account/session/domain/session.contract';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 

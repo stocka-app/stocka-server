@@ -8,9 +8,9 @@ import { VerificationAttemptMapper } from '@authentication/infrastructure/persis
 import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 import { CredentialSessionModel } from '@user/account/session/domain/models/credential-session.model';
 import { SocialSessionModel } from '@user/account/session/domain/models/social-session.model';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
-import { PasswordResetTokenModel } from '@authentication/domain/models/password-reset-token.model';
-import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
+import { PasswordResetTokenAggregate } from '@authentication/domain/aggregates/password-reset-token.aggregate';
+import { VerificationAttemptAggregate } from '@authentication/domain/aggregates/verification-attempt.aggregate';
 
 import { SessionEntity } from '@user/account/session/infrastructure/entities/session.entity';
 import { CredentialSessionEntity } from '@user/account/session/infrastructure/entities/credential-session.entity';
@@ -135,7 +135,7 @@ describe('SessionMapper', () => {
 
         expect(model).toBeInstanceOf(SessionAggregate);
         expect(model.id).toBe(entity.id);
-        expect(model.uuid).toBe(entity.uuid);
+        expect(model.uuid.toString()).toBe(entity.uuid);
         expect(model.accountId).toBe(entity.accountId);
         expect(model.tokenHash).toBe(entity.tokenHash);
         expect(model.expiresAt).toEqual(entity.expiresAt);
@@ -188,11 +188,11 @@ describe('SessionMapper', () => {
 describe('EmailVerificationTokenMapper', () => {
   describe('Given an EmailVerificationTokenEntity', () => {
     describe('When toDomain is called', () => {
-      it('Then it returns an EmailVerificationTokenModel with all fields mapped', () => {
+      it('Then it returns an EmailVerificationTokenAggregate with all fields mapped', () => {
         const entity = buildEmailVerificationTokenEntity({ resendCount: 2 });
         const model = EmailVerificationTokenMapper.toDomain(entity);
 
-        expect(model).toBeInstanceOf(EmailVerificationTokenModel);
+        expect(model).toBeInstanceOf(EmailVerificationTokenAggregate);
         expect(model.id).toBe(entity.id);
         expect(model.credentialAccountId).toBe(entity.credentialAccountId);
         expect(model.codeHash).toBe(entity.codeHash);
@@ -212,7 +212,7 @@ describe('EmailVerificationTokenMapper', () => {
     });
   });
 
-  describe('Given an EmailVerificationTokenModel with an id', () => {
+  describe('Given an EmailVerificationTokenAggregate with an id', () => {
     describe('When toEntity is called', () => {
       it('Then it returns a Partial<EmailVerificationTokenEntity> with id included', () => {
         const entity = buildEmailVerificationTokenEntity();
@@ -227,7 +227,7 @@ describe('EmailVerificationTokenMapper', () => {
     });
   });
 
-  describe('Given an EmailVerificationTokenModel without an id (new token)', () => {
+  describe('Given an EmailVerificationTokenAggregate without an id (new token)', () => {
     describe('When toEntity is called', () => {
       it('Then the id field is omitted from the result', () => {
         const entity = buildEmailVerificationTokenEntity();
@@ -246,11 +246,11 @@ describe('EmailVerificationTokenMapper', () => {
 describe('PasswordResetTokenMapper', () => {
   describe('Given a PasswordResetTokenEntity', () => {
     describe('When toDomain is called', () => {
-      it('Then it returns a PasswordResetTokenModel with all fields mapped', () => {
+      it('Then it returns a PasswordResetTokenAggregate with all fields mapped', () => {
         const entity = buildPasswordResetTokenEntity();
         const model = PasswordResetTokenMapper.toDomain(entity);
 
-        expect(model).toBeInstanceOf(PasswordResetTokenModel);
+        expect(model).toBeInstanceOf(PasswordResetTokenAggregate);
         expect(model.id).toBe(entity.id);
         expect(model.credentialAccountId).toBe(entity.credentialAccountId);
         expect(model.tokenHash).toBe(entity.tokenHash);
@@ -268,7 +268,7 @@ describe('PasswordResetTokenMapper', () => {
     });
   });
 
-  describe('Given a PasswordResetTokenModel with an id', () => {
+  describe('Given a PasswordResetTokenAggregate with an id', () => {
     describe('When toEntity is called', () => {
       it('Then it returns a Partial entity with id included', () => {
         const entity = buildPasswordResetTokenEntity();
@@ -282,7 +282,7 @@ describe('PasswordResetTokenMapper', () => {
     });
   });
 
-  describe('Given a PasswordResetTokenModel without an id (new token)', () => {
+  describe('Given a PasswordResetTokenAggregate without an id (new token)', () => {
     describe('When toEntity is called', () => {
       it('Then the id field is omitted from the result', () => {
         const entity = buildPasswordResetTokenEntity();
@@ -301,11 +301,11 @@ describe('PasswordResetTokenMapper', () => {
 describe('VerificationAttemptMapper', () => {
   describe('Given a VerificationAttemptEntity with all fields populated', () => {
     describe('When toDomain is called', () => {
-      it('Then it returns a VerificationAttemptModel with all fields mapped', () => {
+      it('Then it returns a VerificationAttemptAggregate with all fields mapped', () => {
         const entity = buildVerificationAttemptEntity();
         const model = VerificationAttemptMapper.toDomain(entity);
 
-        expect(model).toBeInstanceOf(VerificationAttemptModel);
+        expect(model).toBeInstanceOf(VerificationAttemptAggregate);
         expect(model.id).toBe(entity.id);
         expect(model.ipAddress.toString()).toBe(entity.ipAddress);
       });
@@ -326,7 +326,7 @@ describe('VerificationAttemptMapper', () => {
     });
   });
 
-  describe('Given a VerificationAttemptModel', () => {
+  describe('Given a VerificationAttemptAggregate', () => {
     describe('When toEntity is called', () => {
       it('Then it returns a Partial entity with all mapped fields', () => {
         const entity = buildVerificationAttemptEntity({ success: true });
@@ -382,7 +382,7 @@ describe('CredentialSessionMapper', () => {
 
         expect(model).toBeInstanceOf(CredentialSessionModel);
         expect(model.id).toBe(entity.id);
-        expect(model.uuid).toBe(entity.uuid);
+        expect(model.uuid.toString()).toBe(entity.uuid);
         expect(model.sessionId).toBe(entity.sessionId);
         expect(model.credentialAccountId).toBe(entity.credentialAccountId);
         expect(model.archivedAt).toBeNull();
@@ -429,7 +429,7 @@ describe('SocialSessionMapper', () => {
 
         expect(model).toBeInstanceOf(SocialSessionModel);
         expect(model.id).toBe(entity.id);
-        expect(model.uuid).toBe(entity.uuid);
+        expect(model.uuid.toString()).toBe(entity.uuid);
         expect(model.sessionId).toBe(entity.sessionId);
         expect(model.socialAccountId).toBe(entity.socialAccountId);
         expect(model.provider).toBe(entity.provider);

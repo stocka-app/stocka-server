@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { ResendVerificationCodeHandler } from '@authentication/application/commands/resend-verification-code/resend-verification-code.handler';
 import { VerificationCodeResentEventHandler } from '@authentication/application/event-handlers/verification-code-resent.event-handler';
 import { ResendVerificationCodeCommand } from '@authentication/application/commands/resend-verification-code/resend-verification-code.command';
-import { EmailVerificationTokenModel } from '@authentication/domain/models/email-verification-token.model';
+import { EmailVerificationTokenAggregate } from '@authentication/domain/aggregates/email-verification-token.aggregate';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { IEmailProviderContract } from '@shared/infrastructure/email/contracts/email-provider.contract';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
@@ -17,8 +17,8 @@ const flushPromises = (): Promise<void> => new Promise<void>((resolve) => setImm
  * Represents an active verification token in the system:
  * never used, not expired, resends still available.
  */
-const buildActiveVerificationToken = (): EmailVerificationTokenModel =>
-  EmailVerificationTokenModel.reconstitute({
+const buildActiveVerificationToken = (): EmailVerificationTokenAggregate =>
+  EmailVerificationTokenAggregate.reconstitute({
     id: 1,
     uuid: '550e8400-e29b-41d4-a716-446655440099',
     credentialAccountId: 1,

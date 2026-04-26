@@ -12,7 +12,7 @@ import { PublishSignInEventsStep } from '@authentication/application/sagas/sign-
 import { SignInSagaContext } from '@authentication/application/sagas/sign-in/sign-in.saga-context';
 import { MediatorService } from '@shared/infrastructure/mediator/mediator.service';
 import { ISessionContract } from '@user/account/session/domain/session.contract';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { CredentialAccountModel } from '@user/account/domain/models/credential-account.model';
 import { SessionAggregate } from '@user/account/session/domain/session.aggregate';
 

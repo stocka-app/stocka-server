@@ -86,7 +86,7 @@ describe('SocialProfileModel.reconstitute', () => {
       const model = SocialProfileModel.reconstitute(BASE_RECONSTITUTE);
 
       expect(model.id).toBe(1);
-      expect(model.uuid).toBe('550e8400-e29b-41d4-a716-446655440100');
+      expect(model.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440100');
       expect(model.profileId).toBe(10);
       expect(model.socialAccountUUID.toString()).toBe('019538a0-0000-7000-8000-000000000099');
       expect(model.provider).toBe('google');

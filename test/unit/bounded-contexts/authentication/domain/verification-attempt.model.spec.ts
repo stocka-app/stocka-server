@@ -1,15 +1,15 @@
-import { VerificationAttemptModel } from '@authentication/domain/models/verification-attempt.model';
+import { VerificationAttemptAggregate } from '@authentication/domain/aggregates/verification-attempt.aggregate';
 import { EmailVerificationFailedEvent } from '@authentication/domain/events/email-verification-failed.event';
 
 const VALID_IP = '192.168.1.1';
 const VALID_UUID = '550e8400-e29b-41d4-a716-446655440000';
 const USER_UUID = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
 
-describe('VerificationAttemptModel', () => {
+describe('VerificationAttemptAggregate', () => {
   describe('Given a new attempt via create()', () => {
     describe('When created with valid props', () => {
       it('Then it stores all fields correctly', () => {
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: USER_UUID,
           email: 'user@test.com',
           ipAddress: VALID_IP,
@@ -29,7 +29,7 @@ describe('VerificationAttemptModel', () => {
 
     describe('When created with null userUUID and email', () => {
       it('Then userUUID and email getters return null', () => {
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: null,
           email: null,
           ipAddress: VALID_IP,
@@ -45,7 +45,7 @@ describe('VerificationAttemptModel', () => {
 
     describe('When created without a userAgent', () => {
       it('Then userAgent is null', () => {
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: USER_UUID,
           email: 'u@u.com',
           ipAddress: VALID_IP,
@@ -58,7 +58,7 @@ describe('VerificationAttemptModel', () => {
     describe('When no attemptedAt is provided', () => {
       it('Then it defaults to the current time', () => {
         const before = Date.now();
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: USER_UUID,
           email: 'u@u.com',
           ipAddress: VALID_IP,
@@ -74,7 +74,7 @@ describe('VerificationAttemptModel', () => {
     describe('When a custom attemptedAt is provided', () => {
       it('Then it stores the given date', () => {
         const customDate = new Date(Date.now() - 5000);
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: USER_UUID,
           email: 'u@u.com',
           ipAddress: VALID_IP,
@@ -89,7 +89,7 @@ describe('VerificationAttemptModel', () => {
   describe('Given a failed attempt created via createFailed()', () => {
     describe('When called with userUUID and failedAttempts', () => {
       it('Then it emits EmailVerificationFailedEvent', () => {
-        const attempt = VerificationAttemptModel.createFailed(
+        const attempt = VerificationAttemptAggregate.createFailed(
           {
             userUUID: USER_UUID,
             email: 'user@test.com',
@@ -108,7 +108,7 @@ describe('VerificationAttemptModel', () => {
       });
 
       it('Then the result is failed', () => {
-        const attempt = VerificationAttemptModel.createFailed(
+        const attempt = VerificationAttemptAggregate.createFailed(
           {
             userUUID: USER_UUID,
             email: 'user@test.com',
@@ -125,7 +125,7 @@ describe('VerificationAttemptModel', () => {
   describe('Given a reconstituted attempt', () => {
     describe('When reconstituted from persisted data', () => {
       it('Then it holds all props without emitting events', () => {
-        const attempt = VerificationAttemptModel.reconstitute({
+        const attempt = VerificationAttemptAggregate.reconstitute({
           id: 10,
           uuid: VALID_UUID,
           userUUID: USER_UUID,
@@ -138,7 +138,7 @@ describe('VerificationAttemptModel', () => {
         });
 
         expect(attempt.id).toBe(10);
-        expect(attempt.uuid).toBe(VALID_UUID);
+        expect(attempt.uuid.toString()).toBe(VALID_UUID);
         expect(attempt.result.isSuccessful()).toBe(true);
         expect(attempt.getUncommittedEvents()).toHaveLength(0);
       });
@@ -148,7 +148,7 @@ describe('VerificationAttemptModel', () => {
   describe('Given a failed attempt', () => {
     describe('When markAsSuccessful() is called', () => {
       it('Then the result becomes successful', () => {
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: USER_UUID,
           email: 'u@u.com',
           ipAddress: VALID_IP,
@@ -166,7 +166,7 @@ describe('VerificationAttemptModel', () => {
   describe('Given an attempt with password_reset verification type', () => {
     describe('When checking the type', () => {
       it('Then verificationType reflects password_reset', () => {
-        const attempt = VerificationAttemptModel.create({
+        const attempt = VerificationAttemptAggregate.create({
           userUUID: null,
           email: null,
           ipAddress: VALID_IP,

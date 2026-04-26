@@ -40,7 +40,7 @@ describe('AccountAggregate', () => {
         });
 
         expect(account.id).toBe(3);
-        expect(account.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(account.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440000');
         expect(account.userId).toBe(42);
         expect(account.createdAt).toEqual(createdAt);
         expect(account.updatedAt).toEqual(updatedAt);
