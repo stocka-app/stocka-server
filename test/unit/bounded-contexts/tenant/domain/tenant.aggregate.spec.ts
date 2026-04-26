@@ -91,7 +91,7 @@ describe('TenantAggregate', () => {
       it('Then id and uuid are preserved', () => {
         const tenant = buildPersistedTenant();
         expect(tenant.id).toBe(1);
-        expect(tenant.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(tenant.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440000');
       });
 
       it('Then no domain events are emitted', () => {

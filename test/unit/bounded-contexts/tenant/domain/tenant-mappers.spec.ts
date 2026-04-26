@@ -36,7 +36,7 @@ describe('TenantMapper', () => {
 
         const aggregate = TenantMapper.toDomain(entity as TenantEntity);
         expect(aggregate.id).toBe(1);
-        expect(aggregate.uuid).toBe('550e8400-e29b-41d4-a716-446655440000');
+        expect(aggregate.uuid.toString()).toBe('550e8400-e29b-41d4-a716-446655440000');
         expect(aggregate.name.getValue()).toBe('Mi Tienda');
         expect(aggregate.slug).toBe('mi-tienda');
         expect(aggregate.businessType).toBe('retail');

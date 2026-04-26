@@ -11,7 +11,7 @@ import { MediatorService } from '@shared/infrastructure/mediator/mediator.servic
 import { TenantAggregate } from '@tenant/domain/tenant.aggregate';
 import { Persisted } from '@shared/domain/contracts/base-repository.contract';
 import { asPersisted } from '@test/helpers/persisted';
-import { UserAggregate } from '@user/domain/models/user.aggregate';
+import { UserAggregate } from '@user/domain/aggregates/user.aggregate';
 import { OnboardingAlreadyCompletedError } from '@tenant/domain/errors/onboarding-already-completed.error';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 
