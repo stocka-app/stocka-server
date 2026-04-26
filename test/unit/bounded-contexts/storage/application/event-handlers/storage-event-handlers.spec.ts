@@ -1,4 +1,6 @@
 import { StorageCreatedEventHandler } from '@storage/application/event-handlers/storage-created.event-handler';
+import { StoragePermanentlyDeletedEventHandler } from '@storage/application/event-handlers/storage-permanently-deleted.event-handler';
+import { StoragePermanentlyDeletedEvent } from '@storage/domain/events/storage-permanently-deleted.event';
 import { StorageNameChangedEventHandler } from '@storage/application/event-handlers/storage-name-changed.event-handler';
 import { StorageDescriptionChangedEventHandler } from '@storage/application/event-handlers/storage-description-changed.event-handler';
 import { StorageAddressChangedEventHandler } from '@storage/application/event-handlers/storage-address-changed.event-handler';
@@ -371,6 +373,66 @@ describe('StorageFrozenEventHandler', () => {
         expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
         expect(savedEntry.previousValue).toBeNull();
         expect(savedEntry.newValue).toBeNull();
+      });
+    });
+  });
+});
+
+// ── StoragePermanentlyDeletedEventHandler ────────────────────────────────────
+
+describe('StoragePermanentlyDeletedEventHandler', () => {
+  let handler: StoragePermanentlyDeletedEventHandler;
+
+  beforeEach(() => {
+    handler = new StoragePermanentlyDeletedEventHandler(mockActivityLogRepo);
+  });
+
+  describe('Given a StoragePermanentlyDeletedEvent for a warehouse', () => {
+    describe('When handle is called', () => {
+      it('Then saves an activity log entry with DELETED action and previousValue carrying name + type', async () => {
+        const event = new StoragePermanentlyDeletedEvent(
+          STORAGE_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.WAREHOUSE,
+          'Almacén Eliminado',
+        );
+
+        await handler.handle(event);
+
+        expect(mockActivityLogRepo.save).toHaveBeenCalledTimes(1);
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
+        expect(savedEntry.action).toBe(StorageActivityAction.DELETED);
+        expect(savedEntry.storageUUID.toString()).toBe(STORAGE_UUID);
+        expect(savedEntry.tenantUUID.toString()).toBe(TENANT_UUID);
+        expect(savedEntry.actorUUID.toString()).toBe(ACTOR_UUID);
+        expect(savedEntry.previousValue).toEqual({
+          storageName: 'Almacén Eliminado',
+          storageType: StorageType.WAREHOUSE,
+        });
+        expect(savedEntry.newValue).toBeNull();
+      });
+    });
+  });
+
+  describe('Given a StoragePermanentlyDeletedEvent for a custom-room', () => {
+    describe('When handle is called', () => {
+      it('Then the previousValue records the CUSTOM_ROOM type', async () => {
+        const event = new StoragePermanentlyDeletedEvent(
+          STORAGE_UUID,
+          TENANT_UUID,
+          ACTOR_UUID,
+          StorageType.CUSTOM_ROOM,
+          'Sala Custom',
+        );
+
+        await handler.handle(event);
+
+        const savedEntry = mockActivityLogRepo.save.mock.calls[0][0];
+        expect(savedEntry.previousValue).toEqual({
+          storageName: 'Sala Custom',
+          storageType: StorageType.CUSTOM_ROOM,
+        });
       });
     });
   });

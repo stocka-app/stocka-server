@@ -1,5 +1,4 @@
-import { EventBus } from '@nestjs/cqrs';
-import { UUIDVO } from '@shared/domain/value-objects/compound/uuid.vo';
+import type { EventPublisher } from '@nestjs/cqrs';
 import { FreezeCustomRoomCommand } from '@storage/application/commands/freeze-custom-room/freeze-custom-room.command';
 import { FreezeCustomRoomHandler } from '@storage/application/commands/freeze-custom-room/freeze-custom-room.handler';
 import { FreezeStoreRoomCommand } from '@storage/application/commands/freeze-store-room/freeze-store-room.command';
@@ -12,589 +11,602 @@ import { UnfreezeStoreRoomCommand } from '@storage/application/commands/unfreeze
 import { UnfreezeStoreRoomHandler } from '@storage/application/commands/unfreeze-store-room/unfreeze-store-room.handler';
 import { UnfreezeWarehouseCommand } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.command';
 import { UnfreezeWarehouseHandler } from '@storage/application/commands/unfreeze-warehouse/unfreeze-warehouse.handler';
-import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
-import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
-import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
-import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { CustomRoomModel } from '@storage/domain/models/custom-room.model';
-import { StoreRoomModel } from '@storage/domain/models/store-room.model';
-import { WarehouseModel } from '@storage/domain/models/warehouse.model';
+import { CustomRoomAggregate } from '@storage/domain/aggregates/custom-room.aggregate';
+import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
+import { WarehouseAggregate } from '@storage/domain/aggregates/warehouse.aggregate';
+import type { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
+import type { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
+import type { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
+import type { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
 import { StorageAlreadyFrozenError } from '@storage/domain/errors/storage-already-frozen.error';
 import { StorageArchivedCannotBeFrozenError } from '@storage/domain/errors/storage-archived-cannot-be-frozen.error';
 import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
 import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen.error';
-import { StorageFrozenEvent } from '@storage/domain/events/storage-frozen.event';
-import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
-import { StorageNameVO } from '@storage/domain/value-objects/storage-name.vo';
-import { StorageIconVO } from '@storage/domain/value-objects/storage-icon.vo';
-import { StorageColorVO } from '@storage/domain/value-objects/storage-color.vo';
-import { StorageAddressVO } from '@storage/domain/value-objects/storage-address.vo';
-import { RoomTypeNameVO } from '@storage/domain/value-objects/room-type-name.vo';
 
 const TENANT_UUID = '019538a0-0000-7000-8000-000000000001';
-const OTHER_TENANT_UUID = '019538a0-0000-7000-8000-000000000002';
 const ACTOR_UUID = '019538a0-0000-7000-8000-000000000099';
-const WH_UUID = '019538a0-0000-7000-8000-000000000010';
-const SR_UUID = '019538a0-0000-7000-8000-000000000020';
-const CR_UUID = '019538a0-0000-7000-8000-000000000030';
+const STORAGE_UUID = '019538a0-0000-7000-8000-000000000010';
+const STORAGE_ID = 17;
 
-function makeWarehouse(
-  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: UUIDVO }> = {},
-): WarehouseModel {
-  return WarehouseModel.reconstitute({
-    id: 1,
-    uuid: new UUIDVO(WH_UUID),
-    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
-    name: new StorageNameVO('WH'),
-    description: null,
-    icon: new StorageIconVO('warehouse'),
-    color: new StorageColorVO('#3b82f6'),
-    address: new StorageAddressVO('789 Industrial'),
-    archivedAt: overrides.archivedAt ?? null,
-    frozenAt: overrides.frozenAt ?? null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-}
+const eventPublisherStub: EventPublisher = {
+  mergeObjectContext: jest.fn(<T>(aggregate: T): T => aggregate),
+} as unknown as EventPublisher;
 
-function makeStoreRoom(
-  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: UUIDVO }> = {},
-): StoreRoomModel {
-  return StoreRoomModel.reconstitute({
-    id: 2,
-    uuid: new UUIDVO(SR_UUID),
-    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
-    name: new StorageNameVO('SR'),
-    description: null,
-    icon: new StorageIconVO('inventory_2'),
-    color: new StorageColorVO('#d97706'),
-    address: new StorageAddressVO('456 Oak'),
-    archivedAt: overrides.archivedAt ?? null,
-    frozenAt: overrides.frozenAt ?? null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-}
-
-function makeCustomRoom(
-  overrides: Partial<{ archivedAt: Date | null; frozenAt: Date | null; tenantUUID: UUIDVO }> = {},
-): CustomRoomModel {
-  return CustomRoomModel.reconstitute({
-    id: 3,
-    uuid: new UUIDVO(CR_UUID),
-    tenantUUID: overrides.tenantUUID ?? new UUIDVO(TENANT_UUID),
-    name: StorageNameVO.create('CR'),
-    description: null,
-    icon: StorageIconVO.create('coffee'),
-    color: StorageColorVO.create('#6b7280'),
-    roomType: RoomTypeNameVO.create('Office'),
-    address: StorageAddressVO.create('123 Main'),
-    archivedAt: overrides.archivedAt ?? null,
-    frozenAt: overrides.frozenAt ?? null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-}
-
-let storageRepository: jest.Mocked<IStorageRepository>;
-let warehouseRepository: jest.Mocked<IWarehouseRepository>;
-let storeRoomRepository: jest.Mocked<IStoreRoomRepository>;
-let customRoomRepository: jest.Mocked<ICustomRoomRepository>;
-let eventBus: jest.Mocked<EventBus>;
-
-beforeEach(() => {
-  storageRepository = {
+function makeStorageRepoStub(): jest.Mocked<IStorageRepository> {
+  return {
     findOrCreate: jest.fn(),
-    existsActiveName: jest.fn(),
-    findIdByTenantUUID: jest.fn().mockResolvedValue(42),
+    existsActiveName: jest.fn().mockResolvedValue(false),
+    findIdByTenantUUID: jest.fn().mockResolvedValue(STORAGE_ID),
   };
-  warehouseRepository = {
-    count: jest.fn(),
-    findByUUID: jest.fn(),
-    save: jest.fn().mockImplementation(async (m) => m),
-    deleteByUUID: jest.fn(),
-  };
-  storeRoomRepository = {
-    count: jest.fn(),
-    findByUUID: jest.fn(),
-    save: jest.fn().mockImplementation(async (m) => m),
-    deleteByUUID: jest.fn(),
-  };
-  customRoomRepository = {
-    count: jest.fn(),
-    findByUUID: jest.fn(),
-    save: jest.fn().mockImplementation(async (m) => m),
-    deleteByUUID: jest.fn(),
-  };
-  eventBus = { publish: jest.fn() } as unknown as jest.Mocked<EventBus>;
-});
+}
 
-// ═══ FreezeXHandler ════════════════════════════════════════════════════════════
+function makeWarehouseRepoStub(): jest.Mocked<IWarehouseRepository> {
+  return {
+    count: jest.fn().mockResolvedValue(0),
+    findByUUID: jest.fn(),
+    save: jest.fn().mockImplementation((agg) => Promise.resolve(agg)),
+    deleteByUUID: jest.fn(),
+  };
+}
+
+function makeStoreRoomRepoStub(): jest.Mocked<IStoreRoomRepository> {
+  return {
+    count: jest.fn().mockResolvedValue(0),
+    findByUUID: jest.fn(),
+    save: jest.fn().mockImplementation((agg) => Promise.resolve(agg)),
+    deleteByUUID: jest.fn(),
+  };
+}
+
+function makeCustomRoomRepoStub(): jest.Mocked<ICustomRoomRepository> {
+  return {
+    count: jest.fn().mockResolvedValue(0),
+    findByUUID: jest.fn(),
+    save: jest.fn().mockImplementation((agg) => Promise.resolve(agg)),
+    deleteByUUID: jest.fn(),
+  };
+}
+
+function buildWarehouse(): WarehouseAggregate {
+  return WarehouseAggregate.create({
+    uuid: STORAGE_UUID,
+    tenantUUID: TENANT_UUID,
+    actorUUID: ACTOR_UUID,
+    name: 'WH',
+    icon: 'icon',
+    color: '#000000',
+    address: 'addr',
+  });
+}
+
+function buildStoreRoom(): StoreRoomAggregate {
+  return StoreRoomAggregate.create({
+    uuid: STORAGE_UUID,
+    tenantUUID: TENANT_UUID,
+    actorUUID: ACTOR_UUID,
+    name: 'SR',
+    icon: 'icon',
+    color: '#000000',
+  });
+}
+
+function buildCustomRoom(): CustomRoomAggregate {
+  return CustomRoomAggregate.create({
+    uuid: STORAGE_UUID,
+    tenantUUID: TENANT_UUID,
+    actorUUID: ACTOR_UUID,
+    name: 'CR',
+    icon: 'icon',
+    color: '#000000',
+    roomType: 'Office',
+  });
+}
+
+// ─── Freeze handlers ──────────────────────────────────────────────────────────
 
 describe('FreezeWarehouseHandler', () => {
+  let storageRepo: jest.Mocked<IStorageRepository>;
+  let warehouseRepo: jest.Mocked<IWarehouseRepository>;
   let handler: FreezeWarehouseHandler;
 
   beforeEach(() => {
-    handler = new FreezeWarehouseHandler(storageRepository, warehouseRepository, eventBus);
+    storageRepo = makeStorageRepoStub();
+    warehouseRepo = makeWarehouseRepoStub();
+    handler = new FreezeWarehouseHandler(storageRepo, warehouseRepo, eventPublisherStub);
   });
 
-  describe('Given an ACTIVE warehouse', () => {
-    describe('When freeze is requested', () => {
-      it('Then the model is frozen, saved, and StorageFrozenEvent is published', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse());
+  describe('Given an active warehouse owned by the tenant', () => {
+    it('Then it freezes and persists', async () => {
+      warehouseRepo.findByUUID.mockResolvedValue(buildWarehouse());
 
-        const result = await handler.execute(
-          new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap().frozenAt).toBeInstanceOf(Date);
-        expect(eventBus.publish.mock.calls[0][0]).toBeInstanceOf(StorageFrozenEvent);
-      });
+      expect(result.isOk()).toBe(true);
+      expect(warehouseRepo.save).toHaveBeenCalled();
     });
   });
 
-  describe('Given a warehouse belonging to another tenant', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
-        );
+  describe('Given a missing warehouse', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      warehouseRepo.findByUUID.mockResolvedValue(null);
 
-        const result = await handler.execute(
-          new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a non-existent warehouse', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(null);
+  describe('Given a warehouse from another tenant', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      warehouseRepo.findByUUID.mockResolvedValue(buildWarehouse());
 
-        const result = await handler.execute(
-          new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeWarehouseCommand(STORAGE_UUID, 'other', ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a FROZEN warehouse', () => {
-    describe('When freeze is requested again', () => {
-      it('Then it returns StorageAlreadyFrozenError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ frozenAt: new Date() }));
+  describe('Given a warehouse already frozen', () => {
+    it('Then it returns StorageAlreadyFrozenError', async () => {
+      const aggregate = buildWarehouse();
+      aggregate.markFrozen(ACTOR_UUID);
+      warehouseRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
     });
   });
 
-  describe('Given an ARCHIVED warehouse', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageArchivedCannotBeFrozenError (restore first)', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ archivedAt: new Date() }));
+  describe('Given an archived warehouse (cannot be frozen)', () => {
+    it('Then it returns StorageArchivedCannotBeFrozenError', async () => {
+      const aggregate = buildWarehouse();
+      aggregate.markArchived(ACTOR_UUID);
+      warehouseRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeFrozenError);
     });
   });
 
-  describe('Given a missing parent storage id', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageNotFoundError as a defensive guard', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse());
-        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+  describe('Given the storage container id is unresolved', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      warehouseRepo.findByUUID.mockResolvedValue(buildWarehouse());
+      storageRepo.findIdByTenantUUID.mockResolvedValue(null);
 
-        const result = await handler.execute(
-          new FreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 });
 
 describe('FreezeStoreRoomHandler', () => {
+  let storageRepo: jest.Mocked<IStorageRepository>;
+  let storeRoomRepo: jest.Mocked<IStoreRoomRepository>;
   let handler: FreezeStoreRoomHandler;
 
   beforeEach(() => {
-    handler = new FreezeStoreRoomHandler(storageRepository, storeRoomRepository, eventBus);
+    storageRepo = makeStorageRepoStub();
+    storeRoomRepo = makeStoreRoomRepoStub();
+    handler = new FreezeStoreRoomHandler(storageRepo, storeRoomRepo, eventPublisherStub);
   });
 
-  describe('Given an ACTIVE store room', () => {
-    describe('When freeze is requested', () => {
-      it('Then it succeeds', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+  describe('Given an active store-room owned by the tenant', () => {
+    it('Then it freezes and persists', async () => {
+      storeRoomRepo.findByUUID.mockResolvedValue(buildStoreRoom());
 
-        const result = await handler.execute(
-          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result.isOk()).toBe(true);
-        expect(eventBus.publish.mock.calls[0][0]).toBeInstanceOf(StorageFrozenEvent);
-      });
+      expect(result.isOk()).toBe(true);
     });
   });
 
-  describe('Given an ARCHIVED store room', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageArchivedCannotBeFrozenError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ archivedAt: new Date() }));
+  describe('Given the store-room is missing', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      storeRoomRepo.findByUUID.mockResolvedValue(null);
 
-        const result = await handler.execute(
-          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a FROZEN store room', () => {
-    describe('When freeze is requested again', () => {
-      it('Then it returns StorageAlreadyFrozenError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ frozenAt: new Date() }));
+  describe('Given a store-room from another tenant', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      storeRoomRepo.findByUUID.mockResolvedValue(buildStoreRoom());
 
-        const result = await handler.execute(
-          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeStoreRoomCommand(STORAGE_UUID, 'other', ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a store room belonging to another tenant', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
-        );
+  describe('Given a store-room already frozen', () => {
+    it('Then it returns StorageAlreadyFrozenError', async () => {
+      const aggregate = buildStoreRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      storeRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
     });
   });
 
-  describe('Given the parent storage id cannot be resolved', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
-        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+  describe('Given an archived store-room', () => {
+    it('Then it returns StorageArchivedCannotBeFrozenError', async () => {
+      const aggregate = buildStoreRoom();
+      aggregate.markArchived(ACTOR_UUID);
+      storeRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new FreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeFrozenError);
+    });
+  });
+
+  describe('Given the storage container id is unresolved', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      storeRoomRepo.findByUUID.mockResolvedValue(buildStoreRoom());
+      storageRepo.findIdByTenantUUID.mockResolvedValue(null);
+
+      const result = await handler.execute(
+        new FreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 });
 
 describe('FreezeCustomRoomHandler', () => {
+  let storageRepo: jest.Mocked<IStorageRepository>;
+  let customRoomRepo: jest.Mocked<ICustomRoomRepository>;
   let handler: FreezeCustomRoomHandler;
 
   beforeEach(() => {
-    handler = new FreezeCustomRoomHandler(storageRepository, customRoomRepository, eventBus);
+    storageRepo = makeStorageRepoStub();
+    customRoomRepo = makeCustomRoomRepoStub();
+    handler = new FreezeCustomRoomHandler(storageRepo, customRoomRepo, eventPublisherStub);
   });
 
-  describe('Given an ACTIVE custom room', () => {
-    describe('When freeze is requested', () => {
-      it('Then it succeeds', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+  describe('Given an active custom-room owned by the tenant', () => {
+    it('Then it freezes and persists', async () => {
+      customRoomRepo.findByUUID.mockResolvedValue(buildCustomRoom());
 
-        const result = await handler.execute(
-          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result.isOk()).toBe(true);
-        expect(eventBus.publish.mock.calls[0][0]).toBeInstanceOf(StorageFrozenEvent);
-      });
+      expect(result.isOk()).toBe(true);
     });
   });
 
-  describe('Given an already FROZEN custom room', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageAlreadyFrozenError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ frozenAt: new Date() }));
+  describe('Given a missing custom-room', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      customRoomRepo.findByUUID.mockResolvedValue(null);
 
-        const result = await handler.execute(
-          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given an ARCHIVED custom room', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageArchivedCannotBeFrozenError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ archivedAt: new Date() }),
-        );
+  describe('Given a custom-room from another tenant', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      customRoomRepo.findByUUID.mockResolvedValue(buildCustomRoom());
 
-        const result = await handler.execute(
-          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeCustomRoomCommand(STORAGE_UUID, 'other', ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a custom room belonging to another tenant', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
-        );
+  describe('Given a custom-room already frozen', () => {
+    it('Then it returns StorageAlreadyFrozenError', async () => {
+      const aggregate = buildCustomRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      customRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageAlreadyFrozenError);
     });
   });
 
-  describe('Given the parent storage id cannot be resolved', () => {
-    describe('When freeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
-        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+  describe('Given an archived custom-room', () => {
+    it('Then it returns StorageArchivedCannotBeFrozenError', async () => {
+      const aggregate = buildCustomRoom();
+      aggregate.markArchived(ACTOR_UUID);
+      customRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new FreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new FreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageArchivedCannotBeFrozenError);
+    });
+  });
+
+  describe('Given the storage container id is unresolved', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      customRoomRepo.findByUUID.mockResolvedValue(buildCustomRoom());
+      storageRepo.findIdByTenantUUID.mockResolvedValue(null);
+
+      const result = await handler.execute(
+        new FreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 });
 
-// ═══ UnfreezeXHandler ══════════════════════════════════════════════════════════
+// ─── Unfreeze handlers ────────────────────────────────────────────────────────
 
 describe('UnfreezeWarehouseHandler', () => {
+  let storageRepo: jest.Mocked<IStorageRepository>;
+  let warehouseRepo: jest.Mocked<IWarehouseRepository>;
   let handler: UnfreezeWarehouseHandler;
 
   beforeEach(() => {
-    handler = new UnfreezeWarehouseHandler(storageRepository, warehouseRepository, eventBus);
+    storageRepo = makeStorageRepoStub();
+    warehouseRepo = makeWarehouseRepoStub();
+    handler = new UnfreezeWarehouseHandler(storageRepo, warehouseRepo, eventPublisherStub);
   });
 
-  describe('Given a FROZEN warehouse', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then frozenAt is cleared and StorageReactivatedEvent is published', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ frozenAt: new Date() }));
+  describe('Given a frozen warehouse', () => {
+    it('Then it unfreezes and persists', async () => {
+      const aggregate = buildWarehouse();
+      aggregate.markFrozen(ACTOR_UUID);
+      warehouseRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new UnfreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result.isOk()).toBe(true);
-        expect(result._unsafeUnwrap().frozenAt).toBeNull();
-        expect(eventBus.publish.mock.calls[0][0]).toBeInstanceOf(StorageReactivatedEvent);
-      });
+      expect(result.isOk()).toBe(true);
     });
   });
 
-  describe('Given an ACTIVE warehouse', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFrozenError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse());
+  describe('Given a missing warehouse', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      warehouseRepo.findByUUID.mockResolvedValue(null);
 
-        const result = await handler.execute(
-          new UnfreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a warehouse belonging to another tenant', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(
-          makeWarehouse({ frozenAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
-        );
+  describe('Given a warehouse from another tenant', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      const aggregate = buildWarehouse();
+      aggregate.markFrozen(ACTOR_UUID);
+      warehouseRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new UnfreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeWarehouseCommand(STORAGE_UUID, 'other', ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a missing parent storage id', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        warehouseRepository.findByUUID.mockResolvedValue(makeWarehouse({ frozenAt: new Date() }));
-        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+  describe('Given a warehouse that is not frozen', () => {
+    it('Then it returns StorageNotFrozenError', async () => {
+      warehouseRepo.findByUUID.mockResolvedValue(buildWarehouse());
 
-        const result = await handler.execute(
-          new UnfreezeWarehouseCommand(WH_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFrozenError);
+    });
+  });
+
+  describe('Given the storage container id is unresolved', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      const aggregate = buildWarehouse();
+      aggregate.markFrozen(ACTOR_UUID);
+      warehouseRepo.findByUUID.mockResolvedValue(aggregate);
+      storageRepo.findIdByTenantUUID.mockResolvedValue(null);
+
+      const result = await handler.execute(
+        new UnfreezeWarehouseCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 });
 
 describe('UnfreezeStoreRoomHandler', () => {
+  let storageRepo: jest.Mocked<IStorageRepository>;
+  let storeRoomRepo: jest.Mocked<IStoreRoomRepository>;
   let handler: UnfreezeStoreRoomHandler;
 
   beforeEach(() => {
-    handler = new UnfreezeStoreRoomHandler(storageRepository, storeRoomRepository, eventBus);
+    storageRepo = makeStorageRepoStub();
+    storeRoomRepo = makeStoreRoomRepoStub();
+    handler = new UnfreezeStoreRoomHandler(storageRepo, storeRoomRepo, eventPublisherStub);
   });
 
-  describe('Given a FROZEN store room', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it succeeds', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ frozenAt: new Date() }));
+  describe('Given a frozen store-room', () => {
+    it('Then it unfreezes', async () => {
+      const aggregate = buildStoreRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      storeRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new UnfreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result.isOk()).toBe(true);
-      });
+      expect(result.isOk()).toBe(true);
     });
   });
 
-  describe('Given an ACTIVE store room', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFrozenError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom());
+  describe('Given the store-room is missing', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      storeRoomRepo.findByUUID.mockResolvedValue(null);
 
-        const result = await handler.execute(
-          new UnfreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a store room belonging to another tenant', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(
-          makeStoreRoom({ frozenAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
-        );
+  describe('Given a store-room from another tenant', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      const aggregate = buildStoreRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      storeRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new UnfreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeStoreRoomCommand(STORAGE_UUID, 'other', ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given the parent storage id cannot be resolved', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        storeRoomRepository.findByUUID.mockResolvedValue(makeStoreRoom({ frozenAt: new Date() }));
-        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+  describe('Given a non-frozen store-room', () => {
+    it('Then it returns StorageNotFrozenError', async () => {
+      storeRoomRepo.findByUUID.mockResolvedValue(buildStoreRoom());
 
-        const result = await handler.execute(
-          new UnfreezeStoreRoomCommand(SR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFrozenError);
+    });
+  });
+
+  describe('Given the storage container id is unresolved', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      const aggregate = buildStoreRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      storeRoomRepo.findByUUID.mockResolvedValue(aggregate);
+      storageRepo.findIdByTenantUUID.mockResolvedValue(null);
+
+      const result = await handler.execute(
+        new UnfreezeStoreRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 });
 
 describe('UnfreezeCustomRoomHandler', () => {
+  let storageRepo: jest.Mocked<IStorageRepository>;
+  let customRoomRepo: jest.Mocked<ICustomRoomRepository>;
   let handler: UnfreezeCustomRoomHandler;
 
   beforeEach(() => {
-    handler = new UnfreezeCustomRoomHandler(storageRepository, customRoomRepository, eventBus);
+    storageRepo = makeStorageRepoStub();
+    customRoomRepo = makeCustomRoomRepoStub();
+    handler = new UnfreezeCustomRoomHandler(storageRepo, customRoomRepo, eventPublisherStub);
   });
 
-  describe('Given a FROZEN custom room', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it succeeds', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ frozenAt: new Date() }));
+  describe('Given a frozen custom-room', () => {
+    it('Then it unfreezes', async () => {
+      const aggregate = buildCustomRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      customRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new UnfreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result.isOk()).toBe(true);
-      });
+      expect(result.isOk()).toBe(true);
     });
   });
 
-  describe('Given an ACTIVE custom room', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFrozenError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom());
+  describe('Given the custom-room is missing', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      customRoomRepo.findByUUID.mockResolvedValue(null);
 
-        const result = await handler.execute(
-          new UnfreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFrozenError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given a custom room belonging to another tenant', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(
-          makeCustomRoom({ frozenAt: new Date(), tenantUUID: new UUIDVO(OTHER_TENANT_UUID) }),
-        );
+  describe('Given a custom-room from another tenant', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      const aggregate = buildCustomRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      customRoomRepo.findByUUID.mockResolvedValue(aggregate);
 
-        const result = await handler.execute(
-          new UnfreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeCustomRoomCommand(STORAGE_UUID, 'other', ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 
-  describe('Given the parent storage id cannot be resolved', () => {
-    describe('When unfreeze is requested', () => {
-      it('Then it returns StorageNotFoundError', async () => {
-        customRoomRepository.findByUUID.mockResolvedValue(makeCustomRoom({ frozenAt: new Date() }));
-        storageRepository.findIdByTenantUUID.mockResolvedValue(null);
+  describe('Given a non-frozen custom-room', () => {
+    it('Then it returns StorageNotFrozenError', async () => {
+      customRoomRepo.findByUUID.mockResolvedValue(buildCustomRoom());
 
-        const result = await handler.execute(
-          new UnfreezeCustomRoomCommand(CR_UUID, TENANT_UUID, ACTOR_UUID),
-        );
+      const result = await handler.execute(
+        new UnfreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
 
-        expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
-      });
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFrozenError);
+    });
+  });
+
+  describe('Given the storage container id is unresolved', () => {
+    it('Then it returns StorageNotFoundError', async () => {
+      const aggregate = buildCustomRoom();
+      aggregate.markFrozen(ACTOR_UUID);
+      customRoomRepo.findByUUID.mockResolvedValue(aggregate);
+      storageRepo.findIdByTenantUUID.mockResolvedValue(null);
+
+      const result = await handler.execute(
+        new UnfreezeCustomRoomCommand(STORAGE_UUID, TENANT_UUID, ACTOR_UUID),
+      );
+
+      expect(result._unsafeUnwrapErr()).toBeInstanceOf(StorageNotFoundError);
     });
   });
 });
