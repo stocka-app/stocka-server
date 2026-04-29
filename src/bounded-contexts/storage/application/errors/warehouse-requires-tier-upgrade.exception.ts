@@ -1,6 +1,6 @@
 import { BusinessLogicException } from '@shared/domain/exceptions/business-logic.exception';
 
-export class WarehouseRequiresTierUpgradeError extends BusinessLogicException {
+export class WarehouseRequiresTierUpgradeException extends BusinessLogicException {
   constructor() {
     super(
       'Your current plan does not allow creating warehouses. Please upgrade your plan.',

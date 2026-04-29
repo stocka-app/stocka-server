@@ -8,7 +8,7 @@ import { StorageItemViewMapper } from '@storage/application/mappers/storage-item
 import { StorageTypeChangePolicy } from '@storage/application/services/storage-type-change.policy';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type RestoreStoreRoomResult = Result<StorageItemView, DomainException>;
@@ -28,7 +28,7 @@ export class RestoreStoreRoomHandler implements ICommandHandler<RestoreStoreRoom
     const storeRoom = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
     if (!storeRoom || storeRoom.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
 
     const capacityError = await this.policy.assertStoreRoomCanRestore(command.tenantUUID);
@@ -38,7 +38,7 @@ export class RestoreStoreRoomHandler implements ICommandHandler<RestoreStoreRoom
     if (transition.isErr()) return err(transition.error);
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
-    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
+    if (storageId === null) return err(new StorageNotFoundException(command.storageUUID));
 
     const saved = await this.storeRoomRepository.save(storeRoom, storageId);
 

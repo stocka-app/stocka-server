@@ -5,7 +5,7 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, err, ok } from '@shared/domain/result';
 import { DeletePermanentCustomRoomCommand } from '@storage/application/commands/delete-permanent-custom-room/delete-permanent-custom-room.command';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 
 export type DeletePermanentCustomRoomResult = Result<void, DomainException>;
 
@@ -23,7 +23,7 @@ export class DeletePermanentCustomRoomHandler implements ICommandHandler<DeleteP
     const customRoom = await this.customRoomRepository.findByUUID(command.storageUUID);
 
     if (!customRoom || customRoom.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
 
     const transition = customRoom.markPermanentlyDeleted(command.actorUUID);

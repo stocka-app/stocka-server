@@ -20,11 +20,11 @@ import { StorageNameChangedEvent } from '@storage/domain/events/storage-name-cha
 import { StoragePermanentlyDeletedEvent } from '@storage/domain/events/storage-permanently-deleted.event';
 import { StorageReactivatedEvent } from '@storage/domain/events/storage-reactivated.event';
 import { StorageRestoredEvent } from '@storage/domain/events/storage-restored.event';
-import { StorageAlreadyArchivedError } from '@storage/domain/errors/storage-already-archived.error';
-import { StorageAlreadyFrozenError } from '@storage/domain/errors/storage-already-frozen.error';
-import { StorageArchivedCannotBeFrozenError } from '@storage/domain/errors/storage-archived-cannot-be-frozen.error';
-import { StorageNotArchivedError } from '@storage/domain/errors/storage-not-archived.error';
-import { StorageNotFrozenError } from '@storage/domain/errors/storage-not-frozen.error';
+import { StorageAlreadyArchivedException } from '@storage/domain/exceptions/business/storage-already-archived.exception';
+import { StorageAlreadyFrozenException } from '@storage/domain/exceptions/business/storage-already-frozen.exception';
+import { StorageArchivedCannotBeFrozenException } from '@storage/domain/exceptions/business/storage-archived-cannot-be-frozen.exception';
+import { StorageNotArchivedException } from '@storage/domain/exceptions/business/storage-not-archived.exception';
+import { StorageNotFrozenException } from '@storage/domain/exceptions/business/storage-not-frozen.exception';
 import {
   StoreRoomModel,
   type StoreRoomModelCreateProps,
@@ -107,7 +107,7 @@ export class StoreRoomAggregate extends AggregateRoot {
 
   markArchived(actorUUID: string): Result<void, DomainException> {
     if (this._model.archivedAt !== null) {
-      return err(new StorageAlreadyArchivedError(this.uuid));
+      return err(new StorageAlreadyArchivedException(this.uuid));
     }
     this._model = this._model.with({
       archivedAt: new Date(),
@@ -119,10 +119,10 @@ export class StoreRoomAggregate extends AggregateRoot {
 
   markFrozen(actorUUID: string): Result<void, DomainException> {
     if (this._model.archivedAt !== null) {
-      return err(new StorageArchivedCannotBeFrozenError(this.uuid));
+      return err(new StorageArchivedCannotBeFrozenException(this.uuid));
     }
     if (this._model.frozenAt !== null) {
-      return err(new StorageAlreadyFrozenError(this.uuid));
+      return err(new StorageAlreadyFrozenException(this.uuid));
     }
     this._model = this._model.with({ frozenAt: new Date() });
     this.apply(new StorageFrozenEvent(this.uuid, this._model.tenantUUID.toString(), actorUUID));
@@ -131,7 +131,7 @@ export class StoreRoomAggregate extends AggregateRoot {
 
   markUnfrozen(actorUUID: string): Result<void, DomainException> {
     if (this._model.frozenAt === null || this._model.archivedAt !== null) {
-      return err(new StorageNotFrozenError(this.uuid));
+      return err(new StorageNotFrozenException(this.uuid));
     }
     this._model = this._model.with({ frozenAt: null });
     this.apply(
@@ -142,7 +142,7 @@ export class StoreRoomAggregate extends AggregateRoot {
 
   markRestored(actorUUID: string): Result<void, DomainException> {
     if (this._model.archivedAt === null) {
-      return err(new StorageNotArchivedError(this.uuid));
+      return err(new StorageNotArchivedException(this.uuid));
     }
     this._model = this._model.with({
       archivedAt: null,
@@ -154,7 +154,7 @@ export class StoreRoomAggregate extends AggregateRoot {
 
   markPermanentlyDeleted(actorUUID: string): Result<void, DomainException> {
     if (this._model.archivedAt === null) {
-      return err(new StorageNotArchivedError(this.uuid));
+      return err(new StorageNotArchivedException(this.uuid));
     }
     this.apply(
       new StoragePermanentlyDeletedEvent(

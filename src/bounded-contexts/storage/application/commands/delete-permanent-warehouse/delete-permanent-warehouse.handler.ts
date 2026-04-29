@@ -5,7 +5,7 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, err, ok } from '@shared/domain/result';
 import { DeletePermanentWarehouseCommand } from '@storage/application/commands/delete-permanent-warehouse/delete-permanent-warehouse.command';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 
 export type DeletePermanentWarehouseResult = Result<void, DomainException>;
 
@@ -21,7 +21,7 @@ export class DeletePermanentWarehouseHandler implements ICommandHandler<DeletePe
     const warehouse = await this.warehouseRepository.findByUUID(command.storageUUID);
 
     if (!warehouse || warehouse.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
 
     const transition = warehouse.markPermanentlyDeleted(command.actorUUID);

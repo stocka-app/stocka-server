@@ -7,7 +7,7 @@ import { FreezeCustomRoomCommand } from '@storage/application/commands/freeze-cu
 import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
 import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.repository.contract';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type FreezeCustomRoomResult = Result<StorageItemView, DomainException>;
@@ -26,14 +26,14 @@ export class FreezeCustomRoomHandler implements ICommandHandler<FreezeCustomRoom
     const customRoom = await this.customRoomRepository.findByUUID(command.storageUUID);
 
     if (!customRoom || customRoom.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
 
     const transition = customRoom.markFrozen(command.actorUUID);
     if (transition.isErr()) return err(transition.error);
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
-    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
+    if (storageId === null) return err(new StorageNotFoundException(command.storageUUID));
 
     const saved = await this.customRoomRepository.save(customRoom, storageId);
 

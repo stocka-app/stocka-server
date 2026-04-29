@@ -7,9 +7,9 @@ import { UpdateWarehouseCommand } from '@storage/application/commands/update-war
 import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IWarehouseRepository } from '@storage/domain/contracts/warehouse.repository.contract';
-import { StorageAddressRequiredForWarehouseError } from '@storage/domain/errors/storage-address-required-for-warehouse.error';
-import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageAddressRequiredForWarehouseException } from '@storage/domain/exceptions/business/storage-address-required-for-warehouse.exception';
+import { StorageNameAlreadyExistsException } from '@storage/domain/exceptions/business/storage-name-already-exists.exception';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type UpdateWarehouseResult = Result<StorageItemView, DomainException>;
@@ -28,12 +28,12 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
     const warehouse = await this.warehouseRepository.findByUUID(command.storageUUID);
 
     if (!warehouse || warehouse.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
 
     // H-07: metadata is editable in ARCHIVED (per E5.2). Type-change is still
-    // blocked by ChangeXToYHandler (StorageTypeLockedWhileArchivedError) and
-    // FROZEN by H-05's StorageTypeLockedWhileFrozenError.
+    // blocked by ChangeXToYHandler (StorageTypeLockedWhileArchivedException) and
+    // FROZEN by H-05's StorageTypeLockedWhileFrozenException.
 
     if (command.name !== undefined && command.name !== warehouse.name.getValue()) {
       const nameExists = await this.storageRepository.existsActiveName(
@@ -41,16 +41,16 @@ export class UpdateWarehouseHandler implements ICommandHandler<UpdateWarehouseCo
         command.name,
       );
       if (nameExists) {
-        return err(new StorageNameAlreadyExistsError(command.name));
+        return err(new StorageNameAlreadyExistsException(command.name));
       }
     }
 
     if (command.address !== undefined && command.address.trim().length === 0) {
-      return err(new StorageAddressRequiredForWarehouseError(command.storageUUID));
+      return err(new StorageAddressRequiredForWarehouseException(command.storageUUID));
     }
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
-    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
+    if (storageId === null) return err(new StorageNotFoundException(command.storageUUID));
 
     const transition = warehouse.update(
       {

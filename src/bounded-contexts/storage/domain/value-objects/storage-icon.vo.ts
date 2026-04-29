@@ -1,4 +1,5 @@
 import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
+import { InvalidStorageIconException } from '@storage/domain/exceptions/validation/invalid-storage-icon.exception';
 
 export class StorageIconVO extends StringVO {
   private static readonly MAX_LENGTH = 100;
@@ -14,10 +15,10 @@ export class StorageIconVO extends StringVO {
 
   protected ensureValid(): void {
     if (this.value.length === 0) {
-      throw new Error('Storage icon identifier cannot be empty');
+      throw new InvalidStorageIconException('Storage icon identifier cannot be empty');
     }
     if (this.value.length > StorageIconVO.MAX_LENGTH) {
-      throw new Error(
+      throw new InvalidStorageIconException(
         `Storage icon identifier cannot exceed ${StorageIconVO.MAX_LENGTH} characters`,
       );
     }

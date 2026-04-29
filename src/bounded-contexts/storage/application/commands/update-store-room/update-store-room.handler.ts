@@ -7,8 +7,8 @@ import { UpdateStoreRoomCommand } from '@storage/application/commands/update-sto
 import { StorageItemViewMapper } from '@storage/application/mappers/storage-item-view.mapper';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
-import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNameAlreadyExistsException } from '@storage/domain/exceptions/business/storage-name-already-exists.exception';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 import { StorageItemView } from '@storage/domain/schemas';
 
 export type UpdateStoreRoomResult = Result<StorageItemView, DomainException>;
@@ -27,7 +27,7 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
     const storeRoom = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
     if (!storeRoom || storeRoom.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
 
     if (command.name !== undefined && command.name !== storeRoom.name.getValue()) {
@@ -36,12 +36,12 @@ export class UpdateStoreRoomHandler implements ICommandHandler<UpdateStoreRoomCo
         command.name,
       );
       if (nameExists) {
-        return err(new StorageNameAlreadyExistsError(command.name));
+        return err(new StorageNameAlreadyExistsException(command.name));
       }
     }
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
-    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
+    if (storageId === null) return err(new StorageNotFoundException(command.storageUUID));
 
     const transition = storeRoom.update(
       {
