@@ -11,8 +11,8 @@ import {
   resolveStorageIcon,
   resolveStorageColor,
 } from '@storage/domain/services/storage-icon-color.resolver';
-import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
-import { StoreRoomLimitReachedError } from '@storage/application/errors/store-room-limit-reached.error';
+import { StorageNameAlreadyExistsException } from '@storage/domain/exceptions/business/storage-name-already-exists.exception';
+import { StoreRoomLimitReachedException } from '@storage/application/errors/store-room-limit-reached.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
@@ -37,7 +37,7 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
     const currentCount = await this.storeRoomRepository.count(command.tenantUUID);
 
     if (!capabilities.canCreateMoreStoreRooms(currentCount)) {
-      return err(new StoreRoomLimitReachedError());
+      return err(new StoreRoomLimitReachedException());
     }
 
     const nameExists = await this.storageRepository.existsActiveName(
@@ -46,7 +46,7 @@ export class CreateStoreRoomHandler implements ICommandHandler<CreateStoreRoomCo
     );
 
     if (nameExists) {
-      return err(new StorageNameAlreadyExistsError(command.name));
+      return err(new StorageNameAlreadyExistsException(command.name));
     }
 
     const container = await this.storageRepository.findOrCreate(command.tenantUUID);

@@ -10,10 +10,10 @@ import { ICustomRoomRepository } from '@storage/domain/contracts/custom-room.rep
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
 import { StorageType } from '@storage/domain/enums/storage-type.enum';
-import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
-import { StorageTypeLockedWhileArchivedError } from '@storage/domain/errors/storage-type-locked-while-archived.error';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
-import { StorageTypeLockedWhileFrozenError } from '@storage/domain/errors/storage-type-locked-while-frozen.error';
+import { StorageNameAlreadyExistsException } from '@storage/domain/exceptions/business/storage-name-already-exists.exception';
+import { StorageTypeLockedWhileArchivedException } from '@storage/domain/exceptions/business/storage-type-locked-while-archived.exception';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
+import { StorageTypeLockedWhileFrozenException } from '@storage/domain/exceptions/business/storage-type-locked-while-frozen.exception';
 import { StorageTypeChangedEvent } from '@storage/domain/events/storage-type-changed.event';
 import { StoreRoomAggregate } from '@storage/domain/aggregates/store-room.aggregate';
 import {
@@ -44,13 +44,13 @@ export class ChangeCustomRoomToStoreRoomHandler implements ICommandHandler<Chang
     const source = await this.customRoomRepository.findByUUID(command.storageUUID);
 
     if (!source || source.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
     if (source.isArchived()) {
-      return err(new StorageTypeLockedWhileArchivedError(command.storageUUID));
+      return err(new StorageTypeLockedWhileArchivedException(command.storageUUID));
     }
     if (source.isFrozen()) {
-      return err(new StorageTypeLockedWhileFrozenError(command.storageUUID));
+      return err(new StorageTypeLockedWhileFrozenException(command.storageUUID));
     }
 
     const capacityError = await this.policy.assertStoreRoomCapacity(command.tenantUUID);
@@ -62,7 +62,7 @@ export class ChangeCustomRoomToStoreRoomHandler implements ICommandHandler<Chang
         command.tenantUUID,
         effectiveName,
       );
-      if (nameExists) return err(new StorageNameAlreadyExistsError(effectiveName));
+      if (nameExists) return err(new StorageNameAlreadyExistsException(effectiveName));
     }
 
     const effectiveDescription =
@@ -75,7 +75,7 @@ export class ChangeCustomRoomToStoreRoomHandler implements ICommandHandler<Chang
         : command.metadata.address;
 
     const storageId = await this.storageRepository.findIdByTenantUUID(command.tenantUUID);
-    if (storageId === null) return err(new StorageNotFoundError(command.storageUUID));
+    if (storageId === null) return err(new StorageNotFoundException(command.storageUUID));
 
     const target = StoreRoomAggregate.forTypeChange({
       uuid: command.storageUUID,

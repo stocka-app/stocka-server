@@ -5,7 +5,7 @@ import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, err, ok } from '@shared/domain/result';
 import { DeletePermanentStoreRoomCommand } from '@storage/application/commands/delete-permanent-store-room/delete-permanent-store-room.command';
 import { IStoreRoomRepository } from '@storage/domain/contracts/store-room.repository.contract';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 
 export type DeletePermanentStoreRoomResult = Result<void, DomainException>;
 
@@ -21,7 +21,7 @@ export class DeletePermanentStoreRoomHandler implements ICommandHandler<DeletePe
     const storeRoom = await this.storeRoomRepository.findByUUID(command.storageUUID);
 
     if (!storeRoom || storeRoom.tenantUUID.toString() !== command.tenantUUID) {
-      return err(new StorageNotFoundError(command.storageUUID));
+      return err(new StorageNotFoundException(command.storageUUID));
     }
 
     const transition = storeRoom.markPermanentlyDeleted(command.actorUUID);

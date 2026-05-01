@@ -11,8 +11,8 @@ import {
   resolveStorageIcon,
   resolveStorageColor,
 } from '@storage/domain/services/storage-icon-color.resolver';
-import { StorageNameAlreadyExistsError } from '@storage/domain/errors/storage-name-already-exists.error';
-import { WarehouseRequiresTierUpgradeError } from '@storage/application/errors/warehouse-requires-tier-upgrade.error';
+import { StorageNameAlreadyExistsException } from '@storage/domain/exceptions/business/storage-name-already-exists.exception';
+import { WarehouseRequiresTierUpgradeException } from '@storage/application/errors/warehouse-requires-tier-upgrade.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
@@ -35,13 +35,13 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
     const capabilities = await this.capabilitiesPort.getCapabilities(command.tenantUUID);
 
     if (!capabilities.canCreateWarehouse()) {
-      return err(new WarehouseRequiresTierUpgradeError());
+      return err(new WarehouseRequiresTierUpgradeException());
     }
 
     const currentCount = await this.warehouseRepository.count(command.tenantUUID);
 
     if (!capabilities.canCreateMoreWarehouses(currentCount)) {
-      return err(new WarehouseRequiresTierUpgradeError());
+      return err(new WarehouseRequiresTierUpgradeException());
     }
 
     const nameExists = await this.storageRepository.existsActiveName(
@@ -50,7 +50,7 @@ export class CreateWarehouseHandler implements ICommandHandler<CreateWarehouseCo
     );
 
     if (nameExists) {
-      return err(new StorageNameAlreadyExistsError(command.name));
+      return err(new StorageNameAlreadyExistsException(command.name));
     }
 
     const container = await this.storageRepository.findOrCreate(command.tenantUUID);

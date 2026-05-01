@@ -3,7 +3,7 @@ import { Inject } from '@nestjs/common';
 import { GetStorageQuery } from '@storage/application/queries/get-storage/get-storage.query';
 import { IStorageRepository } from '@storage/domain/contracts/storage.repository.contract';
 import { StorageItemView } from '@storage/domain/schemas';
-import { StorageNotFoundError } from '@storage/domain/errors/storage-not-found.error';
+import { StorageNotFoundException } from '@storage/domain/exceptions/business/storage-not-found.exception';
 import { INJECTION_TOKENS } from '@common/constants/app.constants';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { Result, ok, err } from '@shared/domain/result';
@@ -22,7 +22,7 @@ export class GetStorageHandler implements IQueryHandler<GetStorageQuery> {
     const view = aggregate.findItemView(query.storageUUID);
 
     if (!view) {
-      return err(new StorageNotFoundError(query.storageUUID));
+      return err(new StorageNotFoundException(query.storageUUID));
     }
 
     return ok(view);

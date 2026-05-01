@@ -1,4 +1,5 @@
 import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
+import { InvalidStorageAddressException } from '@storage/domain/exceptions/validation/invalid-storage-address.exception';
 
 export class StorageAddressVO extends StringVO {
   private static readonly MAX_LENGTH = 200;
@@ -14,10 +15,12 @@ export class StorageAddressVO extends StringVO {
 
   protected ensureValid(): void {
     if (this.value.length === 0) {
-      throw new Error('Storage address cannot be empty');
+      throw new InvalidStorageAddressException('Storage address cannot be empty');
     }
     if (this.value.length > StorageAddressVO.MAX_LENGTH) {
-      throw new Error(`Storage address cannot exceed ${StorageAddressVO.MAX_LENGTH} characters`);
+      throw new InvalidStorageAddressException(
+        `Storage address cannot exceed ${StorageAddressVO.MAX_LENGTH} characters`,
+      );
     }
   }
 }

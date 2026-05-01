@@ -1,4 +1,5 @@
 import { StringVO } from '@shared/domain/value-objects/primitive/string.vo';
+import { InvalidStorageNameException } from '@storage/domain/exceptions/validation/invalid-storage-name.exception';
 
 export class StorageNameVO extends StringVO {
   private static readonly MAX_LENGTH = 100;
@@ -14,10 +15,12 @@ export class StorageNameVO extends StringVO {
 
   protected ensureValid(): void {
     if (this.value.length === 0) {
-      throw new Error('Storage name cannot be empty');
+      throw new InvalidStorageNameException('Storage name cannot be empty');
     }
     if (this.value.length > StorageNameVO.MAX_LENGTH) {
-      throw new Error(`Storage name cannot exceed ${StorageNameVO.MAX_LENGTH} characters`);
+      throw new InvalidStorageNameException(
+        `Storage name cannot exceed ${StorageNameVO.MAX_LENGTH} characters`,
+      );
     }
   }
 

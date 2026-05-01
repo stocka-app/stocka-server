@@ -1,6 +1,6 @@
 import { BusinessLogicException } from '@shared/domain/exceptions/business-logic.exception';
 
-export class StorageAddressRequiredForWarehouseError extends BusinessLogicException {
+export class StorageAddressRequiredForWarehouseException extends BusinessLogicException {
   constructor(identifier: string) {
     super(
       `Storage "${identifier}" is a warehouse and requires a physical address.`,

@@ -1,6 +1,6 @@
 import { BusinessLogicException } from '@shared/domain/exceptions/business-logic.exception';
 
-export class StorageTypeLockedWhileArchivedError extends BusinessLogicException {
+export class StorageTypeLockedWhileArchivedException extends BusinessLogicException {
   constructor(identifier: string) {
     super(
       `Cannot change type of storage "${identifier}" while it is archived. Restore it first.`,
