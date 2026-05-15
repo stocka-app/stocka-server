@@ -1,4 +1,5 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
+import { v7 as uuidV7 } from 'uuid';
 
 /**
  * Initial catalog seed for the billing schema.
@@ -112,10 +113,10 @@ export class SeedBillingCatalog1778830000000 implements MigrationInterface {
         ("uuid", "tier", "billing_cycle", "currency", "amount", "trial_days",
          "is_active", "effective_from")
       VALUES
-        (uuid_generate_v4(), $1, 'MONTHLY', 'MXN', $2, 0, true, $3)
+        ($1, $2, 'MONTHLY', 'MXN', $3, 0, true, $4)
       RETURNING "id"
     `,
-      [tier, amount, this.EFFECTIVE_FROM],
+      [uuidV7(), tier, amount, this.EFFECTIVE_FROM],
     )) as Array<{ id: number }>;
 
     return inserted[0].id;
@@ -146,9 +147,9 @@ export class SeedBillingCatalog1778830000000 implements MigrationInterface {
         ("uuid", "pricing_plan_id", "provider_code", "external_product_id",
          "external_price_id", "is_active")
       VALUES
-        (uuid_generate_v4(), $1, $2, $3, $4, true)
+        ($1, $2, $3, $4, $5, true)
     `,
-      [pricingPlanId, this.PROVIDER_CODE, externalProductId, externalPriceId],
+      [uuidV7(), pricingPlanId, this.PROVIDER_CODE, externalProductId, externalPriceId],
     );
   }
 }
