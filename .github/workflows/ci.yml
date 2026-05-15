@@ -48,7 +48,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run database migrations
-        run: pnpm migration:run
+        run: pnpm typeorm:migration:run
         env:
           NODE_ENV: test
           DB_HOST: localhost
