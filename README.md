@@ -124,13 +124,13 @@ docker/
 
 ```bash
 # Generate a new migration
-pnpm migration:generate src/migrations/MigrationName
+pnpm typeorm:migration:generate src/migrations/MigrationName
 
 # Run pending migrations
-pnpm migration:run
+pnpm typeorm:migration:run
 
 # Revert last migration
-pnpm migration:revert
+pnpm typeorm:migration:revert
 ```
 
 ---
