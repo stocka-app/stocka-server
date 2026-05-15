@@ -25,6 +25,7 @@ import { AppController } from '@core/infrastructure/app.controller';
 import { HealthModule } from '@core/infrastructure/health/health.module';
 import { DomainExceptionFilter } from '@common/filters/domain-exception.filter';
 import { AuthorizationModule } from '@authorization/infrastructure/authorization.module';
+import { BillingModule } from '@billing/billing.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { AuthorizationModule } from '@authorization/infrastructure/authorization
     OnboardingModule,
     MediatorModule,
     AuthorizationModule,
+    BillingModule,
     SecurityModule,
   ],
   controllers: [AppController],
