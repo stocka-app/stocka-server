@@ -32,6 +32,9 @@ export class TierPlanEntity {
   @Column({ name: 'advanced_reports_enabled', type: 'boolean', default: false })
   advancedReportsEnabled!: boolean;
 
+  @Column({ name: 'is_purchasable', type: 'boolean', default: false })
+  isPurchasable!: boolean;
+
   @Column({ name: 'policy_version', type: 'timestamptz' })
   policyVersion!: Date;
 

@@ -160,6 +160,37 @@ class EnvironmentVariables {
   @IsString()
   @IsOptional()
   E2E_MODE?: string;
+
+  // Billing / Stripe
+  @IsString()
+  STRIPE_SECRET_KEY!: string;
+
+  @IsString()
+  STRIPE_PUBLISHABLE_KEY!: string;
+
+  @IsString()
+  STRIPE_WEBHOOK_SECRET!: string;
+
+  @IsString()
+  STRIPE_PRICE_ID_STARTER_MONTHLY!: string;
+
+  @IsString()
+  STRIPE_PRICE_ID_GROWTH_MONTHLY!: string;
+
+  @IsString()
+  STRIPE_PRODUCT_ID_STARTER!: string;
+
+  @IsString()
+  STRIPE_PRODUCT_ID_GROWTH!: string;
+
+  @IsString()
+  STRIPE_CUSTOMER_PORTAL_RETURN_PATH!: string;
+
+  @IsString()
+  STRIPE_CHECKOUT_SUCCESS_PATH!: string;
+
+  @IsString()
+  STRIPE_CHECKOUT_CANCEL_PATH!: string;
 }
 
 export function validate(config: Record<string, unknown>): EnvironmentVariables {

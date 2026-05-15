@@ -32,7 +32,8 @@
       "@test-mockup/*": ["test/__mocks__/*"],
       "@storage/*": ["src/bounded-contexts/storage/*"],
       "@onboarding/*": ["src/bounded-contexts/onboarding/*"],
-      "@authorization/*": ["src/bounded-contexts/authorization/*"]
+      "@authorization/*": ["src/bounded-contexts/authorization/*"],
+      "@billing/*": ["src/bounded-contexts/billing/*"]
     }
   },
   "include": ["src/**/*", "test/**/*", "test/__mocks__/*"],
