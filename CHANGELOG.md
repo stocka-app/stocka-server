@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 
 
+## [0.23.0](https://github.com/stocka-app/stocka-server/compare/v0.22.1...v0.23.0) (2026-05-15)
+
+### ✨ Features
+
+* **billing:** add is_purchasable column to tier_plans ([3581e1c](https://github.com/stocka-app/stocka-server/commit/3581e1c3ab4053088de122233e66a2e231bac011))
+* **billing:** backfill subscriptions + use uuid v7 in seeds ([97ec97c](https://github.com/stocka-app/stocka-server/commit/97ec97c080199746de545f6c76d19ec5a4e27d9b))
+* **billing:** create billing schema with 8 tables and 11 foreign keys ([d87663e](https://github.com/stocka-app/stocka-server/commit/d87663eeb8bc7a97dc8a888053cbfc299da02803))
+* **billing:** scaffold BillingModule and register in AppModule ([d0b7001](https://github.com/stocka-app/stocka-server/commit/d0b700119478a72901c3024934fd5413192c7f90))
+* **billing:** seed initial billing catalog (provider + 2 pricing + 2 mappings) ([14c3ba5](https://github.com/stocka-app/stocka-server/commit/14c3ba5c1c4d3ef584e82854e9ad0b50ad666948))
+* **billing:** seed is_purchasable flag for tier_plans ([1e55981](https://github.com/stocka-app/stocka-server/commit/1e55981fd47c027a62aec18ebd07c29b329ad929))
+
+### 🧹 Chores
+
+* **billing:** add Stripe env vars to .env.test with mock values ([e9d16d9](https://github.com/stocka-app/stocka-server/commit/e9d16d9011f0cb88c6991aee6f0a72316fc187ee))
+* **billing:** add Stripe environment variables and validation ([572ef5b](https://github.com/stocka-app/stocka-server/commit/572ef5b5df9316036f453ea2d54fd7a8f0f0c476))
+* **billing:** install stripe SDK 22.1.1 in BE ([c4ee15f](https://github.com/stocka-app/stocka-server/commit/c4ee15f6138500bc863f84de16448941cdc29b85))
+
 ## [0.22.1](https://github.com/stocka-app/stocka-server/compare/v0.22.0...v0.22.1) (2026-05-15)
 
 ### 🧹 Chores
