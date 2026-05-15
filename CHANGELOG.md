@@ -3,6 +3,12 @@
 All notable changes to this project are documented here.
 
 
+## [0.22.1](https://github.com/stocka-app/stocka-server/compare/v0.22.0...v0.22.1) (2026-05-15)
+
+### 🧹 Chores
+
+* **ci:** align CI and README with typeorm:migration:run script ([8d65cb3](https://github.com/stocka-app/stocka-server/commit/8d65cb344587eda90b7220c305ebc376c3781e79)), closes [#62](https://github.com/stocka-app/stocka-server/issues/62)
+
 ## [0.22.0](https://github.com/stocka-app/stocka-server/compare/v0.7.0...v0.22.0) (2026-05-15)
 
 ### ✨ Features
