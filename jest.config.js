@@ -13,6 +13,7 @@ module.exports = {
   testEnvironment: 'node',
   moduleNameMapper: {
     '^@authorization/(.*)$': '<rootDir>/src/bounded-contexts/authorization/$1',
+    '^@billing/(.*)$': '<rootDir>/src/bounded-contexts/billing/$1',
     '^@storage/(.*)$': '<rootDir>/src/bounded-contexts/storage/$1',
     '^@onboarding/(.*)$': '<rootDir>/src/bounded-contexts/onboarding/$1',
     '^@tenant/(.*)$': '<rootDir>/src/bounded-contexts/tenant/$1',
