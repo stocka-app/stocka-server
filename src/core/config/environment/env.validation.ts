@@ -178,6 +178,12 @@ class EnvironmentVariables {
   STRIPE_PRICE_ID_GROWTH_MONTHLY!: string;
 
   @IsString()
+  STRIPE_PRODUCT_ID_STARTER!: string;
+
+  @IsString()
+  STRIPE_PRODUCT_ID_GROWTH!: string;
+
+  @IsString()
   STRIPE_CUSTOMER_PORTAL_RETURN_PATH!: string;
 
   @IsString()
