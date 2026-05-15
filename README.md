@@ -52,7 +52,7 @@ src/
 ## Prerequisites
 
 - Node.js 20+
-- npm 10+
+- pnpm 10+ (`npm install -g pnpm` or `brew install pnpm`)
 - Docker & Docker Compose (for the database)
 
 ---
@@ -62,7 +62,7 @@ src/
 ### 1. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 2. Configure environment
@@ -82,13 +82,13 @@ cp .env.example .env
 ### 3. Start the database
 
 ```bash
-npm run docker:db
+pnpm docker:db
 ```
 
 ### 4. Run the server
 
 ```bash
-npm run start:dev
+pnpm start:dev
 ```
 
 ---
@@ -109,14 +109,14 @@ docker/
 
 | Command | Description |
 |---------|-------------|
-| `npm run docker:db` | Start PostgreSQL only (local dev) |
-| `npm run docker:dev` | Start full dev environment |
-| `npm run docker:dev:build` | Rebuild & start dev environment |
-| `npm run docker:dev:down` | Stop dev environment |
-| `npm run docker:prod` | Start production (detached) |
-| `npm run docker:prod:build` | Rebuild & start production |
-| `npm run docker:prod:down` | Stop production |
-| `npm run docker:logs` | View container logs |
+| `pnpm docker:db` | Start PostgreSQL only (local dev) |
+| `pnpm docker:dev` | Start full dev environment |
+| `pnpm docker:dev:build` | Rebuild & start dev environment |
+| `pnpm docker:dev:down` | Stop dev environment |
+| `pnpm docker:prod` | Start production (detached) |
+| `pnpm docker:prod:build` | Rebuild & start production |
+| `pnpm docker:prod:down` | Stop production |
+| `pnpm docker:logs` | View container logs |
 
 ---
 
@@ -124,13 +124,13 @@ docker/
 
 ```bash
 # Generate a new migration
-npm run migration:generate -- src/migrations/MigrationName
+pnpm migration:generate src/migrations/MigrationName
 
 # Run pending migrations
-npm run migration:run
+pnpm migration:run
 
 # Revert last migration
-npm run migration:revert
+pnpm migration:revert
 ```
 
 ---
@@ -138,11 +138,11 @@ npm run migration:revert
 ## Testing
 
 ```bash
-npm run test          # Run all tests
-npm run test:watch    # Watch mode
-npm run test:cov      # With coverage report
-npm run test:unit     # Unit tests only
-npm run test:e2e      # End-to-end tests
+pnpm test          # Run all tests
+pnpm test:watch    # Watch mode
+pnpm test:cov      # With coverage report
+pnpm test:unit     # Unit tests only
+pnpm test:e2e      # End-to-end tests
 ```
 
 ---

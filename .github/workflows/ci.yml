@@ -33,17 +33,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run database migrations
-        run: npm run migration:run
+        run: pnpm migration:run
         env:
           NODE_ENV: test
           DB_HOST: localhost
@@ -53,10 +58,10 @@ jobs:
           DB_DATABASE: stocka_test_db
 
       - name: Run linter
-        run: npm run lint
+        run: pnpm lint
 
       - name: Run unit tests with coverage
-        run: npm run test:cov
+        run: pnpm test:cov
         env:
           NODE_ENV: test
           PORT: 3001
@@ -75,7 +80,7 @@ jobs:
           CORS_ORIGIN: http://localhost:5173
 
       - name: Run E2E tests
-        run: npm run test:e2e:seq
+        run: pnpm test:e2e:seq
         env:
           NODE_ENV: test
           E2E_MODE: 'true'
@@ -96,7 +101,7 @@ jobs:
           RESEND_API_KEY: re_test_fake_key
 
       - name: Build application
-        run: npm run build
+        run: pnpm build
 
   deploy-develop:
     needs: lint-test-build
