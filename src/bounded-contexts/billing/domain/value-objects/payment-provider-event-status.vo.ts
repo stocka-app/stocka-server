@@ -1,5 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidPaymentProviderEventStatusException } from '@billing/domain/exceptions/validation/invalid-payment-provider-event-status.exception';
 
 export enum PaymentProviderEventStatusEnum {
   RECEIVED = 'RECEIVED',
@@ -7,16 +8,6 @@ export enum PaymentProviderEventStatusEnum {
   PROCESSED = 'PROCESSED',
   FAILED = 'FAILED',
   IGNORED = 'IGNORED',
-}
-
-export class InvalidPaymentProviderEventStatusException extends DomainException {
-  constructor(value: string) {
-    super(
-      `Invalid payment provider event status: ${value}`,
-      'INVALID_PAYMENT_PROVIDER_EVENT_STATUS',
-      [{ field: 'status', message: `Invalid payment provider event status: ${value}` }],
-    );
-  }
 }
 
 export class PaymentProviderEventStatusVO extends EnumValueObject<PaymentProviderEventStatusEnum> {

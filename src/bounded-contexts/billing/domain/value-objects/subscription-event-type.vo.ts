@@ -1,5 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidSubscriptionEventTypeException } from '@billing/domain/exceptions/validation/invalid-subscription-event-type.exception';
 
 export enum SubscriptionEventTypeEnum {
   UPGRADE_REQUESTED = 'UPGRADE_REQUESTED',
@@ -46,14 +47,6 @@ const LIFECYCLE = new Set<SubscriptionEventTypeEnum>([
   SubscriptionEventTypeEnum.RESET_TO_FREE,
   SubscriptionEventTypeEnum.ENTERPRISE_PLAN_ASSIGNED,
 ]);
-
-export class InvalidSubscriptionEventTypeException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid subscription event type: ${value}`, 'INVALID_SUBSCRIPTION_EVENT_TYPE', [
-      { field: 'eventType', message: `Invalid subscription event type: ${value}` },
-    ]);
-  }
-}
 
 export class SubscriptionEventTypeVO extends EnumValueObject<SubscriptionEventTypeEnum> {
   constructor(value: string) {

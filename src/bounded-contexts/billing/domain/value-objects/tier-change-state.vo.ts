@@ -1,5 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidTierChangeStateException } from '@billing/domain/exceptions/validation/invalid-tier-change-state.exception';
 
 export enum TierChangeStateEnum {
   COLD_DOWN = 'COLD_DOWN',
@@ -8,14 +9,6 @@ export enum TierChangeStateEnum {
   ARCHIVED = 'ARCHIVED',
   DELETED = 'DELETED',
   REVERTED = 'REVERTED',
-}
-
-export class InvalidTierChangeStateException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid tier change state: ${value}`, 'INVALID_TIER_CHANGE_STATE', [
-      { field: 'state', message: `Invalid tier change state: ${value}` },
-    ]);
-  }
 }
 
 export class TierChangeStateVO extends EnumValueObject<TierChangeStateEnum> {

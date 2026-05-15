@@ -1,21 +1,12 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidSubscriptionEventActorTypeException } from '@billing/domain/exceptions/validation/invalid-subscription-event-actor-type.exception';
 
 export enum SubscriptionEventActorTypeEnum {
   USER = 'USER',
   SYSTEM = 'SYSTEM',
   PROVIDER = 'PROVIDER',
   ADMIN = 'ADMIN',
-}
-
-export class InvalidSubscriptionEventActorTypeException extends DomainException {
-  constructor(value: string) {
-    super(
-      `Invalid subscription event actor type: ${value}`,
-      'INVALID_SUBSCRIPTION_EVENT_ACTOR_TYPE',
-      [{ field: 'actorType', message: `Invalid subscription event actor type: ${value}` }],
-    );
-  }
 }
 
 export class SubscriptionEventActorTypeVO extends EnumValueObject<SubscriptionEventActorTypeEnum> {

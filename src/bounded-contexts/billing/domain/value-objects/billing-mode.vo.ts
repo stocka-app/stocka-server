@@ -1,18 +1,11 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidBillingModeException } from '@billing/domain/exceptions/validation/invalid-billing-mode.exception';
 
 export enum BillingModeEnum {
   MANUAL = 'MANUAL',
   STRIPE_INVOICING = 'STRIPE_INVOICING',
   STRIPE_SUBSCRIPTION = 'STRIPE_SUBSCRIPTION',
-}
-
-export class InvalidBillingModeException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid billing mode: ${value}`, 'INVALID_BILLING_MODE', [
-      { field: 'billingMode', message: `Invalid billing mode: ${value}` },
-    ]);
-  }
 }
 
 /**

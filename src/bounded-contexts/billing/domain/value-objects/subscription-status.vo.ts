@@ -1,5 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidSubscriptionStatusException } from '@billing/domain/exceptions/validation/invalid-subscription-status.exception';
 
 export enum SubscriptionStatusEnum {
   ACTIVE = 'ACTIVE',
@@ -7,14 +8,6 @@ export enum SubscriptionStatusEnum {
   GRACE = 'GRACE',
   CANCELLED = 'CANCELLED',
   INCOMPLETE = 'INCOMPLETE',
-}
-
-export class InvalidSubscriptionStatusException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid subscription status: ${value}`, 'INVALID_SUBSCRIPTION_STATUS', [
-      { field: 'status', message: `Invalid subscription status: ${value}` },
-    ]);
-  }
 }
 
 export class SubscriptionStatusVO extends EnumValueObject<SubscriptionStatusEnum> {

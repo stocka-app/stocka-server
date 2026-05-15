@@ -1,18 +1,11 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidTierChangeSourceException } from '@billing/domain/exceptions/validation/invalid-tier-change-source.exception';
 
 export enum TierChangeSourceEnum {
   USER_REQUEST = 'USER_REQUEST',
   DUNNING = 'DUNNING',
   ADMIN = 'ADMIN',
-}
-
-export class InvalidTierChangeSourceException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid tier change source: ${value}`, 'INVALID_TIER_CHANGE_SOURCE', [
-      { field: 'source', message: `Invalid tier change source: ${value}` },
-    ]);
-  }
 }
 
 export class TierChangeSourceVO extends EnumValueObject<TierChangeSourceEnum> {

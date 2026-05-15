@@ -1,5 +1,6 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidInvoiceStatusException } from '@billing/domain/exceptions/validation/invalid-invoice-status.exception';
 
 export enum InvoiceStatusEnum {
   DRAFT = 'DRAFT',
@@ -7,14 +8,6 @@ export enum InvoiceStatusEnum {
   PAID = 'PAID',
   UNCOLLECTIBLE = 'UNCOLLECTIBLE',
   VOID = 'VOID',
-}
-
-export class InvalidInvoiceStatusException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid invoice status: ${value}`, 'INVALID_INVOICE_STATUS', [
-      { field: 'status', message: `Invalid invoice status: ${value}` },
-    ]);
-  }
 }
 
 export class InvoiceStatusVO extends EnumValueObject<InvoiceStatusEnum> {

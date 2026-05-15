@@ -1,17 +1,10 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidResetToFreeReasonException } from '@billing/domain/exceptions/validation/invalid-reset-to-free-reason.exception';
 
 export enum ResetToFreeReasonEnum {
   CANCELLATION_EFFECTIVE = 'CANCELLATION_EFFECTIVE',
   ENTERPRISE_CONTRACT_ENDED = 'ENTERPRISE_CONTRACT_ENDED',
-}
-
-export class InvalidResetToFreeReasonException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid reset-to-free reason: ${value}`, 'INVALID_RESET_TO_FREE_REASON', [
-      { field: 'reason', message: `Invalid reset-to-free reason: ${value}` },
-    ]);
-  }
 }
 
 /**

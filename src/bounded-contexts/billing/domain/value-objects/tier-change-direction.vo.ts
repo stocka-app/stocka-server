@@ -2,6 +2,8 @@ import { TierEnum } from '@authorization/domain/enums/tier.enum';
 import { TierVO } from '@tenant/domain/value-objects/tier.vo';
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidTierChangeDirectionException } from '@billing/domain/exceptions/validation/invalid-tier-change-direction.exception';
+import { SameTierDirectionException } from '@billing/domain/exceptions/business/same-tier-direction.exception';
 
 export enum TierChangeDirectionEnum {
   UPGRADE = 'UPGRADE',
@@ -14,22 +16,6 @@ const TIER_RANK: Record<TierEnum, number> = {
   [TierEnum.GROWTH]: 2,
   [TierEnum.ENTERPRISE]: 3,
 };
-
-export class InvalidTierChangeDirectionException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid tier change direction: ${value}`, 'INVALID_TIER_CHANGE_DIRECTION', [
-      { field: 'direction', message: `Invalid tier change direction: ${value}` },
-    ]);
-  }
-}
-
-export class SameTierDirectionException extends DomainException {
-  constructor(tier: string) {
-    super(`Cannot derive direction: from and to tiers are equal (${tier})`, 'SAME_TIER_DIRECTION', [
-      { field: 'tier', message: `From and to tiers are equal: ${tier}` },
-    ]);
-  }
-}
 
 export class TierChangeDirectionVO extends EnumValueObject<TierChangeDirectionEnum> {
   constructor(value: string) {

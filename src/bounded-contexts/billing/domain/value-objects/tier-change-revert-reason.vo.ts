@@ -1,18 +1,11 @@
 import { DomainException } from '@shared/domain/exceptions/domain.exception';
 import { EnumValueObject } from '@shared/domain/value-objects/compound/enum-value-object.vo';
+import { InvalidTierChangeRevertReasonException } from '@billing/domain/exceptions/validation/invalid-tier-change-revert-reason.exception';
 
 export enum TierChangeRevertReasonEnum {
   USER_CHANGED_MIND = 'USER_CHANGED_MIND',
   ADMIN_OVERRIDE = 'ADMIN_OVERRIDE',
   BILLING_ERROR = 'BILLING_ERROR',
-}
-
-export class InvalidTierChangeRevertReasonException extends DomainException {
-  constructor(value: string) {
-    super(`Invalid tier change revert reason: ${value}`, 'INVALID_TIER_CHANGE_REVERT_REASON', [
-      { field: 'reason', message: `Invalid tier change revert reason: ${value}` },
-    ]);
-  }
 }
 
 export class TierChangeRevertReasonVO extends EnumValueObject<TierChangeRevertReasonEnum> {
