@@ -11,3 +11,6 @@
 export { EmailVerificationCompletedEvent } from '@authentication/domain/events/email-verification-completed.event';
 export { UserPasswordResetByAuthenticationEvent } from '@shared/domain/events/integration/user-password-reset-by-authentication.event';
 export { UserVerificationBlockedByAuthenticationEvent } from '@shared/domain/events/integration/user-verification-blocked-by-authentication.event';
+export { TenantTierChangedIntegrationEvent } from '@shared/domain/events/integration/tenant-tier-changed.integration-event';
+export { TenantUsageMustBeArchivedIntegrationEvent } from '@shared/domain/events/integration/tenant-usage-must-be-archived.integration-event';
+export { TenantUsageMustBePermanentlyDeletedIntegrationEvent } from '@shared/domain/events/integration/tenant-usage-must-be-permanently-deleted.integration-event';
