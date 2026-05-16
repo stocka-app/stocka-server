@@ -14,8 +14,8 @@ export class InvoiceEntity extends BaseEntity {
   @Index('idx_invoices_tenant')
   tenantUUID!: string;
 
-  @Column({ name: 'provider_code', type: 'varchar', length: 20 })
-  providerCode!: string;
+  @Column({ name: 'provider_code', type: 'varchar', length: 20, nullable: true })
+  providerCode!: string | null;
 
   @Column({ name: 'external_invoice_id', type: 'varchar', length: 100 })
   externalInvoiceId!: string;
@@ -48,7 +48,7 @@ export class InvoiceEntity extends BaseEntity {
   @JoinColumn({ name: 'subscription_id' })
   subscription!: SubscriptionEntity;
 
-  @ManyToOne(() => PaymentProviderEntity, { onDelete: 'RESTRICT', nullable: false })
+  @ManyToOne(() => PaymentProviderEntity, { onDelete: 'RESTRICT', nullable: true })
   @JoinColumn({ name: 'provider_code' })
-  provider!: PaymentProviderEntity;
+  provider!: PaymentProviderEntity | null;
 }
